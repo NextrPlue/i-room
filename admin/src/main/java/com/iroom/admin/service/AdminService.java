@@ -18,7 +18,9 @@ public class AdminService {
     private final PasswordEncoder passwordEncoder;
 
     public SignUpResponse signUp(SignUpRequest request) {
-        // 회원가입 로직 구현 필요
+        if (adminRepository.existsByEmail(request.email())) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
 
         Admin admin = Admin.builder()
                 .name(request.name())
