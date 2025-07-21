@@ -7,7 +7,9 @@ spring:
 ---
 
 spring:
-  profiles: default
+  config:
+    activate:
+      on-profile: default
   jpa:
     properties:
       hibernate:
@@ -52,7 +54,9 @@ server:
 ---
 
 spring:
-  profiles: docker
+  config:
+    activate:
+      on-profile: docker
   jpa:
     properties:
       hibernate:
