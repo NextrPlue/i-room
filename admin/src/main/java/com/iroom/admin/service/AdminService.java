@@ -5,6 +5,7 @@ import com.iroom.admin.dto.response.SignUpResponse;
 import com.iroom.admin.entity.Admin;
 import com.iroom.admin.repository.AdminRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,14 +15,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class AdminService {
 
     private final AdminRepository adminRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public SignUpResponse signUp(SignUpRequest request) {
-        // 회원가입 로직 구현 필요
+        if (adminRepository.existsByEmail(request.email())) {
+            throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+        }
 
         Admin admin = Admin.builder()
                 .name(request.name())
                 .email(request.email())
-                .password(request.password())
+                .password(passwordEncoder.encode(request.password()))
                 .phone(request.phone())
                 .role(request.role())
                 .build();
