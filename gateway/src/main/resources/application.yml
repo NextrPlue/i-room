@@ -1,0 +1,132 @@
+server:
+  port: 8088
+
+---
+
+spring:
+  profiles: default
+  cloud:
+    gateway:
+#<<< API Gateway / Routes
+      routes:
+        - id: admin
+          uri: http://localhost:8082
+          predicates:
+            - Path=/admins/**, 
+        - id: dashboard
+          uri: http://localhost:8083
+          predicates:
+            - Path=/dashBoards/**, /blueprints/**, /dangerAreas/**, /readAlarms/**, /workerReadModels/**, /readAiData/**
+        - id: worker
+          uri: http://localhost:8084
+          predicates:
+            - Path=/workers/**, 
+        - id: alarm
+          uri: http://localhost:8085
+          predicates:
+            - Path=/alarms/**, /readWorkers/**
+        - id: management
+          uri: http://localhost:8086
+          predicates:
+            - Path=/workerManagements/**, /workerEdus/**, /readWorkers/**
+        - id: risk
+          uri: http://localhost:8087
+          predicates:
+            - Path=/riskManagements/**, /readDangerAreas/**
+        - id: idle
+          uri: http://localhost:8088
+          predicates:
+            - Path=/idleWorkers/**, 
+        - id: health
+          uri: http://localhost:8089
+          predicates:
+            - Path=/workerManagementAis/**, 
+        - id: eqipment
+          uri: http://localhost:8090
+          predicates:
+            - Path=/ppeDetections/**, 
+        - id: sensor
+          uri: http://localhost:8091
+          predicates:
+            - Path=/workerHealths/**, /heavyEquipments/**, 
+        - id: frontend
+          uri: http://localhost:8080
+          predicates:
+            - Path=/**
+#>>> API Gateway / Routes
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+
+---
+
+spring:
+  profiles: docker
+  cloud:
+    gateway:
+      routes:
+        - id: admin
+          uri: http://admin:8080
+          predicates:
+            - Path=/admins/**, 
+        - id: dashboard
+          uri: http://dashboard:8080
+          predicates:
+            - Path=/dashBoards/**, /blueprints/**, /dangerAreas/**, 
+        - id: worker
+          uri: http://worker:8080
+          predicates:
+            - Path=/workers/**, 
+        - id: alarm
+          uri: http://alarm:8080
+          predicates:
+            - Path=/alarms/**, 
+        - id: management
+          uri: http://management:8080
+          predicates:
+            - Path=/workerManagements/**, /workerEdus/**, 
+        - id: risk
+          uri: http://risk:8080
+          predicates:
+            - Path=/riskManagements/**, 
+        - id: idle
+          uri: http://idle:8080
+          predicates:
+            - Path=/idleWorkers/**, 
+        - id: health
+          uri: http://health:8080
+          predicates:
+            - Path=/workerManagementAis/**, 
+        - id: eqipment
+          uri: http://eqipment:8080
+          predicates:
+            - Path=/ppeDetections/**, 
+        - id: sensor
+          uri: http://sensor:8080
+          predicates:
+            - Path=/workerHealths/**, /heavyEquipments/**, 
+        - id: frontend
+          uri: http://frontend:8080
+          predicates:
+            - Path=/**
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
+server:
+  port: 8080
