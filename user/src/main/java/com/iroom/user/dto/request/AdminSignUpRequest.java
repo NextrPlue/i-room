@@ -1,6 +1,6 @@
-package com.iroom.admin.dto.request;
+package com.iroom.user.dto.request;
 
-public record SignUpRequest(
+public record AdminSignUpRequest(
         String name,
         String email,
         String password,

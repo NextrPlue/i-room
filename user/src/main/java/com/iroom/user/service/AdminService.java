@@ -1,9 +1,9 @@
-package com.iroom.admin.service;
+package com.iroom.user.service;
 
-import com.iroom.admin.dto.request.SignUpRequest;
-import com.iroom.admin.dto.response.SignUpResponse;
-import com.iroom.admin.entity.Admin;
-import com.iroom.admin.repository.AdminRepository;
+import com.iroom.user.dto.request.AdminSignUpRequest;
+import com.iroom.user.dto.response.AdminSignUpResponse;
+import com.iroom.user.entity.Admin;
+import com.iroom.user.repository.AdminRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ public class AdminService {
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public SignUpResponse signUp(SignUpRequest request) {
+    public AdminSignUpResponse signUp(AdminSignUpRequest request) {
         if (adminRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
@@ -32,7 +32,7 @@ public class AdminService {
 
         adminRepository.save(admin);
 
-        return new SignUpResponse(
+        return new AdminSignUpResponse(
                 request.name(),
                 request.email(),
                 request.phone(),

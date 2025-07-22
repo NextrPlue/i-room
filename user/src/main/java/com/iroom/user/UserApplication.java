@@ -1,13 +1,13 @@
-package com.iroom.admin;
+package com.iroom.user;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class AdminApplication {
+public class UserApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(AdminApplication.class, args);
+        SpringApplication.run(UserApplication.class, args);
     }
 
 }

@@ -1,6 +1,6 @@
-package com.iroom.admin.repository;
+package com.iroom.user.repository;
 
-import com.iroom.admin.entity.Admin;
+import com.iroom.user.entity.Admin;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AdminRepository extends JpaRepository<Admin,Long> {

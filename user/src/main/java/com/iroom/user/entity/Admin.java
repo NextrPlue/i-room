@@ -1,4 +1,4 @@
-package com.iroom.admin.entity;
+package com.iroom.user.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
