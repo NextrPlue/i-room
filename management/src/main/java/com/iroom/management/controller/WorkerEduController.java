@@ -4,6 +4,8 @@ import com.iroom.management.dto.request.WorkerEduRequest;
 import com.iroom.management.dto.response.WorkerEduResponse;
 import com.iroom.management.service.WorkerEduService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -14,14 +16,16 @@ public class WorkerEduController {
 
     // 안전교육 이수 등록
     @PostMapping("/record")
-    public WorkerEduResponse recordEdu(@RequestBody WorkerEduRequest requestDto) {
-        return workerEduService.recordEdu(requestDto);
+    public ResponseEntity<WorkerEduResponse> recordEdu(@RequestBody WorkerEduRequest requestDto) {
+        WorkerEduResponse response = workerEduService.recordEdu(requestDto);
+        return ResponseEntity.ok(response);
     }
 
     // 교육 정보 조회
     @GetMapping("/{workerId}")
-    public WorkerEduResponse getEduInfo(@PathVariable Long workerId) {
-        return workerEduService.getEduInfo(workerId);
+    public ResponseEntity<WorkerEduResponse> getEduInfo(@PathVariable Long workerId) {
+        WorkerEduResponse response = workerEduService.getEduInfo(workerId);
+        return ResponseEntity.ok(response);
     }
 
 }
