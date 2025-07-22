@@ -1,4 +1,4 @@
-package com.iroom.admin.config;
+package com.iroom.user.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

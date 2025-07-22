@@ -1,6 +1,6 @@
-package com.iroom.admin.dto.response;
+package com.iroom.user.dto.response;
 
-public record SignUpResponse(
+public record AdminSignUpResponse(
         String name,
         String email,
         String phone,

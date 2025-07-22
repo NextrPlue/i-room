@@ -1,8 +1,8 @@
-package com.iroom.admin.controller;
+package com.iroom.user.controller;
 
-import com.iroom.admin.dto.request.SignUpRequest;
-import com.iroom.admin.dto.response.SignUpResponse;
-import com.iroom.admin.service.AdminService;
+import com.iroom.user.dto.request.AdminSignUpRequest;
+import com.iroom.user.dto.response.AdminSignUpResponse;
+import com.iroom.user.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,8 +17,8 @@ public class AdminController {
     private final AdminService adminService;
 
     @PostMapping("/signup")
-    public ResponseEntity<SignUpResponse> register(@RequestBody SignUpRequest request) {
-        SignUpResponse response = adminService.signUp(request);
+    public ResponseEntity<AdminSignUpResponse> register(@RequestBody AdminSignUpRequest request) {
+        AdminSignUpResponse response = adminService.signUp(request);
         return ResponseEntity.ok(response);
     }
 }
