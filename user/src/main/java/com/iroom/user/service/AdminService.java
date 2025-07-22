@@ -5,6 +5,7 @@ import com.iroom.user.dto.request.LoginRequest;
 import com.iroom.user.dto.response.AdminSignUpResponse;
 import com.iroom.user.dto.response.LoginResponse;
 import com.iroom.user.entity.Admin;
+import com.iroom.user.jwt.JwtTokenProvider;
 import com.iroom.user.repository.AdminRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +19,7 @@ public class AdminService {
 
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtTokenProvider jwtTokenProvider;
 
     public AdminSignUpResponse signUp(AdminSignUpRequest request) {
         if (adminRepository.existsByEmail(request.email())) {
@@ -50,7 +52,6 @@ public class AdminService {
             throw new IllegalArgumentException("잘못된 비밀번호입니다.");
         }
 
-        // JWT 토큰 로직 추가 이후, 이를 반환하도록 수정
-        return new LoginResponse("JWT 토큰이 들어가야 함");
+        return new LoginResponse(jwtTokenProvider.createToken(admin.getEmail()));
     }
 }
