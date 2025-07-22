@@ -1,7 +1,7 @@
 package com.iroom.management.controller;
 
-import com.iroom.management.dto.request.WorkerManagementRequestDto;
-import com.iroom.management.dto.response.WorkerManagementResponseDto;
+import com.iroom.management.dto.request.WorkerManagementRequest;
+import com.iroom.management.dto.response.WorkerManagementResponse;
 import com.iroom.management.service.WorkerManagementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -14,14 +14,14 @@ public class WorkerManagementController {
     private final WorkerManagementService workerManagementService;
 
     @PostMapping("/enter")
-    public ResponseEntity<WorkerManagementResponseDto> enter(@RequestBody WorkerManagementRequestDto requestDto) {
-        WorkerManagementResponseDto response = workerManagementService.enterWorker(requestDto);
+    public ResponseEntity<WorkerManagementResponse> enter(@RequestBody WorkerManagementRequest requestDto) {
+        WorkerManagementResponse response = workerManagementService.enterWorker(requestDto);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/exit/{workerId}")
-    public ResponseEntity<WorkerManagementResponseDto> exit(@PathVariable Long workerId) {
-        WorkerManagementResponseDto response = workerManagementService.exitWorker(workerId);
+    public ResponseEntity<WorkerManagementResponse> exit(@PathVariable Long workerId) {
+        WorkerManagementResponse response = workerManagementService.exitWorker(workerId);
         return ResponseEntity.ok(response);
     }
 }

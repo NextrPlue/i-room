@@ -1,11 +1,11 @@
 package com.iroom.management.service;
 
-import com.iroom.management.dto.request.WorkerManagementRequestDto;
-import com.iroom.management.dto.response.WorkerManagementResponseDto;
+import com.iroom.management.dto.request.WorkerManagementRequest;
+import com.iroom.management.dto.response.WorkerManagementResponse;
 
 public interface WorkerManagementService {
     // 근로자 입장
-    WorkerManagementResponseDto enterWorker(WorkerManagementRequestDto requestDto);
+    WorkerManagementResponse enterWorker(WorkerManagementRequest requestDto);
     // 근로자 퇴장
-    WorkerManagementResponseDto exitWorker(Long workerId);
+    WorkerManagementResponse exitWorker(Long workerId);
 }
