@@ -26,6 +26,7 @@ public class WorkerManagementServiceImpl implements WorkerManagementService {
     public WorkerManagementResponse exitWorker(Long workerId) {
         WorkerManagement existing = repository.findByWorkerId(workerId)
                 .orElseThrow(()-> new IllegalArgumentException("해당 근로자를 찾을 수 없습니다."));
+        existing.markExitedNow();
         WorkerManagement updated = repository.save(existing);
         return new WorkerManagementResponse(updated);
     }

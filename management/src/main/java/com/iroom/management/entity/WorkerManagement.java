@@ -29,8 +29,7 @@ public class WorkerManagement {
         this.enterDate = LocalDateTime.now();
     }
 
-    @PreUpdate
-    protected void onUpdate() {
+    public void markExitedNow(){
         this.outDate = LocalDateTime.now();
     }
 }
