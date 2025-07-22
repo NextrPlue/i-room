@@ -1,0 +1,31 @@
+package com.iroom.user.jwt;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import org.springframework.stereotype.Component;
+import io.jsonwebtoken.security.Keys;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+
+@Component
+public class JwtTokenProvider {
+
+    private final SecretKey secretKey = Keys.hmacShaKeyFor("secret-key-to-get-from-spring-cloud-config".getBytes(StandardCharsets.UTF_8));
+    private final long expirationMs = 86400000;
+
+    public String createToken(String email) {
+        Claims claims = Jwts.claims().setSubject(email);
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + expirationMs);
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(validity)
+                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .compact();
+    }
+}
