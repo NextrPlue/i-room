@@ -3,12 +3,12 @@ package com.iroom.management.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
 @Table(name = "WorkerManagement_table")
@@ -20,9 +20,17 @@ public class WorkerManagement {
     @Column(nullable = false)
     private Long workerId;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date enterDate;
+    private LocalDateTime enterDate;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date outDate;
+    private LocalDateTime outDate;
+
+    @PrePersist
+    protected void onCreate() {
+        this.enterDate = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.outDate = LocalDateTime.now();
+    }
 }
