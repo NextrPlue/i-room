@@ -1,0 +1,31 @@
+package com.iroom.management.controller;
+
+import com.iroom.management.dto.request.WorkerEduRequest;
+import com.iroom.management.dto.response.WorkerEduResponse;
+import com.iroom.management.service.WorkerEduService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.RequestEntity;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("workerEdu")
+@RequiredArgsConstructor
+public class WorkerEduController {
+    private final WorkerEduService workerEduService;
+
+    // 안전교육 이수 등록
+    @PostMapping("/record")
+    public ResponseEntity<WorkerEduResponse> recordEdu(@RequestBody WorkerEduRequest requestDto) {
+        WorkerEduResponse response = workerEduService.recordEdu(requestDto);
+        return ResponseEntity.ok(response);
+    }
+
+    // 교육 정보 조회
+    @GetMapping("/{workerId}")
+    public ResponseEntity<WorkerEduResponse> getEduInfo(@PathVariable Long workerId) {
+        WorkerEduResponse response = workerEduService.getEduInfo(workerId);
+        return ResponseEntity.ok(response);
+    }
+
+}
