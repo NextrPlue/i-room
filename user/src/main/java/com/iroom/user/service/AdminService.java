@@ -1,7 +1,9 @@
 package com.iroom.user.service;
 
 import com.iroom.user.dto.request.AdminSignUpRequest;
+import com.iroom.user.dto.request.LoginRequest;
 import com.iroom.user.dto.response.AdminSignUpResponse;
+import com.iroom.user.dto.response.LoginResponse;
 import com.iroom.user.entity.Admin;
 import com.iroom.user.repository.AdminRepository;
 import lombok.RequiredArgsConstructor;
@@ -40,5 +42,15 @@ public class AdminService {
         );
     }
 
+    public LoginResponse login(LoginRequest request) {
+        Admin admin = adminRepository.findByEmail(request.email())
+                .orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
 
+        if (!passwordEncoder.matches(request.password(), admin.getPassword())) {
+            throw new IllegalArgumentException("잘못된 비밀번호입니다.");
+        }
+
+        // JWT 토큰 로직 추가 이후, 이를 반환하도록 수정
+        return new LoginResponse("JWT 토큰이 들어가야 함");
+    }
 }
