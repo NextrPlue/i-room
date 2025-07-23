@@ -1,0 +1,19 @@
+server:
+  port: 8080
+
+spring:
+  # application:
+    # name: gateway-service # Eureka 등 서비스 디스커버리 적용시 등록될 이름
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: user-service-route
+              uri: http://localhost:8081
+              # uri: lb://USER-SERVICE # 서비스 디스커버리를 사용할 경우 user 서비스의 주소
+              predicates:
+                - Path=/api/user/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/user/(?<segment>.*), /$\{segment}
