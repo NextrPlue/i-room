@@ -1,9 +1,9 @@
 package com.iroom.sensor.controller;
 
-import com.iroom.sensor.dto.EquipmentLocationUpdateRequest;
-import com.iroom.sensor.dto.EquipmentLocationUpdateResponse;
-import com.iroom.sensor.dto.EquipmentRegisterRequest;
-import com.iroom.sensor.dto.EquipmentRegisterResponse;
+import com.iroom.sensor.dto.HeavyEquipment.EquipmentLocationUpdateRequest;
+import com.iroom.sensor.dto.HeavyEquipment.EquipmentLocationUpdateResponse;
+import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterRequest;
+import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterResponse;
 import com.iroom.sensor.service.HeavyEquipmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
