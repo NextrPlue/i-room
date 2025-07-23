@@ -56,6 +56,7 @@ public class AdminService {
         return new LoginResponse(jwtTokenProvider.createAdminToken(admin));
     }
 
+    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER') and #id == authentication.principal")
     public AdminUpdateResponse updateAdminInfo(Long id, AdminUpdateInfoRequest request) {
         Admin admin = adminRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당하는 관리자를 찾을 수 없습니다."));
@@ -75,6 +76,7 @@ public class AdminService {
         );
     }
 
+    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER') and #id == authentication.principal")
     public void updateAdminPassword(Long id, AdminUpdatePasswordRequest request) {
         Admin admin = adminRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당하는 관리자를 찾을 수 없습니다."));
