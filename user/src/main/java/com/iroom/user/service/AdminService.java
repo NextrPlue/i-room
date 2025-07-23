@@ -2,6 +2,7 @@ package com.iroom.user.service;
 
 import com.iroom.user.dto.request.AdminSignUpRequest;
 import com.iroom.user.dto.request.AdminUpdateInfoRequest;
+import com.iroom.user.dto.request.AdminUpdatePasswordRequest;
 import com.iroom.user.dto.request.LoginRequest;
 import com.iroom.user.dto.response.AdminSignUpResponse;
 import com.iroom.user.dto.response.AdminUpdateResponse;
@@ -74,5 +75,16 @@ public class AdminService {
                 admin.getPhone(),
                 admin.getRole()
         );
+    }
+
+    public void updateAdminPassword(Long id, AdminUpdatePasswordRequest request) {
+        Admin admin = adminRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당하는 관리자를 찾을 수 없습니다."));
+
+        if (!passwordEncoder.matches(request.password(), admin.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        admin.updatePassword(passwordEncoder.encode(request.newPassword()));
     }
 }
