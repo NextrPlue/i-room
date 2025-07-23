@@ -1,16 +1,16 @@
 package com.iroom.user.controller;
 
 import com.iroom.user.dto.request.AdminSignUpRequest;
+import com.iroom.user.dto.request.AdminUpdateInfoRequest;
+import com.iroom.user.dto.request.AdminUpdatePasswordRequest;
 import com.iroom.user.dto.request.LoginRequest;
 import com.iroom.user.dto.response.AdminSignUpResponse;
+import com.iroom.user.dto.response.AdminUpdateResponse;
 import com.iroom.user.dto.response.LoginResponse;
 import com.iroom.user.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/admin")
@@ -28,5 +28,17 @@ public class AdminController {
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
         LoginResponse response = adminService.login(request);
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<AdminUpdateResponse> updateInfo(@RequestHeader("X-User-Id") Long id, @RequestBody AdminUpdateInfoRequest request) {
+        AdminUpdateResponse response = adminService.updateAdminInfo(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<Void> updatePassword(@RequestHeader("X-User-Id") Long id, @RequestBody AdminUpdatePasswordRequest request) {
+        adminService.updateAdminPassword(id, request);
+        return ResponseEntity.noContent().build();
     }
 }

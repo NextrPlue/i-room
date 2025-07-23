@@ -30,17 +30,31 @@ public class Admin {
         updatedAt = LocalDateTime.now();
     }
 
-    @PostPersist
+    @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
 
     @Builder
-    public Admin(String email, String name, String password, String phone, String role) {
-        this.email = email;
+    public Admin(String name, String email, String password, String phone, String role) {
         this.name = name;
+        this.email = email;
         this.password = password;
         this.phone = phone;
+        this.role = role;
+    }
+
+    public void updateInfo(String name, String email, String phone) {
+        this.name = name;
+        this.email = email;
+        this.phone = phone;
+    }
+
+    public void updatePassword(String password) {
+        this.password = password;
+    }
+
+    public void updateRole(String role) {
         this.role = role;
     }
 }
