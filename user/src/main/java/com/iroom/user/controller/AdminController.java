@@ -1,9 +1,6 @@
 package com.iroom.user.controller;
 
-import com.iroom.user.dto.request.AdminSignUpRequest;
-import com.iroom.user.dto.request.AdminUpdateInfoRequest;
-import com.iroom.user.dto.request.AdminUpdatePasswordRequest;
-import com.iroom.user.dto.request.LoginRequest;
+import com.iroom.user.dto.request.*;
 import com.iroom.user.dto.response.AdminSignUpResponse;
 import com.iroom.user.dto.response.AdminUpdateResponse;
 import com.iroom.user.dto.response.LoginResponse;
@@ -13,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/admin")
+@RequestMapping("/admins")
 @RequiredArgsConstructor
 public class AdminController {
     private final AdminService adminService;
@@ -40,5 +37,11 @@ public class AdminController {
     public ResponseEntity<Void> updatePassword(@RequestHeader("X-User-Id") Long id, @RequestBody AdminUpdatePasswordRequest request) {
         adminService.updateAdminPassword(id, request);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{adminId}/role")
+    public ResponseEntity<AdminUpdateResponse> updateRole(@PathVariable Long adminId, @RequestBody AdminUpdateRoleRequest request) {
+        AdminUpdateResponse response = adminService.updateAdminRole(adminId, request);
+        return ResponseEntity.ok(response);
     }
 }
