@@ -4,8 +4,8 @@ import json
 import shutil
 
 # ✅ 경로 설정 (역슬래시 이스케이프 또는 슬래시 사용)
-base_dir = "{BASE_PATH}"    # 압축 해제, 필터링 결과 저장 경로 ex) "C:/Users/User/Desktop/safety"
-zip_path = "{ZIP_PATH}"     # .zip 경로 ex) "C:/Users/User/Desktop/원천데이터"
+base_dir = "os.path.normpath({BASE_PATH})"    # 압축 해제, 필터링 결과 저장 경로 ex) "C:/Users/User/Desktop/safety"
+zip_path = "os.path.normpath({ZIP_PATH})"     # .zip 경로 ex) "C:/Users/User/Desktop/원천데이터"
 
 os.makedirs(base_dir, exist_ok=True)
 
