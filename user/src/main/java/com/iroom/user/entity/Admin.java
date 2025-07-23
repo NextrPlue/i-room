@@ -36,17 +36,17 @@ public class Admin {
     }
 
     @Builder
-    public Admin(String email, String name, String password, String phone, String role) {
-        this.email = email;
+    public Admin(String name, String email, String password, String phone, String role) {
         this.name = name;
+        this.email = email;
         this.password = password;
         this.phone = phone;
         this.role = role;
     }
 
-    public void updateInfo(String email, String name, String phone) {
-        this.email = email;
+    public void updateInfo(String name, String email, String phone) {
         this.name = name;
+        this.email = email;
         this.phone = phone;
     }
 
