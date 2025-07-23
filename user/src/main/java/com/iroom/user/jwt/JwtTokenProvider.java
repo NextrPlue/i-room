@@ -1,5 +1,6 @@
 package com.iroom.user.jwt;
 
+import com.iroom.user.entity.Admin;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -16,8 +17,10 @@ public class JwtTokenProvider {
     private final SecretKey secretKey = Keys.hmacShaKeyFor("secret-key-to-get-from-spring-cloud-config".getBytes(StandardCharsets.UTF_8));
     private final long expirationMs = 86400000;
 
-    public String createToken(String email) {
-        Claims claims = Jwts.claims().setSubject(email);
+    public String createAdminToken(Admin admin) {
+        Claims claims = Jwts.claims().setSubject(admin.getId().toString());
+        claims.put("email", admin.getEmail());
+        claims.put("role", admin.getRole());
         Date now = new Date();
         Date validity = new Date(now.getTime() + expirationMs);
 
