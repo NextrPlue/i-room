@@ -1,5 +1,7 @@
 package com.iroom.sensor.service;
 
+import com.iroom.sensor.dto.EquipmentLocationUpdateRequest;
+import com.iroom.sensor.dto.EquipmentLocationUpdateResponse;
 import com.iroom.sensor.dto.EquipmentRegisterRequest;
 import com.iroom.sensor.dto.EquipmentRegisterResponse;
 import com.iroom.sensor.entity.HeavyEquipment;
@@ -27,5 +29,16 @@ public class HeavyEquipmentService {
         HeavyEquipment saved = heavyEquipmentRepository.save(equipment);
         return new EquipmentRegisterResponse(saved);
     }
+
+    //위치 업데이트 기능
+    public EquipmentLocationUpdateResponse updateLocation(EquipmentLocationUpdateRequest request){
+        HeavyEquipment equipment = heavyEquipmentRepository.findById(request.id())
+                .orElseThrow(() -> new EntityNotFoundException("장비 없음 "));
+
+        equipment.updateLocation(request.location());
+
+        return new EquipmentLocationUpdateResponse(equipment.getId(), equipment.getLocation());
+    }
+
 
 }
