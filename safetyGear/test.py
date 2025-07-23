@@ -4,7 +4,7 @@ import time
 from ultralytics import YOLO
 
 # 모델 로드
-model_path = os.path.normpath("{MODEL_PATH}")   # ex) C:/Users/User/i-room-ai/safetyGear/best.pt
+model_path = "./best.pt"
 model = YOLO(model_path)
 
 # 클래스 정의
