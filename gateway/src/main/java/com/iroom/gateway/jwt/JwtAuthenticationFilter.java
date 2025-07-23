@@ -1,5 +1,6 @@
 package com.iroom.gateway.jwt;
 
+import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
@@ -45,7 +46,18 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                 return onError(exchange, "Token is invalid", HttpStatus.UNAUTHORIZED);
             }
 
-            return chain.filter(exchange);
+            Claims claims = jwtTokenProvider.getClaims(token);
+            String userId = claims.getSubject();
+            String email = claims.get("email", String.class);
+            String userRole = claims.get("role", String.class);
+
+            ServerHttpRequest newRequest = request.mutate()
+                    .header("X-User-Id", userId)
+                    .header("X-User-Email", email)
+                    .header("X-User-Role", userRole)
+                    .build();
+
+            return chain.filter(exchange.mutate().request(newRequest).build());
         };
     }
 
