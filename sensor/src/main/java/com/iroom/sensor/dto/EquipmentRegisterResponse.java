@@ -1,6 +1,5 @@
 package com.iroom.sensor.dto;
 
-
 import com.iroom.sensor.entity.HeavyEquipment;
 
 public record EquipmentRegisterResponse(
