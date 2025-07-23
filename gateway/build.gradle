@@ -23,13 +23,7 @@ repositories {
 dependencies {
     // Spring Boot Starters
     implementation 'org.springframework.boot:spring-boot-starter'
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-data-rest'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-    implementation 'org.springframework.boot:spring-boot-starter-hateoas'
-
-    // Spring Security
-    implementation 'org.springframework.boot:spring-boot-starter-security'
 
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
@@ -37,22 +31,18 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
     // Spring Cloud
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
+    implementation 'org.springframework.cloud:spring-cloud-starter-gateway-server-webflux'
 
     // Micrometer Tracing
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
-
-    // Database
-    runtimeOnly 'com.h2database:h2'
 
     // Test Dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'io.cucumber:cucumber-java:7.14.1'
     testImplementation 'io.cucumber:cucumber-junit:7.14.1'
     testImplementation 'io.cucumber:cucumber-spring:7.14.1'
-    testImplementation 'org.springframework.security:spring-security-test'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'
