@@ -8,6 +8,8 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("workerEdu")
 @RequiredArgsConstructor
@@ -23,8 +25,8 @@ public class WorkerEduController {
 
     // 교육 정보 조회
     @GetMapping("/{workerId}")
-    public ResponseEntity<WorkerEduResponse> getEduInfo(@PathVariable Long workerId) {
-        WorkerEduResponse response = workerEduService.getEduInfo(workerId);
+    public ResponseEntity<List<WorkerEduResponse>> getEduInfo(@PathVariable Long workerId) {
+        List<WorkerEduResponse> response = workerEduService.getEduInfo(workerId);
         return ResponseEntity.ok(response);
     }
 
