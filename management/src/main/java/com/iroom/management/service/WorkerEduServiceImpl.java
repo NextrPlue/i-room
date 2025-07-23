@@ -8,6 +8,8 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class WorkerEduServiceImpl implements WorkerEduService {
@@ -23,9 +25,13 @@ public class WorkerEduServiceImpl implements WorkerEduService {
     }
 
     @Override
-    public WorkerEduResponse getEduInfo(Long workerId) {
-        WorkerEdu edu = workerEduRepository.findById(workerId)
-                .orElseThrow(() -> new IllegalArgumentException("해당 근로자의 교육 이력이 없습니다."));
-        return new WorkerEduResponse(edu);
+    public List<WorkerEduResponse> getEduInfo(Long workerId) {
+        List<WorkerEdu> eduList = workerEduRepository.findByWorkerId(workerId);
+        if (eduList.isEmpty()) {
+            throw new IllegalArgumentException("해당 근로자의 교육 이력이 없습니다.");
+        }
+        return eduList.stream()
+                .map(WorkerEduResponse::new)
+                .toList();
     }
 }
