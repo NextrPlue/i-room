@@ -74,6 +74,10 @@ start_time = time.time()
 SKIP_FRAME = 5
 frame_index = 0
 
+# 💡 프레임 스킵 대응용: 마지막 탐지 정보 저장 변수
+last_tracked_objects = []         # (bbox, track_id, class_id) 리스트
+last_tracked_frame_index = -1     # 마지막 탐지 프레임 번호
+
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
@@ -82,30 +86,32 @@ while cap.isOpened():
 
     frame_index += 1
 
-    if frame_index % SKIP_FRAME != 0:
-        video_writer.write(frame)
-        continue
+    if frame_index % SKIP_FRAME == 0:
+        # --- 탐지 수행 ---
+        results = model.predict(frame, conf=CONF_THRESHOLD, verbose=False)[0]
+        detections = []
+        for box, conf, cls in zip(results.boxes.xyxy, results.boxes.conf, results.boxes.cls):
+            x1, y1, x2, y2 = map(int, box)
+            detections.append([[x1, y1, x2 - x1, y2 - y1], float(conf), int(cls)])
 
-    # YOLO 탐지
-    results = model.predict(frame, conf=CONF_THRESHOLD, verbose=False)[0]
+        tracks = tracker.update_tracks(detections, frame=frame)
 
-    # 탐지 결과에서 bbox, conf, class 추출
-    detections = []
-    for box, conf, cls in zip(results.boxes.xyxy, results.boxes.conf, results.boxes.cls):
-        x1, y1, x2, y2 = map(int, box)
-        detections.append([[x1, y1, x2 - x1, y2 - y1], float(conf), int(cls)])
+        # 추적 결과 저장
+        last_tracked_objects = []
+        for track in tracks:
+            if not track.is_confirmed():
+                continue
+            tid = track.track_id
+            bbox = track.to_ltrb()
+            cls_id = int(track.det_class)
+            last_tracked_objects.append((bbox, tid, cls_id))
+            draw_box(frame, bbox, tid, cls_id)
 
-    # DeepSORT로 추적
-    tracks = tracker.update_tracks(detections, frame=frame)
-
-    # 박스 및 추적 ID 표시
-    for track in tracks:
-        if not track.is_confirmed():
-            continue
-        tid = track.track_id
-        bbox = track.to_ltrb()  # [x1, y1, x2, y2]
-        cls_id = int(track.det_class)
-        draw_box(frame, bbox, tid, cls_id)
+        last_tracked_frame_index = frame_index
+    else:
+        # --- 이전 추적 결과 재사용 (보간) ---
+        for bbox, tid, cls_id in last_tracked_objects:
+            draw_box(frame, bbox, tid, cls_id)
 
     # FPS 표시
     frame_count += 1
@@ -114,7 +120,6 @@ while cap.isOpened():
     cv2.putText(frame, f"FPS: {fps_now:.2f}", (20, 40),
                 cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
 
-    # 영상 저장
     video_writer.write(frame)
 
 # -------------------- 7. 종료 --------------------
