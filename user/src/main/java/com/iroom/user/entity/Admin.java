@@ -43,4 +43,18 @@ public class Admin {
         this.phone = phone;
         this.role = role;
     }
+
+    public void updateInfo(String email, String name, String phone) {
+        this.email = email;
+        this.name = name;
+        this.phone = phone;
+    }
+
+    public void updatePassword(String password) {
+        this.password = password;
+    }
+
+    public void updateRole(String role) {
+        this.role = role;
+    }
 }
