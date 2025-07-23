@@ -1,6 +1,6 @@
 package com.iroom.sensor.dto.HeavyEquipment;
 
-public record EquipmentLocationUpdateRequest(
+public record EquipmentUpdateLocationRequest(
         Long id,
         String location
 ) {}

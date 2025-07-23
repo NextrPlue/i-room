@@ -1,7 +1,7 @@
 package com.iroom.sensor.controller;
 
-import com.iroom.sensor.dto.HeavyEquipment.EquipmentLocationUpdateRequest;
-import com.iroom.sensor.dto.HeavyEquipment.EquipmentLocationUpdateResponse;
+import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationRequest;
+import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationResponse;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterRequest;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterResponse;
 import com.iroom.sensor.service.HeavyEquipmentService;
@@ -25,10 +25,10 @@ public class HeavyEquipmentController {
     }
 
     @PutMapping("/location")
-    public ResponseEntity<EquipmentLocationUpdateResponse> updateLocation(
-            @RequestBody EquipmentLocationUpdateRequest request
+    public ResponseEntity<EquipmentUpdateLocationResponse> updateLocation(
+            @RequestBody EquipmentUpdateLocationRequest request
     ){
-        EquipmentLocationUpdateResponse response = heavyEquipmentService.updateLocation(request);
+        EquipmentUpdateLocationResponse response = heavyEquipmentService.updateLocation(request);
         return ResponseEntity.ok(response);
     }
 
