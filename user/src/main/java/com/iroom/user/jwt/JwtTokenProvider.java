@@ -17,11 +17,10 @@ public class JwtTokenProvider {
     private final SecretKey secretKey = Keys.hmacShaKeyFor("secret-key-to-get-from-spring-cloud-config".getBytes(StandardCharsets.UTF_8));
     private final long expirationMs = 86400000;
 
-    public String createToken(Admin admin) {
+    public String createAdminToken(Admin admin) {
         Claims claims = Jwts.claims().setSubject(admin.getId().toString());
         claims.put("email", admin.getEmail());
         claims.put("role", admin.getRole());
-
         Date now = new Date();
         Date validity = new Date(now.getTime() + expirationMs);
 
