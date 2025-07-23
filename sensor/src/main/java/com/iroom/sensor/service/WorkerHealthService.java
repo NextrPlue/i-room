@@ -41,4 +41,12 @@ public class WorkerHealthService {
                 health.getBodyTemperature()
         );
     }
+
+    //위치 조회 기능
+    public WorkerUpdateLocationResponse getWorkerLocation(Long workerId){
+        WorkerHealth health = repository.findByWorkerId(workerId)
+                .orElseThrow(() -> new EntityNotFoundException("해당 근로자 없음"));
+
+        return new WorkerUpdateLocationResponse(health);
+    }
 }

@@ -7,10 +7,7 @@ import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsResponse;
 import com.iroom.sensor.service.WorkerHealthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/workerHealth")
@@ -34,6 +31,15 @@ public class WorkerHealthController {
             @RequestBody WorkerUpdateVitalSignsRequest request
     ){
         WorkerUpdateVitalSignsResponse response = workerHealthService.updateVitalSigns(request);
+        return ResponseEntity.ok(response);
+    }
+
+    //위치 정보 조회
+    @GetMapping("/{workerId}/location")
+    public ResponseEntity<WorkerUpdateLocationResponse> getWorkerLocation(
+            @PathVariable Long workerId
+    ){
+        WorkerUpdateLocationResponse response = workerHealthService.getWorkerLocation(workerId);
         return ResponseEntity.ok(response);
     }
 }
