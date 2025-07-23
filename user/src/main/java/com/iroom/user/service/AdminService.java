@@ -1,9 +1,6 @@
 package com.iroom.user.service;
 
-import com.iroom.user.dto.request.AdminSignUpRequest;
-import com.iroom.user.dto.request.AdminUpdateInfoRequest;
-import com.iroom.user.dto.request.AdminUpdatePasswordRequest;
-import com.iroom.user.dto.request.LoginRequest;
+import com.iroom.user.dto.request.*;
 import com.iroom.user.dto.response.AdminSignUpResponse;
 import com.iroom.user.dto.response.AdminUpdateResponse;
 import com.iroom.user.dto.response.LoginResponse;
@@ -11,6 +8,7 @@ import com.iroom.user.entity.Admin;
 import com.iroom.user.jwt.JwtTokenProvider;
 import com.iroom.user.repository.AdminRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -86,5 +84,21 @@ public class AdminService {
         }
 
         admin.updatePassword(passwordEncoder.encode(request.newPassword()));
+    }
+
+    @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
+    public AdminUpdateResponse updateAdminRole(Long adminId, AdminUpdateRoleRequest request) {
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new IllegalArgumentException("ID " + adminId + "에 해당하는 관리자를 찾을 수 없습니다."));
+
+        admin.updateRole(request.role());
+
+        return new AdminUpdateResponse(
+                admin.getId(),
+                admin.getName(),
+                admin.getEmail(),
+                admin.getPhone(),
+                admin.getRole()
+        );
     }
 }
