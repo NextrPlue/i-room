@@ -64,8 +64,8 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
     private boolean isPublicRoute(ServerHttpRequest request) {
         // 토큰 검증을 제외할 경로 목록
         List<String> publicRoutes = List.of(
-                "/api/user/admin/login",
-                "/api/user/admin/signup"
+                "/api/user/admins/login",
+                "/api/user/admins/signup"
         );
 
         return publicRoutes.stream().anyMatch(route -> request.getURI().getPath().contains(route));

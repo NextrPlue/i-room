@@ -20,7 +20,7 @@ public class JwtTokenProvider {
     public String createAdminToken(Admin admin) {
         Claims claims = Jwts.claims().setSubject(admin.getId().toString());
         claims.put("email", admin.getEmail());
-        claims.put("role", admin.getRole());
+        claims.put("role", admin.getRole().getKey());
         Date now = new Date();
         Date validity = new Date(now.getTime() + expirationMs);
 

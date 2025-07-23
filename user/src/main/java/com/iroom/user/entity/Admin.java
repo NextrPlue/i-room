@@ -1,5 +1,6 @@
 package com.iroom.user.entity;
 
+import com.iroom.user.enums.AdminRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -20,7 +21,9 @@ public class Admin {
     private String email;
     private String password;
     private String phone;
-    private String role;
+
+    @Enumerated(EnumType.STRING)
+    private AdminRole role;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -36,7 +39,7 @@ public class Admin {
     }
 
     @Builder
-    public Admin(String name, String email, String password, String phone, String role) {
+    public Admin(String name, String email, String password, String phone, AdminRole role) {
         this.name = name;
         this.email = email;
         this.password = password;
@@ -54,7 +57,7 @@ public class Admin {
         this.password = password;
     }
 
-    public void updateRole(String role) {
+    public void updateRole(AdminRole role) {
         this.role = role;
     }
 }
