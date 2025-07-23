@@ -1,0 +1,38 @@
+package com.iroom.sensor.entity;
+
+import jakarta.persistence.*;
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Entity
+@Table(name = "WorkerHealth_table")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class WorkerHealth {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private Long id;
+
+    @Column(nullable = false)
+    private Long workerId;
+
+    private String workerLocation;
+
+    private Integer heartRate;
+    private Float bodyTemperature;
+
+    //위치 업데이트
+    public void updateLocation(String location){
+        this.workerLocation = location;
+    }
+
+    //생체 정보 업데이트
+    public void updateVitalSign(Integer heartRate, Float bodyTemperature){
+        this.heartRate = heartRate;
+        this.bodyTemperature = bodyTemperature;
+    }
+
+}
