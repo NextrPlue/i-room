@@ -30,7 +30,7 @@ public class Admin {
         updatedAt = LocalDateTime.now();
     }
 
-    @PostPersist
+    @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
