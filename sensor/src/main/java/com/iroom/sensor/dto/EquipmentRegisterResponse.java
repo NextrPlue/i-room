@@ -6,7 +6,7 @@ public record EquipmentRegisterResponse(
     Long id,
     String name,
     String type,
-    double radius
+    Double radius
 ) {
     public EquipmentRegisterResponse(HeavyEquipment equipment){
         this(
