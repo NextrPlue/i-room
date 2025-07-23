@@ -2,6 +2,7 @@ package com.iroom.user.controller;
 
 import com.iroom.user.dto.request.AdminSignUpRequest;
 import com.iroom.user.dto.request.AdminUpdateInfoRequest;
+import com.iroom.user.dto.request.AdminUpdatePasswordRequest;
 import com.iroom.user.dto.request.LoginRequest;
 import com.iroom.user.dto.response.AdminSignUpResponse;
 import com.iroom.user.dto.response.AdminUpdateResponse;
@@ -30,10 +31,14 @@ public class AdminController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<AdminUpdateResponse> updateInfo(
-            @RequestHeader("X-User-Id") Long id,
-            @RequestBody AdminUpdateInfoRequest request) {
+    public ResponseEntity<AdminUpdateResponse> updateInfo(@RequestHeader("X-User-Id") Long id, @RequestBody AdminUpdateInfoRequest request) {
         AdminUpdateResponse response = adminService.updateAdminInfo(id, request);
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<Void> updatePassword(@RequestHeader("X-User-Id") Long id, @RequestBody AdminUpdatePasswordRequest request) {
+        adminService.updateAdminPassword(id, request);
+        return ResponseEntity.noContent().build();
     }
 }
