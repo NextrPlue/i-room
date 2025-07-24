@@ -19,14 +19,14 @@ public class DashBoardService {
 
         DashBoard dashBoard= dashBoardRepository.findTopByMetricTypeOrderByIdDesc(metricType);
 
-        DashBoardResponse dashBoardDto = new DashBoardResponse(
+        DashBoardResponse dashBoardResponse = new DashBoardResponse(
                 dashBoard.getMetricType(),
                 dashBoard.getMetricValue(),
                 dashBoard.getRecordedAt()
         );
 
 
-        return dashBoardDto;
+        return dashBoardResponse;
     }
 
 }
