@@ -29,13 +29,13 @@ public class AdminController {
     }
 
     @PutMapping("/me")
-    public ResponseEntity<AdminUpdateResponse> updateInfo(@RequestHeader("X-User-Id") Long id, @RequestBody AdminUpdateInfoRequest request) {
+    public ResponseEntity<AdminUpdateResponse> updateInfo(@RequestHeader("X-User-Id") Long id, @Valid @RequestBody AdminUpdateInfoRequest request) {
         AdminUpdateResponse response = adminService.updateAdminInfo(id, request);
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/password")
-    public ResponseEntity<Void> updatePassword(@RequestHeader("X-User-Id") Long id, @RequestBody AdminUpdatePasswordRequest request) {
+    public ResponseEntity<Void> updatePassword(@RequestHeader("X-User-Id") Long id, @Valid @RequestBody AdminUpdatePasswordRequest request) {
         adminService.updateAdminPassword(id, request);
         return ResponseEntity.noContent().build();
     }
