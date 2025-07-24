@@ -1,5 +1,6 @@
 package com.iroom.user.entity;
 
+import com.iroom.user.dto.request.WorkerUpdateInfoRequest;
 import com.iroom.user.enums.WorkerRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -67,19 +68,19 @@ public class Worker {
         this.faceImageUrl = faceImageUrl;
     }
 
-    public void updateInfo(String name, String email, String password, String phone, String bloodType, String gender, Integer age, Float weight, Float height, String jobTitle, String occupation, String department, String faceImageUrl) {        this.name = name;
-        this.name = name;
-        this.email = email;
-        this.phone = phone;
-        this.bloodType = bloodType;
-        this.gender = gender;
-        this.age = age;
-        this.weight = weight;
-        this.height = height;
-        this.jobTitle = jobTitle;
-        this.occupation = occupation;
-        this.department = department;
-        this.faceImageUrl = faceImageUrl;
+    public void updateInfo(WorkerUpdateInfoRequest request) {
+        this.name = request.name();
+        this.email = request.email();
+        this.phone = request.phone();
+        this.bloodType = request.bloodType();
+        this.gender = request.gender();
+        this.age = request.age();
+        this.weight = request.weight();
+        this.height = request.height();
+        this.jobTitle = request.jobTitle();
+        this.occupation = request.occupation();
+        this.department = request.department();
+        this.faceImageUrl = request.faceImageUrl();
     }
 
     public void updatePassword(String password) {

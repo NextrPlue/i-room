@@ -5,7 +5,6 @@ import com.iroom.user.dto.response.AdminSignUpResponse;
 import com.iroom.user.dto.response.AdminUpdateResponse;
 import com.iroom.user.dto.response.LoginResponse;
 import com.iroom.user.entity.Admin;
-import com.iroom.user.enums.AdminRole;
 import com.iroom.user.jwt.JwtTokenProvider;
 import com.iroom.user.repository.AdminRepository;
 import lombok.RequiredArgsConstructor;

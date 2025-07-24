@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
-public record AdminUpdateInfoRequest(
+public record WorkerUpdateInfoRequest(
         @NotBlank
         @Size(min = 2, max = 20)
         String name,
@@ -16,5 +16,16 @@ public record AdminUpdateInfoRequest(
 
         @NotBlank
         @ValidPhone
-        String phone
-) {}
+        String phone,
+
+        String bloodType,
+        String gender,
+        Integer age,
+        Float weight,
+        Float height,
+        String jobTitle,
+        String occupation,
+        String department,
+        String faceImageUrl
+) {
+}
