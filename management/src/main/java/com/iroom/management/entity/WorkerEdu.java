@@ -1,7 +1,7 @@
 package com.iroom.management.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,10 +10,8 @@ import java.time.LocalDate;
 
 @Entity
 @Getter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-@Table(name = "WorkerEdu_table")
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Table(name = "WorkerEdu")
 public class WorkerEdu {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -25,7 +23,17 @@ public class WorkerEdu {
     @Column(nullable = false)
     private String name;
 
+    @Column(nullable = false)
     private String certUrl;
 
+    @Column(nullable = false)
     private LocalDate eduDate;
+
+    @Builder
+    public WorkerEdu(Long workerId, String name, String certUrl, LocalDate eduDate) {
+        this.workerId = workerId;
+        this.name = name;
+        this.certUrl = certUrl;
+        this.eduDate = eduDate;
+    }
 }
