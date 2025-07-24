@@ -13,22 +13,21 @@ import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(value="/dashBoards")
+@RequestMapping(value="/dashboards")
 public class DashBoardController {
     private final DashBoardService dashBoardService;
 
     private final PdfService pdfService;
     //대시보드 조회하기
-    @GetMapping (value ="/get-DashBoard", produces = "application/json;charset=UTF-8")
-    public ResponseEntity<DashBoardResponse> getDashBoard(@RequestParam("metricType")String metricType){
+    @GetMapping (value ="/{metricType}", produces = "application/json;charset=UTF-8")
+    public ResponseEntity<DashBoardResponse> getDashBoard(@PathVariable String metricType){
         DashBoardResponse dashBoardDto= dashBoardService.getDashBoard(metricType);
         return ResponseEntity.ok(dashBoardDto);
     }
 
-
-    @GetMapping(
-            value = "/export-report",
-            produces = "application/json;charset=UTF-8"
+    //리포트 생성
+    @PostMapping(
+            value = "/report"
     )
     public ResponseEntity<byte[]> exportReport() throws Exception {
         LocalDate currentDate = LocalDate.now();
@@ -41,9 +40,9 @@ public class DashBoardController {
         return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }
 
-    @GetMapping(
-            value = "/create-improvement",
-            produces = "application/json;charset=UTF-8"
+    //개선안 생성
+    @PostMapping(
+            value = "/improvement-report"
     )
     public ResponseEntity<byte[]> createImprovement(
     ) throws Exception {
