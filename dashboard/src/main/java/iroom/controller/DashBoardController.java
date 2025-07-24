@@ -13,21 +13,21 @@ import java.time.LocalDate;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping(value="/api")
+@RequestMapping(value="/dashBoards")
 public class DashBoardController {
     private final DashBoardService dashBoardService;
 
     private final PdfService pdfService;
     //대시보드 조회하기
-    @GetMapping (value ="/dashBoards/getDashBoard", produces = "application/json;charset=UTF-8")
+    @GetMapping (value ="/get-DashBoard", produces = "application/json;charset=UTF-8")
     public ResponseEntity<DashBoardResponse> getDashBoard(@RequestParam("metricType")String metricType){
         DashBoardResponse dashBoardDto= dashBoardService.getDashBoard(metricType);
-        return new ResponseEntity<>(dashBoardDto, HttpStatus.OK);
+        return ResponseEntity.ok(dashBoardDto);
     }
 
 
     @GetMapping(
-            value = "/dashBoards/exportreport",
+            value = "/export-report",
             produces = "application/json;charset=UTF-8"
     )
     public ResponseEntity<byte[]> exportReport() throws Exception {
@@ -38,11 +38,11 @@ public class DashBoardController {
         headers.setContentDisposition(ContentDisposition.builder("attachment")
                 .filename("report_"+currentDate+".pdf") //
                 .build());
-        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }
 
     @GetMapping(
-            value = "/dashBoards/createimprovement",
+            value = "/create-improvement",
             produces = "application/json;charset=UTF-8"
     )
     public ResponseEntity<byte[]> createImprovement(
@@ -55,6 +55,6 @@ public class DashBoardController {
         headers.setContentDisposition(ContentDisposition.builder("attachment")
                 .filename("improvement_report_"+currentDate+".pdf")
                 .build());
-        return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        return ResponseEntity.ok().headers(headers).body(pdfBytes);
     }
 }
