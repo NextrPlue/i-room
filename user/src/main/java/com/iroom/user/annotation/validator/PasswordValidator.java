@@ -27,8 +27,13 @@ public class PasswordValidator implements ConstraintValidator<ValidPassword, Str
             return false;
         }
 
-        if (!password.matches("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[!#$%&*+,./\\-:=?@\\[\\\\\\]^_`{|}~])[A-Za-z\\d!#$%&*+,./\\-:=?@\\[\\\\\\]^_`{|}~]{8,}$")) {
-            addConstraintViolation(context, "특수문자(()<>“‘;제외)를 포함해야 합니다");
+        if (!password.matches(".*[!#$%&*+,./-:=?@\\[\\\\\\]^_`{|}~].*")) {
+            addConstraintViolation(context, "특수문자(()<>\"';제외)를 포함해야 합니다");
+            return false;
+        }
+
+        if (password.matches(".*[()<>'\";].*")) {
+            addConstraintViolation(context, "특수문자(()<>\"';)를 사용할 수 없습니다");
             return false;
         }
 
