@@ -1,11 +1,8 @@
-package iroom.service;
+package com.iroom.dashboard.service;
 
-
-
-
-import iroom.dto.DashBoardResponse;
-import iroom.entity.DashBoard;
-import iroom.repository.DashBoardRepository;
+import com.iroom.dashboard.dto.response.DashBoardResponse;
+import com.iroom.dashboard.entity.DashBoard;
+import com.iroom.dashboard.repository.DashBoardRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

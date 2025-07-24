@@ -1,10 +1,13 @@
-package iroom.controller;
+package com.iroom.dashboard.controller;
 
 
 
-import iroom.dto.DashBoardResponse;
-import iroom.service.DashBoardService;
-import iroom.service.PdfService;
+
+
+
+import com.iroom.dashboard.dto.response.DashBoardResponse;
+import com.iroom.dashboard.service.DashBoardService;
+import com.iroom.dashboard.service.PdfService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;

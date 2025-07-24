@@ -1,13 +1,12 @@
-package iroom.service;
+package com.iroom.dashboard.service;
 
 
-
+import com.iroom.dashboard.entity.DashBoard;
+import com.iroom.dashboard.repository.DashBoardRepository;
 import com.itextpdf.text.*;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
-import iroom.entity.DashBoard;
-import iroom.repository.DashBoardRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

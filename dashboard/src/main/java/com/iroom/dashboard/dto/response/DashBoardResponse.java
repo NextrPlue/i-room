@@ -1,4 +1,6 @@
-package iroom.dto;
+package com.iroom.dashboard.dto.response;
+
+
 
 import java.time.LocalDateTime;
 
