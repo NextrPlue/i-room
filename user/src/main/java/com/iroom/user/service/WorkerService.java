@@ -1,6 +1,8 @@
 package com.iroom.user.service;
 
+import com.iroom.user.dto.request.LoginRequest;
 import com.iroom.user.dto.request.WorkerRegisterRequest;
+import com.iroom.user.dto.response.LoginResponse;
 import com.iroom.user.dto.response.WorkerRegisterResponse;
 import com.iroom.user.entity.Worker;
 import com.iroom.user.jwt.JwtTokenProvider;
@@ -30,5 +32,16 @@ public class WorkerService {
         workerRepository.save(worker);
 
         return new WorkerRegisterResponse(worker);
+    }
+
+    public LoginResponse login(LoginRequest request) {
+        Worker worker = workerRepository.findByEmail(request.email())
+                .orElseThrow(() -> new IllegalArgumentException("해당하는 근로자를 찾을 수 없습니다."));
+
+        if (!passwordEncoder.matches(request.password(), worker.getPassword())) {
+            throw new IllegalArgumentException("잘못된 비밀번호입니다.");
+        }
+
+        return new LoginResponse(jwtTokenProvider.createWorkerToken(worker));
     }
 }
