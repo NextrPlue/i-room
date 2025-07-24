@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("workerManagement")
+@RequestMapping("/workerManagement")
 @RequiredArgsConstructor
 public class WorkerManagementController {
     private final WorkerManagementService workerManagementService;
