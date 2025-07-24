@@ -12,12 +12,16 @@ public class DangerArea {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @Column(nullable = false)
     private Long blueprintId;
 
+    @Column(nullable = false)
     private String location;
 
+    @Column(nullable = false)
     private Double width;
 
+    @Column(nullable = false)
     private Double height;
 
     @Builder
