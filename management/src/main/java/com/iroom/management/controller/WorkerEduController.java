@@ -4,14 +4,13 @@ import com.iroom.management.dto.request.WorkerEduRequest;
 import com.iroom.management.dto.response.WorkerEduResponse;
 import com.iroom.management.service.WorkerEduService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("workerEdu")
+@RequestMapping("/workerEdu")
 @RequiredArgsConstructor
 public class WorkerEduController {
     private final WorkerEduService workerEduService;
