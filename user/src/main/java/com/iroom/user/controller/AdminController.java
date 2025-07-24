@@ -5,6 +5,7 @@ import com.iroom.user.dto.response.AdminSignUpResponse;
 import com.iroom.user.dto.response.AdminUpdateResponse;
 import com.iroom.user.dto.response.LoginResponse;
 import com.iroom.user.service.AdminService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,13 +17,13 @@ public class AdminController {
     private final AdminService adminService;
 
     @PostMapping("/signup")
-    public ResponseEntity<AdminSignUpResponse> register(@RequestBody AdminSignUpRequest request) {
+    public ResponseEntity<AdminSignUpResponse> register(@Valid @RequestBody AdminSignUpRequest request) {
         AdminSignUpResponse response = adminService.signUp(request);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse response = adminService.login(request);
         return ResponseEntity.ok(response);
     }
