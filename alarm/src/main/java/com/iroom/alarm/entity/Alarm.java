@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-@Table(name = "Alarm_table")
+@Table(name = "Alarm")
 public class Alarm {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
