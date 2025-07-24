@@ -10,7 +10,7 @@ from skimage.measure import shannon_entropy
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 BASE_DIR = "D:/"
-FOLDER_NAME = "2.공연장_부산_오페라_하우스_신축공사"
+FOLDER_NAME = "6.상업시설_신사동_복합_시설"
 
 # ================== 설정 ==================
 base_dir = os.path.normpath(BASE_DIR)
@@ -117,7 +117,7 @@ for split in split_set:
     # 손상된 이미지 제거
     remove_corrupted_images(in_images_dir)
 
-    # 클래스별로 선택된 파일 저장용 Dictionary 선언
+    # 클래스별로 선택된 파일 저장용 선언
     selected = {cls: set() for cls in target_classes}
     candidates = []
 
@@ -191,13 +191,18 @@ for split in split_set:
     for cls, files in selected.items():
         count = min(len(files), per_class_target)
         for json_file, fname in list(files)[:count]:
+            # 클래스별 하위 디렉토리 생성
+            img_class_dir = os.path.join(out_images_dir, cls)
+            json_class_dir = os.path.join(out_labels_dir, cls)
+
             src_img = os.path.join(in_images_dir, fname)
-            dst_img = os.path.join(out_images_dir, fname)
+            dst_img = os.path.join(img_class_dir, fname)
             src_json = os.path.join(in_labels_dir, json_file)
-            dst_json = os.path.join(out_labels_dir, json_file)
+            dst_json = os.path.join(json_class_dir, json_file)
 
             if not os.path.exists(src_img):
                 continue
+
             os.makedirs(os.path.dirname(dst_img), exist_ok=True)
             os.makedirs(os.path.dirname(dst_json), exist_ok=True)
 
