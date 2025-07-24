@@ -33,16 +33,8 @@ public class BlueprintServiceImpl implements BlueprintService {
     public BlueprintResponse updateBlueprint(Long id, BlueprintRequest request) {
         Blueprint blueprint = blueprintRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("해당 도면이 존재하지 않습니다."));
-
-        Blueprint updated = Blueprint.builder()
-                .id(blueprint.getId())
-                .blueprintUrl(request.blueprintUrl())
-                .floor(request.floor())
-                .width(request.width())
-                .height(request.height())
-                .build();
-
-        return new BlueprintResponse(blueprintRepository.save(updated));
+        blueprint.update(request.blueprintUrl(), request.floor(), request.width(), request.height());
+        return new BlueprintResponse(blueprint);
     }
 
     @Transactional

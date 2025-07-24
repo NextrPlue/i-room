@@ -6,9 +6,7 @@ import lombok.*;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
-@Table(name = "Blueprint_table")
+@Table(name = "Blueprint")
 public class Blueprint {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -25,4 +23,19 @@ public class Blueprint {
 
     @Column(nullable = false)
     private Double height;
+
+    @Builder
+    public Blueprint (String blueprintUrl, Integer floor, Double width, Double height) {
+        this.blueprintUrl =  blueprintUrl;
+        this.floor = floor;
+        this.width = width;
+        this.height = height;
+    }
+
+    public void update(String blueprintUrl, Integer floor, Double width, Double height) {
+        this.blueprintUrl = blueprintUrl;
+        this.floor = floor;
+        this.width = width;
+        this.height = height;
+    }
 }
