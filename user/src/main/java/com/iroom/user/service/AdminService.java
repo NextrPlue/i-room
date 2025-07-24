@@ -56,13 +56,7 @@ public class AdminService {
 
         admin.updateInfo(request.name(), request.email(), request.phone());
 
-        return new AdminUpdateResponse(
-                admin.getId(),
-                admin.getName(),
-                admin.getEmail(),
-                admin.getPhone(),
-                admin.getRole()
-        );
+        return new AdminUpdateResponse(admin);
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER') and #id == authentication.principal")
@@ -84,12 +78,6 @@ public class AdminService {
 
         admin.updateRole(request.role());
 
-        return new AdminUpdateResponse(
-                admin.getId(),
-                admin.getName(),
-                admin.getEmail(),
-                admin.getPhone(),
-                admin.getRole()
-        );
+        return new AdminUpdateResponse(admin);
     }
 }
