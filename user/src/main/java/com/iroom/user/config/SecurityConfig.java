@@ -35,7 +35,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/admins/signup", "/admins/login", "/actuator/health").permitAll()
+                        .requestMatchers("/admins/signup", "/admins/login", "/workers/login","/actuator/health").permitAll()
                         .requestMatchers("/h2-console/**").access(new WebExpressionAuthorizationManager("hasIpAddress('::1')"))
                         .anyRequest().authenticated()
                 )

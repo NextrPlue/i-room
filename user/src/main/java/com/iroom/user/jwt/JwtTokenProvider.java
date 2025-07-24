@@ -1,6 +1,7 @@
 package com.iroom.user.jwt;
 
 import com.iroom.user.entity.Admin;
+import com.iroom.user.entity.Worker;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -27,6 +28,21 @@ public class JwtTokenProvider {
         Claims claims = Jwts.claims().setSubject(admin.getId().toString());
         claims.put("email", admin.getEmail());
         claims.put("role", admin.getRole().getKey());
+        Date now = new Date();
+        Date validity = new Date(now.getTime() + expirationMs);
+
+        return Jwts.builder()
+                .setClaims(claims)
+                .setIssuedAt(now)
+                .setExpiration(validity)
+                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    public String createWorkerToken(Worker worker) {
+        Claims claims = Jwts.claims().setSubject(worker.getId().toString());
+        claims.put("email", worker.getEmail());
+        claims.put("role", worker.getRole().getKey());
         Date now = new Date();
         Date validity = new Date(now.getTime() + expirationMs);
 
