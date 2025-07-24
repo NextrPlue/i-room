@@ -3,6 +3,7 @@ package com.iroom.user.controller;
 import com.iroom.user.dto.request.LoginRequest;
 import com.iroom.user.dto.request.WorkerRegisterRequest;
 import com.iroom.user.dto.request.WorkerUpdateInfoRequest;
+import com.iroom.user.dto.request.WorkerUpdatePasswordRequest;
 import com.iroom.user.dto.response.LoginResponse;
 import com.iroom.user.dto.response.WorkerRegisterResponse;
 import com.iroom.user.dto.response.WorkerUpdateResponse;
@@ -35,5 +36,11 @@ public class WorkerController {
     public ResponseEntity<WorkerUpdateResponse> updateInfo(@PathVariable Long workerId, @RequestBody WorkerUpdateInfoRequest request) {
         WorkerUpdateResponse response = workerService.updateWorkerInfo(workerId, request);
         return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/password")
+    public ResponseEntity<Void> updatePassword(@RequestHeader("X-User-Id") Long id, @Valid @RequestBody WorkerUpdatePasswordRequest request) {
+        workerService.updateWorkerPassword(id, request);
+        return ResponseEntity.noContent().build();
     }
 }
