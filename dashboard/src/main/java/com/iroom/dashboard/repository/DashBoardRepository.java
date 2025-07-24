@@ -1,7 +1,9 @@
-package iroom.repository;
+package com.iroom.dashboard.repository;
+
+;
 
 
-import iroom.entity.DashBoard;
+import com.iroom.dashboard.entity.DashBoard;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
