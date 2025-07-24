@@ -8,8 +8,6 @@ import java.time.LocalDateTime;
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-@Builder
 @Table(name = "Alarm")
 public class Alarm {
     @Id
@@ -34,5 +32,13 @@ public class Alarm {
     @PrePersist
     public void prePersist() {
         this.occuredAt = LocalDateTime.now();
+    }
+
+    @Builder
+    public Alarm(Long workerId, String incidentType, Long incidentId, String incidentDescription) {
+        this.workerId = workerId;
+        this.incidentType = incidentType;
+        this.incidentId = incidentId;
+        this.incidentDescription = incidentDescription;
     }
 }
