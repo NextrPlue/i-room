@@ -1,8 +1,6 @@
 package com.iroom.user.dto.request;
 
-import com.iroom.user.annotation.ValidPassword;
 import com.iroom.user.annotation.ValidPhone;
-import com.iroom.user.enums.WorkerRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
