@@ -5,6 +5,7 @@ import com.iroom.user.dto.response.AdminSignUpResponse;
 import com.iroom.user.dto.response.AdminUpdateResponse;
 import com.iroom.user.dto.response.LoginResponse;
 import com.iroom.user.entity.Admin;
+import com.iroom.user.enums.AdminRole;
 import com.iroom.user.jwt.JwtTokenProvider;
 import com.iroom.user.repository.AdminRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,22 +28,10 @@ public class AdminService {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
-        Admin admin = Admin.builder()
-                .name(request.name())
-                .email(request.email())
-                .password(passwordEncoder.encode(request.password()))
-                .phone(request.phone())
-                .role(request.role())
-                .build();
-
+        Admin admin = request.toEntity(passwordEncoder);
         adminRepository.save(admin);
 
-        return new AdminSignUpResponse(
-                request.name(),
-                request.email(),
-                request.phone(),
-                request.role()
-        );
+        return new AdminSignUpResponse(admin);
     }
 
     public LoginResponse login(LoginRequest request) {
