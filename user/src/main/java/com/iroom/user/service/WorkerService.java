@@ -3,6 +3,7 @@ package com.iroom.user.service;
 import com.iroom.user.dto.request.LoginRequest;
 import com.iroom.user.dto.request.WorkerRegisterRequest;
 import com.iroom.user.dto.request.WorkerUpdateInfoRequest;
+import com.iroom.user.dto.request.WorkerUpdatePasswordRequest;
 import com.iroom.user.dto.response.LoginResponse;
 import com.iroom.user.dto.response.WorkerRegisterResponse;
 import com.iroom.user.dto.response.WorkerUpdateResponse;
@@ -59,5 +60,17 @@ public class WorkerService {
         worker.updateInfo(request);
 
         return new WorkerUpdateResponse(worker);
+    }
+
+    @PreAuthorize("hasAnyAuthority('ROLE_WORKER') and #id == authentication.principal")
+    public void updateWorkerPassword(Long id, WorkerUpdatePasswordRequest request) {
+        Worker worker = workerRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당하는 근로자를 찾을 수 없습니다."));
+
+        if (!passwordEncoder.matches(request.password(), worker.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        worker.updatePassword(passwordEncoder.encode(request.newPassword()));
     }
 }
