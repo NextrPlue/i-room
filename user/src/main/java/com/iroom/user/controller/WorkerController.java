@@ -59,4 +59,10 @@ public class WorkerController {
         PagedResponse<WorkerInfoResponse> response = workerService.getWorkers(target, keyword, page, size);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<WorkerInfoResponse> getMyInfo(@RequestHeader("X-User-Id") Long id) {
+        WorkerInfoResponse response = workerService.getWorkerInfo(id);
+        return ResponseEntity.ok(response);
+    }
 }
