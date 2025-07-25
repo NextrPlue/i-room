@@ -1,9 +1,7 @@
 package com.iroom.user.service;
 
 import com.iroom.user.dto.request.*;
-import com.iroom.user.dto.response.AdminSignUpResponse;
-import com.iroom.user.dto.response.AdminUpdateResponse;
-import com.iroom.user.dto.response.LoginResponse;
+import com.iroom.user.dto.response.*;
 import com.iroom.user.entity.Admin;
 import com.iroom.user.enums.AdminRole;
 import com.iroom.user.jwt.JwtTokenProvider;
@@ -15,10 +13,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.access.AccessDeniedException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.test.context.support.WithMockUser;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,6 +45,10 @@ public class AdminServiceTest {
 
     private Admin admin;
 
+    private Pageable pageable;
+
+    private Page<Admin> adminPage;
+
     @BeforeEach
     void setUp() {
         admin = Admin.builder()
@@ -52,6 +57,16 @@ public class AdminServiceTest {
                 .password("encodedPassword")
                 .role(AdminRole.ADMIN)
                 .build();
+        Admin admin2 = Admin.builder()
+                .name("admin2")
+                .email("admin2@example.com")
+                .password("encodedPassword")
+                .role(AdminRole.READER)
+                .build();
+
+        pageable = PageRequest.of(0, 10);
+
+        adminPage = new PageImpl<>(List.of(admin, admin2), pageable, 2);
     }
 
     @Test
@@ -259,5 +274,61 @@ public class AdminServiceTest {
         assertThatThrownBy(() -> adminService.updateAdminRole(adminId, request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("ID " + adminId + "에 해당하는 관리자를 찾을 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("관리자 목록 조회 - 전체 조회")
+    void getAdminsTest() {
+        // given
+        given(adminRepository.findAll(pageable)).willReturn(adminPage);
+
+        // when
+        PagedResponse<AdminInfoResponse> response = adminService.getAdmins(null, null, 0, 10);
+
+        // then
+        assertThat(response.content()).hasSize(2);
+        assertThat(response.totalElements()).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("관리자 목록 조회 - 이름으로 검색")
+    void getAdminsSearchByName() {
+        // given
+        given(adminRepository.findByNameContaining("admin", pageable)).willReturn(adminPage);
+
+        // when
+        PagedResponse<AdminInfoResponse> response = adminService.getAdmins("name", "admin", 0, 10);
+
+        // then
+        assertThat(response.content()).hasSize(2);
+        assertThat(response.content().get(0).name()).isEqualTo(admin.getName());
+    }
+
+    @Test
+    @DisplayName("관리자 목록 조회 - 이메일로 검색")
+    void getAdminsSearchByEmail() {
+        // given
+        given(adminRepository.findByEmailContaining("admin", pageable)).willReturn(adminPage);
+
+        // when
+        PagedResponse<AdminInfoResponse> response = adminService.getAdmins("email", "admin", 0, 10);
+
+        // then
+        assertThat(response.content()).hasSize(2);
+        assertThat(response.content().get(0).email()).isEqualTo(admin.getEmail());
+    }
+
+    @Test
+    @DisplayName("관리자 목록 조회 - 역할로 검색")
+    void getAdminsSearchByRole() {
+        // given
+        given(adminRepository.findByRole(AdminRole.ADMIN, pageable)).willReturn(new PageImpl<>(List.of(admin), pageable, 1));
+
+        // when
+        PagedResponse<AdminInfoResponse> response = adminService.getAdmins("role", "ADMIN", 0, 10);
+
+        // then
+        assertThat(response.content()).hasSize(1);
+        assertThat(response.content().get(0).role()).isEqualTo(AdminRole.ADMIN);
     }
 }
