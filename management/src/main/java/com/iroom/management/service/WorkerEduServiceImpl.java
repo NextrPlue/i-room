@@ -1,11 +1,15 @@
 package com.iroom.management.service;
 
 import com.iroom.management.dto.request.WorkerEduRequest;
+import com.iroom.management.dto.response.PagedResponse;
 import com.iroom.management.dto.response.WorkerEduResponse;
 import com.iroom.management.entity.WorkerEdu;
 import com.iroom.management.repository.WorkerEduRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,13 +29,12 @@ public class WorkerEduServiceImpl implements WorkerEduService {
     }
 
     @Override
-    public List<WorkerEduResponse> getEduInfo(Long workerId) {
-        List<WorkerEdu> eduList = workerEduRepository.findByWorkerId(workerId);
-        if (eduList.isEmpty()) {
-            throw new IllegalArgumentException("해당 근로자의 교육 이력이 없습니다.");
-        }
-        return eduList.stream()
-                .map(WorkerEduResponse::new)
-                .toList();
+    public PagedResponse<WorkerEduResponse> getEduInfo(Long workerId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<WorkerEdu> eduPage = workerEduRepository.findAllByWorkerId(workerId, pageable);
+
+        Page<WorkerEduResponse> responsePage = eduPage.map(WorkerEduResponse::new);
+
+        return PagedResponse.of(responsePage);
     }
 }
