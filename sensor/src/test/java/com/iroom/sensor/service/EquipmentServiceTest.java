@@ -1,4 +1,4 @@
-package com.iroom.sensor.repository.service;
+package com.iroom.sensor.service;
 
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterRequest;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationRequest;
