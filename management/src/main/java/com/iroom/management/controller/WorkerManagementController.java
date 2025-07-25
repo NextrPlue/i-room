@@ -8,7 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/workerManagement")
+@RequestMapping("/worker-management")
 @RequiredArgsConstructor
 public class WorkerManagementController {
     private final WorkerManagementService workerManagementService;
@@ -19,7 +19,7 @@ public class WorkerManagementController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/exit/{workerId}")
+    @PostMapping("/{workerId}/exit")
     public ResponseEntity<WorkerManagementResponse> exit(@PathVariable Long workerId) {
         WorkerManagementResponse response = workerManagementService.exitWorker(workerId);
         return ResponseEntity.ok(response);
