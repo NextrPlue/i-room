@@ -1,9 +1,6 @@
 package com.iroom.user.service;
 
-import com.iroom.user.dto.request.AdminSignUpRequest;
-import com.iroom.user.dto.request.AdminUpdateInfoRequest;
-import com.iroom.user.dto.request.AdminUpdatePasswordRequest;
-import com.iroom.user.dto.request.LoginRequest;
+import com.iroom.user.dto.request.*;
 import com.iroom.user.dto.response.AdminSignUpResponse;
 import com.iroom.user.dto.response.AdminUpdateResponse;
 import com.iroom.user.dto.response.LoginResponse;
@@ -18,7 +15,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.util.Optional;
 
@@ -229,5 +228,36 @@ public class AdminServiceTest {
         assertThatThrownBy(() -> adminService.updateAdminPassword(adminId, request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("현재 비밀번호가 일치하지 않습니다.");
+    }
+
+    @Test
+    @DisplayName("관리자 권한 수정 성공")
+    void updateAdminRoleTest() {
+        // given
+        Long adminId = 1L;
+        AdminUpdateRoleRequest request = new AdminUpdateRoleRequest(AdminRole.READER);
+
+        given(adminRepository.findById(adminId)).willReturn(Optional.of(admin));
+
+        // when
+        AdminUpdateResponse response = adminService.updateAdminRole(adminId, request);
+
+        // then
+        assertThat(response.role()).isEqualTo(AdminRole.READER);
+    }
+
+    @Test
+    @DisplayName("관리자 권한 수정 실패 - 존재하지 않는 관리자")
+    void updateAdminRoleFailAdminNotFound() {
+        // given
+        Long adminId = 999L;
+        AdminUpdateRoleRequest request = new AdminUpdateRoleRequest(AdminRole.READER);
+
+        given(adminRepository.findById(adminId)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> adminService.updateAdminRole(adminId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("ID " + adminId + "에 해당하는 관리자를 찾을 수 없습니다.");
     }
 }
