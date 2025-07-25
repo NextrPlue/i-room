@@ -65,4 +65,10 @@ public class WorkerController {
         WorkerInfoResponse response = workerService.getWorkerInfo(id);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/{workerId}")
+    public ResponseEntity<WorkerInfoResponse> getWorker(@PathVariable Long workerId) {
+        WorkerInfoResponse response = workerService.getWorkerById(workerId);
+        return ResponseEntity.ok(response);
+    }
 }
