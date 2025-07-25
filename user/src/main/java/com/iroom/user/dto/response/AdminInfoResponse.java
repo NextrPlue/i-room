@@ -16,7 +16,14 @@ public record AdminInfoResponse(
         LocalDateTime updatedAt
 ) {
     public AdminInfoResponse(Admin admin) {
-        this(admin.getId(), admin.getName(), admin.getEmail(), admin.getPhone(), admin.getRole(), admin.getCreatedAt(), admin.getUpdatedAt());
+        this(
+                admin.getId(),
+                admin.getName(),
+                admin.getEmail(),
+                admin.getPhone(),
+                admin.getRole(),
+                admin.getCreatedAt(),
+                admin.getUpdatedAt());
     }
 
     public static List<AdminInfoResponse> fromList(List<Admin> admins) {
