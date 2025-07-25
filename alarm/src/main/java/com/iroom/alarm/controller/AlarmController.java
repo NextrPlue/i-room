@@ -38,12 +38,12 @@ public class AlarmController {
         return ResponseEntity.ok("WebSocket 메시지 전송 완료!");
     }
 
-    @GetMapping("/worker/{workerId}")
+    @GetMapping("/workers/{workerId}")
     public ResponseEntity<List<Alarm>> getAlarmsForWorker(@PathVariable Long workerId) {
         return ResponseEntity.ok(alarmService.getAlarmsForWorker(workerId));
     }
 
-    @GetMapping("/admin")
+    @GetMapping("/admins")
     public ResponseEntity<List<Alarm>> getAlarmsForAdmin() {
         return ResponseEntity.ok(alarmService.getAlarmsForAdmin());
     }
