@@ -72,7 +72,7 @@ public class AdminService {
         admin.updatePassword(passwordEncoder.encode(request.newPassword()));
     }
 
-    @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN') and #adminId != authentication.principal")
     public AdminUpdateResponse updateAdminRole(Long adminId, AdminUpdateRoleRequest request) {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new IllegalArgumentException("ID " + adminId + "에 해당하는 관리자를 찾을 수 없습니다."));
