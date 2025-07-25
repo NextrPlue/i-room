@@ -3,6 +3,7 @@ package com.iroom.alarm.service;
 import com.iroom.alarm.entity.Alarm;
 import com.iroom.alarm.repository.AlarmRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.util.List;
 public class AlarmServiceImpl implements AlarmService {
 
     private final AlarmRepository alarmRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     @Override
@@ -26,6 +28,13 @@ public class AlarmServiceImpl implements AlarmService {
                 .build();
 
         alarmRepository.save(alarm);
+
+        // WebSocket 실시간 전송
+        String message = String.format("[%s] %s", type, description);
+        messagingTemplate.convertAndSend(
+                "/topic/alarms",
+                message
+        );
     }
 
     @Transactional(readOnly = true)

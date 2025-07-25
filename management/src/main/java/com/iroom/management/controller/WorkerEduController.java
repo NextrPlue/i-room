@@ -23,7 +23,7 @@ public class WorkerEduController {
     }
 
     // 교육 정보 조회
-    @GetMapping("/{workerId}")
+    @GetMapping("/workers/{workerId}")
     public ResponseEntity<List<WorkerEduResponse>> getEduInfo(@PathVariable Long workerId) {
         List<WorkerEduResponse> response = workerEduService.getEduInfo(workerId);
         return ResponseEntity.ok(response);
