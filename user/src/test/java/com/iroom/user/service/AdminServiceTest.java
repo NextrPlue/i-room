@@ -2,6 +2,7 @@ package com.iroom.user.service;
 
 import com.iroom.user.dto.request.AdminSignUpRequest;
 import com.iroom.user.dto.request.AdminUpdateInfoRequest;
+import com.iroom.user.dto.request.AdminUpdatePasswordRequest;
 import com.iroom.user.dto.request.LoginRequest;
 import com.iroom.user.dto.response.AdminSignUpResponse;
 import com.iroom.user.dto.response.AdminUpdateResponse;
@@ -10,7 +11,6 @@ import com.iroom.user.entity.Admin;
 import com.iroom.user.enums.AdminRole;
 import com.iroom.user.jwt.JwtTokenProvider;
 import com.iroom.user.repository.AdminRepository;
-import io.cucumber.java.sl.Ter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -27,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class AdminServiceTest {
@@ -180,5 +180,54 @@ public class AdminServiceTest {
         assertThatThrownBy(() -> adminService.updateAdminInfo(adminId, request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("이미 사용 중인 이메일입니다.");
+    }
+
+    @Test
+    @DisplayName("관리자 비밀번호 변경 성공")
+    void updateAdminPasswordTest() {
+        // given
+        Long adminId = 1L;
+        AdminUpdatePasswordRequest request = new AdminUpdatePasswordRequest("currentPassword", "newPassword");
+
+        given(adminRepository.findById(adminId)).willReturn(Optional.of(admin));
+        given(passwordEncoder.matches(request.password(), admin.getPassword())).willReturn(true);
+        given(passwordEncoder.encode(request.newPassword())).willReturn("encodedNewPassword");
+
+        // when
+        adminService.updateAdminPassword(adminId, request);
+
+        // then
+        verify(passwordEncoder).encode(request.newPassword());
+    }
+
+    @Test
+    @DisplayName("관리자 비밀번호 변경 실패 - 존재하지 않는 관리자")
+    void updateAdminPasswordFailAdminNotFound() {
+        // given
+        Long adminId = 999L;
+        AdminUpdatePasswordRequest request = new AdminUpdatePasswordRequest("currentPassword", "newPassword");
+
+        given(adminRepository.findById(adminId)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> adminService.updateAdminPassword(adminId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("해당하는 관리자를 찾을 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("관리자 비밀번호 변경 실패 - 현재 비밀번호 불일치")
+    void updateAdminPasswordFailWrongPassword() {
+        // given
+        Long adminId = 1L;
+        AdminUpdatePasswordRequest request = new AdminUpdatePasswordRequest("wrongPassword", "newPassword");
+
+        given(adminRepository.findById(adminId)).willReturn(Optional.of(admin));
+        given(passwordEncoder.matches(request.password(), admin.getPassword())).willReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> adminService.updateAdminPassword(adminId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("현재 비밀번호가 일치하지 않습니다.");
     }
 }
