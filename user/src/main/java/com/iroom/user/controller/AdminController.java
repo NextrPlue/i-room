@@ -45,7 +45,7 @@ public class AdminController {
     }
 
     @GetMapping
-    public ResponseEntity<PagedResponse<AdminListResponse>> getAdmins(
+    public ResponseEntity<PagedResponse<AdminInfoResponse>> getAdmins(
             @RequestParam(required = false) String target,
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") Integer page,
@@ -58,7 +58,19 @@ public class AdminController {
             size = 0;
         }
 
-        PagedResponse<AdminListResponse> response = adminService.getAdmins(target, keyword, page, size);
+        PagedResponse<AdminInfoResponse> response = adminService.getAdmins(target, keyword, page, size);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<AdminInfoResponse> getMyInfo(@RequestHeader("X-User-Id") Long id) {
+        AdminInfoResponse response = adminService.getAdminInfo(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{adminId}")
+    public ResponseEntity<AdminInfoResponse> getAdmin(@PathVariable Long adminId) {
+        AdminInfoResponse response = adminService.getAdminById(adminId);
         return ResponseEntity.ok(response);
     }
 
