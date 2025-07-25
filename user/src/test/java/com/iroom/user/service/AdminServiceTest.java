@@ -1,11 +1,14 @@
 package com.iroom.user.service;
 
 import com.iroom.user.dto.request.AdminSignUpRequest;
+import com.iroom.user.dto.request.LoginRequest;
 import com.iroom.user.dto.response.AdminSignUpResponse;
+import com.iroom.user.dto.response.LoginResponse;
 import com.iroom.user.entity.Admin;
 import com.iroom.user.enums.AdminRole;
 import com.iroom.user.jwt.JwtTokenProvider;
 import com.iroom.user.repository.AdminRepository;
+import io.cucumber.java.sl.Ter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +18,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -77,5 +82,52 @@ public class AdminServiceTest {
         assertThatThrownBy(() -> adminService.signUp(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("이미 사용 중인 이메일입니다.");
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 성공")
+    void loginTest() {
+        // given
+        LoginRequest request = new LoginRequest("admin@example.com", "password");
+        String token = "jwt-token";
+
+        given(adminRepository.findByEmail(request.email())).willReturn(Optional.of(admin));
+        given(passwordEncoder.matches(request.password(), admin.getPassword())).willReturn(true);
+        given(jwtTokenProvider.createAdminToken(admin)).willReturn(token);
+
+        // when
+        LoginResponse response = adminService.login(request);
+
+        // then
+        assertThat(response.token()).isEqualTo(token);
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 실패 - 존재하지 않는 이메일")
+    void loginFailEmailNotExists() {
+        // given
+        LoginRequest request = new LoginRequest("nonexistent@example.com", "password");
+
+        given(adminRepository.findByEmail(request.email())).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> adminService.login(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("가입되지 않은 이메일입니다.");
+    }
+
+    @Test
+    @DisplayName("관리자 로그인 실패 - 잘못된 비밀번호")
+    void loginFailWrongPassword() {
+        // given
+        LoginRequest request = new LoginRequest("admin@example.com", "wrongpassword");
+
+        given(adminRepository.findByEmail(request.email())).willReturn(Optional.of(admin));
+        given(passwordEncoder.matches(request.password(), admin.getPassword())).willReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> adminService.login(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("잘못된 비밀번호입니다.");
     }
 }
