@@ -24,6 +24,11 @@ public class WorkerHealth {
     private Integer heartRate;
     private Float bodyTemperature;
 
+    @Builder
+    public WorkerHealth(Long workerId){
+        this.workerId = workerId;
+    }
+
     //위치 업데이트
     public void updateLocation(String location){
         this.workerLocation = location;

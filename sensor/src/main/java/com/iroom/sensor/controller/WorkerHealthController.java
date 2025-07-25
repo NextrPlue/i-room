@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/workerHealth")
+@RequestMapping("/worker-health")
 @RequiredArgsConstructor
 public class WorkerHealthController {
 
@@ -26,7 +26,7 @@ public class WorkerHealthController {
     }
 
     //생체정보 업데이트
-    @PostMapping("/vitalSigns")
+    @PostMapping("/vital-signs")
     public ResponseEntity<WorkerUpdateVitalSignsResponse> updateVitalSigns(
             @RequestBody WorkerUpdateVitalSignsRequest request
     ){

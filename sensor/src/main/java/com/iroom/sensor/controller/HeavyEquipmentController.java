@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/heavyEquipments")
+@RequestMapping("/heavy-equipments")
 @RequiredArgsConstructor
 public class HeavyEquipmentController {
 
