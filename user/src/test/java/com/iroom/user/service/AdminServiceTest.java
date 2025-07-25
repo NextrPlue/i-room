@@ -391,4 +391,33 @@ public class AdminServiceTest {
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("해당하는 관리자를 찾을 수 없습니다.");
     }
+
+    @Test
+    @DisplayName("관리자 삭제 성공")
+    void deleteAdminTest() {
+        // given
+        Long adminId = 1L;
+
+        given(adminRepository.findById(adminId)).willReturn(Optional.of(admin));
+
+        // when
+        adminService.deleteAdmin(adminId);
+
+        // then
+        verify(adminRepository).delete(admin);
+    }
+
+    @Test
+    @DisplayName("관리자 삭제 실패 - 존재하지 않는 관리자")
+    void deleteAdminFailAdminNotFound() {
+        // given
+        Long adminId = 999L;
+
+        given(adminRepository.findById(adminId)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> adminService.deleteAdmin(adminId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("ID " + adminId + "에 해당하는 관리자를 찾을 수 없습니다.");
+    }
 }
