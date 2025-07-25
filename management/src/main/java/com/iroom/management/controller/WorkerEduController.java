@@ -1,6 +1,7 @@
 package com.iroom.management.controller;
 
 import com.iroom.management.dto.request.WorkerEduRequest;
+import com.iroom.management.dto.response.PagedResponse;
 import com.iroom.management.dto.response.WorkerEduResponse;
 import com.iroom.management.service.WorkerEduService;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +25,15 @@ public class WorkerEduController {
 
     // 교육 정보 조회
     @GetMapping("/workers/{workerId}")
-    public ResponseEntity<List<WorkerEduResponse>> getEduInfo(@PathVariable Long workerId) {
-        List<WorkerEduResponse> response = workerEduService.getEduInfo(workerId);
+    public ResponseEntity<PagedResponse<WorkerEduResponse>> getEduInfo(
+            @PathVariable Long workerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        if (size > 50) size = 50;
+        if (size < 0) size = 0;
+
+        PagedResponse<WorkerEduResponse> response = workerEduService.getEduInfo(workerId, page, size);
         return ResponseEntity.ok(response);
     }
 
