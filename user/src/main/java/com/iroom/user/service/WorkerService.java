@@ -5,6 +5,7 @@ import com.iroom.user.dto.request.WorkerRegisterRequest;
 import com.iroom.user.dto.request.WorkerUpdateInfoRequest;
 import com.iroom.user.dto.request.WorkerUpdatePasswordRequest;
 import com.iroom.user.dto.response.*;
+import com.iroom.user.entity.Admin;
 import com.iroom.user.entity.Worker;
 import com.iroom.user.jwt.JwtTokenProvider;
 import com.iroom.user.repository.WorkerRepository;
@@ -109,5 +110,13 @@ public class WorkerService {
                 .orElseThrow(() -> new IllegalArgumentException("해당하는 근로자를 찾을 수 없습니다."));
 
         return new WorkerInfoResponse(worker);
+    }
+
+    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
+    public void deleteWorker(Long workerId) {
+        Worker worker = workerRepository.findById(workerId)
+                .orElseThrow(() -> new IllegalArgumentException("해당하는 근로자를 찾을 수 없습니다."));
+
+        workerRepository.delete(worker);
     }
 }
