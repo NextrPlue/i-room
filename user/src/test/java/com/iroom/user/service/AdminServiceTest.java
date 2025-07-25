@@ -1,8 +1,10 @@
 package com.iroom.user.service;
 
 import com.iroom.user.dto.request.AdminSignUpRequest;
+import com.iroom.user.dto.request.AdminUpdateInfoRequest;
 import com.iroom.user.dto.request.LoginRequest;
 import com.iroom.user.dto.response.AdminSignUpResponse;
+import com.iroom.user.dto.response.AdminUpdateResponse;
 import com.iroom.user.dto.response.LoginResponse;
 import com.iroom.user.entity.Admin;
 import com.iroom.user.enums.AdminRole;
@@ -129,5 +131,54 @@ public class AdminServiceTest {
         assertThatThrownBy(() -> adminService.login(request))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("잘못된 비밀번호입니다.");
+    }
+
+    @Test
+    @DisplayName("관리자 정보 수정 성공")
+    void updateAdminInfoTest() {
+        // given
+        Long adminId = 1L;
+        AdminUpdateInfoRequest request = new AdminUpdateInfoRequest("updatedName", "updated@example.com", "010-9876-5432");
+
+        given(adminRepository.findById(adminId)).willReturn(Optional.of(admin));
+        given(adminRepository.existsByEmail(request.email())).willReturn(false);
+
+        // when
+        AdminUpdateResponse response = adminService.updateAdminInfo(adminId, request);
+
+        // then
+        assertThat(response.name()).isEqualTo(request.name());
+        assertThat(response.email()).isEqualTo(request.email());
+    }
+
+    @Test
+    @DisplayName("관리자 정보 수정 실패 - 존재하지 않는 관리자")
+    void updateAdminInfoFailAdminNotFound() {
+        // given
+        Long adminId = 999L;
+        AdminUpdateInfoRequest request = new AdminUpdateInfoRequest("updatedName", "updated@example.com", "010-9876-5432");
+
+        given(adminRepository.findById(adminId)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> adminService.updateAdminInfo(adminId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("해당하는 관리자를 찾을 수 없습니다.");
+    }
+
+    @Test
+    @DisplayName("관리자 정보 수정 실패 - 이메일 중복")
+    void updateAdminInfoFailEmailExists() {
+        // given
+        Long adminId = 1L;
+        AdminUpdateInfoRequest request = new AdminUpdateInfoRequest("updatedName", "updated@example.com", "010-9876-5432");
+
+        given(adminRepository.findById(adminId)).willReturn(Optional.of(admin));
+        given(adminRepository.existsByEmail(request.email())).willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> adminService.updateAdminInfo(adminId, request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("이미 사용 중인 이메일입니다.");
     }
 }
