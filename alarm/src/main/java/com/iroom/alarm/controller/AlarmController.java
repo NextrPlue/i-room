@@ -26,6 +26,18 @@ public class AlarmController {
         return ResponseEntity.ok("Alarm created");
     }
 
+    // WebSocket 테스트용 GET API
+    @GetMapping("/test/send")
+    public ResponseEntity<String> sendTestMessage() {
+        Long workerId = 1L;
+        String type = "위험요소";
+        Long incidentId = 101L;
+        String description = "작업자 침입 감지";
+
+        alarmService.handleAlarmEvent(workerId, type, incidentId, description);
+        return ResponseEntity.ok("WebSocket 메시지 전송 완료!");
+    }
+
     @GetMapping("/worker/{workerId}")
     public ResponseEntity<List<Alarm>> getAlarmsForWorker(@PathVariable Long workerId) {
         return ResponseEntity.ok(alarmService.getAlarmsForWorker(workerId));
