@@ -10,7 +10,7 @@ from skimage.measure import shannon_entropy
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 BASE_DIR = "D:/"
-FOLDER_NAME = "6.상업시설_신사동_복합_시설"
+FOLDER_NAME = "2.공연장_부산_오페라_하우스_신축공사"
 
 # ================== 설정 ==================
 base_dir = os.path.normpath(BASE_DIR)
@@ -21,8 +21,8 @@ target_classes = {"01", "03", "07"}
 
 # 클래스당 목표 수량 (split마다 다름)
 per_class_target_map = {
-    "train": 180,
-    "val": 30
+    "train": 810,
+    "val": 90
 }
 
 # 이미지 품질 필터링 기준 (엄격)
@@ -119,6 +119,7 @@ for split in split_set:
 
     # 클래스별로 선택된 파일 저장용 선언
     selected = {cls: set() for cls in target_classes}
+    selected_total = set()  # 전체 중복 방지용
     candidates = []
 
     # 클래스별 후보 수 저장용 딕셔너리
@@ -175,7 +176,9 @@ for split in split_set:
                 # 클래스별로 quota 초과하지 않는 선에서 추가
                 for cls in class_set:
                     if cls in target_classes and len(selected[cls]) < per_class_target:
-                        selected[cls].add((json_file, filename))
+                        if (json_file, filename) not in selected_total:
+                            selected[cls].add((json_file, filename))
+                            selected_total.add((json_file, filename))
                         break
 
     # 1차 필터: 엄격 기준
@@ -186,6 +189,24 @@ for split in split_set:
         if len(selected[cls]) < per_class_target:
             print(f"⚠️ 클래스 {cls}: {per_class_target - len(selected[cls])}장 부족 → 기준 완화")
             parallel_filter(RELAXED_THRESHOLD)
+
+    # 3차 필터 (품질 무시, 클래스만 맞으면 추가)
+    for cls in target_classes:
+        current_count = len(selected[cls])
+        
+        if current_count >= per_class_target:
+            continue
+
+        needed = per_class_target - current_count
+        print(f"🚨 클래스 {cls}: {needed}장 부족 → 무조건 추가")
+
+        for json_file, filename, class_set in candidates:
+            if cls in class_set and (json_file, filename) not in selected_total:
+                selected[cls].add((json_file, filename))
+                selected_total.add((json_file, filename))
+
+                if len(selected[cls]) >= per_class_target:
+                    break
 
     # 최종 선택된 이미지 및 라벨 복사
     for cls, files in selected.items():
