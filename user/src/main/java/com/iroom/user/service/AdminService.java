@@ -83,7 +83,7 @@ public class AdminService {
     }
 
     @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
-    public PagedResponse<AdminListResponse> getAdmins(String target, String keyword, int page, int size) {
+    public PagedResponse<AdminInfoResponse> getAdmins(String target, String keyword, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
 
         Page<Admin> adminPage;
@@ -104,7 +104,7 @@ public class AdminService {
             adminPage = adminRepository.findAll(pageable);
         }
 
-        Page<AdminListResponse> responsePage = adminPage.map(AdminListResponse::new);
+        Page<AdminInfoResponse> responsePage = adminPage.map(AdminInfoResponse::new);
 
         return PagedResponse.of(responsePage);
     }
@@ -113,7 +113,7 @@ public class AdminService {
     public void deleteAdmin(Long adminId) {
         Admin admin = adminRepository.findById(adminId)
                 .orElseThrow(() -> new IllegalArgumentException("ID " + adminId + "에 해당하는 관리자를 찾을 수 없습니다."));
-        
+
         adminRepository.delete(admin);
     }
 }
