@@ -62,6 +62,12 @@ public class AdminController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<AdminInfoResponse> getMyInfo(@RequestHeader("X-User-Id") Long id) {
+        AdminInfoResponse response = adminService.getAdminInfo(id);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/{adminId}")
     public ResponseEntity<Void> deleteAdmin(@PathVariable Long adminId) {
         adminService.deleteAdmin(adminId);
