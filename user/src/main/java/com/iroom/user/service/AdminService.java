@@ -108,4 +108,12 @@ public class AdminService {
 
         return PagedResponse.of(responsePage);
     }
+
+    @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN') and #adminId != authentication.principal")
+    public void deleteAdmin(Long adminId) {
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new IllegalArgumentException("ID " + adminId + "에 해당하는 관리자를 찾을 수 없습니다."));
+        
+        adminRepository.delete(admin);
+    }
 }
