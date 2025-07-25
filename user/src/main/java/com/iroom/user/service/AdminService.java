@@ -117,6 +117,14 @@ public class AdminService {
         return new AdminInfoResponse(admin);
     }
 
+    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
+    public AdminInfoResponse getAdminById(Long adminId) {
+        Admin admin = adminRepository.findById(adminId)
+                .orElseThrow(() -> new IllegalArgumentException("해당하는 관리자를 찾을 수 없습니다."));
+
+        return new AdminInfoResponse(admin);
+    }
+
     @PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN') and #adminId != authentication.principal")
     public void deleteAdmin(Long adminId) {
         Admin admin = adminRepository.findById(adminId)
