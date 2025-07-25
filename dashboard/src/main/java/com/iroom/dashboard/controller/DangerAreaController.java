@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/dangerAreas")
+@RequestMapping("/danger-areas")
 @RequiredArgsConstructor
 public class DangerAreaController {
     private final DangerAreaService dangerAreaService;
