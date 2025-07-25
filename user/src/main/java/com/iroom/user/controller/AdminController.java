@@ -61,4 +61,10 @@ public class AdminController {
         PagedResponse<AdminListResponse> response = adminService.getAdmins(target, keyword, page, size);
         return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{adminId}")
+    public ResponseEntity<Void> deleteAdmin(@PathVariable Long adminId) {
+        adminService.deleteAdmin(adminId);
+        return ResponseEntity.noContent().build();
+    }
 }
