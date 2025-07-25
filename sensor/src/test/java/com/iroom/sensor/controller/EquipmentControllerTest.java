@@ -51,7 +51,7 @@ public class EquipmentControllerTest {
 
     @Test
     @DisplayName("PUT /heavy-equipments/location - 위치 업데이트 테스트")
-    void updateLocation_Success() throws Exception {
+    void updateLocation() throws Exception {
         // given
         EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(1L, "354.8343, 128.4723");
         EquipmentUpdateLocationResponse response = new EquipmentUpdateLocationResponse(1L, "354.8343, 128.4723");
