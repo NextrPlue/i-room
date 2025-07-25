@@ -94,4 +94,12 @@ public class WorkerService {
 
         return PagedResponse.of(responsePage);
     }
+
+    @PreAuthorize("hasAuthority('ROLE_WORKER') and #id == authentication.principal")
+    public WorkerInfoResponse getWorkerInfo(Long id) {
+        Worker worker = workerRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("해당하는 근로자를 찾을 수 없습니다."));
+
+        return new WorkerInfoResponse(worker);
+    }
 }
