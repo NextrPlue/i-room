@@ -4,14 +4,15 @@ import com.iroom.user.dto.request.LoginRequest;
 import com.iroom.user.dto.request.WorkerRegisterRequest;
 import com.iroom.user.dto.request.WorkerUpdateInfoRequest;
 import com.iroom.user.dto.request.WorkerUpdatePasswordRequest;
-import com.iroom.user.dto.response.LoginResponse;
-import com.iroom.user.dto.response.WorkerRegisterResponse;
-import com.iroom.user.dto.response.WorkerUpdateResponse;
+import com.iroom.user.dto.response.*;
 import com.iroom.user.entity.Worker;
 import com.iroom.user.jwt.JwtTokenProvider;
 import com.iroom.user.repository.WorkerRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -72,5 +73,25 @@ public class WorkerService {
         }
 
         worker.updatePassword(passwordEncoder.encode(request.newPassword()));
+    }
+
+    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
+    public PagedResponse<WorkerInfoResponse> getWorkers(String target, String keyword, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Worker> workerPage;
+        if (target == null || keyword == null || keyword.trim().isEmpty()) {
+            workerPage = workerRepository.findAll(pageable);
+        } else if ("name".equals(target)) {
+            workerPage = workerRepository.findByNameContaining(keyword, pageable);
+        } else if ("email".equals(target)) {
+            workerPage = workerRepository.findByEmailContaining(keyword, pageable);
+        } else {
+            workerPage = workerRepository.findAll(pageable);
+        }
+
+        Page<WorkerInfoResponse> responsePage = workerPage.map(WorkerInfoResponse::new);
+
+        return PagedResponse.of(responsePage);
     }
 }
