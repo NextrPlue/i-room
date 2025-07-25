@@ -10,13 +10,13 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/workerEdu")
+@RequestMapping("/worker-education")
 @RequiredArgsConstructor
 public class WorkerEduController {
     private final WorkerEduService workerEduService;
 
     // 안전교육 이수 등록
-    @PostMapping("/record")
+    @PostMapping
     public ResponseEntity<WorkerEduResponse> recordEdu(@RequestBody WorkerEduRequest requestDto) {
         WorkerEduResponse response = workerEduService.recordEdu(requestDto);
         return ResponseEntity.ok(response);
