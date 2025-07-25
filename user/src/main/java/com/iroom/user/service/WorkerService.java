@@ -102,4 +102,12 @@ public class WorkerService {
 
         return new WorkerInfoResponse(worker);
     }
+
+    @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
+    public WorkerInfoResponse getWorkerById(Long workerId) {
+        Worker worker = workerRepository.findById(workerId)
+                .orElseThrow(() -> new IllegalArgumentException("해당하는 근로자를 찾을 수 없습니다."));
+
+        return new WorkerInfoResponse(worker);
+    }
 }
