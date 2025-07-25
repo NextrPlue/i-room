@@ -331,4 +331,34 @@ public class AdminServiceTest {
         assertThat(response.content()).hasSize(1);
         assertThat(response.content().get(0).role()).isEqualTo(AdminRole.ADMIN);
     }
+
+    @Test
+    @DisplayName("관리자 정보 조회 성공")
+    void getAdminInfoTest() {
+        // given
+        Long adminId = 1L;
+
+        given(adminRepository.findById(adminId)).willReturn(Optional.of(admin));
+
+        // when
+        AdminInfoResponse response = adminService.getAdminInfo(adminId);
+
+        // then
+        assertThat(response.name()).isEqualTo(admin.getName());
+        assertThat(response.email()).isEqualTo(admin.getEmail());
+    }
+
+    @Test
+    @DisplayName("관리자 정보 조회 실패 - 존재하지 않는 관리자")
+    void getAdminInfoFailAdminNotFound() {
+        // given
+        Long adminId = 999L;
+
+        given(adminRepository.findById(adminId)).willReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> adminService.getAdminInfo(adminId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("해당하는 관리자를 찾을 수 없습니다.");
+    }
 }
