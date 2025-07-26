@@ -42,7 +42,7 @@ public record WorkerRegisterRequest(
                 .email(this.email)
                 .password(encoder.encode(this.password))
                 .phone(this.phone)
-                .role(WorkerRole.Worker)
+                .role(WorkerRole.WORKER)
                 .bloodType(this.bloodType)
                 .gender(this.gender)
                 .age(this.age)

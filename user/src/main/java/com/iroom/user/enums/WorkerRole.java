@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum WorkerRole {
-    Worker("ROLE_WORKER");
+    WORKER("ROLE_WORKER");
 
     private final String key;
 }
