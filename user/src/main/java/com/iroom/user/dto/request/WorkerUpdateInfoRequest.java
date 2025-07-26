@@ -1,6 +1,8 @@
 package com.iroom.user.dto.request;
 
 import com.iroom.user.annotation.ValidPhone;
+import com.iroom.user.enums.BloodType;
+import com.iroom.user.enums.Gender;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -18,8 +20,8 @@ public record WorkerUpdateInfoRequest(
         @ValidPhone
         String phone,
 
-        String bloodType,
-        String gender,
+        BloodType bloodType,
+        Gender gender,
         Integer age,
         Float weight,
         Float height,

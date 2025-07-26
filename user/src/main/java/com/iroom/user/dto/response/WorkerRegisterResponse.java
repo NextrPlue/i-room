@@ -1,6 +1,8 @@
 package com.iroom.user.dto.response;
 
 import com.iroom.user.entity.Worker;
+import com.iroom.user.enums.BloodType;
+import com.iroom.user.enums.Gender;
 import com.iroom.user.enums.WorkerRole;
 
 public record WorkerRegisterResponse(
@@ -9,8 +11,8 @@ public record WorkerRegisterResponse(
         String email,
         String phone,
         WorkerRole role,
-        String bloodType,
-        String gender,
+        BloodType bloodType,
+        Gender gender,
         Integer age,
         Float weight,
         Float height,

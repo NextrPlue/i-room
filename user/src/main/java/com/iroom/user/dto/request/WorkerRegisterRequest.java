@@ -3,6 +3,8 @@ package com.iroom.user.dto.request;
 import com.iroom.user.annotation.ValidPassword;
 import com.iroom.user.annotation.ValidPhone;
 import com.iroom.user.entity.Worker;
+import com.iroom.user.enums.BloodType;
+import com.iroom.user.enums.Gender;
 import com.iroom.user.enums.WorkerRole;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -26,8 +28,8 @@ public record WorkerRegisterRequest(
         @ValidPhone
         String phone,
 
-        String bloodType,
-        String gender,
+        BloodType bloodType,
+        Gender gender,
         Integer age,
         Float weight,
         Float height,
