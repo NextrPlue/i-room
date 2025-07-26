@@ -2,13 +2,15 @@ package com.iroom.dashboard.service;
 
 import com.iroom.dashboard.dto.request.DangerAreaRequest;
 import com.iroom.dashboard.dto.response.DangerAreaResponse;
+import com.iroom.dashboard.dto.response.PagedResponse;
 import com.iroom.dashboard.entity.DangerArea;
 import com.iroom.dashboard.repository.DangerAreaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -48,10 +50,10 @@ public class DangerAreaServiceImpl implements DangerAreaService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<DangerAreaResponse> getAll() {
-        return dangerAreaRepository.findAll()
-                .stream()
-                .map(DangerAreaResponse::new)
-                .toList();
+    public PagedResponse<DangerAreaResponse> getDangerAreas(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<DangerArea> dangerAreas = dangerAreaRepository.findAll(pageable);
+        Page<DangerAreaResponse> responsePage = dangerAreas.map(DangerAreaResponse::new);
+        return PagedResponse.of(responsePage);
     }
 }

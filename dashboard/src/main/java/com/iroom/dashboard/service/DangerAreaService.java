@@ -2,8 +2,7 @@ package com.iroom.dashboard.service;
 
 import com.iroom.dashboard.dto.request.DangerAreaRequest;
 import com.iroom.dashboard.dto.response.DangerAreaResponse;
-
-import java.util.List;
+import com.iroom.dashboard.dto.response.PagedResponse;
 
 public interface DangerAreaService {
 
@@ -17,5 +16,5 @@ public interface DangerAreaService {
     void delete(Long id);
 
     // 위험구역 조회
-    List<DangerAreaResponse> getAll();
+    PagedResponse<DangerAreaResponse> getDangerAreas(int page, int size);
 }
