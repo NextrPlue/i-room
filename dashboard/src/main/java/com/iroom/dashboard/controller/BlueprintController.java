@@ -2,12 +2,12 @@ package com.iroom.dashboard.controller;
 
 import com.iroom.dashboard.dto.request.BlueprintRequest;
 import com.iroom.dashboard.dto.response.BlueprintResponse;
+import com.iroom.dashboard.dto.response.PagedResponse;
 import com.iroom.dashboard.service.BlueprintService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -41,8 +41,14 @@ public class BlueprintController {
 
     // 도면 전체 조회
     @GetMapping
-    public ResponseEntity<List<BlueprintResponse>> getAllBlueprints() {
-        List<BlueprintResponse> responses = blueprintService.getAllBlueprints();
+    public ResponseEntity<PagedResponse<BlueprintResponse>> getAllBlueprints(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        if (size > 50) size = 50;
+        if (size < 0) size = 0;
+
+        PagedResponse<BlueprintResponse> responses = blueprintService.getAllBlueprints(page, size);
         return ResponseEntity.ok(responses);
     }
 }
