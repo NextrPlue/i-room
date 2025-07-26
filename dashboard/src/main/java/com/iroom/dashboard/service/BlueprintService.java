@@ -2,8 +2,7 @@ package com.iroom.dashboard.service;
 
 import com.iroom.dashboard.dto.request.BlueprintRequest;
 import com.iroom.dashboard.dto.response.BlueprintResponse;
-
-import java.util.List;
+import com.iroom.dashboard.dto.response.PagedResponse;
 
 public interface BlueprintService {
 
@@ -17,6 +16,6 @@ public interface BlueprintService {
     void deleteBlueprint(Long id);
 
     // 도면 전체 조회
-    List<BlueprintResponse> getAllBlueprints();
+    PagedResponse<BlueprintResponse> getAllBlueprints(int page, int size);
 
 }
