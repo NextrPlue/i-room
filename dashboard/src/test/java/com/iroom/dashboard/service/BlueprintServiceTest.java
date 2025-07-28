@@ -2,8 +2,10 @@ package com.iroom.dashboard.service;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -68,5 +70,36 @@ class BlueprintServiceTest {
 		// then
 		assertThat(response.blueprintUrl()).isEqualTo("url.png");
 		assertThat(response.floor()).isEqualTo(1);
+	}
+
+	@Test
+	@DisplayName("도면 수정 성공")
+	void updateBlueprintTest() {
+		// given
+		Long id = 1L;
+		BlueprintRequest request = new BlueprintRequest("new_url.png", 1, 120.0, 220.0);
+		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprint));
+
+		// when
+		BlueprintResponse response = blueprintService.updateBlueprint(id, request);
+
+		// then
+		assertThat(response.blueprintUrl()).isEqualTo("new_url.png");
+		assertThat(response.width()).isEqualTo(120);
+		assertThat(response.height()).isEqualTo(220);
+	}
+
+	@Test
+	@DisplayName("도면 수정 실패 - 존재하지 않는 도면")
+	void updateBlueprintFailNotFound() {
+		// given
+		Long id = 99L;
+		BlueprintRequest request = new BlueprintRequest("x.png", 2, 50.0, 50.0);
+		given(blueprintRepository.findById(id)).willReturn(Optional.empty());
+
+		// when & then
+		assertThatThrownBy(() -> blueprintService.updateBlueprint(id, request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("해당 도면이 존재하지 않습니다.");
 	}
 }
