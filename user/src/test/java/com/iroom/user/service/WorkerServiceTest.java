@@ -379,4 +379,34 @@ public class WorkerServiceTest {
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("해당하는 근로자를 찾을 수 없습니다.");
 	}
+
+	@Test
+	@DisplayName("근로자 ID로 조회 성공")
+	void getWorkerByIdTest() {
+		// given
+		Long workerId = 1L;
+
+		given(workerRepository.findById(workerId)).willReturn(Optional.of(worker));
+
+		// when
+		WorkerInfoResponse response = workerService.getWorkerById(workerId);
+
+		// then
+		assertThat(response.name()).isEqualTo(worker.getName());
+		assertThat(response.email()).isEqualTo(worker.getEmail());
+	}
+
+	@Test
+	@DisplayName("근로자 ID로 조회 실패 - 존재하지 않는 근로자")
+	void getWorkerByIdFailWorkerNotFound() {
+		// given
+		Long workerId = 999L;
+
+		given(workerRepository.findById(workerId)).willReturn(Optional.empty());
+
+		// when
+		assertThatThrownBy(() -> workerService.getWorkerById(workerId))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("해당하는 근로자를 찾을 수 없습니다.");
+	}
 }
