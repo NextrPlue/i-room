@@ -12,28 +12,27 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class HeavyEquipment {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private Long id;
 
-    private String name;
-    private String type;
+	private String name;
+	private String type;
 
-    @Column(nullable = true)
-    private String location;
+	@Column(nullable = true)
+	private String location;
 
-    private Double radius;
+	private Double radius;
 
-    @Builder
-    public HeavyEquipment(String name, String type, Double radius){
-        this.name = name;
-        this.type = type;
-        this.radius = radius;
-    }
+	@Builder
+	public HeavyEquipment(String name, String type, Double radius) {
+		this.name = name;
+		this.type = type;
+		this.radius = radius;
+	}
 
-    public void updateLocation(String location){
-        this.location = location;
-    }
-
+	public void updateLocation(String location) {
+		this.location = location;
+	}
 
 }
