@@ -5,10 +5,11 @@ import cv2
 from safetyGear.utils import detect_and_draw
 import time
 import requests
+from datetime import datetime
 
 # Spring Boot 서버 API 주소 (REST API)
 # 미착용 감지 시 캡처된 이미지와 정보를 보낼 엔드포인트
-SPRING_BOOT_API = ""
+SPRING_BOOT_API = "http://localhost:8080/api/alerts"
 
 app = FastAPI()             # FastAPI 인스턴스 생성
 cap = cv2.VideoCapture(0)   # 웹캠
@@ -31,8 +32,8 @@ def send_alert(image_bytes, missing_items):
 
     # 추가 데이터: 미착용 장비 목록, 현재 시간
     data = {
-        "missing_items": ",".join(missing_items), 
-        "timestamp": str(time.time())
+        "missing_items": ", ".join(missing_items), 
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
 
     try:
@@ -42,8 +43,11 @@ def send_alert(image_bytes, missing_items):
     except Exception as e:
         print(f"[ERROR] Failed to send alert: {e}")
 
+last_alert_time = 0 # 마지막 전송 시각 (epoch 초)
+
 # 웹캠 프레임을 계속 읽어 스트리밍 + 알림 처리하는 제너레이터
 def generate_frames():
+    global last_alert_time
     while True:
         # 웹캠에서 프레임 한 장 읽기
         ret, frame = cap.read()
@@ -58,13 +62,17 @@ def generate_frames():
         # 필수 보호구(required_items) - 실제 감지된 보호구(detected_classes)
         # 차집합을 구해 누락된 보호구가 있으면 missing에 들어감
         missing = required_items - detected_classes
+        
+        current_time = time.time()  # 현재 시간
 
-        if missing:
+        if missing and (current_time - last_alert_time >= 5):   # 5초 이상 지난 경우에만 전송
             # 누락된 보호구가 있을 경우, 프레임 이미지를 JPEG 바이트로 변환
             _, img_bytes = cv2.imencode(".jpg", frame)
 
             # 서버로 알림 전송 (이미지 + 누락 정보)
             send_alert(img_bytes.tobytes(), missing)
+
+            last_alert_time = current_time  # 전송 시간 갱신
 
         # 스트리밍할 프레임 인코딩
         # 프레임을 JPEG 포맷으로 변환 (HTTP로 전송하기 위함)
