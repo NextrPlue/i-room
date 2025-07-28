@@ -1,65 +1,60 @@
 package com.iroom.dashboard.service;
 
-
 import com.iroom.dashboard.entity.DashBoard;
 import com.iroom.dashboard.repository.DashBoardRepository;
 import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
-public class PdfService {
+public class PdfService { //PDF로 변환
 
-    private final DashBoardRepository dashBoardRepository;
+	private final DashBoardRepository dashBoardRepository;
 
-    public byte[] generateDashboardPdf(String pdfTitle) throws DocumentException {
-        List<DashBoard> dashboards = dashBoardRepository.findAll();
+	public byte[] generateDashboardPdf(String pdfTitle, String content) throws
+		DocumentException,
+		IOException,
+		IOException {
+		Document document = new Document();
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-        Document document = new Document();
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
+		PdfWriter.getInstance(document, out);
+		document.open();
 
-        PdfWriter.getInstance(document, out);
-        document.open();
+		// 한글 폰트 설정
+		String fontPath = "/System/Library/Fonts/Supplemental/AppleGothic.ttf"; // mac은 "/Library/Fonts/AppleGothic.ttf"
+		BaseFont baseFont = BaseFont.createFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+		Font headerFont = new Font(baseFont, 14, Font.BOLD);
+		Font bodyFont = new Font(baseFont, 12);
 
-        Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 14);
-        Font bodyFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
+		// 제목
+		Paragraph title = new Paragraph(pdfTitle, headerFont);
+		title.setAlignment(Element.ALIGN_CENTER);
+		title.setSpacingAfter(20f);
+		document.add(title);
 
-        Paragraph title = new Paragraph(pdfTitle, headerFont);
-        title.setAlignment(Element.ALIGN_CENTER);
-        title.setSpacingAfter(20f);
-        document.add(title);
+		// 본문 줄 단위 추가
+		String[] lines = content.split("\n");
+		for (String line : lines) {
+			Paragraph paragraph = new Paragraph(line, bodyFont);
+			paragraph.setSpacingAfter(10f);
+			document.add(paragraph);
+		}
 
-        PdfPTable table = new PdfPTable(4); // id, metricType, metricValue, recordedAt
-        table.setWidthPercentage(100);
-        table.setWidths(new int[]{1, 3, 2, 3});
+		document.close();
+		return out.toByteArray();
+	}
 
-        // Table Header
-        Stream.of("ID", "Metric Type", "Metric Value", "Recorded At").forEach(col -> {
-            PdfPCell header = new PdfPCell(new Phrase(col, headerFont));
-            header.setHorizontalAlignment(Element.ALIGN_CENTER);
-            header.setBackgroundColor(BaseColor.LIGHT_GRAY);
-            table.addCell(header);
-        });
-
-        // Table Rows
-        for (DashBoard d : dashboards) {
-            table.addCell(new PdfPCell(new Phrase(d.getId().toString(), bodyFont)));
-            table.addCell(new PdfPCell(new Phrase(d.getMetricType(), bodyFont)));
-            table.addCell(new PdfPCell(new Phrase(d.getMetricValue().toString(), bodyFont)));
-            table.addCell(new PdfPCell(new Phrase(d.getRecordedAt().toString(), bodyFont)));
-        }
-
-        document.add(table);
-        document.close();
-
-        return out.toByteArray();
-    }
 }
