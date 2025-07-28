@@ -1,0 +1,40 @@
+package com.iroom.dashboard.service;
+
+import com.iroom.dashboard.dto.request.TranslationRequest;
+import com.iroom.dashboard.dto.response.TranslationResponse;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Collections;
+
+@Service
+public class TranslationService {
+	private final String deeplApiUrl = "https://api-free.deepl.com/v2/translate";
+	private final String authKey = "ab939266-7173-4ba5-9bba-feaa779fd16d:fx";
+
+	public TranslationResponse translate(TranslationRequest request) {
+		String targetLang = request.getTarget_lang();
+
+		String apiUrl = deeplApiUrl + "?target_lang=" + targetLang;
+		RestTemplate restTemplate = new RestTemplate();
+
+		HttpHeaders headers = new HttpHeaders();
+		headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		headers.add("Authorization", "DeepL-Auth-Key " + authKey);
+
+		TranslationResponse response = restTemplate.postForObject(apiUrl, createHttpEntity(request, headers),
+			TranslationResponse.class);
+
+		return response;
+	}
+
+	private HttpEntity<TranslationRequest> createHttpEntity(TranslationRequest request, HttpHeaders headers) {
+		return new HttpEntity<>(request, headers);
+	}
+}
