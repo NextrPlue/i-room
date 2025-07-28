@@ -15,6 +15,9 @@ public class WorkerManagementServiceImpl implements WorkerManagementService {
 
 	@Override
 	public WorkerManagementResponse enterWorker(Long workerId) {
+		if (workerId == null) {
+			throw new IllegalArgumentException("workerId는 null일 수 없습니다.");
+		}
 		WorkerManagement workerManagement = WorkerManagement.builder()
 			.workerId(workerId)
 			.build();
