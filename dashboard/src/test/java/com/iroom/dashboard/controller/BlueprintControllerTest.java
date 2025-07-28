@@ -30,9 +30,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Import(BlueprintControllerTest.MockConfig.class)
 class BlueprintControllerTest {
 
-	@Autowired private MockMvc mockMvc;
-	@Autowired private ObjectMapper objectMapper;
-	@Autowired private BlueprintService blueprintService; // 직접 주입받음
+	@Autowired
+	private MockMvc mockMvc;
+	@Autowired
+	private ObjectMapper objectMapper;
+	@Autowired
+	private BlueprintService blueprintService; // 직접 주입받음
 
 	@TestConfiguration
 	static class MockConfig {
