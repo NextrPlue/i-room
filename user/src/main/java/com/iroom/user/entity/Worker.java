@@ -1,6 +1,8 @@
 package com.iroom.user.entity;
 
 import com.iroom.user.dto.request.WorkerUpdateInfoRequest;
+import com.iroom.user.enums.BloodType;
+import com.iroom.user.enums.Gender;
 import com.iroom.user.enums.WorkerRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -27,8 +29,12 @@ public class Worker {
     @Enumerated(EnumType.STRING)
     private WorkerRole role;
 
-    private String bloodType;
-    private String gender;
+    @Enumerated(EnumType.STRING)
+    private BloodType bloodType;
+    
+    @Enumerated(EnumType.STRING)
+    private Gender gender;
+
     private Integer age;
     private Float weight;
     private Float height;
@@ -51,7 +57,7 @@ public class Worker {
     }
 
     @Builder
-    public Worker(String name, String email, String password, String phone, WorkerRole role, String bloodType, String gender, Integer age, Float weight, Float height, String jobTitle, String occupation, String department, String faceImageUrl) {
+    public Worker(String name, String email, String password, String phone, WorkerRole role, BloodType bloodType, Gender gender, Integer age, Float weight, Float height, String jobTitle, String occupation, String department, String faceImageUrl) {
         this.name = name;
         this.email = email;
         this.password = password;

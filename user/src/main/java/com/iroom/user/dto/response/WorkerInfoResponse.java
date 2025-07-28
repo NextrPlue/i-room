@@ -1,6 +1,8 @@
 package com.iroom.user.dto.response;
 
 import com.iroom.user.entity.Worker;
+import com.iroom.user.enums.BloodType;
+import com.iroom.user.enums.Gender;
 import com.iroom.user.enums.WorkerRole;
 
 import java.time.LocalDateTime;
@@ -12,8 +14,8 @@ public record WorkerInfoResponse(
         String email,
         String phone,
         WorkerRole role,
-        String bloodType,
-        String gender,
+        BloodType bloodType,
+        Gender gender,
         Integer age,
         Float weight,
         Float height,
