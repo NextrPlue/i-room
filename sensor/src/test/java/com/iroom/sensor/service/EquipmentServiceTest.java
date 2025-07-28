@@ -33,6 +33,7 @@ public class EquipmentServiceTest {
 	@Test
 	@DisplayName("장비 등록 요청 시 저장 후 응답 반환 테스트")
 	void registerTest() {
+		// given
 		EquipmentRegisterRequest request = new EquipmentRegisterRequest("크레인A-1", "크레인", 15.0);
 		HeavyEquipment equipment = HeavyEquipment.builder()
 			.name("크레인A-1")
@@ -40,11 +41,12 @@ public class EquipmentServiceTest {
 			.radius(15.0)
 			.build();
 		setIdViaReflection(equipment, 1L);
-
 		given(equipmentRepository.save(any(HeavyEquipment.class))).willReturn(equipment);
 
+		// when
 		var response = equipmentService.register(request);
 
+		// then
 		assertThat(response.name()).isEqualTo("크레인A-1");
 		assertThat(response.type()).isEqualTo("크레인");
 		assertThat(response.radius()).isEqualTo(15.0);
@@ -53,16 +55,18 @@ public class EquipmentServiceTest {
 	@Test
 	@DisplayName("장비 ID로 위치 업데이트 요청 시 위치 변경 테스트")
 	void updateLocationTest() {
+		// given
 		Long equipmentId = 1L;
 		String newLocation = "35.8343, 128.4723";
 		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(equipmentId, newLocation);
 		HeavyEquipment equipment = HeavyEquipment.builder().build();
 		setIdViaReflection(equipment, equipmentId);
-
 		given(equipmentRepository.findById(equipmentId)).willReturn(java.util.Optional.of(equipment));
 
+		// when
 		var response = equipmentService.updateLocation(request);
 
+		// then
 		assertThat(response.id()).isEqualTo(equipmentId);
 		assertThat(response.location()).isEqualTo(newLocation);
 	}
@@ -70,10 +74,12 @@ public class EquipmentServiceTest {
 	@Test
 	@DisplayName("없는 ID로 위치 업데이트 시 예외 발생 테스트")
 	void updateLocation_notFoundId() {
+		// given
 		Long invalidId = 999L;
 		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(invalidId, "354.8343, 128.4723");
 		given(equipmentRepository.findById(invalidId)).willReturn(java.util.Optional.empty());
 
+		// when & then
 		assertThatThrownBy(() -> equipmentService.updateLocation(request))
 			.isInstanceOf(EntityNotFoundException.class)
 			.hasMessageContaining("장비 없음");
