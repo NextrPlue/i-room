@@ -5,8 +5,9 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum WorkerRole {
-    WORKER("ROLE_WORKER");
+public enum Gender {
+    MALE("남성"),
+    FEMALE("여성");
 
-    private final String key;
+    private final String description;
 }

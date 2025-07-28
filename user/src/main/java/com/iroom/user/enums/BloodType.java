@@ -5,8 +5,11 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum WorkerRole {
-    WORKER("ROLE_WORKER");
+public enum BloodType {
+    A("A형"),
+    B("B형"),
+    AB("AB형"),
+    O("O형");
 
-    private final String key;
+    private final String description;
 }
