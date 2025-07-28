@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationRequest;
+import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsRequest;
 import com.iroom.sensor.entity.WorkerHealth;
 import com.iroom.sensor.repository.WorkerHealthRepository;
 
@@ -58,4 +59,25 @@ public class WorkerHealthServiceTest {
 			.isInstanceOf(EntityNotFoundException.class)
 			.hasMessageContaining("해당 근로자 없음");
 	}
+
+	@Test
+	@DisplayName("근로자 생체 정보 업데이트 테스트")
+	void updateVitalSignsTest() {
+		Long workerId = 1L;
+		Integer newHeartRate = 85;
+		Float newTemperature = 36.8F;
+		WorkerUpdateVitalSignsRequest request = new WorkerUpdateVitalSignsRequest(workerId, newHeartRate,
+			newTemperature);
+
+		WorkerHealth workerHealth = WorkerHealth.builder().workerId(workerId).build();
+		given(workerRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerHealth));
+
+		var response = workerService.updateVitalSigns(request);
+
+		assertThat(response.workerId()).isEqualTo(workerId);
+		assertThat(response.heartRate()).isEqualTo(newHeartRate);
+		assertThat(response.bodyTemperature()).isEqualTo(newTemperature);
+		verify(workerRepository).findByWorkerId(workerId);
+	}
+
 }
