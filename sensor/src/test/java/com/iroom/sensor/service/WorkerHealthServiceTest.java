@@ -80,4 +80,16 @@ public class WorkerHealthServiceTest {
 		verify(workerRepository).findByWorkerId(workerId);
 	}
 
+	@Test
+	@DisplayName("없는 workerId로 생체 정보 업데이트 시 실패 테스트")
+	void updateVitalSignsFailTest() {
+		Long invalidId = 999L;
+		WorkerUpdateVitalSignsRequest request = new WorkerUpdateVitalSignsRequest(invalidId, 80, 36.5F);
+		given(workerRepository.findByWorkerId(invalidId)).willReturn(Optional.empty());
+
+		assertThatThrownBy(() -> workerService.updateVitalSigns(request))
+			.isInstanceOf(EntityNotFoundException.class)
+			.hasMessageContaining("해당 근로자 없음");
+	}
+
 }
