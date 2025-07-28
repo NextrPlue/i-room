@@ -1,8 +1,6 @@
 package com.iroom.dashboard.repository;
 
-import static org.assertj.core.api.Assertions.*;
-
-import java.util.Optional;
+import com.iroom.dashboard.entity.DangerArea;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,10 +8,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import com.iroom.dashboard.entity.DangerArea;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -56,5 +57,14 @@ public class DangerAreaRepositoryTest {
 
 		assertThat(result).isPresent();
 		assertThat(result.get().getLocation()).isEqualTo("10,20");
+	}
+
+	@Test
+	@DisplayName("위험구역 전체 조회 성공")
+	void findAllDangerAreas() {
+		Page<DangerArea> page = dangerAreaRepository.findAll(pageable);
+
+		assertThat(page.getContent()).hasSize(2);
+		assertThat(page.getTotalElements()).isEqualTo(2);
 	}
 }
