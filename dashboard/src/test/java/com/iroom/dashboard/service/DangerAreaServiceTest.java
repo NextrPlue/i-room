@@ -101,4 +101,31 @@ class DangerAreaServiceTest {
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("해당 위험구역이 존재하지 않습니다.");
 	}
+
+	@Test
+	@DisplayName("위험구역 삭제 성공")
+	void deleteDangerAreaTest() {
+		// given
+		Long id = 1L;
+		given(dangerAreaRepository.existsById(id)).willReturn(true);
+
+		// when
+		dangerAreaService.deleteDangerArea(id);
+
+		// then
+		verify(dangerAreaRepository).deleteById(id);
+	}
+
+	@Test
+	@DisplayName("위험구역 삭제 실패 - 존재하지 않음")
+	void deleteDangerAreaFail_NotFound() {
+		// given
+		Long id = 999L;
+		given(dangerAreaRepository.existsById(id)).willReturn(false);
+
+		// when & then
+		assertThatThrownBy(() -> dangerAreaService.deleteDangerArea(id))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("해당 위험구역이 존재하지 않습니다.");
+	}
 }
