@@ -63,4 +63,18 @@ public class WorkerHealthControllerTest {
 			.andExpect(jsonPath("$.heartRate").value(88))
 			.andExpect(jsonPath("$.bodyTemperature").value(37.5F));
 	}
+
+	@Test
+	@DisplayName("GET /worker-health/{workerId}/location - 위치 조회 테스트")
+	void getWorkerLocationTest() throws Exception {
+		Long workerId = 3L;
+		WorkerUpdateLocationResponse response = new WorkerUpdateLocationResponse(workerId, "36.987, 127.123");
+
+		given(workerService.getWorkerLocation(workerId)).willReturn(response);
+
+		mockMvc.perform(get("/worker-health/{workerId}/location", workerId))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.workerId").value(workerId))
+			.andExpect(jsonPath("$.location").value("36.987, 127.123"));
+	}
 }
