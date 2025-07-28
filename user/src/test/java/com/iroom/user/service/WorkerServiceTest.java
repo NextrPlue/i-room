@@ -258,4 +258,53 @@ public class WorkerServiceTest {
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("이미 사용 중인 이메일입니다.");
 	}
+
+	@Test
+	@DisplayName("근로자 비밀번호 변경 성공")
+	void updateWorkerPasswordTest() {
+		// given
+		Long workerId = 1L;
+		WorkerUpdatePasswordRequest request = new WorkerUpdatePasswordRequest("currentPassword", "newPassword");
+
+		given(workerRepository.findById(workerId)).willReturn(Optional.of(worker));
+		given(passwordEncoder.matches(request.password(), worker.getPassword())).willReturn(true);
+		given(passwordEncoder.encode(request.newPassword())).willReturn("encodedNewPassword");
+
+		// when
+		workerService.updateWorkerPassword(workerId, request);
+
+		// then
+		verify(passwordEncoder).encode(request.newPassword());
+	}
+
+	@Test
+	@DisplayName("근로자 비밀번호 변경 실패 - 존재하지 않는 근로자")
+	void updateWorkerPasswordFailWorkerNotFound() {
+		// given
+		Long workerId = 999L;
+		WorkerUpdatePasswordRequest request = new WorkerUpdatePasswordRequest("currentPassword", "newPassword");
+
+		given(workerRepository.findById(workerId)).willReturn(Optional.empty());
+
+		// when & then
+		assertThatThrownBy(() -> workerService.updateWorkerPassword(workerId, request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("해당하는 근로자를 찾을 수 없습니다.");
+	}
+
+	@Test
+	@DisplayName("근로자 비밀번호 변경 실패 - 현재 비밀번호 불일치")
+	void updateWorkerPasswordFailWrongPassword() {
+		// given
+		Long workerId = 1L;
+		WorkerUpdatePasswordRequest request = new WorkerUpdatePasswordRequest("wrongPassword", "newPassword");
+
+		given(workerRepository.findById(workerId)).willReturn(Optional.of(worker));
+		given(passwordEncoder.matches(request.password(), worker.getPassword())).willReturn(false);
+
+		// when & then
+		assertThatThrownBy(() -> workerService.updateWorkerPassword(workerId, request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("현재 비밀번호가 일치하지 않습니다.");
+	}
 }
