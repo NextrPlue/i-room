@@ -3,11 +3,16 @@ from ultralytics import YOLO
 import cv2
 import requests
 from fastapi.responses import StreamingResponse
+import os
 
 app = FastAPI() # FastAPI 인스턴스 생성
 
-# 서버 시작 시, 모델 로드
-model = YOLO("./best.pt")
+# 현재 파일 기준 경로로 best.pt 찾기
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "model", "best.pt")
+
+# 모델 로드
+model = YOLO(MODEL_PATH)
 
 # 탐지해야 하는 객체들의 클래스 이름
 classes_name = {
