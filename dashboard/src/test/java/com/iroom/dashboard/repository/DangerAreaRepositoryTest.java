@@ -67,4 +67,13 @@ public class DangerAreaRepositoryTest {
 		assertThat(page.getContent()).hasSize(2);
 		assertThat(page.getTotalElements()).isEqualTo(2);
 	}
+
+	@Test
+	@DisplayName("위험구역 삭제 성공")
+	void deleteDangerArea() {
+		dangerAreaRepository.delete(dangerArea1);
+
+		Optional<DangerArea> result = dangerAreaRepository.findById(dangerArea1.getId());
+		assertThat(result).isNotPresent();
+	}
 }
