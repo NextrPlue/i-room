@@ -77,9 +77,9 @@ public class AdminService {
 			throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
 		}
 
-		kafkaProducerService.publishMessage("ADMIN_UPDATED", new AdminEvent(admin));
-
 		admin.updatePassword(passwordEncoder.encode(request.newPassword()));
+
+		kafkaProducerService.publishMessage("ADMIN_UPDATED", new AdminEvent(admin));
 	}
 
 	@PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN') and #adminId != authentication.principal")
@@ -142,8 +142,8 @@ public class AdminService {
 		Admin admin = adminRepository.findById(adminId)
 			.orElseThrow(() -> new IllegalArgumentException("ID " + adminId + "에 해당하는 관리자를 찾을 수 없습니다."));
 
-		kafkaProducerService.publishMessage("ADMIN_DELETED", new AdminEvent(admin));
-
 		adminRepository.delete(admin);
+
+		kafkaProducerService.publishMessage("ADMIN_DELETED", new AdminEvent(admin));
 	}
 }
