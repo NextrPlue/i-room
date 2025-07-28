@@ -1,0 +1,72 @@
+package com.iroom.dashboard.service;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.BDDMockito.*;
+
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
+import com.iroom.dashboard.dto.request.DangerAreaRequest;
+import com.iroom.dashboard.dto.response.DangerAreaResponse;
+import com.iroom.dashboard.entity.DangerArea;
+import com.iroom.dashboard.repository.DangerAreaRepository;
+
+@ExtendWith(MockitoExtension.class)
+class DangerAreaServiceTest {
+
+	@Mock
+	private DangerAreaRepository dangerAreaRepository;
+
+	@InjectMocks
+	private DangerAreaService dangerAreaService;
+
+	private DangerArea dangerArea;
+	private Pageable pageable;
+	private Page<DangerArea> dangerAreaPage;
+
+	@BeforeEach
+	void setUp() {
+		dangerArea = DangerArea.builder()
+			.blueprintId(1L)
+			.location("X:10, Y:20")
+			.width(100.0)
+			.height(200.0)
+			.build();
+
+		DangerArea dangerArea2 = DangerArea.builder()
+			.blueprintId(2L)
+			.location("X:50, Y:60")
+			.width(150.0)
+			.height(250.0)
+			.build();
+
+		pageable = PageRequest.of(0, 10);
+		dangerAreaPage = new PageImpl<>(List.of(dangerArea, dangerArea2), pageable, 2);
+	}
+
+	@Test
+	@DisplayName("위험구역 등록 성공")
+	void createDangerAreaTest() {
+		// given
+		DangerAreaRequest request = new DangerAreaRequest(1L, "X:10, Y:20", 100.0, 200.0);
+		given(dangerAreaRepository.save(any(DangerArea.class))).willReturn(dangerArea);
+
+		// when
+		DangerAreaResponse response = dangerAreaService.createDangerArea(request);
+
+		// then
+		assertThat(response.blueprintId()).isEqualTo(1L);
+		assertThat(response.location()).isEqualTo("X:10, Y:20");
+	}
+}
