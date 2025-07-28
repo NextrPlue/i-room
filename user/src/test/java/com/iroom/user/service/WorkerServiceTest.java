@@ -307,4 +307,46 @@ public class WorkerServiceTest {
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("현재 비밀번호가 일치하지 않습니다.");
 	}
+
+	@Test
+	@DisplayName("근로자 목록 조회 - 전체 조회")
+	void getWorkersTest() {
+		// given
+		given(workerRepository.findAll(pageable)).willReturn(workerPage);
+
+		// when
+		PagedResponse<WorkerInfoResponse> response = workerService.getWorkers(null, null, 0, 10);
+
+		// then
+		assertThat(response.content()).hasSize(2);
+		assertThat(response.totalElements()).isEqualTo(2);
+	}
+
+	@Test
+	@DisplayName("근로자 목록 조회 - 이름으로 검색")
+	void getWorkersSearchByName() {
+		// given
+		given(workerRepository.findByNameContaining("worker", pageable)).willReturn(workerPage);
+
+		// when
+		PagedResponse<WorkerInfoResponse> response = workerService.getWorkers("name", "worker", 0, 10);
+
+		// then
+		assertThat(response.content()).hasSize(2);
+		assertThat(response.content().get(0).name()).isEqualTo(worker.getName());
+	}
+
+	@Test
+	@DisplayName("근로자 목록 조회 - 이메일로 검색")
+	void getWorkersSearchByEmail() {
+		// given
+		given(workerRepository.findByEmailContaining("worker", pageable)).willReturn(workerPage);
+
+		// when
+		PagedResponse<WorkerInfoResponse> response = workerService.getWorkers("email", "worker", 0, 10);
+
+		// then
+		assertThat(response.content()).hasSize(2);
+		assertThat(response.content().get(0).email()).isEqualTo(worker.getEmail());
+	}
 }
