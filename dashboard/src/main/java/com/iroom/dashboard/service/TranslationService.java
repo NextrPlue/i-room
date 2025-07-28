@@ -3,6 +3,7 @@ package com.iroom.dashboard.service;
 import com.iroom.dashboard.dto.request.TranslationRequest;
 import com.iroom.dashboard.dto.response.TranslationResponse;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -15,7 +16,8 @@ import java.util.Collections;
 @Service
 public class TranslationService {
 	private final String deeplApiUrl = "https://api-free.deepl.com/v2/translate";
-	private final String authKey = "ab939266-7173-4ba5-9bba-feaa779fd16d:fx";
+	@Value("${myapp.auth.key}")
+	private String authKey;
 
 	public TranslationResponse translate(TranslationRequest request) {
 		String targetLang = request.getTarget_lang();
