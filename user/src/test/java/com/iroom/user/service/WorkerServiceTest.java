@@ -126,4 +126,51 @@ public class WorkerServiceTest {
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("이미 사용 중인 이메일입니다.");
 	}
+
+	@Test
+	@DisplayName("근로자 로그인 성공")
+	void loginTest() {
+		// given
+		LoginRequest request = new LoginRequest("worker@example.com", "password");
+		String token = "jwt-token";
+
+		given(workerRepository.findByEmail(request.email())).willReturn(Optional.of(worker));
+		given(passwordEncoder.matches(request.password(), worker.getPassword())).willReturn(true);
+		given(jwtTokenProvider.createWorkerToken(worker)).willReturn(token);
+
+		// when
+		LoginResponse response = workerService.login(request);
+
+		// then
+		assertThat(response.token()).isEqualTo(token);
+	}
+
+	@Test
+	@DisplayName("근로자 로그인 실패 - 존재하지 않는 이메일")
+	void loginFailEmailNotExists() {
+		// given
+		LoginRequest request = new LoginRequest("noexistent@example.com", "password");
+
+		given(workerRepository.findByEmail(request.email())).willReturn(Optional.empty());
+
+		// when & then
+		assertThatThrownBy(() -> workerService.login(request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("가입되지 않은 이메일입니다.");
+	}
+
+	@Test
+	@DisplayName("근로자 로그인 실패 - 잘못된 비밀번호")
+	void loginFailWrongPassword() {
+		// given
+		LoginRequest request = new LoginRequest("worker@exmaple.com", "wrongpassword");
+
+		given(workerRepository.findByEmail(request.email())).willReturn(Optional.of(worker));
+		given(passwordEncoder.matches(request.password(), worker.getPassword())).willReturn(false);
+
+		// when & then
+		assertThatThrownBy(() -> workerService.login(request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("잘못된 비밀번호입니다.");
+	}
 }
