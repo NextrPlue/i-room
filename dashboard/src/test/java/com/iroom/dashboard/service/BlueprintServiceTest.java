@@ -102,4 +102,31 @@ class BlueprintServiceTest {
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("해당 도면이 존재하지 않습니다.");
 	}
+
+	@Test
+	@DisplayName("도면 삭제 성공")
+	void deleteBlueprintTest() {
+		// given
+		Long id = 1L;
+		given(blueprintRepository.existsById(id)).willReturn(true);
+
+		// when
+		blueprintService.deleteBlueprint(id);
+
+		// then
+		verify(blueprintRepository).deleteById(id);
+	}
+
+	@Test
+	@DisplayName("도면 삭제 실패 - 존재하지 않는 도면")
+	void deleteBlueprintFailNotFound() {
+		// given
+		Long id = 999L;
+		given(blueprintRepository.existsById(id)).willReturn(false);
+
+		// when & then
+		assertThatThrownBy(() -> blueprintService.deleteBlueprint(id))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("해당 도면이 존재하지 않습니다.");
+	}
 }
