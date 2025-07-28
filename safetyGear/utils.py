@@ -5,7 +5,7 @@ import os
 
 # 현재 파일 기준 경로로 best.pt 찾기
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "best.pt")
+MODEL_PATH = os.path.join(BASE_DIR, "model", "best.pt")
 
 model = YOLO(MODEL_PATH)
 
