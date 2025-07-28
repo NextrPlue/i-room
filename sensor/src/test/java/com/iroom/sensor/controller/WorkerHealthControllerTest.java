@@ -15,6 +15,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationRequest;
 import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationResponse;
+import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsRequest;
+import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsResponse;
 import com.iroom.sensor.service.WorkerHealthService;
 
 @WebMvcTest(WorkerHealthController.class)
@@ -43,5 +45,22 @@ public class WorkerHealthControllerTest {
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.workerId").value(1L))
 			.andExpect(jsonPath("$.location").value("54.8343, 1.4723"));
+	}
+
+	@Test
+	@DisplayName("POST /worker-health/vital-signs - 생체 정보 업데이트 테스트")
+	void updateVitalSignsTest() throws Exception {
+		WorkerUpdateVitalSignsRequest request = new WorkerUpdateVitalSignsRequest(2L, 88, 37.5F);
+		WorkerUpdateVitalSignsResponse response = new WorkerUpdateVitalSignsResponse(2L, 88, 37.5F);
+
+		given(workerService.updateVitalSigns(request)).willReturn(response);
+
+		mockMvc.perform(post("/worker-health/vital-signs")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.workerId").value(2L))
+			.andExpect(jsonPath("$.heartRate").value(88))
+			.andExpect(jsonPath("$.bodyTemperature").value(37.5F));
 	}
 }
