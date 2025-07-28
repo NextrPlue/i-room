@@ -1,6 +1,8 @@
 package com.iroom.dashboard.repository;
 
-import com.iroom.dashboard.entity.DangerArea;
+import static org.assertj.core.api.Assertions.*;
+
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,9 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import java.util.Optional;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import com.iroom.dashboard.entity.DangerArea;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -53,8 +53,10 @@ public class DangerAreaRepositoryTest {
 	@Test
 	@DisplayName("위험구역 저장 및 조회 성공")
 	void saveAndFindById() {
+		// when
 		Optional<DangerArea> result = dangerAreaRepository.findById(dangerArea1.getId());
 
+		// then
 		assertThat(result).isPresent();
 		assertThat(result.get().getLocation()).isEqualTo("10,20");
 	}
@@ -62,8 +64,10 @@ public class DangerAreaRepositoryTest {
 	@Test
 	@DisplayName("위험구역 전체 조회 성공")
 	void findAllDangerAreas() {
+		// when
 		Page<DangerArea> page = dangerAreaRepository.findAll(pageable);
 
+		// then
 		assertThat(page.getContent()).hasSize(2);
 		assertThat(page.getTotalElements()).isEqualTo(2);
 	}
@@ -71,8 +75,10 @@ public class DangerAreaRepositoryTest {
 	@Test
 	@DisplayName("위험구역 삭제 성공")
 	void deleteDangerArea() {
+		// when
 		dangerAreaRepository.delete(dangerArea1);
 
+		// then
 		Optional<DangerArea> result = dangerAreaRepository.findById(dangerArea1.getId());
 		assertThat(result).isNotPresent();
 	}
