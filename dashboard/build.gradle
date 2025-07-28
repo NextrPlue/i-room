@@ -38,6 +38,7 @@ dependencies {
 
     //새로 추가한 의존성
     implementation 'com.itextpdf:itextpdf:5.5.13.2'//(pdf로 만들어주는 라이브러리)
+    implementation 'org.apache.pdfbox:pdfbox:2.0.30' // 내가 추가한 의존성
 
     // Database
     //runtimeOnly 'com.h2database:h2'
