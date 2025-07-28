@@ -6,14 +6,26 @@
 
 ```plaintext
 safetyGear/
-├── safetyGear_study.ipynb     # 모델 학습 코드
-├── YOLO_test.ipynb            # [GPU] 동영상 객체 추론 테스트 코드
-├── safetyGear_test_local.py   # [CPU] 동영상 객체 추론 테스트 코드
-├── test.py                    # [CPU] 웹캠 실시간 객체 추론 테스트 코드
-├── image_filtering.py         # 데이터 중 원하는 클래스의 이미지만 추출하는 코드
-├── complete-image.py          # [CPU] 특정 품질 기준 이상을 충족하는 이미지만 추출하는 코드
-├── complete-image_gpu.py      # [GPU] 특정 품질 기준 이상을 충족하는 이미지만 추출하는 코드
-├── image_json_mapping.py      # 추출된 이미지에 해당되는 json 파일을 불러오는 코드
+├── image_filtering/
+│   ├── image_filtering.py         # 데이터 중 원하는 클래스의 이미지만 추출하는 코드
+│   ├── complete-image.py          # [CPU] 특정 품질 기준 이상을 충족하는 이미지만 추출하는 코드
+│   ├── complete-image_gpu.py      # [GPU] 특정 품질 기준 이상을 충족하는 이미지만 추출하는 코드
+│   ├── bbox-image_gpu.py          # 이미지에 bounding box를 그리는 코드
+│   └── image_json_mapping.py      # 추출된 이미지에 해당되는 json 파일을 불러오는 코드
+├── study/
+│   ├── YOLO_study.ipynb           # 모델 학습 코드 프로토타입
+│   └── safetyGear_study.ipynb     # 안전 보호구 객체 탐지 모델 학습 코드
+├── model/
+│   ├── best.pt                    # 테스트용 경량화 모델 YOLOv8n.pt
+│   └── best_8s_many.pt            # 최고 성능 경량화 모델 YOLOv8s.pt
+├── test/
+│   ├── YOLO_test.ipynb            # [GPU] 동영상 객체 추론 테스트 코드
+│   ├── safetyGear_test_local.py   # [CPU] 동영상 객체 추론 테스트 코드
+│   └── test.py                    # [CPU] 웹캠 실시간 객체 추론 테스트 코드
+├── main.py                        # [FastAPI] 실시간 객체 탐지 서비스 프로토타입 코드
+├── utils.py                       # [FastAPI] 객체 탐지 모듈
+├── main_webcam.py                 # [FastAPI] 실시간 객체 탐지 서비스 (웹캠)
+├── main_prototype.py              # [FastAPI] 객체 탐지 서비스 (영상 처리)
 └── README.md
 ```
 
