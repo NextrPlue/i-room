@@ -6,22 +6,25 @@ import static org.mockito.BDDMockito.*;
 import java.util.List;
 import java.util.Optional;
 
+import com.iroom.dashboard.dto.request.DangerAreaRequest;
+import com.iroom.dashboard.dto.response.DangerAreaResponse;
+import com.iroom.dashboard.dto.response.PagedResponse;
+import com.iroom.dashboard.entity.DangerArea;
+import com.iroom.dashboard.repository.DangerAreaRepository;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-
-import com.iroom.dashboard.dto.request.DangerAreaRequest;
-import com.iroom.dashboard.dto.response.DangerAreaResponse;
-import com.iroom.dashboard.entity.DangerArea;
-import com.iroom.dashboard.repository.DangerAreaRepository;
 
 @ExtendWith(MockitoExtension.class)
 class DangerAreaServiceTest {
@@ -127,5 +130,20 @@ class DangerAreaServiceTest {
 		assertThatThrownBy(() -> dangerAreaService.deleteDangerArea(id))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("해당 위험구역이 존재하지 않습니다.");
+	}
+
+	@Test
+	@DisplayName("위험구역 전체 조회 성공")
+	void getAllDangerAreasTest() {
+		// given
+		given(dangerAreaRepository.findAll(pageable)).willReturn(dangerAreaPage);
+
+		// when
+		PagedResponse<DangerAreaResponse> response = dangerAreaService.getAllDangerAreas(0, 10);
+
+		// then
+		assertThat(response.content()).hasSize(2);
+		assertThat(response.totalElements()).isEqualTo(2);
+		assertThat(response.content().get(0).location()).isEqualTo("X:10, Y:20");
 	}
 }
