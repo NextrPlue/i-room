@@ -2,7 +2,6 @@ package com.iroom.dashboard.service;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
-import static org.mockito.Mockito.*;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.iroom.dashboard.dto.request.BlueprintRequest;
 import com.iroom.dashboard.dto.response.BlueprintResponse;
+import com.iroom.dashboard.dto.response.PagedResponse;
 import com.iroom.dashboard.entity.Blueprint;
 import com.iroom.dashboard.repository.BlueprintRepository;
 
@@ -128,5 +128,20 @@ class BlueprintServiceTest {
 		assertThatThrownBy(() -> blueprintService.deleteBlueprint(id))
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("해당 도면이 존재하지 않습니다.");
+	}
+
+	@Test
+	@DisplayName("도면 전체 조회 성공")
+	void getAllBlueprintsTest() {
+		// given
+		given(blueprintRepository.findAll(pageable)).willReturn(blueprintPage);
+
+		// when
+		PagedResponse<BlueprintResponse> response = blueprintService.getAllBlueprints(0, 10);
+
+		// then
+		assertThat(response.content()).hasSize(2);
+		assertThat(response.totalElements()).isEqualTo(2);
+		assertThat(response.content().get(0).floor()).isEqualTo(1);
 	}
 }
