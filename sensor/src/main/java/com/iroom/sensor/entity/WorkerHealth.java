@@ -12,32 +12,32 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WorkerHealth {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private Long id;
 
-    @Column(nullable = false)
-    private Long workerId;
+	@Column(nullable = false)
+	private Long workerId;
 
-    private String workerLocation;
+	private String workerLocation;
 
-    private Integer heartRate;
-    private Float bodyTemperature;
+	private Integer heartRate;
+	private Float bodyTemperature;
 
-    @Builder
-    public WorkerHealth(Long workerId){
-        this.workerId = workerId;
-    }
+	@Builder
+	public WorkerHealth(Long workerId) {
+		this.workerId = workerId;
+	}
 
-    //위치 업데이트
-    public void updateLocation(String location){
-        this.workerLocation = location;
-    }
+	//위치 업데이트
+	public void updateLocation(String location) {
+		this.workerLocation = location;
+	}
 
-    //생체 정보 업데이트
-    public void updateVitalSign(Integer heartRate, Float bodyTemperature){
-        this.heartRate = heartRate;
-        this.bodyTemperature = bodyTemperature;
-    }
+	//생체 정보 업데이트
+	public void updateVitalSign(Integer heartRate, Float bodyTemperature) {
+		this.heartRate = heartRate;
+		this.bodyTemperature = bodyTemperature;
+	}
 
 }
