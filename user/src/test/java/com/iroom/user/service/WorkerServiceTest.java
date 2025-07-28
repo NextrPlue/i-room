@@ -173,4 +173,89 @@ public class WorkerServiceTest {
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("잘못된 비밀번호입니다.");
 	}
+
+	@Test
+	@DisplayName("근로자 정보 수정 성공")
+	void updateWorkerInfoTest() {
+		// given
+		Long workerId = 1L;
+		WorkerUpdateInfoRequest request = new WorkerUpdateInfoRequest(
+			"updatedworker",
+			"updeatedworker@example.com",
+			"010-1234-5678",
+			BloodType.A,
+			Gender.MALE,
+			30,
+			70.0f,
+			175.0f,
+			"팀장",
+			"철근공",
+			"건설부",
+			"face.jpg");
+
+		given(workerRepository.findById(workerId)).willReturn(Optional.of(worker));
+		given(workerRepository.existsByEmail(request.email())).willReturn(false);
+
+		// when
+		WorkerUpdateResponse response = workerService.updateWorkerInfo(workerId, request);
+
+		// then
+		assertThat(response.name()).isEqualTo(request.name());
+		assertThat(response.email()).isEqualTo(request.email());
+	}
+
+	@Test
+	@DisplayName("근로자 정보 수정 실패 - 존재하지 않는 근로자")
+	void updateWorkerInfoFailWorkerNotFound() {
+		// given
+		Long workerId = 999L;
+		WorkerUpdateInfoRequest request = new WorkerUpdateInfoRequest(
+			"updatedworker",
+			"updeatedworker@example.com",
+			"010-1234-5678",
+			BloodType.A,
+			Gender.MALE,
+			30,
+			70.0f,
+			175.0f,
+			"팀장",
+			"철근공",
+			"건설부",
+			"face.jpg");
+
+		given(workerRepository.findById(workerId)).willReturn(Optional.empty());
+
+		// when & then
+		assertThatThrownBy(() -> workerService.updateWorkerInfo(workerId, request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("해당하는 근로자를 찾을 수 없습니다.");
+	}
+
+	@Test
+	@DisplayName("근로자 정보 수정 실패 - 이메일 중복")
+	void updateWorkerInfoFailEmailExists() {
+		// given
+		Long workerId = 1L;
+		WorkerUpdateInfoRequest request = new WorkerUpdateInfoRequest(
+			"updatedworker",
+			"updeatedworker@example.com",
+			"010-1234-5678",
+			BloodType.A,
+			Gender.MALE,
+			30,
+			70.0f,
+			175.0f,
+			"팀장",
+			"철근공",
+			"건설부",
+			"face.jpg");
+
+		given(workerRepository.findById(workerId)).willReturn(Optional.of(worker));
+		given(workerRepository.existsByEmail(request.email())).willReturn(true);
+
+		// when & then
+		assertThatThrownBy(() -> workerService.updateWorkerInfo(workerId, request))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("이미 사용 중인 이메일입니다.");
+	}
 }
