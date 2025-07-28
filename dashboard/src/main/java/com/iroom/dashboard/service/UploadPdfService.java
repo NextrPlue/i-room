@@ -40,11 +40,13 @@ public class UploadPdfService {
 				String chunk = context.substring(start, end);
 				List<String> promptList = new ArrayList<>();
 				promptList.add(chunk);
-				TranslationRequest translationRequest = TranslationRequest.builder().
-					text(promptList).target_lang("EN").
-					build();
+				// TranslationRequest translationRequest = TranslationRequest.builder().
+				// 	text(promptList).target_lang("EN").
+				// 	build();
+				TranslationRequest translationRequest = new TranslationRequest(promptList, "EN");
+
 				TranslationResponse translated = translationService.translate(translationRequest);
-				for (Translation t : translated.getTranslations()) {
+				for (Translation t : translated.translations()) {
 					translatedContext += t.getText();
 				}
 				start = end;

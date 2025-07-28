@@ -20,7 +20,7 @@ public class TranslationService {
 	private String authKey;
 
 	public TranslationResponse translate(TranslationRequest request) {
-		String targetLang = request.getTarget_lang();
+		String targetLang = request.target_lang();
 
 		String apiUrl = deeplApiUrl + "?target_lang=" + targetLang;
 		RestTemplate restTemplate = new RestTemplate();

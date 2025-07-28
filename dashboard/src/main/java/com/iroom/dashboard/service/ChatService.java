@@ -1,8 +1,8 @@
 package com.iroom.dashboard.service;
 
 import com.iroom.dashboard.dto.Message;
-import com.iroom.dashboard.dto.request.ChatRequestDto;
-import com.iroom.dashboard.dto.response.ChatResponseDto;
+import com.iroom.dashboard.dto.request.ChatRequest;
+import com.iroom.dashboard.dto.response.ChatResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -10,8 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -26,8 +24,8 @@ public class ChatService {
 	private RestTemplate template;
 
 	public String chat(String prompt) {
-		ChatRequestDto request = new ChatRequestDto(chatModel, prompt);
-		request.getMessages().add(new Message(
+		ChatRequest request = ChatRequest.of(chatModel, prompt);
+		request.messages().add(new Message(
 			"system",
 			"General Purpose) Construction Safety Document Summarization Prompt for LLMs\n" +
 				"1. Overview\n" +
@@ -79,8 +77,9 @@ public class ChatService {
 				"\n" +
 				"Flexibility: This is a standard template. If the source document follows a different structure (e.g., cause-effect, legal regulation–explanation), adapt the summary format accordingly to best reflect the content and its purpose."));
 		try {
-			ChatResponseDto response = template.postForObject(chatApiURL, request, ChatResponseDto.class);
-			return response.getChoices().get(0).getMessage().getContent();
+			ChatResponse response = template.postForObject(chatApiURL, request, ChatResponse.class);
+			return response.choices().get(0).message().getContent();
+
 		} catch (Exception e) {
 			System.out.println("gpt에러: " + e);
 		}
@@ -94,8 +93,8 @@ public class ChatService {
 	}
 
 	public String generateReport(String prompt) {
-		ChatRequestDto request = new ChatRequestDto(chatModel, prompt);
-		request.getMessages().add(new Message(
+		ChatRequest request = ChatRequest.of(chatModel, prompt);
+		request.messages().add(new Message(
 			"system",
 			"너는 산업안전 보고서를 작성하는 전문가야. 영어로 된 위험요인 자율점검표를 참고해서 " +
 				"위험 지역 접근 수,보호구 미착용 수,건강 알림 수에 대한 안전 보고서를 작성해 " +
@@ -103,8 +102,8 @@ public class ChatService {
 				"또한 보고서를 작성할 때 자율점검표의 어느 부분을 참고 해서 작성했는지 문단 앞에 배치하면서 서술해)."
 				+ "보고서는 한국어로 작성해주고 마크다운('**')은 제거해줘"));
 		try {
-			ChatResponseDto response = template.postForObject(chatApiURL, request, ChatResponseDto.class);
-			return response.getChoices().get(0).getMessage().getContent();
+			ChatResponse response = template.postForObject(chatApiURL, request, ChatResponse.class);
+			return response.choices().get(0).message().getContent();
 		} catch (Exception e) {
 			System.out.println("gpt에러: " + e);
 		}
