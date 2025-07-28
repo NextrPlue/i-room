@@ -48,11 +48,13 @@ class BlueprintControllerTest {
 	@Test
 	@DisplayName("도면 등록 성공")
 	void createBlueprintTest() throws Exception {
+		// given
 		BlueprintRequest request = new BlueprintRequest("url.png", 1, 100.0, 200.0);
 		BlueprintResponse response = new BlueprintResponse(1L, "url.png", 1, 100.0, 200.0);
 
 		Mockito.when(blueprintService.createBlueprint(any())).thenReturn(response);
 
+		// when & then
 		mockMvc.perform(post("/blueprints")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
@@ -64,11 +66,13 @@ class BlueprintControllerTest {
 	@Test
 	@DisplayName("도면 수정 성공")
 	void updateBlueprintTest() throws Exception {
+		// given
 		BlueprintRequest request = new BlueprintRequest("new_url.png", 2, 150.0, 250.0);
 		BlueprintResponse response = new BlueprintResponse(1L, "new_url.png", 2, 150.0, 250.0);
 
 		Mockito.when(blueprintService.updateBlueprint(eq(1L), any())).thenReturn(response);
 
+		// when & then
 		mockMvc.perform(put("/blueprints/1")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
@@ -80,8 +84,10 @@ class BlueprintControllerTest {
 	@Test
 	@DisplayName("도면 삭제 성공")
 	void deleteBlueprintTest() throws Exception {
+		// given
 		Mockito.doNothing().when(blueprintService).deleteBlueprint(1L);
 
+		// when & then
 		mockMvc.perform(delete("/blueprints/1"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.message").value("도면 삭제 완료"))
@@ -91,6 +97,7 @@ class BlueprintControllerTest {
 	@Test
 	@DisplayName("도면 전체 조회 성공")
 	void getAllBlueprintsTest() throws Exception {
+		// given
 		BlueprintResponse r1 = new BlueprintResponse(1L, "url1.png", 1, 100.0, 100.0);
 		BlueprintResponse r2 = new BlueprintResponse(2L, "url2.png", 2, 200.0, 200.0);
 
@@ -100,6 +107,7 @@ class BlueprintControllerTest {
 
 		Mockito.when(blueprintService.getAllBlueprints(0, 10)).thenReturn(pagedResponse);
 
+		// when & then
 		mockMvc.perform(get("/blueprints?page=0&size=10"))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.content").isArray())
