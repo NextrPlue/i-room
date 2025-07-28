@@ -1,0 +1,27 @@
+spring:
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/iroom_alarm?serverTimezone=Asia/Seoul
+    username: root
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        order_insert: true
+        order_update: true
+        show_sql: true
+        format_sql: true
+        jdbc:
+          batch_size: 1000
+
+
+
+
+
+logging.level:
+  org.hibernate.SQL: debug
+  org.hibernate.type: trace  #sql 사용시 파라미터를 로그로 남긴다
