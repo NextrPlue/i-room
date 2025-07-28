@@ -409,4 +409,33 @@ public class WorkerServiceTest {
 			.isInstanceOf(IllegalArgumentException.class)
 			.hasMessage("해당하는 근로자를 찾을 수 없습니다.");
 	}
+
+	@Test
+	@DisplayName("근로자 삭제 성공")
+	void deleteWorkerTest() {
+		// given
+		Long workerId = 1L;
+
+		given(workerRepository.findById(workerId)).willReturn(Optional.of(worker));
+
+		// when
+		workerService.deleteWorker(workerId);
+
+		// then
+		verify(workerRepository).delete(worker);
+	}
+
+	@Test
+	@DisplayName("근로자 삭제 실패 - 존재하지 않는 근로자")
+	void deleteWorkerFailWorkerNotFound() {
+		// given
+		Long workerId = 999L;
+
+		given(workerRepository.findById(workerId)).willReturn(Optional.empty());
+
+		// when & then
+		assertThatThrownBy(() -> workerService.deleteWorker(workerId))
+			.isInstanceOf(IllegalArgumentException.class)
+			.hasMessage("ID " + workerId + "에 해당하는 근로자를 찾을 수 없습니다.");
+	}
 }

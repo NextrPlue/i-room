@@ -117,7 +117,7 @@ public class WorkerService {
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public void deleteWorker(Long workerId) {
 		Worker worker = workerRepository.findById(workerId)
-			.orElseThrow(() -> new IllegalArgumentException("해당하는 근로자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new IllegalArgumentException("ID " + workerId + "에 해당하는 근로자를 찾을 수 없습니다."));
 
 		workerRepository.delete(worker);
 	}
