@@ -1,5 +1,7 @@
 package com.iroom.user.service;
 
+import com.iroom.user.dto.event.AdminEvent;
+import com.iroom.user.dto.event.WorkerEvent;
 import com.iroom.user.dto.request.LoginRequest;
 import com.iroom.user.dto.request.WorkerRegisterRequest;
 import com.iroom.user.dto.request.WorkerUpdateInfoRequest;
@@ -28,6 +30,7 @@ public class WorkerService {
 	private final WorkerRepository workerRepository;
 	private final PasswordEncoder passwordEncoder;
 	private final JwtTokenProvider jwtTokenProvider;
+	private final KafkaProducerService kafkaProducerService;
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public WorkerRegisterResponse registerWorker(WorkerRegisterRequest request) {
@@ -37,6 +40,8 @@ public class WorkerService {
 
 		Worker worker = request.toEntity(passwordEncoder);
 		workerRepository.save(worker);
+
+		kafkaProducerService.publishMessage("WORKER_CREATED", new WorkerEvent(worker));
 
 		return new WorkerRegisterResponse(worker);
 	}
@@ -63,6 +68,8 @@ public class WorkerService {
 
 		worker.updateInfo(request);
 
+		kafkaProducerService.publishMessage("WORKER_UPDATED", new WorkerEvent(worker));
+
 		return new WorkerUpdateResponse(worker);
 	}
 
@@ -76,6 +83,8 @@ public class WorkerService {
 		}
 
 		worker.updatePassword(passwordEncoder.encode(request.newPassword()));
+
+		kafkaProducerService.publishMessage("WORKER_UPDATED", new WorkerEvent(worker));
 	}
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
@@ -120,5 +129,7 @@ public class WorkerService {
 			.orElseThrow(() -> new IllegalArgumentException("ID " + workerId + "에 해당하는 근로자를 찾을 수 없습니다."));
 
 		workerRepository.delete(worker);
+
+		kafkaProducerService.publishMessage("WORKER_DELETED", new WorkerEvent(worker));
 	}
 }
