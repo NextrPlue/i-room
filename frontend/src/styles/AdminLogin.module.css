@@ -1,0 +1,139 @@
+.page {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #FAFBFF;
+    font-family: 'Pretendard', sans-serif;
+}
+
+.topBar {
+    height: 72px;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+    overflow: hidden;
+}
+
+.circle {
+    width: 34px;
+    height: 32px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 9999px;
+}
+
+.logoText {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* 중앙 레이아웃 Frame2 */
+.mainContent {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 80px;
+    padding: 40px 0;
+}
+
+/* 왼쪽 영역 (left) */
+.left {
+    text-align: left;
+    color: #111827;
+}
+
+.leftTitle {
+    font-size: 32px;
+    font-weight: bold;
+    line-height: 40px;
+    letter-spacing: -0.5px;
+}
+
+.leftDesc {
+    margin-top: 12px;
+    font-size: 14px;
+    color: #6b7280; /* 회색 tone */
+    line-height: 20px;
+}
+
+/* 로그인 폼 영역 (기입창) */
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0px 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+/* 입력창 공통 스타일 */
+.input {
+    padding: 12px 14px;
+    width: 320px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #111827;
+    background-color: #ffffff;
+}
+
+/* 버튼 줄 */
+.buttonRow {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+/* 회색 버튼: 회원가입 */
+.grayBtn {
+    flex: 1;
+    background-color: #9ca3af;
+    color: #ffffff;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.grayBtn:hover {
+    background-color: #6b7280;
+}
+
+/* 검정 버튼: 로그인 */
+.blackBtn {
+    flex: 1;
+    background-color: #111111;
+    color: #ffffff;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.blackBtn:hover {
+    background-color: #000000;
+}
+
+/* 에러 메시지 */
+.errorMessage {
+    font-size: 13px;
+    color: #ef4444;
+    margin-top: 4px;
+}
+
+/* 입력창에 에러 표시 시 테두리 강조 */
+.error {
+    border-color: #ef4444;
+    background-color: #fff1f2;
+}
