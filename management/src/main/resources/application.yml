@@ -1,3 +1,6 @@
+server:
+  port: 8082
+
 spring:
   application:
     name: management
@@ -20,20 +23,42 @@ spring:
         jdbc:
           batch_size: 1000
 
-  kafka:
-    bootstrap-servers: localhost:9092
-    consumer:
-      group-id: management-service
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
+  cloud:
+    stream:
+      bindings:
+        event-in:
+          group: manager
+          destination: iroom
+          contentType: application/json
+        event-out:
+          destination: iroom
+          contentType: application/json
 
+---
 
+spring:
+  config:
+    activate:
+      on-profile: default
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: localhost:9092
 
+logging:
+  level:
+    org.hibernate.type: trace
+    org.springframework.cloud: debug
 
+---
 
-logging.level:
-  org.hibernate.SQL: debug
-  org.hibernate.type: trace  #sql 사용시 파라미터를 로그로 남긴다
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: my-kafka:9092
