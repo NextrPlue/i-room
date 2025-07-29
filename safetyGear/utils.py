@@ -5,15 +5,14 @@ import os
 
 # 현재 파일 기준 경로로 모델 찾기
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, "model", "best_8s_many.pt")
+MODEL_PATH = os.path.join(BASE_DIR, "model", "best_8n_somany.pt")
 
 model = YOLO(MODEL_PATH)
 
 # 탐지해야 하는 객체들의 클래스 이름
 classes_name = {
     0: "safety_harness_on",
-    1: "safety_lanyard_on",
-    2: "safety_helmet_on"
+    1: "safety_helmet_on"
 }
 
 def detect_and_draw(frame):
