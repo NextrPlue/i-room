@@ -1,25 +1,31 @@
-import logo from './logo.svg';
+import React, { useState } from 'react';
+import Header from './components/Header';
+import Sidebar from './components/Sidebar';
+import MainContent from './components/MainContent';
 import './App.css';
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    const [activeItem, setActiveItem] = useState('dashboard');
+
+    const appStyle = {
+        minHeight: '100vh',
+        backgroundColor: '#f3f4f6',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+    };
+
+    const layoutStyle = {
+        display: 'flex'
+    };
+
+    return (
+        <div style={appStyle}>
+            <Header />
+            <div style={layoutStyle}>
+                <Sidebar activeItem={activeItem} setActiveItem={setActiveItem} />
+                <MainContent activeItem={activeItem} />
+            </div>
+        </div>
+    );
 }
 
 export default App;
