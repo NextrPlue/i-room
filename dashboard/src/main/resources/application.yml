@@ -1,10 +1,15 @@
+server:
+  port: 8085
+
 spring:
+  application:
+    name: dashboard
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/iroom?serverTimezone=Asia/Seoul
+    url: jdbc:mysql://localhost:3306/iroom_dashboard?serverTimezone=Asia/Seoul
     username: root
-    password: Chogi4585!
+    password: password
 
   jpa:
     hibernate:
@@ -14,14 +19,46 @@ spring:
         order_insert: true
         order_update: true
         show_sql: true
-        format_sql : true
+        format_sql: true
         jdbc:
           batch_size: 1000
 
+  cloud:
+    stream:
+      bindings:
+        event-in:
+          group: dashboard
+          destination: iroom
+          contentType: application/json
+        event-out:
+          destination: iroom
+          contentType: application/json
 
+---
 
+spring:
+  config:
+    activate:
+      on-profile: default
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: localhost:9092
 
+logging:
+  level:
+    org.hibernate.type: trace
+    org.springframework.cloud: debug
 
-logging.level:
-  org.hibernate.SQL: debug
-  org.hibernate.type: trace  #sql 사용시 파라미터를 로그로 남긴다
+---
+
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: my-kafka:9092
