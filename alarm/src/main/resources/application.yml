@@ -1,4 +1,9 @@
+server:
+  port: 8084
+
 spring:
+  application:
+    name: alarm
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -18,10 +23,42 @@ spring:
         jdbc:
           batch_size: 1000
 
+  cloud:
+    stream:
+      bindings:
+        event-in:
+          group: alarm
+          destination: iroom
+          contentType: application/json
+        event-out:
+          destination: iroom
+          contentType: application/json
 
+---
 
+spring:
+  config:
+    activate:
+      on-profile: default
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: localhost:9092
 
+logging:
+  level:
+    org.hibernate.type: trace
+    org.springframework.cloud: debug
 
-logging.level:
-  org.hibernate.SQL: debug
-  org.hibernate.type: trace  #sql 사용시 파라미터를 로그로 남긴다
+---
+
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: my-kafka:9092
