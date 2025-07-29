@@ -31,6 +31,11 @@ async def capture_loop():
     global cap, latest_frame, clients_count, last_alert_time
     cap = cv2.VideoCapture(0)
     print("Capture loop started")
+
+    frame_count = 0
+    fps = 0
+    prev_time = time.time()
+
     try:
         while True:
             # 클라이언트 없으면 종료
@@ -62,9 +67,20 @@ async def capture_loop():
                 cv2.putText(frame, f"ID:{track_id}", (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
                 
+            # FPS 계산
+            frame_count += 1
+            current_time = time.time()
+            if current_time - prev_time >= 1.0:
+                fps = frame_count / (current_time - prev_time)
+                prev_time = current_time
+                frame_count = 0
+
+            # 화면에 FPS 출력
+            cv2.putText(frame, f"FPS: {fps:.1f}", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                
             # ======== 5초마다 미착용 경고 로직 추가 ========
             missing = REQUIRED_ITEMS - detected_classes
-            current_time = time.time()
             if missing and (current_time - last_alert_time >= ALERT_INTERVAL):
                 # JPEG로 인코딩
                 _, img_bytes = cv2.imencode(".jpg", frame)
@@ -109,7 +125,7 @@ async def monitor_page():
     <html>
     <body>
     <h2>WebRTC Monitor</h2>
-    <video id="video" autoplay playsinline controls style="width: 640px; height: 480px; background: black;"></video>
+    <video id="video" autoplay playsinline controls style="width: 1280px; height: 720px; background: black;"></video>
     <script>
     const pc = new RTCPeerConnection();
     const video = document.getElementById('video');
