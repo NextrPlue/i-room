@@ -1,13 +1,13 @@
 server:
-  port: 8081
+  port: 8083
 
 spring:
   application:
-    name: admin
+    name: sensor
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/iroom_user?serverTimezone=Asia/Seoul
+    url: jdbc:mysql://localhost:3306/iroom_sensor?serverTimezone=Asia/Seoul
     username: root
     password: password
 
@@ -27,7 +27,7 @@ spring:
     stream:
       bindings:
         event-in:
-          group: user
+          group: sensor
           destination: iroom
           contentType: application/json
         event-out:

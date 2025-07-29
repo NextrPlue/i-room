@@ -1,5 +1,6 @@
 package com.iroom.dashboard.controller;
 
+import com.iroom.dashboard.dto.request.ReportRequest;
 import com.iroom.dashboard.dto.response.DashBoardResponse;
 import com.iroom.dashboard.service.ChatService;
 import com.iroom.dashboard.service.DashBoardService;
@@ -39,12 +40,14 @@ public class DashBoardController {
 	@PostMapping(
 		value = "/report"
 	)
-	public ResponseEntity<byte[]> exportReport() throws Exception {
+	public ResponseEntity<byte[]> exportReport(@RequestBody ReportRequest reportRequest) throws Exception {
 		int missingPPECount = 40;
 		int dangerZoneAccessCount = 20;
 		int healthAlertCount = 10;
 		// 1. 질의 프롬프트 생성
-		String userPrompt = String.format("오늘 보호구 미착용 %d건, 위험지역 접근 %d건, 건강 이상 알림 %d건이 있었습니다. 이에 따른 안전 보고서를 작성해주세요.",
+		String userPrompt = String.format(
+			"오늘 보호구 미착용 " + reportRequest.missingPpeCnt() + "건, 위험지역 접근 " + reportRequest.dangerZoneAccessCnt()
+				+ "건, 건강 이상 알림 " + reportRequest.healthAlertCnt() + "건이 있었습니다. 이에 따른 안전 보고서를 작성해주세요.",
 			missingPPECount, dangerZoneAccessCount, healthAlertCount);
 
 		// 2. Qdrant에 유사 문단 질의 (임의 벡터 사용 중이라 실제 의미 없음)
