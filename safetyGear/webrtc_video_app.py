@@ -12,6 +12,7 @@ from deep_sort_realtime.deepsort_tracker import DeepSort
 from safetyGear.alert_service import send_alert
 import time
 import os
+import asyncio
 
 app = FastAPI()
 
@@ -28,6 +29,14 @@ REQUIRED_ITEMS = {"safety_harness_on", "safety_helmet_on"}
 # YOLO + DeepSORT 초기화
 tracker = DeepSort(max_age=30, n_init=3, max_iou_distance=0.7)
 
+async def async_send_alert(frame, missing):
+    # 프레임 복사 후 JPEG로 인코딩
+    _, img_bytes = cv2.imencode(".jpg", frame)
+
+    # 동기 함수(send_alert)를 쓰레드 풀에서 실행
+    loop = asyncio.get_running_loop()
+    await loop.run_in_executor(None, send_alert, img_bytes.tobytes(), missing)
+
 async def capture_loop():
     global cap, latest_frame, clients_count, last_alert_time
 
@@ -35,6 +44,10 @@ async def capture_loop():
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     VIDEO_PATH = os.path.join(BASE_DIR, "sample.mp4")
     cap = cv2.VideoCapture(VIDEO_PATH)
+
+    frame_count = 0
+    fps = 0
+    prev_time = time.time()
 
     print("Capture loop started")
     try:
@@ -69,13 +82,22 @@ async def capture_loop():
                 cv2.putText(frame, f"ID:{track_id}", (x1, y1 - 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
                 
+            # FPS 계산
+            frame_count += 1
+            current_time = time.time()
+            if current_time - prev_time >= 1.0:
+                fps = frame_count / (current_time - prev_time)
+                prev_time = current_time
+                frame_count = 0
+
+            # 화면에 FPS 출력
+            cv2.putText(frame, f"FPS: {fps:.1f}", (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+                
             # ======== 5초마다 미착용 경고 로직 추가 ========
             missing = REQUIRED_ITEMS - detected_classes
-            current_time = time.time()
             if missing and (current_time - last_alert_time >= ALERT_INTERVAL):
-                # JPEG로 인코딩
-                _, img_bytes = cv2.imencode(".jpg", frame)
-                send_alert(img_bytes.tobytes(), missing)
+                asyncio.create_task(async_send_alert(frame.copy(), missing))
                 last_alert_time = current_time
             # ============================================
 
@@ -116,7 +138,7 @@ async def monitor_page():
     <html>
     <body>
     <h2>WebRTC Monitor</h2>
-    <video id="video" autoplay playsinline controls style="width: 640px; height: 480px; background: black;"></video>
+    <video id="video" autoplay playsinline controls style="width: 1280px; height: 720px; background: black;"></video>
     <script>
     const pc = new RTCPeerConnection();
     const video = document.getElementById('video');
