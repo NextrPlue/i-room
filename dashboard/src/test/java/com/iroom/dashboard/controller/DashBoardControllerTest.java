@@ -1,12 +1,13 @@
 package com.iroom.dashboard.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iroom.dashboard.dto.request.ReportRequest;
 import com.iroom.dashboard.dto.response.DashBoardResponse;
 import com.iroom.dashboard.service.ChatService;
 import com.iroom.dashboard.service.DashBoardService;
 import com.iroom.dashboard.service.EmbeddingService;
 import com.iroom.dashboard.service.PdfService;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -41,6 +42,9 @@ class DashBoardControllerTest {
 	private MockMvc mockMvc;
 
 	@Autowired
+	private ObjectMapper objectMapper;
+
+	@Autowired
 	private DashBoardService dashBoardService;
 
 	@Autowired
@@ -54,8 +58,6 @@ class DashBoardControllerTest {
 
 	@Autowired
 	private RestTemplate restTemplate;
-
-	private DashBoardResponse dashBoardResponse;
 
 	@TestConfiguration
 	static class MockConfig {
@@ -85,16 +87,14 @@ class DashBoardControllerTest {
 		}
 	}
 
-	@BeforeEach
-	void setUp() {
-		dashBoardResponse = new DashBoardResponse("t", 100, LocalDateTime.now());
-	}
-
 	@Test
 	@DisplayName("GET /dashboards/{metricType} - 대시보드 조회 성공")
 	void getDashBoard_Success() throws Exception {
+		// given
+		DashBoardResponse dashBoardResponse = new DashBoardResponse("t", 100, LocalDateTime.now());
 		when(dashBoardService.getDashBoard("t")).thenReturn(dashBoardResponse);
 
+		// when & then
 		mockMvc.perform(get("/dashboards/t")
 				.accept(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
@@ -106,7 +106,8 @@ class DashBoardControllerTest {
 	@Test
 	@DisplayName("POST /dashboards/report - 리포트 생성 성공")
 	void exportReport_Success() throws Exception {
-
+		// given
+		ReportRequest request = new ReportRequest(1, 2, 3);
 		float[] dummyVector = new float[1536];
 		for (int i = 0; i < 1536; i++) {
 			dummyVector[i] = 0.0f;
@@ -125,7 +126,10 @@ class DashBoardControllerTest {
 		when(chatService.questionReport(anyString())).thenReturn("GPT 응답입니다.");
 		when(pdfService.generateDashboardPdf(anyString(), anyString())).thenReturn(pdfBytes);
 
-		mockMvc.perform(post("/dashboards/report"))
+		// when & then
+		mockMvc.perform(post("/dashboards/report")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_PDF))
 			.andExpect(header().string("Content-Disposition",
@@ -136,10 +140,11 @@ class DashBoardControllerTest {
 	@Test
 	@DisplayName("POST /dashboards/improvement-report - 개선안 생성 성공")
 	void createImprovement_Success() throws Exception {
+		// given
 		byte[] pdfBytes = "개선안 PDF".getBytes();
-
 		when(pdfService.generateDashboardPdf(anyString(), anyString())).thenReturn(pdfBytes);
 
+		// when & then
 		mockMvc.perform(post("/dashboards/improvement-report"))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_PDF))
