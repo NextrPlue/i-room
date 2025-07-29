@@ -3,9 +3,11 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import MainContent from './components/MainContent';
 import './App.css';
+import AdminLogin from "./pages/AdminLogin";
 
 function App() {
     const [activeItem, setActiveItem] = useState('dashboard');
+    const [showLogin, setShowLogin] = useState(true);
 
     const appStyle = {
         minHeight: '100vh',
@@ -16,6 +18,10 @@ function App() {
     const layoutStyle = {
         display: 'flex'
     };
+
+    if(showLogin){
+        return <AdminLogin onLogin={() => setShowLogin(false)} />;
+    }
 
     return (
         <div style={appStyle}>
