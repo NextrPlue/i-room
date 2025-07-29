@@ -1,5 +1,8 @@
 package com.iroom.dashboard.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iroom.dashboard.dto.request.TranslationRequest;
 import com.iroom.dashboard.dto.response.Translation;
 import com.iroom.dashboard.dto.response.TranslationResponse;
@@ -7,32 +10,30 @@ import com.iroom.dashboard.dto.response.TranslationResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.test.context.SpringBootTest;
-
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 
-@SpringBootTest
+@ExtendWith(MockitoExtension.class)
 class UploadPdfServiceTest {
 
-	@Autowired
+	@InjectMocks
 	private UploadPdfService uploadPdfService;
-
-	@Mock
-	private RestTemplate restTemplate;
 
 	@Mock
 	private TranslationService translationService;
@@ -40,27 +41,44 @@ class UploadPdfServiceTest {
 	@Mock
 	private ChatService chatService;
 
+	@Mock
+	private RestTemplate restTemplate;
+
 	private MockMultipartFile file;
 
 	@BeforeEach
 	void setUp() throws IOException {
-		file = new MockMultipartFile("file", "test.pdf", "application/pdf", "test data".getBytes());
+		InputStream is = getClass().getClassLoader().getResourceAsStream("sample.pdf");
+		file = new MockMultipartFile("file", "sample.pdf", "application/pdf", is);
 	}
 
 	@Test
 	@DisplayName("uploadReport - 성공")
-	void uploadReport_Success() {
+	void uploadReport_Success() throws JsonProcessingException {
 		// given
 		TranslationResponse translationResponse = new TranslationResponse(List.of(new Translation("EN", "test data")));
 		when(translationService.translate(any(TranslationRequest.class))).thenReturn(translationResponse);
 		when(chatService.question(anyString())).thenReturn("summary text");
+
+		String jsonResponse = """
+			{"result":{"operation_id":2,"status":"completed"},"status":"ok","time":0.0110805}
+			""";
 		when(restTemplate.exchange(anyString(), eq(HttpMethod.PUT), any(), eq(String.class)))
-			.thenReturn(ResponseEntity.ok("success"));
+			.thenReturn(ResponseEntity.ok(jsonResponse));
 
 		// when
 		ResponseEntity<String> result = uploadPdfService.uploadReport(file);
-
+		String responseBody = result.getBody();
 		// then
-		assertEquals("success", result.getBody());
+
+		// JSON 파싱
+		ObjectMapper objectMapper = new ObjectMapper();
+		JsonNode root = objectMapper.readTree(responseBody);
+
+		// 최상위 "status" 접근
+		String status = root.get("status").asText();
+
+		assertEquals("ok", status);
 	}
+
 }
