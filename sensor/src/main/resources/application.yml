@@ -1,0 +1,64 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: sensor
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/iroom_sensor?serverTimezone=Asia/Seoul
+    username: root
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        order_insert: true
+        order_update: true
+        show_sql: true
+        format_sql: true
+        jdbc:
+          batch_size: 1000
+
+  cloud:
+    stream:
+      bindings:
+        event-in:
+          group: sensor
+          destination: iroom
+          contentType: application/json
+        event-out:
+          destination: iroom
+          contentType: application/json
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: default
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: localhost:9092
+
+logging:
+  level:
+    org.hibernate.type: trace
+    org.springframework.cloud: debug
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: my-kafka:9092
