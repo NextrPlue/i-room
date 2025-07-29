@@ -18,7 +18,6 @@ async def receive_alert(
     print(f"누락 보호구: {missing_items}")
     print(f"발생 시간: {timestamp}")
     print(f"이미지 파일명: {image.filename}")
-    print("============================")
 
     # 이미지 저장
     contents = await image.read()
@@ -28,6 +27,7 @@ async def receive_alert(
     with open(save_path, "wb") as f:
         f.write(contents)
     print(f"[테스트 서버] 이미지 저장 완료: {save_path}")
+    print("============================")
 
     return {
         "status": "ok",
