@@ -4,52 +4,52 @@ server:
 spring:
   application:
     name: admin
+
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/iroom_user?serverTimezone=Asia/Seoul
+    username: root
+    password: password
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        order_insert: true
+        order_update: true
+        show_sql: true
+        format_sql: true
+        jdbc:
+          batch_size: 1000
+
+  cloud:
+    stream:
+      bindings:
+        event-in:
+          group: user
+          destination: iroom
+          contentType: application/json
+        event-out:
+          destination: iroom
+          contentType: application/json
+
 ---
 
 spring:
   config:
     activate:
       on-profile: default
-  jpa:
-    properties:
-      hibernate:
-        show_sql: true
-        format_sql: true
-        implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl
   cloud:
     stream:
       kafka:
         binder:
           brokers: localhost:9092
-        streams:
-          binder:
-            configuration:
-              default:
-                key:
-                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-                value:
-                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-      bindings:
-        event-in:
-          group: admin
-#<<< EDA / Topic Name
-          destination: iroom
-#>>> EDA / Topic Name
-          contentType: application/json
-        event-out:
-#<<< EDA / Topic Name
-          destination: iroom
-#>>> EDA / Topic Name
-          contentType: application/json
 
 logging:
   level:
     org.hibernate.type: trace
     org.springframework.cloud: debug
-
-
-server:
-  port: 8081
 
 ---
 
@@ -57,32 +57,8 @@ spring:
   config:
     activate:
       on-profile: docker
-  jpa:
-    properties:
-      hibernate:
-        show_sql: true
-        format_sql: true
-        implicit_naming_strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyComponentPathImpl
   cloud:
     stream:
       kafka:
         binder:
           brokers: my-kafka:9092
-        streams:
-          binder:
-            configuration:
-              default:
-                key:
-                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-                value:
-                  serde: org.apache.kafka.common.serialization.Serdes$StringSerde
-      bindings:
-        event-in:
-          group: admin
-          destination: iroom
-          contentType: application/json
-        event-out:
-          destination: iroom
-          contentType: application/json
-
-
