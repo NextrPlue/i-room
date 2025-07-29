@@ -21,7 +21,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class UploadPdfService {
 
-	private final RestTemplate restTemplate = new RestTemplate();
+	private final RestTemplate restTemplate;
 	private final String QDRANT_URL = "http://localhost:6333/collections/safety_db/points?wait=true";
 	private final TranslationService translationService;
 	private final ChatService chatService;
