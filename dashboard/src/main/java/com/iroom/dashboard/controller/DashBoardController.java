@@ -40,7 +40,7 @@ public class DashBoardController {
 	@PostMapping(
 		value = "/report"
 	)
-	public ResponseEntity<byte[]> exportReport(ReportRequest reportRequest) throws Exception {
+	public ResponseEntity<byte[]> exportReport(@RequestBody ReportRequest reportRequest) throws Exception {
 		int missingPPECount = 40;
 		int dangerZoneAccessCount = 20;
 		int healthAlertCount = 10;
