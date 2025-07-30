@@ -67,7 +67,8 @@ public class JwtAuthenticationFilter extends AbstractGatewayFilterFactory<JwtAut
                 "/api/user/actuator",
                 "/api/user/admins/login",
                 "/api/user/admins/signup",
-                "/api/user/workers/login"
+                "/api/user/workers/login",
+                "/api/user/systems/authenticate"
         );
 
         return publicRoutes.stream().anyMatch(route -> request.getURI().getPath().contains(route));

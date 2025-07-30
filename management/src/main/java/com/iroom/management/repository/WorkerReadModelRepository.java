@@ -4,9 +4,9 @@ import com.iroom.management.entity.WorkerReadModel;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
-@Repository
+@RepositoryRestResource(exported = false)
 public interface WorkerReadModelRepository extends JpaRepository<WorkerReadModel, Long> {
     
     Page<WorkerReadModel> findByNameContaining(String name, Pageable pageable);
