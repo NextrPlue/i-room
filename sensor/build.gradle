@@ -7,7 +7,7 @@ ext {
     springCloudVersion = "2025.0.0"
 }
 
-group = 'iroom'
+group = 'com.iroom'
 version = '0.0.1-SNAPSHOT'
 
 java {
@@ -39,7 +39,6 @@ dependencies {
 
     // Database
     runtimeOnly 'com.mysql:mysql-connector-j'
-    testRuntimeOnly 'com.h2database:h2'
 
     // Test Dependencies
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
