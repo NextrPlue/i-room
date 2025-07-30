@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 @Entity
-@Table("name=Systems")
+@Table(name="Systems")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class System {
