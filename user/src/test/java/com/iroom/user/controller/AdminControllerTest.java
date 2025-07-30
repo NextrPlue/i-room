@@ -1,10 +1,19 @@
 package com.iroom.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iroom.user.dto.request.*;
-import com.iroom.user.dto.response.*;
-import com.iroom.user.enums.AdminRole;
-import com.iroom.user.service.AdminService;
+import com.iroom.user.admin.controller.AdminController;
+import com.iroom.user.admin.dto.request.AdminSignUpRequest;
+import com.iroom.user.admin.dto.request.AdminUpdateInfoRequest;
+import com.iroom.user.admin.dto.request.AdminUpdatePasswordRequest;
+import com.iroom.user.admin.dto.request.AdminUpdateRoleRequest;
+import com.iroom.user.admin.dto.response.AdminInfoResponse;
+import com.iroom.user.admin.dto.response.AdminSignUpResponse;
+import com.iroom.user.admin.dto.response.AdminUpdateResponse;
+import com.iroom.user.common.dto.request.LoginRequest;
+import com.iroom.user.common.dto.response.LoginResponse;
+import com.iroom.user.common.dto.response.PagedResponse;
+import com.iroom.user.admin.enums.AdminRole;
+import com.iroom.user.admin.service.AdminService;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

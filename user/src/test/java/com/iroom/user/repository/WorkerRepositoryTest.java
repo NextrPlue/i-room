@@ -1,6 +1,7 @@
 package com.iroom.user.repository;
 
-import com.iroom.user.entity.Worker;
+import com.iroom.user.worker.entity.Worker;
+import com.iroom.user.worker.repository.WorkerRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -1,12 +1,20 @@
 package com.iroom.user.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iroom.user.dto.request.*;
-import com.iroom.user.dto.response.*;
-import com.iroom.user.enums.BloodType;
-import com.iroom.user.enums.Gender;
-import com.iroom.user.enums.WorkerRole;
-import com.iroom.user.service.WorkerService;
+import com.iroom.user.common.dto.request.LoginRequest;
+import com.iroom.user.common.dto.response.LoginResponse;
+import com.iroom.user.common.dto.response.PagedResponse;
+import com.iroom.user.worker.controller.WorkerController;
+import com.iroom.user.worker.dto.request.WorkerRegisterRequest;
+import com.iroom.user.worker.dto.request.WorkerUpdateInfoRequest;
+import com.iroom.user.worker.dto.request.WorkerUpdatePasswordRequest;
+import com.iroom.user.worker.dto.response.WorkerInfoResponse;
+import com.iroom.user.worker.dto.response.WorkerRegisterResponse;
+import com.iroom.user.worker.dto.response.WorkerUpdateResponse;
+import com.iroom.user.worker.enums.BloodType;
+import com.iroom.user.worker.enums.Gender;
+import com.iroom.user.worker.enums.WorkerRole;
+import com.iroom.user.worker.service.WorkerService;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

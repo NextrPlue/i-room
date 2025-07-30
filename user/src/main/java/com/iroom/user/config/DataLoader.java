@@ -1,8 +1,8 @@
 package com.iroom.user.config;
 
-import com.iroom.user.entity.Admin;
-import com.iroom.user.enums.AdminRole;
-import com.iroom.user.repository.AdminRepository;
+import com.iroom.user.admin.entity.Admin;
+import com.iroom.user.admin.enums.AdminRole;
+import com.iroom.user.admin.repository.AdminRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
