@@ -41,6 +41,9 @@ android {
 
 dependencies {
 
+    //위치 권한 요청
+    implemen
+
     implementation(libs.play.services.wearable)
     implementation(platform(libs.compose.bom))
     implementation(libs.ui)
