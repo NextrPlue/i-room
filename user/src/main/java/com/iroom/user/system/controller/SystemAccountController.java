@@ -2,7 +2,7 @@ package com.iroom.user.system.controller;
 
 import com.iroom.user.system.dto.request.SystemAuthRequest;
 import com.iroom.user.system.dto.response.SystemAuthResponse;
-import com.iroom.user.system.service.SystemService;
+import com.iroom.user.system.service.SystemAccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,13 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/systems")
 @RequiredArgsConstructor
-public class SystemController {
+public class SystemAccountController {
 
-    private final SystemService systemService;
+    private final SystemAccountService systemAccountService;
 
     @PostMapping("/authenticate")
     public ResponseEntity<SystemAuthResponse> authenticate(@RequestBody SystemAuthRequest request) {
-        SystemAuthResponse response = systemService.authenticate(request);
+        SystemAuthResponse response = systemAccountService.authenticate(request);
         return ResponseEntity.ok(response);
     }
 }

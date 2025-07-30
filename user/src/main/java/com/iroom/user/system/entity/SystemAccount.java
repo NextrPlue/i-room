@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @Table(name="Systems")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class System {
+public class SystemAccount {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -39,7 +39,7 @@ public class System {
     }
 
     @Builder
-    public System(String name, String apiKey, SystemRole role) {
+    public SystemAccount(String name, String apiKey, SystemRole role) {
         this.name = name;
         this.apiKey = apiKey;
         this.role = role;

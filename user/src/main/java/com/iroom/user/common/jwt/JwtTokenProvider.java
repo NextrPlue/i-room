@@ -1,7 +1,7 @@
 package com.iroom.user.common.jwt;
 
 import com.iroom.user.admin.entity.Admin;
-import com.iroom.user.system.entity.System;
+import com.iroom.user.system.entity.SystemAccount;
 import com.iroom.user.worker.entity.Worker;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -55,7 +55,7 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String createSystemToken(System system) {
+    public String createSystemToken(SystemAccount system) {
         Claims claims = Jwts.claims().setSubject(system.getId().toString());
         claims.put("name", system.getName());
         claims.put("role", system.getRole().getKey());
