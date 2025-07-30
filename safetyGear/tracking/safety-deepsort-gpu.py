@@ -8,7 +8,7 @@ from ultralytics import YOLO
 from deep_sort_realtime.deepsort_tracker import DeepSort
 
 # -------------------- 2. 설정 --------------------
-MODEL_PATH = 'best_8n_finished.pt'
+MODEL_PATH = 'model/best_8n_finished_v3.pt'
 VIDEO_PATH = "test2.mp4"
 OUTPUT_VIDEO_PATH = "output_deepsort_gpu.mp4"
 
@@ -26,7 +26,7 @@ CLASS_COLORS = {
     5: (255, 0, 0),
 }
 
-CONF_THRESHOLD = 0.2
+CONF_THRESHOLD = 0.35
 
 # -------------------- 3. 모델 및 비디오 초기화 --------------------
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -54,7 +54,7 @@ video_writer = cv2.VideoWriter(
 use_gpu = torch.cuda.is_available()
 tracker = DeepSort(
     max_age=15,
-    n_init=1,
+    n_init=2,
     embedder='mobilenet',  
     half=True,
     bgr=True,
@@ -78,21 +78,43 @@ start_time = time.time()
 # track_id별 클래스 기록용 딕셔너리
 track_class_map = {}
 
+# YOLO 입력 크기 지정
+TARGET_SIZE = (640, 640)
+
+# 탐지 주기 설정 (예: 5프레임마다 탐지)
+DETECTION_INTERVAL = 5
+
+# 최근 탐지 결과 저장
+last_detections = []
+last_cls_list = []
+
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
         print("✅ 영상 종료 또는 프레임 없음")
         break
 
-    # YOLO 탐지
-    results = model.predict(frame, conf=CONF_THRESHOLD, device=device, verbose=False)[0]
+    # 프레임 크기를 640x640으로 리사이즈
+    frame = cv2.resize(frame, TARGET_SIZE)
 
     detections = []
-    cls_list = []  # 클래스 ID를 별도로 저장
-    for box, conf, cls in zip(results.boxes.xyxy, results.boxes.conf, results.boxes.cls):
-        x1, y1, x2, y2 = map(int, box)
-        detections.append([[x1, y1, x2 - x1, y2 - y1], float(conf), int(cls)])
-        cls_list.append(int(cls))  # 탐지된 클래스 기록
+    cls_list = []
+
+    # 지정된 주기마다 YOLO 탐지 실행
+    if frame_count % DETECTION_INTERVAL == 0:
+        results = model.predict(frame, conf=CONF_THRESHOLD, device=device, verbose=False)[0]
+        for box, conf, cls in zip(results.boxes.xyxy, results.boxes.conf, results.boxes.cls):
+            x1, y1, x2, y2 = map(int, box)
+            detections.append([[x1, y1, x2 - x1, y2 - y1], float(conf), int(cls)])
+            cls_list.append(int(cls))
+
+        # 탐지 결과 갱신
+        last_detections = detections
+        last_cls_list = cls_list
+    else:
+        # 이전 탐지 결과 그대로 사용
+        detections = last_detections
+        cls_list = last_cls_list
 
     # DeepSORT 추적
     tracks = tracker.update_tracks(detections, frame=frame)
@@ -104,11 +126,9 @@ while cap.isOpened():
         tid = track.track_id
         bbox = track.to_ltrb()
 
-        # 새 트랙이면 YOLO cls_id를 기록
         if tid not in track_class_map and i < len(cls_list):
             track_class_map[tid] = cls_list[i]
 
-        # 기록된 cls_id 사용
         cls_id = track_class_map.get(tid, 0)
         draw_box(frame, bbox, tid, cls_id)
 
@@ -121,12 +141,6 @@ while cap.isOpened():
 
     # 결과 저장 및 출력
     video_writer.write(frame)
-    cv2.imshow('YOLOv8 + DeepSORT Tracking (Fixed)', frame)
+    cv2.imshow('YOLOv8 + DeepSORT Tracking (Interval Detection)', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-
-# -------------------- 7. 종료 --------------------
-cap.release()
-video_writer.release()
-cv2.destroyAllWindows()
-print(f"🎬 탐지 완료. 결과 저장 위치: {OUTPUT_VIDEO_PATH}")
