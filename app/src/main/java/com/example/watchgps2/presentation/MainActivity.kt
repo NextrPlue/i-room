@@ -4,16 +4,21 @@
  */
 
 package com.example.watchgps2.presentation
-
+import android.provider.Settings
+import android.os.Build
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
+
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.ActivityResultLauncher
+
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -26,8 +31,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+
 import androidx.core.app.ActivityCompat
 import androidx.core.content.pm.ShortcutInfoCompat.Surface
+
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
@@ -43,6 +50,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationListener
 import com.google.android.gms.location.Priority
+import androidx.core.net.toUri
 
 class MainActivity : ComponentActivity() {
 
@@ -54,8 +62,7 @@ class MainActivity : ComponentActivity() {
     private var isTracking = false
 
     private val locationPermissions = arrayOf(
-        Manifest.permission.ACCESS_FINE_LOCATION,
-        Manifest.permission.ACCESS_COARSE_LOCATION
+        Manifest.permission.ACCESS_FINE_LOCATION
     )
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -107,6 +114,8 @@ class MainActivity : ComponentActivity() {
                             }
                         } else {
                             locationPermissionRequest.launch(locationPermissions)
+                            Toast.makeText(this@MainActivity, "위치 권한이 '항상 허용'인지 확인해주세요", Toast.LENGTH_LONG).show()
+                            openAppSettings() // 설정 화면으로 이동
                         }
                     }) {
                         Text(
@@ -167,5 +176,12 @@ class MainActivity : ComponentActivity() {
         }
         isTracking = false
         locationText.value = "위치 추적 중지됨"
+    }
+
+    private fun openAppSettings() {
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+            data = "package:$packageName".toUri()
+        }
+        startActivity(intent)
     }
 }
