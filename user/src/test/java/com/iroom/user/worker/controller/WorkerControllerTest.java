@@ -1,4 +1,4 @@
-package com.iroom.user.controller;
+package com.iroom.user.worker.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iroom.user.common.dto.request.LoginRequest;

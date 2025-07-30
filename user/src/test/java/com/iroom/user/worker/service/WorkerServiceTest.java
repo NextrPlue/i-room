@@ -1,4 +1,4 @@
-package com.iroom.user.service;
+package com.iroom.user.worker.service;
 
 import com.iroom.user.common.dto.request.LoginRequest;
 import com.iroom.user.common.dto.response.LoginResponse;
