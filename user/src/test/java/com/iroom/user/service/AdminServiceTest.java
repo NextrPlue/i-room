@@ -26,6 +26,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -40,6 +41,9 @@ public class AdminServiceTest {
 
 	@Mock
 	private JwtTokenProvider jwtTokenProvider;
+
+	@Mock
+	private KafkaProducerService kafkaProducerService;
 
 	@InjectMocks
 	private AdminService adminService;
@@ -83,6 +87,7 @@ public class AdminServiceTest {
 		// then
 		assertThat(response.name()).isEqualTo(admin.getName());
 		assertThat(response.email()).isEqualTo(admin.getEmail());
+		verify(kafkaProducerService).publishMessage(eq("ADMIN_CREATED"), any());
 	}
 
 	@Test
@@ -163,6 +168,7 @@ public class AdminServiceTest {
 		// then
 		assertThat(response.name()).isEqualTo(request.name());
 		assertThat(response.email()).isEqualTo(request.email());
+		verify(kafkaProducerService).publishMessage(eq("ADMIN_UPDATED"), any());
 	}
 
 	@Test
@@ -214,6 +220,7 @@ public class AdminServiceTest {
 
 		// then
 		verify(passwordEncoder).encode(request.newPassword());
+		verify(kafkaProducerService).publishMessage(eq("ADMIN_UPDATED"), any());
 	}
 
 	@Test
@@ -261,6 +268,7 @@ public class AdminServiceTest {
 
 		// then
 		assertThat(response.role()).isEqualTo(AdminRole.READER);
+		verify(kafkaProducerService).publishMessage(eq("ADMIN_UPDATED"), any());
 	}
 
 	@Test
@@ -408,6 +416,7 @@ public class AdminServiceTest {
 
 		// then
 		verify(adminRepository).delete(admin);
+		verify(kafkaProducerService).publishMessage(eq("ADMIN_DELETED"), any());
 	}
 
 	@Test
