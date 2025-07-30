@@ -1,7 +1,6 @@
-package com.iroom.user.controller;
+package com.iroom.user.admin.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iroom.user.admin.controller.AdminController;
 import com.iroom.user.admin.dto.request.AdminSignUpRequest;
 import com.iroom.user.admin.dto.request.AdminUpdateInfoRequest;
 import com.iroom.user.admin.dto.request.AdminUpdatePasswordRequest;

@@ -1,4 +1,4 @@
-package com.iroom.user.service;
+package com.iroom.user.admin.service;
 
 import com.iroom.user.admin.dto.request.AdminSignUpRequest;
 import com.iroom.user.admin.dto.request.AdminUpdateInfoRequest;
@@ -7,7 +7,6 @@ import com.iroom.user.admin.dto.request.AdminUpdateRoleRequest;
 import com.iroom.user.admin.dto.response.AdminInfoResponse;
 import com.iroom.user.admin.dto.response.AdminSignUpResponse;
 import com.iroom.user.admin.dto.response.AdminUpdateResponse;
-import com.iroom.user.admin.service.AdminService;
 import com.iroom.user.common.dto.request.LoginRequest;
 import com.iroom.user.common.dto.response.LoginResponse;
 import com.iroom.user.common.dto.response.PagedResponse;

@@ -1,4 +1,4 @@
-package com.iroom.user.repository;
+package com.iroom.user.worker.repository;
 
 import com.iroom.user.worker.entity.Worker;
 import com.iroom.user.worker.repository.WorkerRepository;
