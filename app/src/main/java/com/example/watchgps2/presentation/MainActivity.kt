@@ -49,7 +49,9 @@ class MainActivity : ComponentActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationPermissionRequest: ActivityResultLauncher<Array<String>>
 
+    private var locationCallback: LocationCallback? = null
     private val locationText = mutableStateOf("위치 정보 없음")
+    private var isTracking = false
 
     private val locationPermissions = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION,
@@ -67,7 +69,7 @@ class MainActivity : ComponentActivity() {
             val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
             if (granted) {
                 Toast.makeText(this, "GPS 권한 허용됨", Toast.LENGTH_SHORT).show()
-                requestSingleLocationUpdate()
+                startLocationUpdates()
             } else {
                 Toast.makeText(this, "GPS 권한 거부됨", Toast.LENGTH_SHORT).show()
                 locationText.value = "위치 권한이 필요합니다"
@@ -98,21 +100,26 @@ class MainActivity : ComponentActivity() {
                         ) == PackageManager.PERMISSION_GRANTED
 
                         if (fineGranted) {
-                            Toast.makeText(this@MainActivity, "권한 있음 → GPS 요청", Toast.LENGTH_SHORT).show()
-                            requestSingleLocationUpdate()
+                            if (!isTracking) {
+                                startLocationUpdates()
+                            } else {
+                                stopLocationUpdates()
+                            }
                         } else {
-                            Toast.makeText(this@MainActivity, "권한 요청 실행", Toast.LENGTH_SHORT).show()
                             locationPermissionRequest.launch(locationPermissions)
                         }
                     }) {
-                        Text("GPS 위치 가져오기", color = Color.White)
+                        Text(
+                            if (isTracking) "위치 추적 중지" else "1분마다 위치 추적 시작",
+                            color = Color.White
+                        )
                     }
                 }
             }
         }
     }
 
-    private fun requestSingleLocationUpdate() {
+    private fun startLocationUpdates() {
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -122,17 +129,18 @@ class MainActivity : ComponentActivity() {
             return
         }
 
+        isTracking = true
+        locationText.value = "위치 추적 시작됨"
+
         val locationRequest = LocationRequest.Builder(
             Priority.PRIORITY_HIGH_ACCURACY,
-            5000 // interval in ms
+            60_000L // 1분 간격
         ).apply {
-            setWaitForAccurateLocation(true)
-            setMinUpdateIntervalMillis(2000)
-            setMaxUpdateDelayMillis(10000)
-            setMaxUpdates(1)
+            setMinUpdateIntervalMillis(60_000L)
+            setMinUpdateDistanceMeters(1f) // 1m 이상 이동해야 업데이트
         }.build()
 
-        val locationCallback = object : LocationCallback() {
+        locationCallback = object : LocationCallback() {
             override fun onLocationResult(result: LocationResult) {
                 val location = result.lastLocation
                 if (location != null) {
@@ -142,15 +150,22 @@ class MainActivity : ComponentActivity() {
                 } else {
                     locationText.value = "위치 정보 없음"
                 }
-                // ✅ 요청 끝났으니 콜백 해제 (자동으로 해제되지만 명시적으로 해도 안전)
-                fusedLocationClient.removeLocationUpdates(this)
             }
         }
 
         fusedLocationClient.requestLocationUpdates(
             locationRequest,
-            locationCallback,
+            locationCallback as LocationCallback,
             mainLooper
         )
+    }
+
+    private fun stopLocationUpdates() {
+        locationCallback?.let {
+            fusedLocationClient.removeLocationUpdates(it)
+            locationCallback = null
+        }
+        isTracking = false
+        locationText.value = "위치 추적 중지됨"
     }
 }
