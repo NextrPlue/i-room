@@ -12,6 +12,7 @@ import java.util.Optional;
 @RepositoryRestResource(exported = false)
 public interface AdminRepository extends JpaRepository<Admin,Long> {
     boolean existsByEmail(String email);
+    boolean existsByRole(AdminRole role);
     Optional<Admin> findByEmail(String email);
     Page<Admin> findByNameContaining(String name, Pageable pageable);
     Page<Admin> findByEmailContaining(String email, Pageable pageable);
