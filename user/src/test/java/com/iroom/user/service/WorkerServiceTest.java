@@ -28,6 +28,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -42,6 +43,9 @@ public class WorkerServiceTest {
 
 	@Mock
 	private JwtTokenProvider jwtTokenProvider;
+
+	@Mock
+	private KafkaProducerService kafkaProducerService;
 
 	@InjectMocks
 	private WorkerService workerService;
@@ -108,6 +112,7 @@ public class WorkerServiceTest {
 		// then
 		assertThat(response.name()).isEqualTo(worker.getName());
 		assertThat(response.email()).isEqualTo(worker.getEmail());
+		verify(kafkaProducerService).publishMessage(eq("WORKER_CREATED"), any());
 	}
 
 	@Test
@@ -202,6 +207,7 @@ public class WorkerServiceTest {
 		// then
 		assertThat(response.name()).isEqualTo(request.name());
 		assertThat(response.email()).isEqualTo(request.email());
+		verify(kafkaProducerService).publishMessage(eq("WORKER_UPDATED"), any());
 	}
 
 	@Test
@@ -275,6 +281,7 @@ public class WorkerServiceTest {
 
 		// then
 		verify(passwordEncoder).encode(request.newPassword());
+		verify(kafkaProducerService).publishMessage(eq("WORKER_UPDATED"), any());
 	}
 
 	@Test
@@ -423,6 +430,7 @@ public class WorkerServiceTest {
 
 		// then
 		verify(workerRepository).delete(worker);
+		verify(kafkaProducerService).publishMessage(eq("WORKER_DELETED"), any());
 	}
 
 	@Test
