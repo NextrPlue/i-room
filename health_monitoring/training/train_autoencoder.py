@@ -31,3 +31,12 @@ model = keras.Sequential([
 
 model.compile(optimizer='adam', loss='mse')
 model.summary()
+
+# 학습
+history = model.fit(
+    train_data,
+    train_data,     # 입력 == 출력 (Autoencoder)
+    epochs=30,
+    batch_size=64,
+    validation_data=(val_data, val_data)
+)
