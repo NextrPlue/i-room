@@ -40,3 +40,12 @@ history = model.fit(
     batch_size=64,
     validation_data=(val_data, val_data)
 )
+
+# 모델 저장
+model.save("health_monitoring/app/models/autoencoder_model.keras")
+
+# Reconstruction error 계산
+reconstructions = model.predict(val_data)
+mse = np.mean(np.square(val_data - reconstructions), axis=1)
+
+print("Reconstruction error (앞 10개):", mse[:10])
