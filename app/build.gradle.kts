@@ -42,7 +42,7 @@ android {
 dependencies {
 
     //위치 권한 요청
-    implemen
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 
     implementation(libs.play.services.wearable)
     implementation(platform(libs.compose.bom))
