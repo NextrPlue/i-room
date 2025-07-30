@@ -11,6 +11,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -32,7 +33,7 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var locationPermissionRequest: ActivityResultLauncher<Array<String>>
     private val locationText = mutableStateOf("위치 정보 없음")
-    private var isTracking = false
+    private var isTracking = mutableStateOf(false)
 
     private val locationPermissions = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION
@@ -43,6 +44,8 @@ class MainActivity : ComponentActivity() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val lat = intent?.getDoubleExtra("latitude", 0.0)
             val lon = intent?.getDoubleExtra("longitude", 0.0)
+
+            Log.d("RECEIVER", "위치 수신됨")
 
             if (lat != null && lon != null) {
                 locationText.value = "위도: $lat\n경도: $lon"
@@ -55,7 +58,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // 리시버 등록 (ContextCompat 필요 없음)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        if (Build.VERSION.SDK_INT >= 34) {
             registerReceiver(locationReceiver, IntentFilter("LOCATION_UPDATE"), RECEIVER_NOT_EXPORTED)
         } else {
             registerReceiver(locationReceiver, IntentFilter("LOCATION_UPDATE"))
@@ -111,7 +114,7 @@ class MainActivity : ComponentActivity() {
                         ) == PackageManager.PERMISSION_GRANTED
 
                         if (fineGranted) {
-                            if (!isTracking) {
+                            if (!isTracking.value) {
                                 startLocationService()
                             } else {
                                 stopLocationService()
@@ -126,7 +129,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }) {
                         Text(
-                            if (isTracking) "위치 추적 중지" else "위치 추적 시작",
+                            if (isTracking.value) "위치 추적 중지" else "위치 추적 시작",
                             color = Color.White
                         )
                     }
@@ -142,14 +145,14 @@ class MainActivity : ComponentActivity() {
         } else {
             startService(intent)
         }
-        isTracking = true
+        isTracking.value = true
         locationText.value = "위치 추적 시작됨"
     }
 
     private fun stopLocationService() {
         val intent = Intent(this, ForegroundLocationService::class.java)
         stopService(intent)
-        isTracking = false
+        isTracking.value = false
         locationText.value = "위치 추적 중지됨"
     }
 
