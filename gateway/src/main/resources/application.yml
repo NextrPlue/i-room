@@ -17,3 +17,31 @@ spring:
               filters:
                 - JwtAuthenticationFilter
                 - RewritePath=/api/user/(?<segment>.*), /$\{segment}
+            - id: management-service-route
+              uri: http://localhost:8082
+              predicates:
+                - Path=/api/management/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/management/(?<segment>.*), /$\{segment}
+            - id: sensor-service-route
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/sensor/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/sensor/(?<segment>.*), /$\{segment}
+            - id: alarm-service-route
+              uri: http://localhost:8084
+              predicates:
+                - Path=/api/alarm/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/alarm/(?<segment>.*), /$\{segment}
+            - id: dashboard-service-route
+              uri: http://localhost:8085
+              predicates:
+                - Path=/api/dashboard/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/dashboard/(?<segment>.*), /$\{segment}
