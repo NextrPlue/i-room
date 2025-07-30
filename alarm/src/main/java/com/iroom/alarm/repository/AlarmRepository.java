@@ -4,11 +4,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import com.iroom.alarm.entity.Alarm;
 
-@Repository
+@RepositoryRestResource(exported = false)
 public interface AlarmRepository extends JpaRepository<Alarm, Long> {
 
 	// 근로자용 알림 조회
