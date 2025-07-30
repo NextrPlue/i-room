@@ -38,7 +38,14 @@ import com.example.watchgps2.presentation.theme.WatchGPS2Theme
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationListener
+import com.google.android.gms.location.Priority
+
 class MainActivity : ComponentActivity() {
+
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationPermissionRequest: ActivityResultLauncher<Array<String>>
 
@@ -54,14 +61,13 @@ class MainActivity : ComponentActivity() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        // ✅ 반드시 onCreate 시점에서 register 실행해야 함!
         locationPermissionRequest = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
             val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
             if (granted) {
                 Toast.makeText(this, "GPS 권한 허용됨", Toast.LENGTH_SHORT).show()
-                getLastLocation()
+                requestSingleLocationUpdate()
             } else {
                 Toast.makeText(this, "GPS 권한 거부됨", Toast.LENGTH_SHORT).show()
                 locationText.value = "위치 권한이 필요합니다"
@@ -93,7 +99,7 @@ class MainActivity : ComponentActivity() {
 
                         if (fineGranted) {
                             Toast.makeText(this@MainActivity, "권한 있음 → GPS 요청", Toast.LENGTH_SHORT).show()
-                            getLastLocation()
+                            requestSingleLocationUpdate()
                         } else {
                             Toast.makeText(this@MainActivity, "권한 요청 실행", Toast.LENGTH_SHORT).show()
                             locationPermissionRequest.launch(locationPermissions)
@@ -106,7 +112,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun getLastLocation() {
+    private fun requestSingleLocationUpdate() {
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -116,50 +122,35 @@ class MainActivity : ComponentActivity() {
             return
         }
 
-        fusedLocationClient.lastLocation
-            .addOnSuccessListener { location: Location? ->
-                location?.let {
-                    val lat = it.latitude
-                    val lon = it.longitude
+        val locationRequest = LocationRequest.Builder(
+            Priority.PRIORITY_HIGH_ACCURACY,
+            5000 // interval in ms
+        ).apply {
+            setWaitForAccurateLocation(true)
+            setMinUpdateIntervalMillis(2000)
+            setMaxUpdateDelayMillis(10000)
+            setMaxUpdates(1)
+        }.build()
+
+        val locationCallback = object : LocationCallback() {
+            override fun onLocationResult(result: LocationResult) {
+                val location = result.lastLocation
+                if (location != null) {
+                    val lat = location.latitude
+                    val lon = location.longitude
                     locationText.value = "위도: $lat\n경도: $lon"
-                } ?: run {
+                } else {
                     locationText.value = "위치 정보 없음"
                 }
+                // ✅ 요청 끝났으니 콜백 해제 (자동으로 해제되지만 명시적으로 해도 안전)
+                fusedLocationClient.removeLocationUpdates(this)
             }
-            .addOnFailureListener {
-                locationText.value = "위치 가져오기 실패"
-            }
-    }
-
-}
-
-@Composable
-fun WearApp(greetingName: String) {
-    WatchGPS2Theme {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colors.background),
-            contentAlignment = Alignment.Center
-        ) {
-            TimeText()
-            Greeting(greetingName = greetingName)
         }
+
+        fusedLocationClient.requestLocationUpdates(
+            locationRequest,
+            locationCallback,
+            mainLooper
+        )
     }
-}
-
-@Composable
-fun Greeting(greetingName: String) {
-    Text(
-        modifier = Modifier.fillMaxWidth(),
-        textAlign = TextAlign.Center,
-        color = MaterialTheme.colors.primary,
-        text = stringResource(R.string.hello_world, greetingName)
-    )
-}
-
-@Preview(device = WearDevices.SMALL_ROUND, showSystemUi = true)
-@Composable
-fun DefaultPreview() {
-    WearApp("Preview Android")
 }
