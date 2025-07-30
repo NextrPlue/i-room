@@ -1,9 +1,13 @@
 package com.example.watchgps2.presentation
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -20,10 +24,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Text
-import com.example.watchgps2.R
-import com.example.watchgps2.presentation.ForegroundLocationService
 
 class MainActivity : ComponentActivity() {
 
@@ -35,9 +38,30 @@ class MainActivity : ComponentActivity() {
         Manifest.permission.ACCESS_FINE_LOCATION
     )
 
+    // 내부에서 상태를 직접 바꾸는 BroadcastReceiver
+    private val locationReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val lat = intent?.getDoubleExtra("latitude", 0.0)
+            val lon = intent?.getDoubleExtra("longitude", 0.0)
+
+            if (lat != null && lon != null) {
+                locationText.value = "위도: $lat\n경도: $lon"
+            }
+        }
+    }
+
+    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        // 리시버 등록 (ContextCompat 필요 없음)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            registerReceiver(locationReceiver, IntentFilter("LOCATION_UPDATE"), RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(locationReceiver, IntentFilter("LOCATION_UPDATE"))
+        }
+
+        // 권한 요청 등록
         locationPermissionRequest = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
@@ -51,6 +75,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // 알림 채널 생성 (O 이상)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 "location_channel",
@@ -61,6 +86,7 @@ class MainActivity : ComponentActivity() {
             manager.createNotificationChannel(channel)
         }
 
+        // ✅ UI 구성
         setContent {
             Box(
                 modifier = Modifier
@@ -125,5 +151,10 @@ class MainActivity : ComponentActivity() {
         stopService(intent)
         isTracking = false
         locationText.value = "위치 추적 중지됨"
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        unregisterReceiver(locationReceiver)
     }
 }

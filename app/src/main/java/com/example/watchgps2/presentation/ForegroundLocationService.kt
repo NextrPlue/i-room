@@ -31,12 +31,14 @@ class ForegroundLocationService : Service() {
                 val location = result.lastLocation
                 location?.let {
                     Log.d("GPS", "위도: ${it.latitude}, 경도: ${it.longitude}")
+                    sendLocationToUI(it.latitude, it.longitude)
                 }
             }
         }
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            == PackageManager.PERMISSION_GRANTED) {
+            == PackageManager.PERMISSION_GRANTED
+        ) {
             fusedLocationClient.requestLocationUpdates(request, locationCallback, Looper.getMainLooper())
         }
     }
@@ -58,4 +60,14 @@ class ForegroundLocationService : Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
+
+    // 위치 정보를 Broadcast로 전달하는 함수
+    private fun sendLocationToUI(latitude: Double, longitude: Double) {
+        val intent = Intent("LOCATION_UPDATE").apply {
+            putExtra("latitude", latitude)
+            putExtra("longitude", longitude)
+        }
+
+        sendBroadcast(intent)
+    }
 }
