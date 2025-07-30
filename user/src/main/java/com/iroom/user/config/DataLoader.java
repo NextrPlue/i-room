@@ -18,17 +18,20 @@ public class DataLoader implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        Admin superAdmin = Admin.builder()
-                .name("Super Admin")
-                .email("admin@iroom.com")
-                .password(passwordEncoder.encode("admin123!"))
-                .phone("010-0000-0000")
-                .role(AdminRole.SUPER_ADMIN)
-                .build();
+        if (!adminRepository.existsByRole(AdminRole.SUPER_ADMIN)) {
+            Admin superAdmin = Admin.builder()
+                    .name("Super Admin")
+                    .email("admin@iroom.com")
+                    .password(passwordEncoder.encode("admin123!"))
+                    .phone("010-0000-0000")
+                    .role(AdminRole.SUPER_ADMIN)
+                    .build();
 
-        adminRepository.save(superAdmin);
-        System.out.println("SUPER_ADMIN 계정이 생성되었습니다.");
-        System.out.println("Email: admin@iroom.com");
-        System.out.println("Password: admin123!");
+            adminRepository.save(superAdmin);
+            System.out.println("SUPER_ADMIN 계정이 생성되었습니다.");
+            System.out.println("Email: admin@iroom.com");
+            System.out.println("Password: admin123!");
+        }
+
     }
 }
