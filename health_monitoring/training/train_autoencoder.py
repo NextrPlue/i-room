@@ -4,6 +4,7 @@ from pathlib import Path
 from sklearn.model_selection import train_test_split
 from keras import layers
 import numpy as np
+import keras
 
 # 데이터 로드
 data_path = Path("health_monitoring/training/all_windows.npy")
@@ -16,3 +17,17 @@ windows = (windows - windows.min()) / (windows.max() - windows.min())
 train_data, val_data = train_test_split(windows, test_size=0.2, random_state=42)
 
 print(f"Train shape: {train_data.shape}, Val shape: {val_data.shape}")
+
+# Autoencoder 모델 정의
+input_dim = train_data.shape[1]
+
+model = keras.Sequential([
+    layers.Input(shape=(input_dim,)),
+    layers.Dense(16, activation='relu'),
+    layers.Dense(8, activation='relu'),
+    layers.Dense(16, activation='relu'),
+    layers.Dense(input_dim, activation='linear')    # 원래 입력을 재구성
+])
+
+model.compile(optimizer='adam', loss='mse')
+model.summary()
