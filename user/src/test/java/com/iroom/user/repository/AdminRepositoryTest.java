@@ -1,7 +1,8 @@
 package com.iroom.user.repository;
 
-import com.iroom.user.entity.Admin;
-import com.iroom.user.enums.AdminRole;
+import com.iroom.user.admin.entity.Admin;
+import com.iroom.user.admin.enums.AdminRole;
+import com.iroom.user.admin.repository.AdminRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
