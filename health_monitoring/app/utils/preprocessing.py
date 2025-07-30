@@ -10,7 +10,8 @@ def load_hr_series(pkl_path: str) -> np.ndarray:
     return: numpy array (HR bpm)
     """
     with open(pkl_path, "rb") as f:
-        data = pickle.load(f)
+        # encoding='Latin1' 추가
+        data = pickle.load(f, encoding='latin1')
     
     return np.array(data['label'], dtype=float)
 
