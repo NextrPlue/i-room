@@ -36,7 +36,6 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/admins/signup", "/admins/login", "/workers/login","/actuator/health").permitAll()
-                        .requestMatchers("/h2-console/**").access(new WebExpressionAuthorizationManager("hasIpAddress('::1')"))
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
