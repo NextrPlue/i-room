@@ -6,9 +6,9 @@ import logging
 from ultralytics import YOLO
 
 # -------------------- 설정 --------------------
-MODEL_PATH = '../model/best_8m_v4.pt'
-VIDEO_PATH = "../test2.mp4"
-OUTPUT_VIDEO_PATH = "../output_bot_sort_test.mp4"
+MODEL_PATH = 'model/best_8m_v4.pt'
+VIDEO_PATH = "test2.mp4"
+OUTPUT_VIDEO_PATH = "output_bot_sort_test.mp4"
 LOG_PATH = "botsort_inference_log.txt"
 
 CLASS_NAMES = {
@@ -19,7 +19,14 @@ CLASS_NAMES = {
 # -------------------- 장치 설정 --------------------
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"📌 Using device: {device}")
-model = YOLO(MODEL_PATH).to(device)
+
+# FP16 모드 적용 (CUDA 전용)
+if device == "cuda":
+    model = YOLO(MODEL_PATH).to(device).half()
+    print("✅ FP16(Half precision) 모드 활성화")
+else:
+    model = YOLO(MODEL_PATH).to(device)
+    print("⚠️ CPU 모드: FP16 미지원, FP32로 실행")
 
 # -------------------- 로그 설정 --------------------
 logging.basicConfig(filename=LOG_PATH, level=logging.INFO)
@@ -31,7 +38,8 @@ results = model.track(
     tracker="my_botsort.yaml",
     stream=True,
     device=device,
-    persist=True
+    persist=True,
+    half=(device == "cuda")  # FP16 적용 여부
 )
 
 # -------------------- 비디오 저장 준비 --------------------
@@ -87,7 +95,7 @@ for r in results:
                      f"GPU: {gpu_mem:.2f} MB | CPU: {cpu_mem:.2f} MB")
 
     # 영상 출력 및 저장
-    cv2.imshow("YOLOv8 + BoT-SORT (640x640)", frame)
+    cv2.imshow("YOLOv8 + BoT-SORT (640x640, FP16)", frame)
     video_writer.write(frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
