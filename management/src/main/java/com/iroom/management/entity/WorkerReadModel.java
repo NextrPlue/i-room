@@ -3,15 +3,13 @@ package com.iroom.management.entity;
 import java.time.LocalDateTime;
 
 import com.iroom.management.dto.event.WorkerEvent;
-import com.iroom.management.enums.BloodType;
-import com.iroom.management.enums.Gender;
-import com.iroom.management.enums.WorkerRole;
+import com.iroom.modulecommon.enums.BloodType;
+import com.iroom.modulecommon.enums.Gender;
+import com.iroom.modulecommon.enums.WorkerRole;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;

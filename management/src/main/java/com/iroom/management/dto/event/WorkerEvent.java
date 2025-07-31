@@ -1,8 +1,8 @@
 package com.iroom.management.dto.event;
 
-import com.iroom.management.enums.BloodType;
-import com.iroom.management.enums.Gender;
-import com.iroom.management.enums.WorkerRole;
+import com.iroom.modulecommon.enums.BloodType;
+import com.iroom.modulecommon.enums.Gender;
+import com.iroom.modulecommon.enums.WorkerRole;
 
 public record WorkerEvent(
 	Long id,
