@@ -5,7 +5,7 @@ from pathlib import Path
 import numpy as np
 
 # 데이터 경로
-data_root = Path("D:/건강분석AI/ppg+dalia/data/PPG_FieldStudy")
+data_root = Path("C:/Users/minsu/Desktop/ppg+dalia/data/PPG_FieldStudy")
 output_path = Path("health_monitoring/training/all_features_windows.npy")
 
 # 사용할 참가자 ID
