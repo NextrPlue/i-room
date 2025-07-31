@@ -11,8 +11,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -53,7 +51,8 @@ public class WorkerReadModel {
 	@Builder
 	public WorkerReadModel(Long id, String name, String email, String phone, WorkerRole role,
 		BloodType bloodType, Gender gender, Integer age, Float weight, Float height,
-		String jobTitle, String occupation, String department, String faceImageUrl) {
+		String jobTitle, String occupation, String department, String faceImageUrl, LocalDateTime createdAt,
+		LocalDateTime updatedAt) {
 		this.id = id;
 		this.name = name;
 		this.email = email;
@@ -68,6 +67,8 @@ public class WorkerReadModel {
 		this.occupation = occupation;
 		this.department = department;
 		this.faceImageUrl = faceImageUrl;
+		this.createdAt = createdAt;
+		this.updatedAt = updatedAt;
 	}
 
 	public void updateFromEvent(WorkerEvent event) {
@@ -84,16 +85,7 @@ public class WorkerReadModel {
 		this.occupation = event.occupation();
 		this.department = event.department();
 		this.faceImageUrl = event.faceImageUrl();
-	}
-
-	@PrePersist
-	protected void onCreate() {
-		createdAt = LocalDateTime.now();
-		updatedAt = LocalDateTime.now();
-	}
-
-	@PreUpdate
-	protected void onUpdate() {
-		updatedAt = LocalDateTime.now();
+		this.createdAt = event.createdAt();
+		this.updatedAt = event.updatedAt();
 	}
 }
