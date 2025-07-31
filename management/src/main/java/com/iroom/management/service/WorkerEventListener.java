@@ -65,6 +65,8 @@ public class WorkerEventListener {
 			.occupation(event.occupation())
 			.department(event.department())
 			.faceImageUrl(event.faceImageUrl())
+			.createdAt(event.createdAt())
+			.updatedAt(event.updatedAt())
 			.build();
 
 		workerReadModelRepository.save(readModel);
