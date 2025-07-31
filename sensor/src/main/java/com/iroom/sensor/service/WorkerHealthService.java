@@ -4,6 +4,7 @@ import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationRequest;
 import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationResponse;
 import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsRequest;
 import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsResponse;
+import com.iroom.sensor.dto.event.WorkerLocationEvent;
 import com.iroom.sensor.entity.WorkerHealth;
 import com.iroom.sensor.repository.WorkerHealthRepository;
 
@@ -17,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @RequiredArgsConstructor
 public class WorkerHealthService {
-
+	private final KafkaProducerService kafkaProducerService;
 	private final WorkerHealthRepository repository;
 
 	//위치 업데이트 기능
@@ -26,7 +27,12 @@ public class WorkerHealthService {
 			.orElseThrow(() -> new EntityNotFoundException("해당 근로자 없음"));
 
 		health.updateLocation(request.latitude(), request.longitude());
-
+		WorkerLocationEvent workerLocationEvent = new WorkerLocationEvent(
+			request.workerId(),
+			request.latitude(),
+			request.longitude()
+		);
+		kafkaProducerService.publishMessage("Worker_Location", workerLocationEvent);
 		return new WorkerUpdateLocationResponse(health.getWorkerId(), health.getLatitude(), health.getLongitude());
 	}
 
