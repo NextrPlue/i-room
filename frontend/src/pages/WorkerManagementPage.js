@@ -4,6 +4,18 @@ import styles from '../styles/WorkerManagement.module.css';
 
 const WorkerManagementPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
+
+    /**
+     * @typedef {Object} Worker
+     * @property {string} id
+     * @property {string} name
+     * @property {string} department
+     * @property {string} occupation
+     * @property {string} phone
+     * @property {string} bloodType
+     */
+
+    /** @type {[Worker[], Function]} */
     const [workers, setWorkers] = useState([]);
 
     useEffect(() => {
