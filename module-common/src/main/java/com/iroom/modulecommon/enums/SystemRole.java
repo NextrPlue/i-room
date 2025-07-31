@@ -1,4 +1,4 @@
-package com.iroom.user.system.enums;
+package com.iroom.modulecommon.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
