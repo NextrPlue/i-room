@@ -1,46 +1,43 @@
-import React, { useState } from 'react';
+import React, {useState, useEffect} from 'react';
+import {userAPI} from '../api/api';
 import styles from '../styles/WorkerManagement.module.css';
 
 const WorkerManagementPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
-    // 더미 데이터 (실제로는 props나 API에서 받아올 예정)
-    const workers = [
-        { id: 1, name: '김재완', department: '건설팀', position: '철근공', phone: '010-1234-5678', bloodType: 'A형', location: '1구역', status: 'safe' },
-        { id: 2, name: '이수진', department: '건설팀', position: '용접공', phone: '010-2345-6789', bloodType: 'B형', location: '2구역', status: 'safe' },
-        { id: 3, name: '박민호', department: '안전팀', position: '안전관리자', phone: '010-3456-7890', bloodType: 'O형', location: '3구역', status: 'safe' },
-        { id: 4, name: '최영희', department: '품질팀', position: '품질검사원', phone: '010-4567-8901', bloodType: 'AB형', location: '1구역', status: 'safe' },
-        { id: 5, name: '정다은', department: '건설팀', position: '현장관리자', phone: '010-5678-9012', bloodType: 'A형', location: '2구역', status: 'safe' },
-        { id: 6, name: '한석진', department: '기술팀', position: '기술자', phone: '010-6789-0123', bloodType: 'B형', location: '3구역', status: 'warning' },
-        { id: 7, name: '윤서연', department: '건설팀', position: '철근공', phone: '010-7890-1234', bloodType: 'O형', location: '1구역', status: 'danger' },
-        { id: 8, name: '조현우', department: '안전팀', position: '안전요원', phone: '010-8901-2345', bloodType: 'A형', location: '2구역', status: 'safe' },
-    ];
+    /**
+     * @typedef {Object} Worker
+     * @property {string} id
+     * @property {string} name
+     * @property {string} department
+     * @property {string} occupation
+     * @property {string} phone
+     * @property {string} bloodType
+     */
+
+    /** @type {[Worker[], Function]} */
+    const [workers, setWorkers] = useState([]);
+
+    useEffect(() => {
+        const fetchWorkers = async () => {
+            try {
+                const data = await userAPI.getWorkers();
+                setWorkers(data.content || []);
+            } catch (error) {
+                console.error('근로자 데이터 조회 실패:', error);
+                setWorkers([]);
+            }
+        };
+
+        fetchWorkers().catch(console.error);
+    }, []);
 
     // 검색 필터링
     const filteredWorkers = workers.filter(worker =>
-        worker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        worker.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        worker.position.toLowerCase().includes(searchTerm.toLowerCase())
+        worker.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        worker.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        worker.occupation?.toLowerCase().includes(searchTerm.toLowerCase())
     );
-
-    // 상태별 스타일
-    const getStatusClass = (status) => {
-        const statusMap = {
-            safe: styles.safe,
-            warning: styles.warning,
-            danger: styles.danger
-        };
-        return statusMap[status] || styles.safe;
-    };
-
-    const getStatusText = (status) => {
-        const textMap = {
-            safe: '정상',
-            warning: '경고',
-            danger: '위험'
-        };
-        return textMap[status] || '정상';
-    };
 
     return (
         <div className={styles.page}>
@@ -52,21 +49,21 @@ const WorkerManagementPage = () => {
             {/* 통계 섹션 */}
             <section className={styles.statsSection}>
                 <div className={styles.statCard}>
-                    <div className={styles.statIcon} />
+                    <div className={styles.statIcon}/>
                     <div className={styles.statContent}>
                         <p className={styles.statLabel}>총근무자</p>
                         <p className={styles.statValue}>2,082</p>
                     </div>
                 </div>
                 <div className={styles.statCard}>
-                    <div className={styles.statIcon} />
+                    <div className={styles.statIcon}/>
                     <div className={styles.statContent}>
                         <p className={styles.statLabel}>근무중</p>
                         <p className={styles.statValue}>1,893</p>
                     </div>
                 </div>
                 <div className={styles.statCard}>
-                    <div className={styles.statIcon} />
+                    <div className={styles.statIcon}/>
                     <div className={styles.statContent}>
                         <p className={styles.statLabel}>퇴근</p>
                         <p className={styles.statValue}>189</p>
@@ -115,13 +112,13 @@ const WorkerManagementPage = () => {
                                 <tr key={worker.id}>
                                     <td className={styles.nameCell}>{worker.name}</td>
                                     <td>{worker.department}</td>
-                                    <td>{worker.position}</td>
+                                    <td>{worker.occupation}</td>
                                     <td>{worker.phone}</td>
-                                    <td>{worker.bloodType}</td>
-                                    <td>{worker.location}</td>
+                                    <td>{worker.bloodType}형</td>
+                                    <td>-</td>
                                     <td>
-                                            <span className={`${styles.healthStatus} ${getStatusClass(worker.status)}`}>
-                                                {getStatusText(worker.status)}
+                                            <span className={`${styles.healthStatus} ${styles.safe}`}>
+                                                정상
                                             </span>
                                     </td>
                                     <td className={styles.actionCell}>
