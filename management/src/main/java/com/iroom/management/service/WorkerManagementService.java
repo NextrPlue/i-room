@@ -1,5 +1,6 @@
 package com.iroom.management.service;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +18,8 @@ public class WorkerManagementService {
 	private final WorkerManagementRepository repository;
 
 	// 근로자 입장
+	// 근로자 리드모델 조회로 존재하는 근로자만 동작하도록 수정 필요
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_ENTRANCE_SYSTEM')")
 	public WorkerManagementResponse enterWorker(Long workerId) {
 		if (workerId == null) {
 			throw new IllegalArgumentException("workerId는 null일 수 없습니다.");
@@ -29,6 +32,8 @@ public class WorkerManagementService {
 	}
 
 	// 근로자 퇴장
+	// 근로자 리드모델 조회로 존재하는 근로자만 동작하도록 수정 필요
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_ENTRANCE_SYSTEM')")
 	public WorkerManagementResponse exitWorker(Long workerId) {
 		WorkerManagement existing = repository.findByWorkerId(workerId)
 			.orElseThrow(() -> new IllegalArgumentException("해당 근로자를 찾을 수 없습니다."));
