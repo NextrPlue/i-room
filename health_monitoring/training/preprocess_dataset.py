@@ -1,12 +1,12 @@
 # health_monitoring/training/preprocess_dataset.py
 # PPG-DaLiA HR 추출 전처리
-from health_monitoring.app.utils.preprocessing import load_hr_series, sliding_window
+from health_monitoring.app.utils.preprocessing import load_features
 from pathlib import Path
 import numpy as np
 
 # 데이터 경로
 data_root = Path("D:/건강분석AI/ppg+dalia/data/PPG_FieldStudy")
-output_path = Path("health_monitoring/training/all_windows.npy")
+output_path = Path("health_monitoring/training/all_features_windows.npy")
 
 # 사용할 참가자 ID
 subjects = [f"S{i}" for i in range(1, 16)]  # S1 ~ S15
@@ -24,12 +24,10 @@ for subject_id in subjects:
 
     print(f"처리 중: {subject_id}")
 
-    # HR 시계열 로드
-    hr_series = load_hr_series(pkl_path)
+    # HR + ACC + Activity 기반 feature 윈도우 생성
+    features = load_features(pkl_path, window_size=30, step=1)
 
-    # 30개(=60초) 윈도우 생성
-    windows = sliding_window(hr_series, window_size=30, step=1)
-    all_windows.append(windows) # 리스트에 저장
+    all_windows.append(features) # 리스트에 저장
 
 # 전체 데이터 합치기
 all_windows = np.vstack(all_windows)
