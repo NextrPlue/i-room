@@ -48,4 +48,5 @@ model.save("health_monitoring/app/models/autoencoder_model.keras")
 reconstructions = model.predict(val_data)
 mse = np.mean(np.square(val_data - reconstructions), axis=1)
 
-print("Reconstruction error (앞 10개):", mse[:10])
+print("평균 오차:", mse.mean())
+print("표준편차:", mse.std())
