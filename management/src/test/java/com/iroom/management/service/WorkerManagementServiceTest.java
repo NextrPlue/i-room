@@ -24,7 +24,7 @@ class WorkerManagementServiceTest {
 	private WorkerManagementRepository repository;
 
 	@InjectMocks
-	private WorkerManagementServiceImpl service;
+	private WorkerManagementService service;
 
 	private WorkerManagement worker;
 
