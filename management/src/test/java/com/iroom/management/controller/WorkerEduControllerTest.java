@@ -1,8 +1,8 @@
 package com.iroom.management.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.management.dto.request.WorkerEduRequest;
-import com.iroom.management.dto.response.PagedResponse;
 import com.iroom.management.dto.response.WorkerEduResponse;
 import com.iroom.management.service.WorkerEduService;
 
@@ -28,7 +28,8 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(WorkerEduController.class)
+@WebMvcTest(value = WorkerEduController.class, excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class})
 @Import(WorkerEduControllerTest.MockConfig.class)
 class WorkerEduControllerTest {
 

@@ -21,7 +21,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iroom.management.dto.response.WorkerManagementResponse;
 import com.iroom.management.service.WorkerManagementService;
 
-@WebMvcTest(WorkerManagementController.class)
+@WebMvcTest(value = WorkerManagementController.class, excludeAutoConfiguration = {
+		org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class})
 @Import(WorkerManagementControllerTest.MockConfig.class)
 class WorkerManagementControllerTest {
 

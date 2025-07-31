@@ -5,8 +5,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.management.dto.request.WorkerEduRequest;
-import com.iroom.management.dto.response.PagedResponse;
 import com.iroom.management.dto.response.WorkerEduResponse;
 import com.iroom.management.entity.WorkerEdu;
 import com.iroom.management.repository.WorkerEduRepository;

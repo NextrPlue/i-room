@@ -11,9 +11,9 @@ import com.iroom.user.worker.dto.response.WorkerInfoResponse;
 import com.iroom.user.worker.dto.response.WorkerRegisterResponse;
 import com.iroom.user.worker.dto.response.WorkerUpdateResponse;
 import com.iroom.user.worker.entity.Worker;
-import com.iroom.user.worker.enums.BloodType;
-import com.iroom.user.worker.enums.Gender;
-import com.iroom.user.worker.enums.WorkerRole;
+import com.iroom.modulecommon.enums.BloodType;
+import com.iroom.modulecommon.enums.Gender;
+import com.iroom.modulecommon.enums.WorkerRole;
 import com.iroom.user.common.jwt.JwtTokenProvider;
 import com.iroom.user.worker.repository.WorkerRepository;
 

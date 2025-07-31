@@ -1,6 +1,6 @@
 package com.iroom.user.admin.dto.request;
 
-import com.iroom.user.admin.enums.AdminRole;
+import com.iroom.modulecommon.enums.AdminRole;
 import jakarta.validation.constraints.NotNull;
 
 public record AdminUpdateRoleRequest(

@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iroom.management.dto.event.WorkerEvent;
+import com.iroom.modulecommon.dto.event.WorkerEvent;
 import com.iroom.management.entity.WorkerReadModel;
 import com.iroom.management.repository.WorkerReadModelRepository;
 
@@ -65,6 +65,8 @@ public class WorkerEventListener {
 			.occupation(event.occupation())
 			.department(event.department())
 			.faceImageUrl(event.faceImageUrl())
+			.createdAt(event.createdAt())
+			.updatedAt(event.updatedAt())
 			.build();
 
 		workerReadModelRepository.save(readModel);

@@ -1,6 +1,6 @@
 package com.iroom.user.system.entity;
 
-import com.iroom.user.system.enums.SystemRole;
+import com.iroom.modulecommon.enums.SystemRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

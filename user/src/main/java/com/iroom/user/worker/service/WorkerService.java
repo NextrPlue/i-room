@@ -3,7 +3,7 @@ package com.iroom.user.worker.service;
 import com.iroom.user.common.dto.response.LoginResponse;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.modulecommon.service.KafkaProducerService;
-import com.iroom.user.worker.dto.event.WorkerEvent;
+import com.iroom.modulecommon.dto.event.WorkerEvent;
 import com.iroom.user.common.dto.request.LoginRequest;
 import com.iroom.user.worker.dto.request.WorkerRegisterRequest;
 import com.iroom.user.worker.dto.request.WorkerUpdateInfoRequest;
@@ -44,7 +44,13 @@ public class WorkerService {
 		Worker worker = request.toEntity(passwordEncoder);
 		workerRepository.save(worker);
 
-		kafkaProducerService.publishMessage("WORKER_CREATED", new WorkerEvent(worker));
+		WorkerEvent workerEvent = new WorkerEvent(worker.getId(), worker.getName(), worker.getEmail(),
+			worker.getPhone(),
+			worker.getRole(), worker.getBloodType(), worker.getGender(), worker.getAge(), worker.getWeight(),
+			worker.getHeight(), worker.getJobTitle(), worker.getOccupation(), worker.getDepartment(),
+			worker.getFaceImageUrl(), worker.getCreatedAt(), worker.getUpdatedAt());
+
+		kafkaProducerService.publishMessage("WORKER_CREATED", workerEvent);
 
 		return new WorkerRegisterResponse(worker);
 	}
@@ -71,7 +77,13 @@ public class WorkerService {
 
 		worker.updateInfo(request);
 
-		kafkaProducerService.publishMessage("WORKER_UPDATED", new WorkerEvent(worker));
+		WorkerEvent workerEvent = new WorkerEvent(worker.getId(), worker.getName(), worker.getEmail(),
+			worker.getPhone(),
+			worker.getRole(), worker.getBloodType(), worker.getGender(), worker.getAge(), worker.getWeight(),
+			worker.getHeight(), worker.getJobTitle(), worker.getOccupation(), worker.getDepartment(),
+			worker.getFaceImageUrl(), worker.getCreatedAt(), worker.getUpdatedAt());
+
+		kafkaProducerService.publishMessage("WORKER_UPDATED", workerEvent);
 
 		return new WorkerUpdateResponse(worker);
 	}
@@ -87,7 +99,13 @@ public class WorkerService {
 
 		worker.updatePassword(passwordEncoder.encode(request.newPassword()));
 
-		kafkaProducerService.publishMessage("WORKER_UPDATED", new WorkerEvent(worker));
+		WorkerEvent workerEvent = new WorkerEvent(worker.getId(), worker.getName(), worker.getEmail(),
+			worker.getPhone(),
+			worker.getRole(), worker.getBloodType(), worker.getGender(), worker.getAge(), worker.getWeight(),
+			worker.getHeight(), worker.getJobTitle(), worker.getOccupation(), worker.getDepartment(),
+			worker.getFaceImageUrl(), worker.getCreatedAt(), worker.getUpdatedAt());
+
+		kafkaProducerService.publishMessage("WORKER_UPDATED", workerEvent);
 	}
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
@@ -133,6 +151,12 @@ public class WorkerService {
 
 		workerRepository.delete(worker);
 
-		kafkaProducerService.publishMessage("WORKER_DELETED", new WorkerEvent(worker));
+		WorkerEvent workerEvent = new WorkerEvent(worker.getId(), worker.getName(), worker.getEmail(),
+			worker.getPhone(),
+			worker.getRole(), worker.getBloodType(), worker.getGender(), worker.getAge(), worker.getWeight(),
+			worker.getHeight(), worker.getJobTitle(), worker.getOccupation(), worker.getDepartment(),
+			worker.getFaceImageUrl(), worker.getCreatedAt(), worker.getUpdatedAt());
+
+		kafkaProducerService.publishMessage("WORKER_DELETED", workerEvent);
 	}
 }

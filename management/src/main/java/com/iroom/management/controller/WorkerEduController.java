@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.management.dto.request.WorkerEduRequest;
-import com.iroom.management.dto.response.PagedResponse;
 import com.iroom.management.dto.response.WorkerEduResponse;
 import com.iroom.management.service.WorkerEduService;
 

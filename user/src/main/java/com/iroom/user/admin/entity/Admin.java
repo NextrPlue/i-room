@@ -1,6 +1,6 @@
 package com.iroom.user.admin.entity;
 
-import com.iroom.user.admin.enums.AdminRole;
+import com.iroom.modulecommon.enums.AdminRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

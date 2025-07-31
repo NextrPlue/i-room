@@ -1,7 +1,7 @@
 package com.iroom.management.service;
 
+import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.management.dto.request.WorkerEduRequest;
-import com.iroom.management.dto.response.PagedResponse;
 import com.iroom.management.dto.response.WorkerEduResponse;
 
 public interface WorkerEduService {

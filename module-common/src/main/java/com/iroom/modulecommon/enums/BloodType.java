@@ -1,13 +1,15 @@
-package com.iroom.user.worker.enums;
+package com.iroom.modulecommon.enums;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum Gender {
-    MALE("남성"),
-    FEMALE("여성");
+public enum BloodType {
+    A("A형"),
+    B("B형"),
+    AB("AB형"),
+    O("O형");
 
     private final String description;
 }
