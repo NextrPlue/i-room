@@ -2,8 +2,8 @@ package com.iroom.user.worker.service;
 
 import com.iroom.user.common.dto.request.LoginRequest;
 import com.iroom.user.common.dto.response.LoginResponse;
-import com.iroom.user.common.dto.response.PagedResponse;
-import com.iroom.user.common.service.KafkaProducerService;
+import com.iroom.modulecommon.dto.response.PagedResponse;
+import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.user.worker.dto.request.WorkerRegisterRequest;
 import com.iroom.user.worker.dto.request.WorkerUpdateInfoRequest;
 import com.iroom.user.worker.dto.request.WorkerUpdatePasswordRequest;
@@ -17,7 +17,6 @@ import com.iroom.user.worker.enums.WorkerRole;
 import com.iroom.user.common.jwt.JwtTokenProvider;
 import com.iroom.user.worker.repository.WorkerRepository;
 
-import com.iroom.user.worker.service.WorkerService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
