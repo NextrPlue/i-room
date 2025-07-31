@@ -86,7 +86,7 @@ class ForegroundLocationService : Service() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 //서버 url 변경필요
-                val url = URL("http://server:8080/api/location")
+                val url = URL("https://my-wearos-test.free.beeceptor.com/api/location")
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "POST"
                 connection.setRequestProperty("Content-Type", "application/json")
