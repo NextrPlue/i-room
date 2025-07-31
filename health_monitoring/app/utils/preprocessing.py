@@ -59,8 +59,8 @@ def load_features(pkl_path: str, window_size: int = 30, step: int = 1):
     # ECG 신호에서 R-peak를 검출
     # 8초 길이의 구간으로 평균 HR을 계산
     # 2초씩 겹치도록 윈도우를 옮겨가면 HR을 산출 (6초는 겹치는 데이터)
-    # 해당 8초 동안의 평균 HR
-    hr_series = np.array(data['label'], dtype=float)
+    # 해당 8초 동안의 평균 HR (2초 단위 HR 시계열)
+    hr = np.array(data['label'], dtype=float)
 
     # ACC: 32Hz(HR와 길이가 다름)
     acc = np.array(data['signal']['wrist']['ACC'])
