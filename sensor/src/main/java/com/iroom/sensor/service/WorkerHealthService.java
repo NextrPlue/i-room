@@ -25,9 +25,9 @@ public class WorkerHealthService {
 		WorkerHealth health = repository.findByWorkerId(request.workerId())
 			.orElseThrow(() -> new EntityNotFoundException("해당 근로자 없음"));
 
-		health.updateLocation(request.location());
+		health.updateLocation(request.latitude(), request.longitude());
 
-		return new WorkerUpdateLocationResponse(health.getWorkerId(), health.getWorkerLocation());
+		return new WorkerUpdateLocationResponse(health.getWorkerId(), health.getLatitude(), health.getLongitude());
 	}
 
 	//생체정보 업데이트 기능
