@@ -4,9 +4,9 @@ import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -45,8 +45,8 @@ public class AlarmController {
 		return ResponseEntity.ok("WebSocket 메시지 전송 완료!");
 	}
 
-	@GetMapping("/workers/{workerId}")
-	public ResponseEntity<List<Alarm>> getAlarmsForWorker(@PathVariable Long workerId) {
+	@GetMapping("/workers/me")
+	public ResponseEntity<List<Alarm>> getAlarmsForWorker(@RequestHeader("X-User-Id") Long workerId) {
 		return ResponseEntity.ok(alarmService.getAlarmsForWorker(workerId));
 	}
 

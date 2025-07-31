@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,11 +41,15 @@ public class AlarmService {
 	}
 
 	// 근로자의 알림 목록을 조회
+	// 페이지네이션 적용 필요
+	@PreAuthorize("hasAuthority('ROLE_WORKER') and #workerId == authentication.principal")
 	public List<Alarm> getAlarmsForWorker(Long workerId) {
 		return alarmRepository.findByWorkerIdOrderByOccuredAtDesc(workerId);
 	}
 
 	// 관리자용 전체 알림 목록을 조회
+	// 페이지네이션 적용 필요
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
 	public List<Alarm> getAlarmsForAdmin() {
 		LocalDateTime time = LocalDateTime.now().minusHours(3);
 		return alarmRepository.findByOccuredAtAfterOrderByOccuredAtDesc(time);
