@@ -2,7 +2,7 @@ package com.iroom.management.entity;
 
 import java.time.LocalDateTime;
 
-import com.iroom.management.dto.event.WorkerEvent;
+import com.iroom.modulecommon.dto.event.WorkerEvent;
 import com.iroom.modulecommon.enums.BloodType;
 import com.iroom.modulecommon.enums.Gender;
 import com.iroom.modulecommon.enums.WorkerRole;
