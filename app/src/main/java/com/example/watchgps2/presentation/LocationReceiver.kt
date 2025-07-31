@@ -17,7 +17,8 @@ class LocationReceiver : BroadcastReceiver() {
         val prefs = context.getSharedPreferences("location_prefs", Context.MODE_PRIVATE)
         prefs.edit {
             putFloat("latitude", latitude.toFloat())
-                .putFloat("longitude", longitude.toFloat())
+            putFloat("longitude", longitude.toFloat())
         }
+        Log.d("LocationReceiver", "SharedPreferences 저장 완료: $latitude, $longitude")
     }
 }

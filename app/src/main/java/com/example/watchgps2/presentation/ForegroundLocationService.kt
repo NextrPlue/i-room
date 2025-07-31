@@ -62,7 +62,9 @@ class ForegroundLocationService : Service() {
 
     // 위치 정보를 Broadcast로 전달하는 함수
     private fun sendLocationToUI(latitude: Double, longitude: Double) {
-        val intent = Intent("LOCATION_UPDATE").apply {
+        val intent = Intent().apply {
+            setClassName(packageName, "com.example.watchgps2.presentation.LocationReceiver")
+            action = "LOCATION_UPDATE"
             putExtra("latitude", latitude)
             putExtra("longitude", longitude)
         }
