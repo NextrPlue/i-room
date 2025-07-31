@@ -1,0 +1,48 @@
+# Ultralytics 🚀 AGPL-3.0 License - https://ultralytics.com/license
+
+# Default Ultralytics settings for BoT-SORT tracker when using mode="track"
+# For documentation and examples see https://docs.ultralytics.com/modes/track/
+# For BoT-SORT source code see https://github.com/NirAharon/BoT-SORT
+
+tracker_type: botsort # tracker type, ['botsort', 'bytetrack']
+
+#- 값 ↑ → 확신 높은 detection만 트래킹 (정확도 ↑, 놓침 ↑)
+#- 값 ↓ → 불확실한 detection도 연결 (연속성 ↑, 오탐 ↑)
+track_high_thresh: 0.25 # threshold for the first association
+
+# - bbox가 끊기는 경우 ↑ (더 많은 detection을 연결)
+# - 잘못된 객체를 붙잡는 경우 ↓
+track_low_thresh: 0.15 # threshold for the second association
+
+# - 값 ↓ → 가려졌다가 다시 나타날 때 빠르게 새로운 트랙 생성 (하지만 잘못된 트랙도 생길 수 있음)
+new_track_thresh: 0.25 # threshold for init new track if the detection does not match any tracks
+
+# - 객체가 잠깐 가려지는 경우 ↑ (끊김 방지)
+# - 너무 오래 유지하면 유령 트랙(ghost track) ↑
+track_buffer: 120 # buffer to calculate the time when to remove tracks
+
+# - 값 ↑ → 박스가 비슷해야 연결 (정확도 ↑, 놓침 ↑)
+# - 값 ↓ → 약간 다른 위치의 박스도 연결 (연속성 ↑, 잘못된 연결 ↑)
+match_thresh: 0.9 # threshold for matching tracks
+
+# True 유지 추천 (정확도 ↑).
+fuse_score: True # Whether to fuse confidence scores with the iou distances before matching
+# min_box_area: 10  # threshold for min box areas(for tracker evaluation, not used for now)
+#ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+# BoT-SORT settings
+#- 드론/움직이는 카메라 영상이라면 sparseOptFlow 유지
+#- 고정 CCTV라면 none 으로 꺼도 됨
+gmc_method: sparseOptFlow # method of global motion compensation
+
+# ReID model related thresh
+# 값 ↓ → 겹치거나 가려져도 연결 잘 됨 (하지만 다른 객체와 혼동 ↑)
+proximity_thresh: 0.5 # minimum IoU for valid match with ReID
+
+# - 값 ↓ → 외형이 조금 달라도 같은 객체로 인식 (연속성 ↑)
+# - 값 ↑ → 색상/모양 다르면 새 트랙 생성 (정확도 ↑)
+appearance_thresh: 0.7 # minimum appearance similarity for ReID
+
+# - 끄면 속도 ↑, 메모리 ↓, 하지만 가려짐·겹침에 취약
+# - 켜면 속도 ↓, 연속성 ↑
+with_reid: True # <- 연산량이 많아지면 이거 끄기!
+model: auto # uses native features if detector is YOLO else yolo11n-cls.pt
