@@ -39,30 +39,24 @@ class MainActivity : ComponentActivity() {
         Manifest.permission.ACCESS_FINE_LOCATION
     )
 
-    // 내부에서 상태를 직접 바꾸는 BroadcastReceiver
-    private val locationReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val lat = intent?.getDoubleExtra("latitude", 0.0)
-            val lon = intent?.getDoubleExtra("longitude", 0.0)
+    override fun onResume() {
+        super.onResume()
 
-            Log.d("RECEIVER", "위치 수신됨")
+        //SharePreferences에서 최신 위치 읽기
+        var prefs = getSharedPreferences("location_prefs", MODE_PRIVATE)
+        val lat = prefs.getFloat("latitude", 0.0f).toDouble()
+        val lon = prefs.getFloat("longitude", 0.0f).toDouble()
 
-            if (lat != null && lon != null) {
-                locationText.value = "위도: $lat\n경도: $lon"
-            }
+        if(lat != 0.0 || lon != 0.0){
+            locationText.value = "위도: $lat\n경도: $lon"
+        } else{
+            locationText.value = "위치 정보 없음"
         }
     }
 
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
+    @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // 리시버 등록 (ContextCompat 필요 없음)
-        if (Build.VERSION.SDK_INT >= 34) {
-            registerReceiver(locationReceiver, IntentFilter("LOCATION_UPDATE"), RECEIVER_NOT_EXPORTED)
-        } else {
-            registerReceiver(locationReceiver, IntentFilter("LOCATION_UPDATE"))
-        }
 
         // 권한 요청 등록
         locationPermissionRequest = registerForActivityResult(
@@ -156,8 +150,4 @@ class MainActivity : ComponentActivity() {
         locationText.value = "위치 추적 중지됨"
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        unregisterReceiver(locationReceiver)
-    }
 }
