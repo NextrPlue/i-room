@@ -1,3 +1,4 @@
 .idea
 .gradle
+!gradle/wrapper/gradle-wrapper.jar
 .env
