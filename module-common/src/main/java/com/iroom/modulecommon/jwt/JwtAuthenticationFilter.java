@@ -1,4 +1,4 @@
-package com.iroom.user.common.jwt;
+package com.iroom.modulecommon.jwt;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

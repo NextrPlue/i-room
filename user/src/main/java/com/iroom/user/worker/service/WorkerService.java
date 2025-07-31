@@ -1,8 +1,8 @@
 package com.iroom.user.worker.service;
 
 import com.iroom.user.common.dto.response.LoginResponse;
-import com.iroom.user.common.dto.response.PagedResponse;
-import com.iroom.user.common.service.KafkaProducerService;
+import com.iroom.modulecommon.dto.response.PagedResponse;
+import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.user.worker.dto.event.WorkerEvent;
 import com.iroom.user.common.dto.request.LoginRequest;
 import com.iroom.user.worker.dto.request.WorkerRegisterRequest;

@@ -2,7 +2,7 @@ package com.iroom.user.worker.controller;
 
 import com.iroom.user.common.dto.request.LoginRequest;
 import com.iroom.user.common.dto.response.LoginResponse;
-import com.iroom.user.common.dto.response.PagedResponse;
+import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.user.worker.dto.request.WorkerRegisterRequest;
 import com.iroom.user.worker.dto.request.WorkerUpdateInfoRequest;
 import com.iroom.user.worker.dto.request.WorkerUpdatePasswordRequest;
