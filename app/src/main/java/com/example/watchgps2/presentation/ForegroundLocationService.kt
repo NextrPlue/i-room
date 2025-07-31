@@ -12,6 +12,12 @@ import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.*
 import com.example.watchgps2.R
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import java.net.HttpURLConnection
+import java.net.URL
+
 class ForegroundLocationService : Service() {
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -31,6 +37,9 @@ class ForegroundLocationService : Service() {
                 location?.let {
                     Log.d("GPS", "위도: ${it.latitude}, 경도: ${it.longitude}")
                     sendLocationToUI(it.latitude, it.longitude)
+
+                    // 서버 전송
+                    sendLocationToServer(workerId = 1L, it.latitude, it.longitude)
                 }
             }
         }
@@ -71,4 +80,36 @@ class ForegroundLocationService : Service() {
 
         sendBroadcast(intent)
     }
+
+    //서버 전송 함수
+    private fun sendLocationToServer(workerId: Long, latitude: Double, longitude: Double) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                //서버 url 변경필요
+                val url = URL("http://server:8080/api/location")
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.doOutput = true
+
+                val json = """
+                {
+                    "workerId": $workerId,
+                    "latitude": $latitude,
+                    "longitude": $longitude
+                }
+            """.trimIndent()
+
+                connection.outputStream.use { it.write(json.toByteArray()) }
+
+                val responseCode = connection.responseCode
+                Log.d("Server", "서버 응답 코드: $responseCode")
+
+                connection.disconnect()
+            } catch (e: Exception) {
+                Log.e("Server", "위치 전송 실패: ${e.message}")
+            }
+        }
+    }
+
 }

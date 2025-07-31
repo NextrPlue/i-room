@@ -45,6 +45,8 @@ dependencies {
     //위치 권한 요청
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
     implementation(libs.play.services.wearable)
     implementation(platform(libs.compose.bom))
     implementation(libs.ui)
