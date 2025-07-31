@@ -26,8 +26,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Text
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -41,19 +45,6 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        Log.d("MainActivity", "onResume called!")
-        //SharePreferences에서 최신 위치 읽기
-        var prefs = getSharedPreferences("location_prefs", MODE_PRIVATE)
-        val lat = prefs.getFloat("latitude", 0.0f).toDouble()
-        val lon = prefs.getFloat("longitude", 0.0f).toDouble()
-
-        Log.d("MainActivity", "onResume - SharedPreferences 읽음: $lat, $lon")
-
-        if(lat != 0.0 || lon != 0.0){
-            locationText.value = "위도: $lat\n경도: $lon"
-        } else{
-            locationText.value = "위치 정보 없음"
-        }
     }
 
     @SuppressLint("MissingPermission")
@@ -130,6 +121,23 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+            }
+        }
+
+        // 주기적 확인 루프
+        lifecycleScope.launch {
+            while (isActive){
+                var prefs = getSharedPreferences("location_prefs", MODE_PRIVATE)
+                val lat = prefs.getFloat("latitude", 0.0f).toDouble()
+                val lon = prefs.getFloat("longitude", 0.0f).toDouble()
+
+                if(lat != 0.0 || lon != 0.0){
+                    locationText.value = "위도: $lat\n경도: $lon"
+                } else{
+                    locationText.value = "위치 정보 없음"
+                }
+
+                delay(20000)
             }
         }
     }
