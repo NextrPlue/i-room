@@ -1,9 +1,9 @@
 package com.iroom.user.worker.dto.response;
 
 import com.iroom.user.worker.entity.Worker;
-import com.iroom.user.worker.enums.BloodType;
-import com.iroom.user.worker.enums.Gender;
-import com.iroom.user.worker.enums.WorkerRole;
+import com.iroom.modulecommon.enums.BloodType;
+import com.iroom.modulecommon.enums.Gender;
+import com.iroom.modulecommon.enums.WorkerRole;
 
 public record WorkerRegisterResponse(
         Long id,

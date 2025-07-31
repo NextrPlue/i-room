@@ -1,8 +1,8 @@
 package com.iroom.user.worker.dto.request;
 
 import com.iroom.user.common.annotation.ValidPhone;
-import com.iroom.user.worker.enums.BloodType;
-import com.iroom.user.worker.enums.Gender;
+import com.iroom.modulecommon.enums.BloodType;
+import com.iroom.modulecommon.enums.Gender;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

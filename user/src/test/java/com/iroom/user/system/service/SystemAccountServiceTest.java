@@ -4,7 +4,7 @@ import com.iroom.user.common.jwt.JwtTokenProvider;
 import com.iroom.user.system.dto.request.SystemAuthRequest;
 import com.iroom.user.system.dto.response.SystemAuthResponse;
 import com.iroom.user.system.entity.SystemAccount;
-import com.iroom.user.system.enums.SystemRole;
+import com.iroom.modulecommon.enums.SystemRole;
 import com.iroom.user.system.repository.SystemAccountRepository;
 
 import org.junit.jupiter.api.BeforeEach;

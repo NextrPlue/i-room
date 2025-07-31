@@ -11,7 +11,7 @@ import com.iroom.user.admin.dto.response.AdminUpdateResponse;
 import com.iroom.user.common.dto.request.LoginRequest;
 import com.iroom.user.common.dto.response.LoginResponse;
 import com.iroom.modulecommon.dto.response.PagedResponse;
-import com.iroom.user.admin.enums.AdminRole;
+import com.iroom.modulecommon.enums.AdminRole;
 import com.iroom.user.admin.service.AdminService;
 
 import org.junit.jupiter.api.DisplayName;

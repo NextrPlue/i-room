@@ -10,9 +10,9 @@ import com.iroom.user.worker.dto.request.WorkerUpdatePasswordRequest;
 import com.iroom.user.worker.dto.response.WorkerInfoResponse;
 import com.iroom.user.worker.dto.response.WorkerRegisterResponse;
 import com.iroom.user.worker.dto.response.WorkerUpdateResponse;
-import com.iroom.user.worker.enums.BloodType;
-import com.iroom.user.worker.enums.Gender;
-import com.iroom.user.worker.enums.WorkerRole;
+import com.iroom.modulecommon.enums.BloodType;
+import com.iroom.modulecommon.enums.Gender;
+import com.iroom.modulecommon.enums.WorkerRole;
 import com.iroom.user.worker.service.WorkerService;
 
 import org.junit.jupiter.api.DisplayName;
