@@ -74,6 +74,16 @@ def load_features(pkl_path: str, window_size: int = 30, step: int = 1):
         acc_mag                                     # ACC 크기 값
     )
 
+    # Activity (활동 ID)
+    # activity: 0~8 범위 값, 4Hz 샘플링
+    # HR 샘플 수에 맞게 다움샘플링
+    act = np.array(data['activity'])
+    act_down = np.interp(
+        np.linspace(0, len(act) - 1, len(hr)),
+        np.arange(len(act)),
+        act
+    )
+
     features = []
     for start in range(0, len(hr_series) - window_size + 1, step):
         hr_seg = hr_series[start:start + window_size]
