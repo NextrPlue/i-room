@@ -82,9 +82,18 @@ export const userAPI = {
         return await apiRequest(url);
     },
 
-};
+    /**
+     * 근로자 정보 수정
+     * @param {string} workerId - 근로자 ID
+     * @param {object} workerData - 수정할 근로자 데이터
+     * @returns {Promise} 수정된 근로자 정보
+     */
+    updateWorker: async (workerId, workerData) => {
+        const url = `${API_CONFIG.gateway}/api/user/workers/${workerId}`;
+        return await apiRequest(url, {
+            method: 'PUT',
+            body: JSON.stringify(workerData)
+        });
+    },
 
-
-export default {
-    userAPI
 };
