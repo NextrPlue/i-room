@@ -24,7 +24,8 @@ public class DangerAreaService {
 	public DangerAreaResponse createDangerArea(DangerAreaRequest request) {
 		DangerArea dangerArea = DangerArea.builder()
 			.blueprintId(request.blueprintId())
-			.location(request.location())
+			.latitude(request.latitude())
+			.longitude(request.longitude())
 			.width(request.width())
 			.height(request.height())
 			.build();
@@ -34,7 +35,7 @@ public class DangerAreaService {
 	public DangerAreaResponse updateDangerArea(Long id, DangerAreaRequest request) {
 		DangerArea dangerArea = dangerAreaRepository.findById(id)
 			.orElseThrow(() -> new IllegalArgumentException("해당 위험구역이 존재하지 않습니다."));
-		dangerArea.update(request.location(), request.width(), request.height());
+		dangerArea.update(request.latitude(), request.longitude(), request.width(), request.height());
 		return new DangerAreaResponse(dangerArea);
 	}
 

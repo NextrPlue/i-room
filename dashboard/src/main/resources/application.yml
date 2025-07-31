@@ -9,7 +9,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/iroom_dashboard?serverTimezone=Asia/Seoul
     username: root
-    password: password
+    password: Chogi4585!
 
   jpa:
     hibernate:
@@ -33,7 +33,25 @@ spring:
         event-out:
           destination: iroom
           contentType: application/json
+  servlet: #(파일 전송 제한풀기  / spring: 밑에 들여쓰기)
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
 
+
+openai: #gpt api
+  model:
+    image: dall-e-3
+    chat: gpt-4o
+  api:
+    key: ${OPENAI_API_KEY}
+    url:
+      chat: https://api.openai.com/v1/chat/completions
+      image: https://api.openai.com/v1/images/generations
+
+myapp: #번역 api
+  auth:
+    key: ${TRANSLATE_AUTH_KEY}
 ---
 
 spring:
@@ -62,3 +80,5 @@ spring:
       kafka:
         binder:
           brokers: my-kafka:9092
+
+

@@ -30,6 +30,7 @@ public class WorkerEduController {
 	}
 
 	// 교육 정보 조회
+	// 로그인 정보가 근로자일 경우, 토큰에서 workerId 넘겨주도록 수정 필요
 	@GetMapping("/workers/{workerId}")
 	public ResponseEntity<PagedResponse<WorkerEduResponse>> getEduInfo(
 		@PathVariable Long workerId,

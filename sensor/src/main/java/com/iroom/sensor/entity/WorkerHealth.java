@@ -19,7 +19,8 @@ public class WorkerHealth {
 	@Column(nullable = false)
 	private Long workerId;
 
-	private String workerLocation;
+	private Double latitude;
+	private Double longitude;
 
 	private Integer heartRate;
 	private Float bodyTemperature;
@@ -30,8 +31,9 @@ public class WorkerHealth {
 	}
 
 	//위치 업데이트
-	public void updateLocation(String location) {
-		this.workerLocation = location;
+	public void updateLocation(Double latitude, Double longitude) {
+		this.latitude = latitude;
+		this.longitude = longitude;
 	}
 
 	//생체 정보 업데이트

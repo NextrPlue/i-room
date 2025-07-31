@@ -33,7 +33,7 @@ class WorkerEduServiceTest {
 	private WorkerEduRepository workerEduRepository;
 
 	@InjectMocks
-	private WorkerEduServiceImpl workerEduService;
+	private WorkerEduService workerEduService;
 
 	private WorkerEduRequest request;
 	private WorkerEdu workerEdu;
