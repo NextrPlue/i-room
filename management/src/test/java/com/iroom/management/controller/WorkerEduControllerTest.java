@@ -1,8 +1,8 @@
 package com.iroom.management.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.management.dto.request.WorkerEduRequest;
-import com.iroom.management.dto.response.PagedResponse;
 import com.iroom.management.dto.response.WorkerEduResponse;
 import com.iroom.management.service.WorkerEduService;
 
