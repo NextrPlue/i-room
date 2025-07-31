@@ -62,16 +62,16 @@ def load_features(pkl_path: str, window_size: int = 30, step: int = 1):
     # 해당 8초 동안의 평균 HR (2초 단위 HR 시계열)
     hr = np.array(data['label'], dtype=float)
 
-    # ACC: 32Hz(HR와 길이가 다름)
+    # ACC(가속도) 시계열
+    # 3축 (x, y, z) 32Hz -> 움직임 강도를 나타내는 magnitude로 변환
     acc = np.array(data['signal']['wrist']['ACC'])
-    # 윈도우 단위로 평균 가속도 크기, 표준편차 등 통계 특성을 뽑음
-    acc_magnitude = np.linalg.norm(acc, axis=1)
+    acc_mag = np.linalg.norm(acc, axis=1)
 
-    # ACC와 HR길이를 맞춤
-    acc_downsampled = np.interp(
-        np.linspace(0, len(acc_magnitude) - 1, len(hr_series)),
-        np.arange(len(acc_magnitude)),
-        acc_magnitude
+    # HR과 샘플 수가 다르므로 ACC를 HR 샘플 수에 맞게 다운샘플링
+    acc_down = np.interp(
+        np.linspace(0, len(acc_mag) - 1, len(hr)),  # HR 길이에 맞는 index
+        np.arange(len(acc_mag)),                    # ACC의 원래 index
+        acc_mag                                     # ACC 크기 값
     )
 
     features = []
