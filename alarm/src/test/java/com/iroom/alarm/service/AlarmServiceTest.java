@@ -27,7 +27,7 @@ class AlarmServiceTest {
 	private SimpMessagingTemplate messagingTemplate;
 
 	@InjectMocks
-	private AlarmServiceImpl alarmService;
+	private AlarmService alarmService;
 
 	private Alarm alarm;
 
