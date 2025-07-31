@@ -1,11 +1,11 @@
-package com.iroom.user.common.service;
+package com.iroom.modulecommon.service;
 
 import java.time.LocalDateTime;
 
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.stereotype.Service;
 
-import com.iroom.user.common.dto.event.AbstractEvent;
+import com.iroom.modulecommon.dto.event.AbstractEvent;
 
 import lombok.RequiredArgsConstructor;
 

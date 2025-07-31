@@ -1,4 +1,4 @@
-package com.iroom.user.common.dto.event;
+package com.iroom.modulecommon.dto.event;
 
 import java.time.LocalDateTime;
 

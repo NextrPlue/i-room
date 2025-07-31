@@ -1,0 +1,9 @@
+rootProject.name = 'i-room'
+
+include 'module-common'
+include 'user'
+include 'management'
+include 'sensor'
+include 'dashboard'
+include 'alarm'
+include 'gateway'

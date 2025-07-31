@@ -9,7 +9,7 @@ import com.iroom.user.admin.dto.response.AdminSignUpResponse;
 import com.iroom.user.admin.dto.response.AdminUpdateResponse;
 import com.iroom.user.common.dto.request.LoginRequest;
 import com.iroom.user.common.dto.response.LoginResponse;
-import com.iroom.user.common.dto.response.PagedResponse;
+import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.user.admin.service.AdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

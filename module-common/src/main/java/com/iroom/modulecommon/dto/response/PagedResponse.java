@@ -1,4 +1,4 @@
-package com.iroom.user.common.dto.response;
+package com.iroom.modulecommon.dto.response;
 
 import org.springframework.data.domain.Page;
 

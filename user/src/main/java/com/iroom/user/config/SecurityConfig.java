@@ -1,6 +1,6 @@
 package com.iroom.user.config;
 
-import com.iroom.user.common.jwt.JwtAuthenticationFilter;
+import com.iroom.modulecommon.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
