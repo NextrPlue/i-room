@@ -37,9 +37,10 @@ public class HeavyEquipmentService {
 		HeavyEquipment equipment = heavyEquipmentRepository.findById(request.id())
 			.orElseThrow(() -> new EntityNotFoundException("장비 없음 "));
 
-		equipment.updateLocation(request.location());
+		equipment.updateLocation(request.latitude(), request.longitude());
 
-		return new EquipmentUpdateLocationResponse(equipment.getId(), equipment.getLocation());
+		return new EquipmentUpdateLocationResponse(equipment.getId(), equipment.getLatitude(),
+			equipment.getLongitude());
 	}
 
 }

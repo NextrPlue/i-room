@@ -20,7 +20,10 @@ public class HeavyEquipment {
 	private String type;
 
 	@Column(nullable = true)
-	private String location;
+	private Double latitude;
+
+	@Column(nullable = true)
+	private Double longitude;
 
 	private Double radius;
 
@@ -31,8 +34,9 @@ public class HeavyEquipment {
 		this.radius = radius;
 	}
 
-	public void updateLocation(String location) {
-		this.location = location;
+	public void updateLocation(Double latitude, Double longitude) {
+		this.latitude = latitude;
+		this.longitude = longitude;
 	}
 
 }

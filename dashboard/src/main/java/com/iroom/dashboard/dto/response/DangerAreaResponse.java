@@ -5,7 +5,8 @@ import com.iroom.dashboard.entity.DangerArea;
 public record DangerAreaResponse(
 	Long id,
 	Long blueprintId,
-	String location,
+	String latitude,
+	String longitude,
 	Double width,
 	Double height
 ) {
@@ -13,7 +14,8 @@ public record DangerAreaResponse(
 		this(
 			entity.getId(),
 			entity.getBlueprintId(),
-			entity.getLocation(),
+			entity.getLatitude(),
+			entity.getLongitude(),
 			entity.getWidth(),
 			entity.getHeight()
 		);
