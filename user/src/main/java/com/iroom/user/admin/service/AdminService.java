@@ -11,7 +11,7 @@ import com.iroom.user.common.dto.request.LoginRequest;
 import com.iroom.user.common.dto.response.LoginResponse;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.modulecommon.service.KafkaProducerService;
-import com.iroom.user.admin.dto.event.AdminEvent;
+import com.iroom.modulecommon.dto.event.AdminEvent;
 import com.iroom.user.admin.entity.Admin;
 import com.iroom.modulecommon.enums.AdminRole;
 import com.iroom.user.common.jwt.JwtTokenProvider;
@@ -45,7 +45,10 @@ public class AdminService {
 		Admin admin = request.toEntity(passwordEncoder);
 		adminRepository.save(admin);
 
-		kafkaProducerService.publishMessage("ADMIN_CREATED", new AdminEvent(admin));
+		AdminEvent adminEvent = new AdminEvent(admin.getId(), admin.getName(), admin.getEmail(), admin.getPhone(),
+			admin.getRole(), admin.getCreatedAt(), admin.getUpdatedAt());
+
+		kafkaProducerService.publishMessage("ADMIN_CREATED", adminEvent);
 
 		return new AdminSignUpResponse(admin);
 	}
@@ -72,7 +75,10 @@ public class AdminService {
 
 		admin.updateInfo(request.name(), request.email(), request.phone());
 
-		kafkaProducerService.publishMessage("ADMIN_UPDATED", new AdminEvent(admin));
+		AdminEvent adminEvent = new AdminEvent(admin.getId(), admin.getName(), admin.getEmail(), admin.getPhone(),
+			admin.getRole(), admin.getCreatedAt(), admin.getUpdatedAt());
+
+		kafkaProducerService.publishMessage("ADMIN_UPDATED", adminEvent);
 
 		return new AdminUpdateResponse(admin);
 	}
@@ -88,7 +94,10 @@ public class AdminService {
 
 		admin.updatePassword(passwordEncoder.encode(request.newPassword()));
 
-		kafkaProducerService.publishMessage("ADMIN_UPDATED", new AdminEvent(admin));
+		AdminEvent adminEvent = new AdminEvent(admin.getId(), admin.getName(), admin.getEmail(), admin.getPhone(),
+			admin.getRole(), admin.getCreatedAt(), admin.getUpdatedAt());
+
+		kafkaProducerService.publishMessage("ADMIN_UPDATED", adminEvent);
 	}
 
 	@PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN') and #adminId != authentication.principal")
@@ -98,7 +107,10 @@ public class AdminService {
 
 		admin.updateRole(request.role());
 
-		kafkaProducerService.publishMessage("ADMIN_UPDATED", new AdminEvent(admin));
+		AdminEvent adminEvent = new AdminEvent(admin.getId(), admin.getName(), admin.getEmail(), admin.getPhone(),
+			admin.getRole(), admin.getCreatedAt(), admin.getUpdatedAt());
+
+		kafkaProducerService.publishMessage("ADMIN_UPDATED", adminEvent);
 
 		return new AdminUpdateResponse(admin);
 	}
@@ -153,6 +165,9 @@ public class AdminService {
 
 		adminRepository.delete(admin);
 
-		kafkaProducerService.publishMessage("ADMIN_DELETED", new AdminEvent(admin));
+		AdminEvent adminEvent = new AdminEvent(admin.getId(), admin.getName(), admin.getEmail(), admin.getPhone(),
+			admin.getRole(), admin.getCreatedAt(), admin.getUpdatedAt());
+
+		kafkaProducerService.publishMessage("ADMIN_DELETED", adminEvent);
 	}
 }
