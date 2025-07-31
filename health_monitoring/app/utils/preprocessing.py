@@ -84,14 +84,19 @@ def load_features(pkl_path: str, window_size: int = 30, step: int = 1):
         act
     )
 
+    # 슬라이딩 윈도우 생성
     features = []
-    for start in range(0, len(hr_series) - window_size + 1, step):
-        hr_seg = hr_series[start:start + window_size]
-        acc_seg = acc_downsampled[start:start + window_size]
+    for start in range(0, len(hr) - window_size + 1, step):
+        # (start ~ start+window_size) 범위의 데이터를 자름
+        hr_seg = hr[start:start+window_size]
+        acc_seg = acc_down[start:start+window_size]
+        act_seg = act_down[start:start+window_size]
 
-        # 2개의 feature 채널 (HR, ACC)
-        # [윈도우 길이, 2] -> flatten 해서 1D로 변환
-        segment = np.stack([hr_seg, acc_seg], axis=1).flatten()
-        features.append(segment)
+        # 3개의 feature (HR, ACC, ACTIVITY)를 합쳐 (window_size, 3) 형태로 쌓음
+        seg2d = np.stack([hr_seg, acc_seg, act_seg], axis=1)
 
-    return np.array(features)
+        # Autoencoder 입력을 위해 2D를 1D로 flatten
+        # ex) window_size=30이면 -> 길이 90 벡터
+        features.append(seg2d.flatten())
+
+    return np.array(features)   # numpy 배열 (N, window_size*3) 반환
