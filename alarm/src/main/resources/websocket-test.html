@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #messages li {
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+<h1>WebSocket Test</h1>
+<div>
+    <label for="token">JWT Token:</label>
+    <input type="text" id="token" size="50" placeholder="Enter your JWT token here"/>
+</div>
+<br>
+<div>
+    <button id="connect" onclick="connect()">Connect</button>
+    <button id="disconnect" onclick="disconnect()" disabled>Disconnect</button>
+</div>
+<br>
+<ul id="messages"></ul>
+
+<script type="text/javascript">
+    var stompClient = null;
+
+    function setConnected(connected) {
+        document.getElementById('connect').disabled = connected;
+        document.getElementById('disconnect').disabled = !connected;
+    }
+
+    function connect() {
+        var token = document.getElementById('token').value;
+        if (!token) {
+            alert('Please enter a JWT token.');
+            return;
+        }
+
+        var socket = new SockJS('http://localhost:8084/ws'); // Alarm service endpoint
+        stompClient = Stomp.over(socket);
+
+        var headers = {
+            'Authorization': 'Bearer ' + token
+        };
+
+        stompClient.connect(headers, function (frame) {
+            setConnected(true);
+            console.log('Connected: ' + frame);
+            showMessage("Connected to WebSocket!");
+
+            // Subscribe to the public topic
+            stompClient.subscribe('/topic/alarms', function (message) {
+                showMessage(message.body);
+            });
+
+        }, function (error) {
+            console.error('STOMP error', error);
+            showMessage("Connection error: " + error);
+        });
+    }
+
+    function disconnect() {
+        if (stompClient !== null) {
+            stompClient.disconnect();
+        }
+        setConnected(false);
+        console.log("Disconnected");
+        showMessage("Disconnected.");
+    }
+
+    function showMessage(message) {
+        var messageList = document.getElementById('messages');
+        var messageItem = document.createElement('li');
+        messageItem.appendChild(document.createTextNode(message));
+        messageList.appendChild(messageItem);
+    }
+</script>
+</body>
+</html>
