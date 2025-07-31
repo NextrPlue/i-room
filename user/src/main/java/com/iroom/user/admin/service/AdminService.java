@@ -13,7 +13,7 @@ import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.user.admin.dto.event.AdminEvent;
 import com.iroom.user.admin.entity.Admin;
-import com.iroom.user.admin.enums.AdminRole;
+import com.iroom.modulecommon.enums.AdminRole;
 import com.iroom.user.common.jwt.JwtTokenProvider;
 import com.iroom.user.admin.repository.AdminRepository;
 

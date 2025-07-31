@@ -3,7 +3,7 @@ package com.iroom.user.admin.dto.event;
 import java.time.LocalDateTime;
 
 import com.iroom.user.admin.entity.Admin;
-import com.iroom.user.admin.enums.AdminRole;
+import com.iroom.modulecommon.enums.AdminRole;
 
 public record AdminEvent(
 	Long id,

@@ -1,7 +1,7 @@
 package com.iroom.user.admin.dto.response;
 
 import com.iroom.user.admin.entity.Admin;
-import com.iroom.user.admin.enums.AdminRole;
+import com.iroom.modulecommon.enums.AdminRole;
 
 public record AdminSignUpResponse(
         String name,

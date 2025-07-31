@@ -1,7 +1,7 @@
 package com.iroom.user.system.repository;
 
 import com.iroom.user.system.entity.SystemAccount;
-import com.iroom.user.system.enums.SystemRole;
+import com.iroom.modulecommon.enums.SystemRole;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

@@ -2,7 +2,7 @@ package com.iroom.user.admin.dto.request;
 
 import com.iroom.user.common.annotation.ValidPhone;
 import com.iroom.user.admin.entity.Admin;
-import com.iroom.user.admin.enums.AdminRole;
+import com.iroom.modulecommon.enums.AdminRole;
 import com.iroom.user.common.annotation.ValidPassword;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
