@@ -22,8 +22,7 @@ class ForegroundLocationService : Service() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 60_000L)
-            .setMinUpdateDistanceMeters(0f)
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5_000L)
             .build()
 
         locationCallback = object : LocationCallback() {
