@@ -1,6 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {userAPI} from '../api/api';
 import styles from '../styles/WorkerManagement.module.css';
+import WorkerEditModal from '../components/WorkerEditModal';
 
 const WorkerManagementPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -17,6 +18,9 @@ const WorkerManagementPage = () => {
 
     /** @type {[Worker[], Function]} */
     const [workers, setWorkers] = useState([]);
+
+    const [selectedWorker, setSelectedWorker] = useState(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         const fetchWorkers = async () => {
@@ -38,6 +42,62 @@ const WorkerManagementPage = () => {
         worker.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         worker.occupation?.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // 수정 모달 열기
+    const handleEditClick = (worker) => {
+        setSelectedWorker(worker);
+        setIsModalOpen(true);
+    };
+
+    // 모달 닫기
+    const handleModalClose = () => {
+        setIsModalOpen(false);
+        setSelectedWorker(null);
+    };
+
+    // 저장
+    const handleSave = async (editForm) => {
+        try {
+            // Worker ID가 없으면 에러
+            if (!selectedWorker?.id) {
+                console.error('근로자 ID가 없습니다.');
+                alert('근로자 ID를 찾을 수 없습니다.');
+                return;
+            }
+
+            // API 호출을 위한 데이터 변환
+            const updateData = {
+                name: editForm.name,
+                email: editForm.email || "",
+                phone: editForm.phone,
+                bloodType: editForm.bloodType,
+                gender: editForm.gender || "MALE",
+                age: parseInt(editForm.age) || 0,
+                weight: parseFloat(editForm.weight) || 0,
+                height: parseFloat(editForm.height) || 0,
+                jobTitle: editForm.jobTitle,
+                occupation: editForm.occupation,
+                department: editForm.department,
+                faceImageUrl: editForm.faceImageUrl || ""
+            };
+
+            // API 호출
+            const response = await userAPI.updateWorker(selectedWorker.id, updateData);
+
+            console.log('API 응답:', response);
+
+            if (response) {
+                alert('저장이 완료되었습니다!');
+                // 근로자 목록 새로고침
+                const data = await userAPI.getWorkers();
+                setWorkers(data.content || []);
+                handleModalClose();
+            }
+        } catch (error) {
+            console.error('저장 실패:', error);
+            alert('저장에 실패했습니다: ' + (error.message || '알 수 없는 오류'));
+        }
+    };
 
     return (
         <div className={styles.page}>
@@ -123,7 +183,8 @@ const WorkerManagementPage = () => {
                                     </td>
                                     <td className={styles.actionCell}>
                                         <button className={styles.detailBtn}>상세</button>
-                                        <button className={styles.editBtn}>수정</button>
+                                        <button className={styles.editBtn} onClick={() => handleEditClick(worker)}>수정
+                                        </button>
                                     </td>
                                 </tr>
                             ))
@@ -143,6 +204,14 @@ const WorkerManagementPage = () => {
                     <button className={styles.pageBtn}>다음</button>
                 </div>
             </section>
+
+            {/* 수정 모달 */}
+            <WorkerEditModal
+                isOpen={isModalOpen}
+                worker={selectedWorker}
+                onClose={handleModalClose}
+                onSave={handleSave}
+            />
         </div>
     );
 };
