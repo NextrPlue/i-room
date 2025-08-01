@@ -77,7 +77,8 @@ def load_features(pkl_path: str, window_size: int = 30, step: int = 1):
     # Activity (활동 ID)
     # activity: 0~8 범위 값, 4Hz 샘플링
     # HR 샘플 수에 맞게 다움샘플링
-    act = np.array(data['activity'])
+    act = np.array(data['activity']).squeeze()  # (N, 1) -> (N,)
+    # activity는 라벨이지만, 보간(np.interp) 위해 float 유지
     act_down = np.interp(
         np.linspace(0, len(act) - 1, len(hr)),
         np.arange(len(act)),
