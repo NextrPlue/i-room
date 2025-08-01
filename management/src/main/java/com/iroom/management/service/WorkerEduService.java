@@ -33,7 +33,7 @@ public class WorkerEduService {
 
 	// 안전교육 내역 조회
 	// 근로자 리드모델 조회로 존재하는 근로자만 동작하도록 수정 필요
-	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN') or hasAuthority('ROLE_WORKER') and #workerId == authentication.principal")
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN') or (hasAuthority('ROLE_WORKER') and #workerId == authentication.principal)")
 	public PagedResponse<WorkerEduResponse> getEduInfo(Long workerId, int page, int size) {
 		Pageable pageable = PageRequest.of(page, size);
 		Page<WorkerEdu> eduPage = workerEduRepository.findAllByWorkerId(workerId, pageable);
