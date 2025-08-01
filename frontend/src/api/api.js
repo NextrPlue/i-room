@@ -65,26 +65,42 @@ export const userAPI = {
 
     /**
      * 근로자 목록 조회
-     * @param {object} params - 조회 조건
-     * @param {string} params.page - 페이지 번호 (기본값: 1)
-     * @param {string} params.size - 페이지 크기 (기본값: 10)
-     * @param {string} params.search - 검색어 (이름, 부서, 직종)
-     * @returns {Promise} 근로자 목록 및 페이징 정보
+     * @param {object} options
+     * @param {number} options.page - 페이지 번호 (기본값: 0)
+     * @param {number} options.size - 페이지당 개수 (기본값: 10)
+     * @param {string} [options.target] - 검색 대상 (name, email)
+     * @param {string} [options.keyword] - 검색어
      */
-    getWorkers: async (params = {}) => {
-        const queryParams = new URLSearchParams();
+    getWorkers: async ({ page = 0, size = 10, target = '', keyword = '' } = {}) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
 
-        if (params.page) queryParams.append('page', params.page);
-        if (params.size) queryParams.append('size', params.size);
-        if (params.search && params.search.trim()) queryParams.append('search', params.search.trim());
+        // target과 keyword가 모두 있을 때만 검색 파라미터 추가
+        if (target && keyword && keyword.trim()) {
+            queryParams.append('target', target);
+            queryParams.append('keyword', keyword.trim());
+        }
 
-        const url = `${API_CONFIG.gateway}/api/user/workers${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+        const url = `${API_CONFIG.gateway}/api/user/workers?${queryParams.toString()}`;
+        console.log('[요청 URL]', url);
         return await apiRequest(url);
     },
 
-};
 
+    /**
+     * 근로자 정보 수정
+     * @param {string} workerId - 근로자 ID
+     * @param {object} workerData - 수정할 근로자 데이터
+     * @returns {Promise} 수정된 근로자 정보
+     */
+    updateWorker: async (workerId, workerData) => {
+        const url = `${API_CONFIG.gateway}/api/user/workers/${workerId}`;
+        return await apiRequest(url, {
+            method: 'PUT',
+            body: JSON.stringify(workerData)
+        });
+    },
 
-export default {
-    userAPI
 };
