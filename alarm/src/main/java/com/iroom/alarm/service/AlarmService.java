@@ -8,6 +8,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.iroom.alarm.config.StompHandler;
 import com.iroom.alarm.entity.Alarm;
 import com.iroom.alarm.repository.AlarmRepository;
 
@@ -20,6 +21,7 @@ public class AlarmService {
 
 	private final AlarmRepository alarmRepository;
 	private final SimpMessagingTemplate messagingTemplate;
+	private final StompHandler stompHandler;
 
 	// 알림을 생성해서 저장(Kafka 이벤트 수신 시 사용)
 	public void handleAlarmEvent(Long workerId, String type, Long incidentId, String description) {
@@ -33,11 +35,18 @@ public class AlarmService {
 		alarmRepository.save(alarm);
 
 		// WebSocket 실시간 전송
-		String message = String.format("[%s] %s", type, description);
-		messagingTemplate.convertAndSend(
-			"/topic/alarms",
-			message
-		);
+		String adminMessage = String.format("[%s] %s (작업자 ID: %d)", type, description, workerId);
+		String workerMessage = String.format("[%s] %s", type, description);
+
+		// 관리자에게 모든 알람 전송
+		messagingTemplate.convertAndSend("/topic/alarms/admin", adminMessage);
+
+		// 해당 근로자에게만 개별 알람 전송
+		String sessionId = stompHandler.getSessionIdByUserId(workerId.toString());
+		if (sessionId != null) {
+			String workerDestination = "/queue/alarms-" + sessionId;
+			messagingTemplate.convertAndSend(workerDestination, workerMessage);
+		}
 	}
 
 	// 근로자의 알림 목록을 조회
