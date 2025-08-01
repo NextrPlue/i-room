@@ -1,6 +1,7 @@
 package com.iroom.alarm.config;
 
-import java.util.Collections;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.iroom.modulecommon.jwt.JwtTokenProvider;
 
@@ -12,10 +13,6 @@ import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
 import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -25,18 +22,27 @@ public class StompHandler implements ChannelInterceptor {
 
 	private final JwtTokenProvider jwtTokenProvider;
 
+	private final Map<String, String> userSessionMap = new ConcurrentHashMap<>();
+
 	@Override
 	public Message<?> preSend(Message<?> message, MessageChannel channel) {
 		StompHeaderAccessor accessor = StompHeaderAccessor.wrap(message);
+
+		if (StompCommand.DISCONNECT.equals(accessor.getCommand())) {
+			String sessionId = accessor.getSessionId();
+			userSessionMap.entrySet().removeIf(entry -> entry.getValue().equals(sessionId));
+		}
 
 		if (StompCommand.CONNECT.equals(accessor.getCommand())) {
 			String jwt = extractToken(accessor);
 			if (!StringUtils.hasText(jwt) || !jwtTokenProvider.validateToken(jwt)) {
 				throw new SecurityException("유효하지 않은 토큰으로 웹소켓에 연결할 수 없습니다.");
 			}
-			Authentication authentication = getAuthentication(jwt);
-			SecurityContextHolder.getContext().setAuthentication(authentication);
-			accessor.setUser(authentication);
+
+			Claims claims = jwtTokenProvider.getClaims(jwt);
+			String userId = claims.getSubject();
+
+			userSessionMap.put(userId, accessor.getSessionId());
 		}
 
 		return message;
@@ -50,12 +56,7 @@ public class StompHandler implements ChannelInterceptor {
 		return null;
 	}
 
-	private Authentication getAuthentication(String token) {
-		Claims claims = jwtTokenProvider.getClaims(token);
-		String userId = claims.getSubject();
-		String role = claims.get("role", String.class);
-
-		return new UsernamePasswordAuthenticationToken(userId, null,
-			Collections.singleton(new SimpleGrantedAuthority(role)));
+	public String getSessionIdByUserId(String userId) {
+		return userSessionMap.get(userId);
 	}
 }
