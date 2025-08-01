@@ -1,40 +1,78 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>WebSocket Test</title>
+    <meta charset="UTF-8">
+    <title>WebSocket Test - 권한별 알람 수신</title>
     <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
     <style>
         body {
             font-family: sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
         }
 
         #messages {
             list-style-type: none;
             margin: 0;
             padding: 0;
+            max-height: 400px;
+            overflow-y: auto;
         }
 
         #messages li {
             padding: 8px;
             margin-bottom: 5px;
             background-color: #f0f0f0;
+            border-radius: 3px;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+        }
+
+        input[type="text"] {
+            padding: 5px;
+            margin: 5px;
         }
     </style>
 </head>
 <body>
-<h1>WebSocket Test</h1>
-<div>
-    <label for="token">JWT Token:</label>
-    <input type="text" id="token" size="50" placeholder="Enter your JWT token here"/>
+<h1>WebSocket Test - 권한별 알람 수신</h1>
+
+<div class="section">
+    <h3>연결 설정</h3>
+    <div>
+        <label for="token">JWT Token:</label>
+        <input type="text" id="token" size="50" placeholder="Enter your JWT token here"/>
+    </div>
+    <div>
+        <label for="userType">사용자 유형:</label>
+        <select id="userType">
+            <option value="admin">관리자 (모든 알람 수신)</option>
+            <option value="worker">근로자 (본인 알람만 수신)</option>
+        </select>
+    </div>
+    <div>
+        <button id="connect" onclick="connect()">Connect</button>
+        <button id="disconnect" onclick="disconnect()" disabled>Disconnect</button>
+    </div>
 </div>
-<br>
-<div>
-    <button id="connect" onclick="connect()">Connect</button>
-    <button id="disconnect" onclick="disconnect()" disabled>Disconnect</button>
+
+<div class="section">
+    <h3>수신된 메시지</h3>
+    <ul id="messages"></ul>
+    <button onclick="clearMessages()">메시지 클리어</button>
 </div>
-<br>
-<ul id="messages"></ul>
 
 <script type="text/javascript">
     var stompClient = null;
@@ -46,6 +84,8 @@
 
     function connect() {
         var token = document.getElementById('token').value;
+        var userType = document.getElementById('userType').value;
+
         if (!token) {
             alert('Please enter a JWT token.');
             return;
@@ -61,16 +101,29 @@
         stompClient.connect(headers, function (frame) {
             setConnected(true);
             console.log('Connected: ' + frame);
-            showMessage("Connected to WebSocket!");
+            showMessage("✅ WebSocket 연결 성공!", "system");
 
-            // Subscribe to the public topic
-            stompClient.subscribe('/topic/alarms', function (message) {
-                showMessage(message.body);
-            });
+            // 세션 ID 추출
+            var sessionId = stompClient.ws._transport.url.split('/')[5];
+
+            if (userType === 'admin') {
+                // 관리자: 모든 알람 수신
+                stompClient.subscribe('/topic/alarms/admin', function (message) {
+                    showMessage("🔴 [관리자] " + message.body, "admin");
+                });
+                showMessage("🔴 관리자 모드 활성화", "system");
+            } else {
+                // 근로자: 세션 기반 개별 알람 수신
+                var workerDestination = '/queue/alarms-' + sessionId;
+                stompClient.subscribe(workerDestination, function (message) {
+                    showMessage("🟢 [근로자] " + message.body, "worker");
+                });
+                showMessage("🟢 근로자 모드 활성화", "system");
+            }
 
         }, function (error) {
             console.error('STOMP error', error);
-            showMessage("Connection error: " + error);
+            showMessage("❌ 연결 오류: " + error, "error");
         });
     }
 
@@ -80,14 +133,31 @@
         }
         setConnected(false);
         console.log("Disconnected");
-        showMessage("Disconnected.");
+        showMessage("⚪ 연결이 해제되었습니다.", "system");
     }
 
-    function showMessage(message) {
+    function showMessage(message, type) {
         var messageList = document.getElementById('messages');
         var messageItem = document.createElement('li');
-        messageItem.appendChild(document.createTextNode(message));
+
+        // 타입별 스타일 적용
+        if (type === 'admin') {
+            messageItem.className = 'admin-message';
+        } else if (type === 'worker') {
+            messageItem.className = 'worker-message';
+        }
+
+        // 시간 추가
+        var now = new Date();
+        var timeStr = now.toLocaleTimeString();
+        messageItem.appendChild(document.createTextNode(`[${timeStr}] ${message}`));
+
         messageList.appendChild(messageItem);
+        messageList.scrollTop = messageList.scrollHeight; // 자동 스크롤
+    }
+
+    function clearMessages() {
+        document.getElementById('messages').innerHTML = '';
     }
 </script>
 </body>
