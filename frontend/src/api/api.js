@@ -88,6 +88,32 @@ export const userAPI = {
         return await apiRequest(url);
     },
 
+    /**
+     * 근로자 등록
+     * @param {object} workerData - 등록할 근로자 데이터
+     * @param {string} workerData.name - 이름
+     * @param {string} workerData.email - 이메일
+     * @param {string} workerData.password - 비밀번호
+     * @param {string} workerData.phone - 연락처
+     * @param {string} workerData.bloodType - 혈액형
+     * @param {string} workerData.gender - 성별
+     * @param {number} workerData.age - 나이
+     * @param {number} workerData.weight - 몸무게
+     * @param {number} workerData.height - 키
+     * @param {string} workerData.jobTitle - 직책
+     * @param {string} workerData.occupation - 직종
+     * @param {string} workerData.department - 부서
+     * @param {string} workerData.faceImageUrl - 얼굴 이미지 URL  # 얜 나중에 없애야함
+     * @returns {Promise} 등록된 근로자 정보
+     */
+    createWorker: async (workerData) => {
+        const url = `${API_CONFIG.gateway}/api/user/workers/register`;
+        return await apiRequest(url, {
+            method: 'POST',
+            body: JSON.stringify(workerData)
+        });
+    },
+
 
     /**
      * 근로자 정보 수정
