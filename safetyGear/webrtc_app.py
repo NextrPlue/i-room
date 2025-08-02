@@ -32,8 +32,11 @@ REQUIRED_ITEMS = {"safety_belt", "safety_helmet"}
 # ===== RTSP 캡처 루프 =====
 async def capture_loop():
     global cap, latest_frame, clients_count, last_alert_time
-    cap = cv2.VideoCapture(RTSP_URL)
-    print("Capture loop started")
+    # cap = cv2.VideoCapture(RTSP_URL)
+    print("Capture loop started (cv2 + ffmpeg backend)")
+
+    # OpenCV를 ffmpeg 백엔드로 사용
+    cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
 
     # FPS 계산용 변수
     prev_time = time.time()
@@ -50,7 +53,22 @@ async def capture_loop():
             if not ret:
                 await asyncio.sleep(0.05)
                 continue
+            
+            # 프레임 크기 줄이기 -> IP 카메라의 해상도가 QHD(2560, 1440)이라서 상당히 무거움
+            frame = cv2.resize(frame, (1280, 720))
+            
+            # 객체 탐지
+            frame, detections, detected_classes = detect_and_draw(frame)
                 
+            # # ======== 5초마다 미착용 경고 로직 추가 ========
+            # missing = REQUIRED_ITEMS - detected_classes
+            # if missing and (current_time - last_alert_time >= ALERT_INTERVAL):
+            #     # JPEG로 인코딩
+            #     _, img_bytes = cv2.imencode(".jpg", frame)
+            #     send_alert(img_bytes.tobytes(), missing)
+            #     last_alert_time = current_time
+            # # ============================================
+
             # FPS 계산
             frame_count += 1
             current_time = time.time()
@@ -64,21 +82,9 @@ async def capture_loop():
             # FPS 오버레이
             cv2.putText(frame, f"FPS: {fps:.1f}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-            
-            # 객체 탐지
-            frame, detections, detected_classes = detect_and_draw(frame)
-                
-            # ======== 5초마다 미착용 경고 로직 추가 ========
-            missing = REQUIRED_ITEMS - detected_classes
-            if missing and (current_time - last_alert_time >= ALERT_INTERVAL):
-                # JPEG로 인코딩
-                _, img_bytes = cv2.imencode(".jpg", frame)
-                send_alert(img_bytes.tobytes(), missing)
-                last_alert_time = current_time
-            # ============================================
 
             latest_frame = frame
-            await asyncio.sleep(0.03)
+            await asyncio.sleep(0)   # WebRTC 전송 주기
     finally:
         if cap:
             cap.release()
