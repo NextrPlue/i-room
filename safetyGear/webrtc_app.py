@@ -6,15 +6,20 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from aiortc import RTCPeerConnection, VideoStreamTrack, RTCSessionDescription
 from pydantic import BaseModel
-import numpy as np
 from safetyGear.utils import detect_and_draw
-from deep_sort_realtime.deepsort_tracker import DeepSort
 from safetyGear.alert_service import send_alert
 import time
+from dotenv import load_dotenv
+import os
+
+# ===== .env 파일 로드 =====
+load_dotenv()
+
+RTSP_URL = os.getenv("RTSP_URL")
 
 app = FastAPI()
 
-# 전역 변수
+# ===== 전역 변수 =====
 cap = None
 latest_frame = None
 capture_task = None
@@ -22,19 +27,18 @@ clients_count = 0
 lock = asyncio.Lock()
 last_alert_time = 0
 ALERT_INTERVAL = 5  # 5초 간격
-REQUIRED_ITEMS = {"safety_harness_on", "safety_helmet_on"}
+REQUIRED_ITEMS = {"safety_belt", "safety_helmet"}
 
-# YOLO + DeepSORT 초기화
-tracker = DeepSort(max_age=30, n_init=3, max_iou_distance=0.7)
-
+# ===== RTSP 캡처 루프 =====
 async def capture_loop():
     global cap, latest_frame, clients_count, last_alert_time
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(RTSP_URL)
     print("Capture loop started")
 
+    # FPS 계산용 변수
+    prev_time = time.time()
     frame_count = 0
     fps = 0
-    prev_time = time.time()
 
     try:
         while True:
@@ -46,38 +50,23 @@ async def capture_loop():
             if not ret:
                 await asyncio.sleep(0.05)
                 continue
-
-            # YOLO + DeepSORT 처리
-            frame, detections, detected_classes = detect_and_draw(frame)
-            ds_detections = []
-            for det in detections:
-                x1, y1, x2, y2 = det['bbox']
-                w, h = x2 - x1, y2 - y1
-                ds_detections.append(([x1, y1, w, h],
-                                      det["confidence"],
-                                      det["class"]))
-            tracks = tracker.update_tracks(ds_detections, frame=frame)
-
-            for t in tracks:
-                if not t.is_confirmed():
-                    continue
-                x1, y1, x2, y2 = map(int, t.to_ltrb())
-                track_id = t.track_id
-                cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
-                cv2.putText(frame, f"ID:{track_id}", (x1, y1 - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
                 
             # FPS 계산
             frame_count += 1
             current_time = time.time()
-            if current_time - prev_time >= 1.0:
-                fps = frame_count / (current_time - prev_time)
-                prev_time = current_time
-                frame_count = 0
+            elapsed = current_time - prev_time
 
-            # 화면에 FPS 출력
+            if elapsed >= 1.0:
+                fps = frame_count / elapsed
+                frame_count = 0
+                prev_time = current_time
+
+            # FPS 오버레이
             cv2.putText(frame, f"FPS: {fps:.1f}", (10, 30),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+            
+            # 객체 탐지
+            frame, detections, detected_classes = detect_and_draw(frame)
                 
             # ======== 5초마다 미착용 경고 로직 추가 ========
             missing = REQUIRED_ITEMS - detected_classes
@@ -97,8 +86,7 @@ async def capture_loop():
         latest_frame = None
         print("Capture loop stopped")
 
-
-# WebRTC용 Track
+# ===== WebRTC용 Track =====
 class SharedCameraStreamTrack(VideoStreamTrack):
     async def recv(self):
         global latest_frame
@@ -118,6 +106,7 @@ class Offer(BaseModel):
     sdp: str
     type: str
 
+# ===== HTML 페이지 (간단 테스트용) =====
 @app.get("/monitor", response_class=HTMLResponse)
 async def monitor_page():
     # JS 부분에 beforeunload 추가됨
@@ -125,7 +114,7 @@ async def monitor_page():
     <html>
     <body>
     <h2>WebRTC Monitor</h2>
-    <video id="video" autoplay playsinline controls style="width: 1280px; height: 720px; background: black;"></video>
+    <video id="video" autoplay playsinline controls style="width: 640px; height: 640px; background: black;"></video>
     <script>
     const pc = new RTCPeerConnection();
     const video = document.getElementById('video');
@@ -153,6 +142,7 @@ async def monitor_page():
     </html>
     """
 
+# ===== WebRTC 시그널링 엔드포인트 =====
 @app.post("/offer")
 async def offer(request: Request):
     global clients_count, capture_task
