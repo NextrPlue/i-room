@@ -28,15 +28,16 @@ lock = asyncio.Lock()
 last_alert_time = 0
 ALERT_INTERVAL = 5  # 5초 간격
 REQUIRED_ITEMS = {"safety_belt", "safety_helmet"}
+last_detections = []
+frame_index = 0
 
 # ===== RTSP 캡처 루프 =====
 async def capture_loop():
-    global cap, latest_frame, clients_count, last_alert_time
-    # cap = cv2.VideoCapture(RTSP_URL)
-    print("Capture loop started (cv2 + ffmpeg backend)")
+    global cap, latest_frame, clients_count, last_alert_time, last_detections, frame_index
 
     # OpenCV를 ffmpeg 백엔드로 사용
     cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
+    print("Capture loop started (cv2 + ffmpeg backend)")
 
     # FPS 계산용 변수
     prev_time = time.time()
@@ -53,12 +54,33 @@ async def capture_loop():
             if not ret:
                 await asyncio.sleep(0.05)
                 continue
-            
+
             # 프레임 크기 줄이기 -> IP 카메라의 해상도가 QHD(2560, 1440)이라서 상당히 무거움
-            frame = cv2.resize(frame, (1280, 720))
-            
-            # 객체 탐지
-            frame, detections, detected_classes = detect_and_draw(frame)
+            frame = cv2.resize(frame, (640, 640))
+
+            # YOLO는 2프레임마다 1번
+            frame_index += 1
+            if frame_index % 2 == 0:
+                # === YOLO + tracker 실행 ===
+                frame, detections, detected_classes = detect_and_draw(frame)
+                last_detections = detections
+            else:
+                # YOLO를 건너뛰고, 이전 detections를 그대로 그림
+                for det in last_detections:
+                    x1, y1, x2, y2 = det["bbox"]
+                    cls_name = det["class"]
+                    conf = det["confidence"]
+                    track_id = det.get("track_id")
+
+                    label = f"{cls_name} {conf:.2f}"
+                    color = (0, 255, 0) if conf > 0.5 else (0, 0, 255)
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                    cv2.putText(frame, label, (x1, y1 - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                    
+                    if track_id is not None:
+                        cv2.putText(frame, f"ID:{det['track_id']}", (x1, y1 - 25),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
                 
             # # ======== 5초마다 미착용 경고 로직 추가 ========
             # missing = REQUIRED_ITEMS - detected_classes
