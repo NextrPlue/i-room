@@ -8,6 +8,7 @@ from aiortc import RTCPeerConnection, VideoStreamTrack, RTCSessionDescription
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
+import time
 
 # ===== .env 파일 로드 =====
 load_dotenv()
@@ -28,6 +29,12 @@ async def capture_loop():
     global cap, latest_frame, clients_count, last_alert_time
     cap = cv2.VideoCapture(RTSP_URL)
     print("Capture loop started")
+
+    # FPS 계산용 변수
+    prev_time = time.time()
+    fps = 0
+    frame_count = 0
+
     try:
         while True:
             # 클라이언트 없으면 종료
@@ -38,6 +45,25 @@ async def capture_loop():
             if not ret:
                 await asyncio.sleep(0.05)
                 continue
+
+            # FPS 계산
+            frame_count += 1
+            current_time = time.time()
+            elapsed = current_time - prev_time
+
+            if elapsed >= 1.0:  # 1초마다 갱신
+                fps = frame_count / elapsed
+                frame_count = 0
+                prev_time = current_time
+
+            # FPS 오버레이
+            cv2.putText(frame,
+                        f"FPS: {fps:.1f}",
+                        (10, 30),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        1.0,
+                        (0, 255, 0),
+                        2)
 
             latest_frame = frame
             await asyncio.sleep(0.03)
