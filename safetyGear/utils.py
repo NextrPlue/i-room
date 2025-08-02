@@ -47,25 +47,29 @@ def detect_and_draw(frame):
         x1, y1, x2, y2 = map(int, box.xyxy[0])  # 박스 좌표 (왼쪽 위 x, y, 오른쪽 아래 x, y)
         class_name = classes_name.get(cls_id, 'unknown')    # 클래스 ID를 이용해 클래스 이름을 가져옴 (classes_name 딕셔너리)
         detected_classes.add(class_name)    # 탐지된 클래스 이름을 집합에 추가 (중복 없이)
+        
+        # track ID (BoT-SORT가 제공)
+        track_id = None
+        if hasattr(box, 'id') and box.id is not None:
+            track_id = int(box.id[0])
 
-        label = f"{class_name} {conf:.2f}"  # 라벨 텍스트 (ex: safety_helmet 0.92)
+        # 화면에 바로 그리기
         color = (0, 255, 0) if conf > 0.5 else (0, 0, 255)  # 신뢰도가 0.5 이상이면 초록색, 아니면 빨간색으로 표시
-
+        label = f"{class_name} {conf:.2f}"  # 라벨 텍스트 (ex: safety_helmet 0.92)
         cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)  # 탐지된 객체 영역에 사각형 그리기
         cv2.putText(frame, label, (x1, y1 - 10),            # 사각형 위쪽에 클래스 이름 + 신뢰도 표시
                     cv2.FONT_HERSHEY_COMPLEX, 0.6, color, 2)
         
-        # track ID (BoT-SORT가 제공)
-        if hasattr(box, 'id') and box.id is not None:
-            track_id = int(box.id[0])
+        if track_id is not None:
             cv2.putText(frame, f"ID:{track_id}", (x1, y1 - 25),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
-        
+
         # detections 리스트에 감지 결과 저장 (추후 서버 전송 등 활용)
         detections.append({
             "class": class_name,            # 클래스 이름
             "confidence": round(conf, 2),   # 소수점 2자리로 반올림된 신뢰도
-            "bbox": [x1, y1, x2, y2]        # 바운딩 박스 좌표
+            "bbox": [x1, y1, x2, y2],       # 바운딩 박스 좌표
+            "track_id": track_id
         })
 
     return frame, detections, detected_classes  # 처리된 프레임, 탐지된 모든 객체 리스트, 탐지된 클래스 집합 변환
