@@ -1,5 +1,6 @@
 package com.iroom.sensor.service;
 
+import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterRequest;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationRequest;
 import com.iroom.sensor.entity.HeavyEquipment;
@@ -19,12 +20,16 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.ArgumentMatchers.any;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class HeavyEquipmentServiceTest {
 
 	@Mock
 	private HeavyEquipmentRepository equipmentRepository;
+
+	@Mock
+	private KafkaProducerService kafkaProducerService;
 
 	@InjectMocks
 	private HeavyEquipmentService equipmentService;
@@ -49,6 +54,7 @@ public class HeavyEquipmentServiceTest {
 		assertThat(response.name()).isEqualTo("크레인A-1");
 		assertThat(response.type()).isEqualTo("크레인");
 		assertThat(response.radius()).isEqualTo(15.0);
+		verify(kafkaProducerService).publishMessage(eq("HEAVY_EQUIPMENT_REGISTERED"), any());
 	}
 
 	@Test

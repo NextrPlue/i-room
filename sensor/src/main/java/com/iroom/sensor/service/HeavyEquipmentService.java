@@ -1,9 +1,12 @@
 package com.iroom.sensor.service;
 
+import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationRequest;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationResponse;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterRequest;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterResponse;
+import com.iroom.sensor.dto.event.EquipmentEvent;
+import com.iroom.sensor.dto.event.EquipmentLocationEvent;
 import com.iroom.sensor.entity.HeavyEquipment;
 import com.iroom.sensor.repository.HeavyEquipmentRepository;
 
@@ -19,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class HeavyEquipmentService {
 
 	private final HeavyEquipmentRepository heavyEquipmentRepository;
+	private final KafkaProducerService kafkaProducerService;
 
 	//등록 기능
 	public EquipmentRegisterResponse register(EquipmentRegisterRequest request) {
@@ -29,6 +33,12 @@ public class HeavyEquipmentService {
 			.build();
 
 		HeavyEquipment saved = heavyEquipmentRepository.save(equipment);
+
+		EquipmentEvent equipmentEvent = new EquipmentEvent(saved.getId(), saved.getName(), saved.getType(),
+			saved.getRadius());
+
+		kafkaProducerService.publishMessage("HEAVY_EQUIPMENT_REGISTERED", equipmentEvent);
+
 		return new EquipmentRegisterResponse(saved);
 	}
 
