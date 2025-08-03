@@ -116,6 +116,16 @@ export const userAPI = {
 
 
     /**
+     * 근로자 상세 정보 조회
+     * @param {string} workerId - 근로자 ID
+     * @returns {Promise} 근로자 상세 정보
+     */
+    getWorkerDetail: async (workerId) => {
+        const url = `${API_CONFIG.gateway}/api/user/workers/${workerId}`;
+        return await apiRequest(url);
+    },
+
+    /**
      * 근로자 정보 수정
      * @param {string} workerId - 근로자 ID
      * @param {object} workerData - 수정할 근로자 데이터
