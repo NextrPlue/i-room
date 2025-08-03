@@ -126,6 +126,24 @@ export const userAPI = {
     },
 
     /**
+     * 근로자 안전교육 이력 조회
+     * @param {string} workerId - 근로자 ID
+     * @param {number} page - 페이지 번호 (기본값: 0)
+     * @param {number} size - 페이지당 개수 (기본값: 10)
+     * @returns {Promise} 안전교육 이력 데이터
+     */
+    getWorkerEducation: async (workerId, page = 0, size = 10) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString()
+        });
+        
+        const url = `${API_CONFIG.gateway}/api/management/worker-education/workers/${workerId}?${queryParams.toString()}`;
+        console.log('[교육이력 요청 URL]', url);
+        return await apiRequest(url);
+    },
+
+    /**
      * 근로자 정보 수정
      * @param {string} workerId - 근로자 ID
      * @param {object} workerData - 수정할 근로자 데이터
