@@ -1,5 +1,6 @@
 package com.iroom.user.admin.service;
 
+import com.iroom.modulecommon.dto.response.SimpleResponse;
 import com.iroom.modulecommon.exception.CustomException;
 import com.iroom.modulecommon.exception.ErrorCode;
 import com.iroom.user.admin.dto.request.AdminSignUpRequest;
@@ -73,7 +74,7 @@ public class AdminService {
 	}
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER') and #id == authentication.principal")
-	public void updateAdminPassword(Long id, AdminUpdatePasswordRequest request) {
+	public SimpleResponse updateAdminPassword(Long id, AdminUpdatePasswordRequest request) {
 		Admin admin = adminRepository.findById(id)
 			.orElseThrow(() -> new CustomException(ErrorCode.USER_ADMIN_NOT_FOUND));
 
@@ -82,6 +83,8 @@ public class AdminService {
 		}
 
 		admin.updatePassword(passwordEncoder.encode(request.newPassword()));
+
+		return new SimpleResponse("비밀번호가 성공적으로 변경되었습니다.");
 	}
 
 	@PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN') and #adminId != authentication.principal")
@@ -138,10 +141,12 @@ public class AdminService {
 	}
 
 	@PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN') and #adminId != authentication.principal")
-	public void deleteAdmin(Long adminId) {
+	public SimpleResponse deleteAdmin(Long adminId) {
 		Admin admin = adminRepository.findById(adminId)
 			.orElseThrow(() -> new CustomException(ErrorCode.USER_ADMIN_NOT_FOUND));
 
 		adminRepository.delete(admin);
+
+		return new SimpleResponse("관리자가 성공적으로 삭제되었습니다.");
 	}
 }

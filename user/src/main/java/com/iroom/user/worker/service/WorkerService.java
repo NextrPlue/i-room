@@ -1,5 +1,6 @@
 package com.iroom.user.worker.service;
 
+import com.iroom.modulecommon.dto.response.SimpleResponse;
 import com.iroom.modulecommon.exception.CustomException;
 import com.iroom.modulecommon.exception.ErrorCode;
 import com.iroom.user.common.dto.response.LoginResponse;
@@ -91,7 +92,7 @@ public class WorkerService {
 	}
 
 	@PreAuthorize("hasAnyAuthority('ROLE_WORKER') and #id == authentication.principal")
-	public void updateWorkerPassword(Long id, WorkerUpdatePasswordRequest request) {
+	public SimpleResponse updateWorkerPassword(Long id, WorkerUpdatePasswordRequest request) {
 		Worker worker = workerRepository.findById(id)
 			.orElseThrow(() -> new CustomException(ErrorCode.USER_WORKER_NOT_FOUND));
 
@@ -108,6 +109,8 @@ public class WorkerService {
 			worker.getFaceImageUrl(), worker.getCreatedAt(), worker.getUpdatedAt());
 
 		kafkaProducerService.publishMessage("WORKER_UPDATED", workerEvent);
+
+		return new SimpleResponse("비밀번호가 성공적으로 변경되었습니다.");
 	}
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
@@ -147,7 +150,7 @@ public class WorkerService {
 	}
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
-	public void deleteWorker(Long workerId) {
+	public SimpleResponse deleteWorker(Long workerId) {
 		Worker worker = workerRepository.findById(workerId)
 			.orElseThrow(() -> new CustomException(ErrorCode.USER_WORKER_NOT_FOUND));
 
@@ -160,5 +163,7 @@ public class WorkerService {
 			worker.getFaceImageUrl(), worker.getCreatedAt(), worker.getUpdatedAt());
 
 		kafkaProducerService.publishMessage("WORKER_DELETED", workerEvent);
+
+		return new SimpleResponse("근로자가 성공적으로 삭제되었습니다.");
 	}
 }

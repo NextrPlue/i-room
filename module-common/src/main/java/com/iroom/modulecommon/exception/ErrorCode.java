@@ -16,10 +16,14 @@ public enum ErrorCode {
 	// User Service - Bad Request (400)
 	USER_EMAIL_ALREADY_EXISTS("USER_1004", "이미 사용 중인 이메일입니다.", HttpStatus.BAD_REQUEST),
 	USER_CURRENT_PASSWORD_MISMATCH("USER_1005", "현재 비밀번호가 일치하지 않습니다.", HttpStatus.BAD_REQUEST),
+	USER_INVALID_REQUEST_FORMAT("USER_1006", "요청 형식이 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
+
+	// User Service - Forbidden (403)
+	USER_ACCESS_DENIED("USER_1007", "해당 리소스에 대한 접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
 
 	// User Service - Not Found (404)
-	USER_WORKER_NOT_FOUND("USER_1006", "해당하는 근로자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-	USER_ADMIN_NOT_FOUND("USER_1007", "해당하는 관리자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+	USER_WORKER_NOT_FOUND("USER_1008", "해당하는 근로자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+	USER_ADMIN_NOT_FOUND("USER_1009", "해당하는 관리자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
 
 	private final String code;
 	private final String message;

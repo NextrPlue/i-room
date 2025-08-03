@@ -1,6 +1,7 @@
 package com.iroom.user.worker.controller;
 
 import com.iroom.modulecommon.dto.response.ApiResponse;
+import com.iroom.modulecommon.dto.response.SimpleResponse;
 import com.iroom.user.common.dto.request.LoginRequest;
 import com.iroom.user.common.dto.response.LoginResponse;
 import com.iroom.modulecommon.dto.response.PagedResponse;
@@ -46,10 +47,10 @@ public class WorkerController {
 	}
 
 	@PutMapping("/password")
-	public ResponseEntity<ApiResponse<String>> updatePassword(@RequestHeader("X-User-Id") Long id,
+	public ResponseEntity<ApiResponse<SimpleResponse>> updatePassword(@RequestHeader("X-User-Id") Long id,
 		@Valid @RequestBody WorkerUpdatePasswordRequest request) {
-		workerService.updateWorkerPassword(id, request);
-		return ResponseEntity.ok(ApiResponse.success("비밀번호가 성공적으로 변경되었습니다."));
+		SimpleResponse response = workerService.updateWorkerPassword(id, request);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
 	@GetMapping
@@ -83,8 +84,8 @@ public class WorkerController {
 	}
 
 	@DeleteMapping("/{workerId}")
-	public ResponseEntity<ApiResponse<String>> deleteWorker(@PathVariable Long workerId) {
-		workerService.deleteWorker(workerId);
-		return ResponseEntity.ok(ApiResponse.success("근로자가 성공적으로 삭제되었습니다."));
+	public ResponseEntity<ApiResponse<SimpleResponse>> deleteWorker(@PathVariable Long workerId) {
+		SimpleResponse response = workerService.deleteWorker(workerId);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 }
