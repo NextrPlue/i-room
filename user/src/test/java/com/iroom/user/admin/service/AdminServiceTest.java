@@ -10,7 +10,6 @@ import com.iroom.user.admin.dto.response.AdminUpdateResponse;
 import com.iroom.user.common.dto.request.LoginRequest;
 import com.iroom.user.common.dto.response.LoginResponse;
 import com.iroom.modulecommon.dto.response.PagedResponse;
-import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.user.admin.entity.Admin;
 import com.iroom.modulecommon.enums.AdminRole;
 import com.iroom.user.common.jwt.JwtTokenProvider;
@@ -50,9 +49,6 @@ public class AdminServiceTest {
 
 	@Mock
 	private JwtTokenProvider jwtTokenProvider;
-
-	@Mock
-	private KafkaProducerService kafkaProducerService;
 
 	@InjectMocks
 	private AdminService adminService;
@@ -96,7 +92,6 @@ public class AdminServiceTest {
 		// then
 		assertThat(response.name()).isEqualTo(admin.getName());
 		assertThat(response.email()).isEqualTo(admin.getEmail());
-		verify(kafkaProducerService).publishMessage(eq("ADMIN_CREATED"), any());
 	}
 
 	@Test
@@ -177,7 +172,6 @@ public class AdminServiceTest {
 		// then
 		assertThat(response.name()).isEqualTo(request.name());
 		assertThat(response.email()).isEqualTo(request.email());
-		verify(kafkaProducerService).publishMessage(eq("ADMIN_UPDATED"), any());
 	}
 
 	@Test
@@ -229,7 +223,6 @@ public class AdminServiceTest {
 
 		// then
 		verify(passwordEncoder).encode(request.newPassword());
-		verify(kafkaProducerService).publishMessage(eq("ADMIN_UPDATED"), any());
 	}
 
 	@Test
@@ -277,7 +270,6 @@ public class AdminServiceTest {
 
 		// then
 		assertThat(response.role()).isEqualTo(AdminRole.READER);
-		verify(kafkaProducerService).publishMessage(eq("ADMIN_UPDATED"), any());
 	}
 
 	@Test
@@ -425,7 +417,6 @@ public class AdminServiceTest {
 
 		// then
 		verify(adminRepository).delete(admin);
-		verify(kafkaProducerService).publishMessage(eq("ADMIN_DELETED"), any());
 	}
 
 	@Test
