@@ -1,5 +1,7 @@
 package com.iroom.user.worker.service;
 
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 import com.iroom.user.common.dto.response.LoginResponse;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.modulecommon.service.KafkaProducerService;
@@ -38,7 +40,7 @@ public class WorkerService {
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public WorkerRegisterResponse registerWorker(WorkerRegisterRequest request) {
 		if (workerRepository.existsByEmail(request.email())) {
-			throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+			throw new CustomException(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
 		}
 
 		Worker worker = request.toEntity(passwordEncoder);
@@ -57,10 +59,10 @@ public class WorkerService {
 
 	public LoginResponse login(LoginRequest request) {
 		Worker worker = workerRepository.findByEmail(request.email())
-			.orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_UNREGISTERED_EMAIL));
 
 		if (!passwordEncoder.matches(request.password(), worker.getPassword())) {
-			throw new IllegalArgumentException("잘못된 비밀번호입니다.");
+			throw new CustomException(ErrorCode.USER_INVALID_PASSWORD);
 		}
 
 		return new LoginResponse(jwtTokenProvider.createWorkerToken(worker));
@@ -69,10 +71,10 @@ public class WorkerService {
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public WorkerUpdateResponse updateWorkerInfo(Long id, WorkerUpdateInfoRequest request) {
 		Worker worker = workerRepository.findById(id)
-			.orElseThrow(() -> new IllegalArgumentException("해당하는 근로자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_WORKER_NOT_FOUND));
 
 		if (!worker.getEmail().equals(request.email()) && workerRepository.existsByEmail(request.email())) {
-			throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+			throw new CustomException(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
 		}
 
 		worker.updateInfo(request);
@@ -91,10 +93,10 @@ public class WorkerService {
 	@PreAuthorize("hasAnyAuthority('ROLE_WORKER') and #id == authentication.principal")
 	public void updateWorkerPassword(Long id, WorkerUpdatePasswordRequest request) {
 		Worker worker = workerRepository.findById(id)
-			.orElseThrow(() -> new IllegalArgumentException("해당하는 근로자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_WORKER_NOT_FOUND));
 
 		if (!passwordEncoder.matches(request.password(), worker.getPassword())) {
-			throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+			throw new CustomException(ErrorCode.USER_CURRENT_PASSWORD_MISMATCH);
 		}
 
 		worker.updatePassword(passwordEncoder.encode(request.newPassword()));
@@ -131,7 +133,7 @@ public class WorkerService {
 	@PreAuthorize("hasAuthority('ROLE_WORKER') and #id == authentication.principal")
 	public WorkerInfoResponse getWorkerInfo(Long id) {
 		Worker worker = workerRepository.findById(id)
-			.orElseThrow(() -> new IllegalArgumentException("해당하는 근로자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_WORKER_NOT_FOUND));
 
 		return new WorkerInfoResponse(worker);
 	}
@@ -139,7 +141,7 @@ public class WorkerService {
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
 	public WorkerInfoResponse getWorkerById(Long workerId) {
 		Worker worker = workerRepository.findById(workerId)
-			.orElseThrow(() -> new IllegalArgumentException("해당하는 근로자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_WORKER_NOT_FOUND));
 
 		return new WorkerInfoResponse(worker);
 	}
@@ -147,7 +149,7 @@ public class WorkerService {
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public void deleteWorker(Long workerId) {
 		Worker worker = workerRepository.findById(workerId)
-			.orElseThrow(() -> new IllegalArgumentException("ID " + workerId + "에 해당하는 근로자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_WORKER_NOT_FOUND));
 
 		workerRepository.delete(worker);
 

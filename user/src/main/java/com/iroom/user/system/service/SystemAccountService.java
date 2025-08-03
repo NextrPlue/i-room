@@ -1,5 +1,7 @@
 package com.iroom.user.system.service;
 
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 import com.iroom.user.common.jwt.JwtTokenProvider;
 import com.iroom.user.system.dto.request.SystemAuthRequest;
 import com.iroom.user.system.dto.response.SystemAuthResponse;
@@ -19,7 +21,7 @@ public class SystemAccountService {
 
     public SystemAuthResponse authenticate(SystemAuthRequest request) {
         SystemAccount system =  systemAccountRepository.findByApiKey(request.apiKey())
-                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 API Key 입니다."));
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_INVALID_API_KEY));
 
         return new SystemAuthResponse(jwtTokenProvider.createSystemToken(system));
     }
