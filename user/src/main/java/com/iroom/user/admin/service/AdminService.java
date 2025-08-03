@@ -1,5 +1,7 @@
 package com.iroom.user.admin.service;
 
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 import com.iroom.user.admin.dto.request.AdminSignUpRequest;
 import com.iroom.user.admin.dto.request.AdminUpdateInfoRequest;
 import com.iroom.user.admin.dto.request.AdminUpdatePasswordRequest;
@@ -36,7 +38,7 @@ public class AdminService {
 
 	public AdminSignUpResponse signUp(AdminSignUpRequest request) {
 		if (adminRepository.existsByEmail(request.email())) {
-			throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+			throw new CustomException(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
 		}
 
 		Admin admin = request.toEntity(passwordEncoder);
@@ -47,10 +49,10 @@ public class AdminService {
 
 	public LoginResponse login(LoginRequest request) {
 		Admin admin = adminRepository.findByEmail(request.email())
-			.orElseThrow(() -> new IllegalArgumentException("가입되지 않은 이메일입니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_UNREGISTERED_EMAIL));
 
 		if (!passwordEncoder.matches(request.password(), admin.getPassword())) {
-			throw new IllegalArgumentException("잘못된 비밀번호입니다.");
+			throw new CustomException(ErrorCode.USER_INVALID_PASSWORD);
 		}
 
 		return new LoginResponse(jwtTokenProvider.createAdminToken(admin));
@@ -59,10 +61,10 @@ public class AdminService {
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER') and #id == authentication.principal")
 	public AdminUpdateResponse updateAdminInfo(Long id, AdminUpdateInfoRequest request) {
 		Admin admin = adminRepository.findById(id)
-			.orElseThrow(() -> new IllegalArgumentException("해당하는 관리자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_ADMIN_NOT_FOUND));
 
 		if (!admin.getEmail().equals(request.email()) && adminRepository.existsByEmail(request.email())) {
-			throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
+			throw new CustomException(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
 		}
 
 		admin.updateInfo(request.name(), request.email(), request.phone());
@@ -73,10 +75,10 @@ public class AdminService {
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER') and #id == authentication.principal")
 	public void updateAdminPassword(Long id, AdminUpdatePasswordRequest request) {
 		Admin admin = adminRepository.findById(id)
-			.orElseThrow(() -> new IllegalArgumentException("해당하는 관리자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_ADMIN_NOT_FOUND));
 
 		if (!passwordEncoder.matches(request.password(), admin.getPassword())) {
-			throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+			throw new CustomException(ErrorCode.USER_CURRENT_PASSWORD_MISMATCH);
 		}
 
 		admin.updatePassword(passwordEncoder.encode(request.newPassword()));
@@ -85,7 +87,7 @@ public class AdminService {
 	@PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN') and #adminId != authentication.principal")
 	public AdminUpdateResponse updateAdminRole(Long adminId, AdminUpdateRoleRequest request) {
 		Admin admin = adminRepository.findById(adminId)
-			.orElseThrow(() -> new IllegalArgumentException("ID " + adminId + "에 해당하는 관리자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_ADMIN_NOT_FOUND));
 
 		admin.updateRole(request.role());
 
@@ -122,7 +124,7 @@ public class AdminService {
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER') and #id == authentication.principal")
 	public AdminInfoResponse getAdminInfo(Long id) {
 		Admin admin = adminRepository.findById(id)
-			.orElseThrow(() -> new IllegalArgumentException("해당하는 관리자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_ADMIN_NOT_FOUND));
 
 		return new AdminInfoResponse(admin);
 	}
@@ -130,7 +132,7 @@ public class AdminService {
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public AdminInfoResponse getAdminById(Long adminId) {
 		Admin admin = adminRepository.findById(adminId)
-			.orElseThrow(() -> new IllegalArgumentException("해당하는 관리자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_ADMIN_NOT_FOUND));
 
 		return new AdminInfoResponse(admin);
 	}
@@ -138,7 +140,7 @@ public class AdminService {
 	@PreAuthorize("hasAuthority('ROLE_SUPER_ADMIN') and #adminId != authentication.principal")
 	public void deleteAdmin(Long adminId) {
 		Admin admin = adminRepository.findById(adminId)
-			.orElseThrow(() -> new IllegalArgumentException("ID " + adminId + "에 해당하는 관리자를 찾을 수 없습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_ADMIN_NOT_FOUND));
 
 		adminRepository.delete(admin);
 	}

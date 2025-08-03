@@ -70,19 +70,22 @@ public class WorkerControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.id").value(1L))
-			.andExpect(jsonPath("$.name").value("김근로"))
-			.andExpect(jsonPath("$.email").value("worker@example.com"))
-			.andExpect(jsonPath("$.phone").value("010-1234-5678"))
-			.andExpect(jsonPath("$.role").value("WORKER"))
-			.andExpect(jsonPath("$.gender").value("MALE"))
-			.andExpect(jsonPath("$.bloodType").value("A"))
-			.andExpect(jsonPath("$.age").value(30))
-			.andExpect(jsonPath("$.weight").value(70.5))
-			.andExpect(jsonPath("$.height").value(175.2))
-			.andExpect(jsonPath("$.jobTitle").value("현장관리자"))
-			.andExpect(jsonPath("$.occupation").value("건설업"))
-			.andExpect(jsonPath("$.department").value("안전관리팀"));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.id").value(1L))
+			.andExpect(jsonPath("$.data.name").value("김근로"))
+			.andExpect(jsonPath("$.data.email").value("worker@example.com"))
+			.andExpect(jsonPath("$.data.phone").value("010-1234-5678"))
+			.andExpect(jsonPath("$.data.role").value("WORKER"))
+			.andExpect(jsonPath("$.data.gender").value("MALE"))
+			.andExpect(jsonPath("$.data.bloodType").value("A"))
+			.andExpect(jsonPath("$.data.age").value(30))
+			.andExpect(jsonPath("$.data.weight").value(70.5))
+			.andExpect(jsonPath("$.data.height").value(175.2))
+			.andExpect(jsonPath("$.data.jobTitle").value("현장관리자"))
+			.andExpect(jsonPath("$.data.occupation").value("건설업"))
+			.andExpect(jsonPath("$.data.department").value("안전관리팀"))
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 
 	@Test
@@ -114,7 +117,10 @@ public class WorkerControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.token").value("jwt-token-example"));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.token").value("jwt-token-example"))
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 
 	@Test
@@ -153,10 +159,13 @@ public class WorkerControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.id").value(1L))
-			.andExpect(jsonPath("$.name").value("김수정"))
-			.andExpect(jsonPath("$.email").value("updated@example.com"))
-			.andExpect(jsonPath("$.phone").value("010-9876-5432"));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.id").value(1L))
+			.andExpect(jsonPath("$.data.name").value("김수정"))
+			.andExpect(jsonPath("$.data.email").value("updated@example.com"))
+			.andExpect(jsonPath("$.data.phone").value("010-9876-5432"))
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 
 	@Test
@@ -188,7 +197,10 @@ public class WorkerControllerTest {
 				.header("X-User-Id", "1")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(status().isNoContent());
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 
 	@Test
@@ -246,12 +258,15 @@ public class WorkerControllerTest {
 				.param("page", "0")
 				.param("size", "10"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.content").isArray())
-			.andExpect(jsonPath("$.content[0].id").value(1L))
-			.andExpect(jsonPath("$.content[0].name").value("김근로1"))
-			.andExpect(jsonPath("$.content[1].id").value(2L))
-			.andExpect(jsonPath("$.content[1].name").value("김근로2"))
-			.andExpect(jsonPath("$.totalElements").value(2));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.content").isArray())
+			.andExpect(jsonPath("$.data.content[0].id").value(1L))
+			.andExpect(jsonPath("$.data.content[0].name").value("김근로1"))
+			.andExpect(jsonPath("$.data.content[1].id").value(2L))
+			.andExpect(jsonPath("$.data.content[1].name").value("김근로2"))
+			.andExpect(jsonPath("$.data.totalElements").value(2))
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 
 	@Test
@@ -277,9 +292,12 @@ public class WorkerControllerTest {
 				.param("page", "0")
 				.param("size", "10"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.content").isArray())
-			.andExpect(jsonPath("$.content[0].name").value("김근로"))
-			.andExpect(jsonPath("$.totalElements").value(1));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.content").isArray())
+			.andExpect(jsonPath("$.data.content[0].name").value("김근로"))
+			.andExpect(jsonPath("$.data.totalElements").value(1))
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 
 	@Test
@@ -317,14 +335,17 @@ public class WorkerControllerTest {
 		mockMvc.perform(get("/workers/me")
 				.header("X-User-Id", "1"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.id").value(1L))
-			.andExpect(jsonPath("$.name").value("김근로"))
-			.andExpect(jsonPath("$.email").value("worker@example.com"))
-			.andExpect(jsonPath("$.phone").value("010-1234-5678"))
-			.andExpect(jsonPath("$.role").value("WORKER"))
-			.andExpect(jsonPath("$.gender").value("MALE"))
-			.andExpect(jsonPath("$.bloodType").value("A"))
-			.andExpect(jsonPath("$.jobTitle").value("현장관리자"));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.id").value(1L))
+			.andExpect(jsonPath("$.data.name").value("김근로"))
+			.andExpect(jsonPath("$.data.email").value("worker@example.com"))
+			.andExpect(jsonPath("$.data.phone").value("010-1234-5678"))
+			.andExpect(jsonPath("$.data.role").value("WORKER"))
+			.andExpect(jsonPath("$.data.gender").value("MALE"))
+			.andExpect(jsonPath("$.data.bloodType").value("A"))
+			.andExpect(jsonPath("$.data.jobTitle").value("현장관리자"))
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 
 	@Test
@@ -352,11 +373,14 @@ public class WorkerControllerTest {
 		// when & then
 		mockMvc.perform(get("/workers/{workerId}", workerId))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.id").value(1L))
-			.andExpect(jsonPath("$.name").value("김근로"))
-			.andExpect(jsonPath("$.email").value("worker@example.com"))
-			.andExpect(jsonPath("$.jobTitle").value("현장관리자"))
-			.andExpect(jsonPath("$.department").value("안전관리팀"));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.id").value(1L))
+			.andExpect(jsonPath("$.data.name").value("김근로"))
+			.andExpect(jsonPath("$.data.email").value("worker@example.com"))
+			.andExpect(jsonPath("$.data.jobTitle").value("현장관리자"))
+			.andExpect(jsonPath("$.data.department").value("안전관리팀"))
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 
 	@Test
@@ -369,6 +393,9 @@ public class WorkerControllerTest {
 
 		// when & then
 		mockMvc.perform(delete("/workers/{workerId}", workerId))
-			.andExpect(status().isNoContent());
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 }
