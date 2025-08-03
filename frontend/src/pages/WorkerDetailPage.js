@@ -212,34 +212,32 @@ const WorkerDetailPage = () => {
                         <div className={styles.contactItem}>
                             <div className={styles.contactIcon}>👤</div>
                             <div className={styles.contactInfo}>
-                                <span className={styles.contactLabel}>성별</span>
-                                <span className={styles.contactValue}>
-                                    {worker.gender === 'MALE' ? '남성' : worker.gender === 'FEMALE' ? '여성' : '미설정'}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className={styles.contactItem}>
-                            <div className={styles.contactIcon}>🎂</div>
-                            <div className={styles.contactInfo}>
-                                <span className={styles.contactLabel}>나이</span>
-                                <span className={styles.contactValue}>{worker.age ? `${worker.age}세` : '미설정'}</span>
+                                <span className={styles.contactLabel}>개인정보</span>
+                                <div className={styles.combinedValue}>
+                                    <span className={styles.valueItem}>
+                                        성별: {worker.gender === 'MALE' ? '남성' : worker.gender === 'FEMALE' ? '여성' : '미설정'}
+                                    </span>
+                                    <span className={styles.valueDivider}>•</span>
+                                    <span className={styles.valueItem}>
+                                        나이: {worker.age ? `${worker.age}세` : '미설정'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
                         <div className={styles.contactItem}>
                             <div className={styles.contactIcon}>📏</div>
                             <div className={styles.contactInfo}>
-                                <span className={styles.contactLabel}>키</span>
-                                <span className={styles.contactValue}>{worker.height ? `${worker.height}cm` : '미설정'}</span>
-                            </div>
-                        </div>
-
-                        <div className={styles.contactItem}>
-                            <div className={styles.contactIcon}>⚖️</div>
-                            <div className={styles.contactInfo}>
-                                <span className={styles.contactLabel}>몸무게</span>
-                                <span className={styles.contactValue}>{worker.weight ? `${worker.weight}kg` : '미설정'}</span>
+                                <span className={styles.contactLabel}>신체정보</span>
+                                <div className={styles.combinedValue}>
+                                    <span className={styles.valueItem}>
+                                        키: {worker.height ? `${worker.height}cm` : '미설정'}
+                                    </span>
+                                    <span className={styles.valueDivider}>•</span>
+                                    <span className={styles.valueItem}>
+                                        몸무게: {worker.weight ? `${worker.weight}kg` : '미설정'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
 

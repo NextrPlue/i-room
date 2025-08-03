@@ -513,6 +513,26 @@
     font-weight: 400;
 }
 
+/* 결합 레이아웃용 스타일 */
+.combinedValue {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.valueItem {
+    font-size: 14px;
+    color: #1F2937;
+    font-weight: 500;
+}
+
+.valueDivider {
+    color: #9CA3AF;
+    font-weight: 500;
+    font-size: 14px;
+}
+
 /* 교육이력 상태 메시지 */
 .educationLoading,
 .educationError,
