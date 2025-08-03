@@ -9,7 +9,7 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/iroom_dashboard?serverTimezone=Asia/Seoul
     username: root
-    password: Chogi4585!
+    password: password
 
   jpa:
     hibernate:
@@ -33,6 +33,7 @@ spring:
         event-out:
           destination: iroom
           contentType: application/json
+
   servlet: #(파일 전송 제한풀기  / spring: 밑에 들여쓰기)
     multipart:
       max-file-size: 500MB
