@@ -1,4 +1,4 @@
-package com.iroom.user.common.exception;
+package com.iroom.modulecommon.exception;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -6,7 +6,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.iroom.modulecommon.dto.response.ApiResponse;
 import com.iroom.modulecommon.dto.response.ErrorDetail;
-import com.iroom.modulecommon.exception.CustomException;
 
 import lombok.extern.slf4j.Slf4j;
 
