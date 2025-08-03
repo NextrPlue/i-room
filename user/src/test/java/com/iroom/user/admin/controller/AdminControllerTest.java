@@ -62,10 +62,12 @@ public class AdminControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.name").value("admin"))
-			.andExpect(jsonPath("$.email").value("admin@example.com"))
-			.andExpect(jsonPath("$.phone").value("010-1234-5678"))
-			.andExpect(jsonPath("$.role").value("ADMIN"));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.name").value("admin"))
+			.andExpect(jsonPath("$.data.email").value("admin@example.com"))
+			.andExpect(jsonPath("$.data.phone").value("010-1234-5678"))
+			.andExpect(jsonPath("$.data.role").value("ADMIN"));
 	}
 
 	@Test
@@ -95,7 +97,10 @@ public class AdminControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.token").value("jwt-token-example"));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.token").value("jwt-token-example"))
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 
 	@Test
@@ -130,11 +135,13 @@ public class AdminControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.id").value(1L))
-			.andExpect(jsonPath("$.name").value("updatedName"))
-			.andExpect(jsonPath("$.email").value("updated@example.com"))
-			.andExpect(jsonPath("$.phone").value("010-9876-5432"))
-			.andExpect(jsonPath("$.role").value("ADMIN"));
+			.andExpect(jsonPath("$.data.id").value(1L))
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.name").value("updatedName"))
+			.andExpect(jsonPath("$.data.email").value("updated@example.com"))
+			.andExpect(jsonPath("$.data.phone").value("010-9876-5432"))
+			.andExpect(jsonPath("$.data.role").value("ADMIN"));
 	}
 
 	@Test
@@ -181,7 +188,10 @@ public class AdminControllerTest {
 				.header("X-User-Id", adminId)
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
-			.andExpect(status().isNoContent());
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 
 	@Test
@@ -228,8 +238,11 @@ public class AdminControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.id").value(1L))
-			.andExpect(jsonPath("$.role").value("READER"));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.id").value(1L))
+			.andExpect(jsonPath("$.data.role").value("READER"))
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 
 	@Test
@@ -250,12 +263,15 @@ public class AdminControllerTest {
 				.param("page", "0")
 				.param("size", "10"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.content").isArray())
-			.andExpect(jsonPath("$.content[0].id").value(1L))
-			.andExpect(jsonPath("$.content[0].name").value("admin1"))
-			.andExpect(jsonPath("$.content[1].id").value(2L))
-			.andExpect(jsonPath("$.content[1].name").value("admin2"))
-			.andExpect(jsonPath("$.totalElements").value(2));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.content").isArray())
+			.andExpect(jsonPath("$.data.content[0].id").value(1L))
+			.andExpect(jsonPath("$.data.content[0].name").value("admin1"))
+			.andExpect(jsonPath("$.data.content[1].id").value(2L))
+			.andExpect(jsonPath("$.data.content[1].name").value("admin2"))
+			.andExpect(jsonPath("$.data.totalElements").value(2))
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 
 	@Test
@@ -276,9 +292,12 @@ public class AdminControllerTest {
 				.param("page", "0")
 				.param("size", "10"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.content").isArray())
-			.andExpect(jsonPath("$.content[0].name").value("admin1"))
-			.andExpect(jsonPath("$.totalElements").value(1));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.content").isArray())
+			.andExpect(jsonPath("$.data.content[0].name").value("admin1"))
+			.andExpect(jsonPath("$.data.totalElements").value(1))
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 
 	@Test
@@ -311,11 +330,13 @@ public class AdminControllerTest {
 		mockMvc.perform(get("/admins/me")
 				.header("X-User-Id", adminId))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.id").value(1L))
-			.andExpect(jsonPath("$.name").value("admin"))
-			.andExpect(jsonPath("$.email").value("admin@example.com"))
-			.andExpect(jsonPath("$.phone").value("010-1234-5678"))
-			.andExpect(jsonPath("$.role").value("ADMIN"));
+			.andExpect(jsonPath("$.data.id").value(1L))
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.name").value("admin"))
+			.andExpect(jsonPath("$.data.email").value("admin@example.com"))
+			.andExpect(jsonPath("$.data.phone").value("010-1234-5678"))
+			.andExpect(jsonPath("$.data.role").value("ADMIN"));
 	}
 
 	@Test
@@ -339,10 +360,12 @@ public class AdminControllerTest {
 		// when & then
 		mockMvc.perform(get("/admins/{adminId}", adminId))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.id").value(1L))
-			.andExpect(jsonPath("$.name").value("admin"))
-			.andExpect(jsonPath("$.email").value("admin@example.com"))
-			.andExpect(jsonPath("$.role").value("ADMIN"));
+			.andExpect(jsonPath("$.data.id").value(1L))
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.data.name").value("admin"))
+			.andExpect(jsonPath("$.data.email").value("admin@example.com"))
+			.andExpect(jsonPath("$.data.role").value("ADMIN"));
 	}
 
 	@Test
@@ -355,6 +378,9 @@ public class AdminControllerTest {
 
 		// when & then
 		mockMvc.perform(delete("/admins/{adminId}", adminId))
-			.andExpect(status().isNoContent());
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.message").exists())
+			.andExpect(jsonPath("$.timestamp").exists());
 	}
 }

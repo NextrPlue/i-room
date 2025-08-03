@@ -1,5 +1,7 @@
 package com.iroom.user.admin.service;
 
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 import com.iroom.user.admin.dto.request.AdminSignUpRequest;
 import com.iroom.user.admin.dto.request.AdminUpdateInfoRequest;
 import com.iroom.user.admin.dto.request.AdminUpdatePasswordRequest;
@@ -34,7 +36,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
@@ -104,8 +105,11 @@ public class AdminServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> adminService.signUp(request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("이미 사용 중인 이메일입니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
+			});
 	}
 
 	@Test
@@ -136,8 +140,11 @@ public class AdminServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> adminService.login(request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("가입되지 않은 이메일입니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_UNREGISTERED_EMAIL);
+			});
 	}
 
 	@Test
@@ -151,8 +158,11 @@ public class AdminServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> adminService.login(request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("잘못된 비밀번호입니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_INVALID_PASSWORD);
+			});
 	}
 
 	@Test
@@ -186,8 +196,11 @@ public class AdminServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> adminService.updateAdminInfo(adminId, request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("해당하는 관리자를 찾을 수 없습니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_ADMIN_NOT_FOUND);
+			});
 	}
 
 	@Test
@@ -203,8 +216,11 @@ public class AdminServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> adminService.updateAdminInfo(adminId, request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("이미 사용 중인 이메일입니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
+			});
 	}
 
 	@Test
@@ -236,8 +252,11 @@ public class AdminServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> adminService.updateAdminPassword(adminId, request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("해당하는 관리자를 찾을 수 없습니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_ADMIN_NOT_FOUND);
+			});
 	}
 
 	@Test
@@ -252,8 +271,11 @@ public class AdminServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> adminService.updateAdminPassword(adminId, request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("현재 비밀번호가 일치하지 않습니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_CURRENT_PASSWORD_MISMATCH);
+			});
 	}
 
 	@Test
@@ -283,8 +305,11 @@ public class AdminServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> adminService.updateAdminRole(adminId, request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("ID " + adminId + "에 해당하는 관리자를 찾을 수 없습니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_ADMIN_NOT_FOUND);
+			});
 	}
 
 	@Test
@@ -370,8 +395,11 @@ public class AdminServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> adminService.getAdminInfo(adminId))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("해당하는 관리자를 찾을 수 없습니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_ADMIN_NOT_FOUND);
+			});
 	}
 
 	@Test
@@ -400,8 +428,11 @@ public class AdminServiceTest {
 
 		// when
 		assertThatThrownBy(() -> adminService.getAdminById(adminId))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("해당하는 관리자를 찾을 수 없습니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_ADMIN_NOT_FOUND);
+			});
 	}
 
 	@Test
@@ -429,7 +460,10 @@ public class AdminServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> adminService.deleteAdmin(adminId))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("ID " + adminId + "에 해당하는 관리자를 찾을 수 없습니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_ADMIN_NOT_FOUND);
+			});
 	}
 }

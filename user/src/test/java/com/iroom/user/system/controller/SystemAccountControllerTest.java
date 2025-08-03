@@ -48,7 +48,10 @@ public class SystemAccountControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.token").value("jwt-system-token"));
+                .andExpect(jsonPath("$.status").value("success"))
+                .andExpect(jsonPath("$.message").exists())
+                .andExpect(jsonPath("$.data.token").value("jwt-system-token"))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test

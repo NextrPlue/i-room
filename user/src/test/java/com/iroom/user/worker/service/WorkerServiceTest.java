@@ -1,5 +1,7 @@
 package com.iroom.user.worker.service;
 
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 import com.iroom.user.common.dto.request.LoginRequest;
 import com.iroom.user.common.dto.response.LoginResponse;
 import com.iroom.modulecommon.dto.response.PagedResponse;
@@ -136,8 +138,11 @@ public class WorkerServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> workerService.registerWorker(request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("이미 사용 중인 이메일입니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
+			});
 	}
 
 	@Test
@@ -168,8 +173,11 @@ public class WorkerServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> workerService.login(request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("가입되지 않은 이메일입니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_UNREGISTERED_EMAIL);
+			});
 	}
 
 	@Test
@@ -183,8 +191,11 @@ public class WorkerServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> workerService.login(request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("잘못된 비밀번호입니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_INVALID_PASSWORD);
+			});
 	}
 
 	@Test
@@ -241,8 +252,11 @@ public class WorkerServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> workerService.updateWorkerInfo(workerId, request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("해당하는 근로자를 찾을 수 없습니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_WORKER_NOT_FOUND);
+			});
 	}
 
 	@Test
@@ -269,8 +283,11 @@ public class WorkerServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> workerService.updateWorkerInfo(workerId, request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("이미 사용 중인 이메일입니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_EMAIL_ALREADY_EXISTS);
+			});
 	}
 
 	@Test
@@ -303,8 +320,11 @@ public class WorkerServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> workerService.updateWorkerPassword(workerId, request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("해당하는 근로자를 찾을 수 없습니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_WORKER_NOT_FOUND);
+			});
 	}
 
 	@Test
@@ -319,8 +339,11 @@ public class WorkerServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> workerService.updateWorkerPassword(workerId, request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("현재 비밀번호가 일치하지 않습니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_CURRENT_PASSWORD_MISMATCH);
+			});
 	}
 
 	@Test
@@ -391,8 +414,11 @@ public class WorkerServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> workerService.getWorkerInfo(workerId))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("해당하는 근로자를 찾을 수 없습니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_WORKER_NOT_FOUND);
+			});
 	}
 
 	@Test
@@ -419,10 +445,13 @@ public class WorkerServiceTest {
 
 		given(workerRepository.findById(workerId)).willReturn(Optional.empty());
 
-		// when
+		// when & then
 		assertThatThrownBy(() -> workerService.getWorkerById(workerId))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("해당하는 근로자를 찾을 수 없습니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_WORKER_NOT_FOUND);
+			});
 	}
 
 	@Test
@@ -451,7 +480,10 @@ public class WorkerServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> workerService.deleteWorker(workerId))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("ID " + workerId + "에 해당하는 근로자를 찾을 수 없습니다.");
+			.isInstanceOf(CustomException.class)
+			.satisfies(ex -> {
+				CustomException customException = (CustomException)ex;
+				assertThat(customException.getErrorCode()).isEqualTo(ErrorCode.USER_WORKER_NOT_FOUND);
+			});
 	}
 }
