@@ -19,8 +19,8 @@ const CommonLayout = ({ children, currentPage }) => {
         setActiveItem(item);
         if (item === 'dashboard') {
             navigate('/admin/dashboard');
-        } else if (item === 'management') {
-            navigate('/admin/management');
+        } else if (item === 'worker') {
+            navigate('/admin/worker');
         } else if (item === 'blueprint') {
             navigate('/admin/blueprint');
         } else if (item === 'monitoring') {
@@ -100,13 +100,13 @@ const App = () => {
                 }/>
 
                 {/* 근로자 관리 */}
-                <Route path="/admin/management" element={
-                    <CommonLayout currentPage="management">
+                <Route path="/admin/worker" element={
+                    <CommonLayout currentPage="worker">
                         <WorkerManagementPage/>
                     </CommonLayout>
                 }/>
-                <Route path="/admin/management/:workerId" element={
-                    <CommonLayout currentPage="management">
+                <Route path="/admin/worker/:workerId" element={
+                    <CommonLayout currentPage="worker">
                         <WorkerDetailPage/>
                     </CommonLayout>
                 }/>
