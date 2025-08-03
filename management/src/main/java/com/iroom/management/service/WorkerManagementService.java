@@ -41,4 +41,17 @@ public class WorkerManagementService {
 		WorkerManagement updated = repository.save(existing);
 		return new WorkerManagementResponse(updated);
 	}
+
+	// 근로자 출입현황 조회
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_ENTRANCE_SYSTEM')")
+	public WorkerManagementResponse getEntryByWorkerId(Long workerId) {
+		if (workerId == null) {
+			throw new IllegalArgumentException("workerId는 null일 수 없습니다.");
+		}
+
+		WorkerManagement latest = repository.findTopByWorkerIdOrderByEnterDateDesc(workerId)
+			.orElseThrow(() -> new IllegalArgumentException("해당 근로자의 출입 기록이 존재하지 않습니다."));
+
+		return new WorkerManagementResponse(latest);
+	}
 }
