@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -19,7 +20,7 @@ import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsRequest;
 import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsResponse;
 import com.iroom.sensor.service.WorkerHealthService;
 
-@WebMvcTest(WorkerHealthController.class)
+@WebMvcTest(controllers = WorkerHealthController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
 public class WorkerHealthControllerTest {
 
 	@Autowired
@@ -35,8 +36,10 @@ public class WorkerHealthControllerTest {
 	@DisplayName("POST /worker-health/location - 위치 업데이트 테스트")
 	void updateLocationTest() throws Exception {
 		// given
-		WorkerUpdateLocationRequest request = new WorkerUpdateLocationRequest(1L, "54.8343, 1.4723");
-		WorkerUpdateLocationResponse response = new WorkerUpdateLocationResponse(1L, "54.8343, 1.4723");
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
+		WorkerUpdateLocationRequest request = new WorkerUpdateLocationRequest(1L, latitude, longitude);
+		WorkerUpdateLocationResponse response = new WorkerUpdateLocationResponse(1L, latitude, longitude);
 		given(workerService.updateLocation(request)).willReturn(response);
 
 		// when & then
@@ -45,7 +48,8 @@ public class WorkerHealthControllerTest {
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.workerId").value(1L))
-			.andExpect(jsonPath("$.location").value("54.8343, 1.4723"));
+			.andExpect(jsonPath("$.latitude").value(latitude))
+			.andExpect(jsonPath("$.longitude").value(longitude));
 	}
 
 	@Test
@@ -71,13 +75,16 @@ public class WorkerHealthControllerTest {
 	void getWorkerLocationTest() throws Exception {
 		// given
 		Long workerId = 3L;
-		WorkerUpdateLocationResponse response = new WorkerUpdateLocationResponse(workerId, "36.987, 127.123");
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
+		WorkerUpdateLocationResponse response = new WorkerUpdateLocationResponse(workerId, latitude, longitude);
 		given(workerService.getWorkerLocation(workerId)).willReturn(response);
 
 		// when & then
 		mockMvc.perform(get("/worker-health/{workerId}/location", workerId))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.workerId").value(workerId))
-			.andExpect(jsonPath("$.location").value("36.987, 127.123"));
+			.andExpect(jsonPath("$.latitude").value(latitude))
+			.andExpect(jsonPath("$.longitude").value(longitude));
 	}
 }

@@ -57,8 +57,9 @@ public class EquipmentServiceTest {
 	void updateLocationTest() {
 		// given
 		Long equipmentId = 1L;
-		String newLocation = "35.8343, 128.4723";
-		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(equipmentId, newLocation);
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
+		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(equipmentId, latitude, longitude);
 		HeavyEquipment equipment = HeavyEquipment.builder().build();
 		setIdViaReflection(equipment, equipmentId);
 		given(equipmentRepository.findById(equipmentId)).willReturn(java.util.Optional.of(equipment));
@@ -68,7 +69,8 @@ public class EquipmentServiceTest {
 
 		// then
 		assertThat(response.id()).isEqualTo(equipmentId);
-		assertThat(response.location()).isEqualTo(newLocation);
+		assertThat(response.latitude()).isEqualTo(latitude);
+		assertThat(response.longitude()).isEqualTo(longitude);
 	}
 
 	@Test
@@ -76,7 +78,9 @@ public class EquipmentServiceTest {
 	void updateLocation_notFoundId() {
 		// given
 		Long invalidId = 999L;
-		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(invalidId, "354.8343, 128.4723");
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
+		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(invalidId, latitude, longitude);
 		given(equipmentRepository.findById(invalidId)).willReturn(java.util.Optional.empty());
 
 		// when & then

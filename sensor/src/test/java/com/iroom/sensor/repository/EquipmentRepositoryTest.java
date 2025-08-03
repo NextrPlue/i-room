@@ -53,12 +53,15 @@ public class EquipmentRepositoryTest {
 		HeavyEquipment saved = equipmentRepository.save(equipment);
 
 		// when
-		saved.updateLocation("35.8343, 128.4723");
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
+		saved.updateLocation(latitude, longitude);
 		HeavyEquipment updated = equipmentRepository.save(saved);
 
 		// then
 		Optional<HeavyEquipment> result = equipmentRepository.findById(updated.getId());
 		assertThat(result).isPresent();
-		assertThat(result.get().getLocation()).isEqualTo("35.8343, 128.4723");
+		assertThat(result.get().getLatitude()).isEqualTo(latitude);
+		assertThat(result.get().getLongitude()).isEqualTo(longitude);
 	}
 }

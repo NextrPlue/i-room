@@ -12,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.sensor.dto.WorkerHealth.*;
 import com.iroom.sensor.entity.WorkerHealth;
 import com.iroom.sensor.repository.WorkerHealthRepository;
@@ -24,6 +25,9 @@ public class WorkerHealthServiceTest {
 	@Mock
 	private WorkerHealthRepository workerRepository;
 
+	@Mock
+	private KafkaProducerService kafkaProducerService;
+
 	@InjectMocks
 	private WorkerHealthService workerService;
 
@@ -32,8 +36,9 @@ public class WorkerHealthServiceTest {
 	void updateLocationTest() {
 		// given
 		Long workerId = 1L;
-		String newLocation = "35.8343, 128.4723";
-		WorkerUpdateLocationRequest request = new WorkerUpdateLocationRequest(workerId, newLocation);
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
+		WorkerUpdateLocationRequest request = new WorkerUpdateLocationRequest(workerId, latitude, longitude);
 
 		WorkerHealth workerHealth = WorkerHealth.builder()
 			.workerId(workerId)
@@ -45,7 +50,9 @@ public class WorkerHealthServiceTest {
 
 		// then
 		assertThat(response.workerId()).isEqualTo(workerId);
-		assertThat(response.location()).isEqualTo(newLocation);
+		assertThat(response.latitude()).isEqualTo(latitude);
+		assertThat(response.longitude()).isEqualTo(longitude);
+		verify(kafkaProducerService).publishMessage(eq("Worker_Location"), any());
 		verify(workerRepository).findByWorkerId(workerId);
 	}
 
@@ -54,7 +61,9 @@ public class WorkerHealthServiceTest {
 	void updateLocationFailTest() {
 		// given
 		Long invalidId = 999L;
-		WorkerUpdateLocationRequest request = new WorkerUpdateLocationRequest(invalidId, "354.8343, 128.4723");
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
+		WorkerUpdateLocationRequest request = new WorkerUpdateLocationRequest(invalidId, latitude, longitude);
 		given(workerRepository.findByWorkerId(invalidId)).willReturn(Optional.empty());
 
 		// when & then
@@ -104,9 +113,10 @@ public class WorkerHealthServiceTest {
 	void getWorkerLocationTest() {
 		//given
 		Long workerId = 1L;
-		String location = "51.5072, 0.1275";
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
 		WorkerHealth workerHealth = WorkerHealth.builder().workerId(workerId).build();
-		workerHealth.updateLocation(location);
+		workerHealth.updateLocation(latitude, longitude);
 		given(workerRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerHealth));
 
 		// when
@@ -114,7 +124,8 @@ public class WorkerHealthServiceTest {
 
 		// then
 		assertThat(response.workerId()).isEqualTo(workerId);
-		assertThat(response.location()).isEqualTo(location);
+		assertThat(response.latitude()).isEqualTo(latitude);
+		assertThat(response.longitude()).isEqualTo(longitude);
 		verify(workerRepository).findByWorkerId(workerId);
 	}
 
