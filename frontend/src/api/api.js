@@ -144,6 +144,25 @@ export const userAPI = {
     },
 
     /**
+     * 안전교육 등록
+     * @param {object} educationData - 등록할 교육 데이터
+     * @param {string} educationData.workerId - 근로자 ID
+     * @param {string} educationData.name - 교육명
+     * @param {string} educationData.eduDate - 교육 일시 (YYYY-MM-DD)
+     * @param {string} educationData.certUrl - 수료증 URL
+     * @returns {Promise} 등록된 교육 정보
+     */
+    createWorkerEducation: async (educationData) => {
+        const url = `${API_CONFIG.gateway}/api/management/worker-education`;
+        console.log('[교육등록 요청 URL]', url);
+        console.log('[교육등록 데이터]', educationData);
+        return await apiRequest(url, {
+            method: 'POST',
+            body: JSON.stringify(educationData)
+        });
+    },
+
+    /**
      * 근로자 정보 수정
      * @param {string} workerId - 근로자 ID
      * @param {object} workerData - 수정할 근로자 데이터
