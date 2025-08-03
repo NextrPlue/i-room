@@ -176,4 +176,15 @@ export const userAPI = {
         });
     },
 
+    /**
+     * 근로자 출입현황 조회
+     * @param {string} workerId - 근로자 ID
+     * @returns {Promise} 출입현황 데이터 { id, workerId, enterDate, outDate }
+     */
+    getWorkerAttendance: async (workerId) => {
+        const url = `${API_CONFIG.gateway}/api/management/entries/${workerId}`;
+        console.log('[출입현황 요청 URL]', url);
+        return await apiRequest(url);
+    },
+
 };
