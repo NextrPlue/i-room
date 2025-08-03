@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-// import { userAPI } from '../api/api'; // 실제 API 연결 시 사용
+import { userAPI } from '../api/api';
 import styles from '../styles/WorkerDetail.module.css';
 
 const WorkerDetailPage = () => {
@@ -12,27 +12,13 @@ const WorkerDetailPage = () => {
     useEffect(() => {
         const fetchWorkerDetail = async () => {
             try {
-                // TODO: 실제 API 연결 시 사용
-                // const data = await userAPI.getWorkerDetail(workerId);
-                // setWorker(data);
-
-                // 임시 데이터 (나중에 제거)
-                setWorker({
-                    id: workerId,
-                    name: '김재한',
-                    department: '건설팀',
-                    occupation: '철근공',
-                    jobTitle: '근무자',
-                    phone: '010-1234-5678',
-                    bloodType: 'A',
-                    currentLocation: '1구역',
-                    healthStatus: '정상',
-                    profileImage: null,
-                    height: '178cm',
-                    weight: '72kg'
-                });
+                console.log('근로자 상세 정보 조회 시작:', workerId);
+                const data = await userAPI.getWorkerDetail(workerId);
+                console.log('근로자 상세 정보 조회 성공:', data);
+                setWorker(data);
             } catch (error) {
                 console.error('근로자 상세 정보 조회 실패:', error);
+                setWorker(null);
             } finally {
                 setLoading(false);
             }
