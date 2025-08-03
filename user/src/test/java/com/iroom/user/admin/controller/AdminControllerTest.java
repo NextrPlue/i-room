@@ -1,6 +1,7 @@
 package com.iroom.user.admin.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iroom.modulecommon.dto.response.SimpleResponse;
 import com.iroom.user.admin.dto.request.AdminSignUpRequest;
 import com.iroom.user.admin.dto.request.AdminUpdateInfoRequest;
 import com.iroom.user.admin.dto.request.AdminUpdatePasswordRequest;
@@ -29,7 +30,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -179,9 +179,10 @@ public class AdminControllerTest {
 		// given
 		Long adminId = 1L;
 		AdminUpdatePasswordRequest request = new AdminUpdatePasswordRequest("!admin123", "!newpass123");
+		SimpleResponse response = new SimpleResponse("비밀번호가 성공적으로 변경되었습니다.");
 
 		// when
-		doNothing().when(adminService).updateAdminPassword(adminId, request);
+		given(adminService.updateAdminPassword(adminId, request)).willReturn(response);
 
 		// then
 		mockMvc.perform(put("/admins/password")
@@ -373,8 +374,9 @@ public class AdminControllerTest {
 	void deleteAdminSuccessTest() throws Exception {
 		// given
 		Long adminId = 1L;
+		SimpleResponse response = new SimpleResponse("관리자가 성공적으로 삭제되었습니다.");
 
-		doNothing().when(adminService).deleteAdmin(adminId);
+		given(adminService.deleteAdmin(adminId)).willReturn(response);
 
 		// when & then
 		mockMvc.perform(delete("/admins/{adminId}", adminId))

@@ -1,6 +1,7 @@
 package com.iroom.user.worker.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.iroom.modulecommon.dto.response.SimpleResponse;
 import com.iroom.user.common.dto.request.LoginRequest;
 import com.iroom.user.common.dto.response.LoginResponse;
 import com.iroom.modulecommon.dto.response.PagedResponse;
@@ -30,7 +31,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.doNothing;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -189,8 +189,9 @@ public class WorkerControllerTest {
 		// given
 		Long workerId = 1L;
 		WorkerUpdatePasswordRequest request = new WorkerUpdatePasswordRequest("Current123!", "NewPass456@");
+		SimpleResponse response = new SimpleResponse("비밀번호가 성공적으로 변경되었습니다.");
 
-		doNothing().when(workerService).updateWorkerPassword(workerId, request);
+		given(workerService.updateWorkerPassword(workerId, request)).willReturn(response);
 
 		// when & then
 		mockMvc.perform(put("/workers/password")
@@ -388,8 +389,9 @@ public class WorkerControllerTest {
 	void deleteWorkerSuccessTest() throws Exception {
 		// given
 		Long workerId = 1L;
+		SimpleResponse response = new SimpleResponse("근로자가 성공적으로 삭제되었습니다.");
 
-		doNothing().when(workerService).deleteWorker(workerId);
+		given(workerService.deleteWorker(workerId)).willReturn(response);
 
 		// when & then
 		mockMvc.perform(delete("/workers/{workerId}", workerId))

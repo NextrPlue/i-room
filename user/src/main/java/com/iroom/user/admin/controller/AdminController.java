@@ -1,6 +1,7 @@
 package com.iroom.user.admin.controller;
 
 import com.iroom.modulecommon.dto.response.ApiResponse;
+import com.iroom.modulecommon.dto.response.SimpleResponse;
 import com.iroom.user.admin.dto.request.AdminSignUpRequest;
 import com.iroom.user.admin.dto.request.AdminUpdateInfoRequest;
 import com.iroom.user.admin.dto.request.AdminUpdatePasswordRequest;
@@ -45,10 +46,10 @@ public class AdminController {
 	}
 
 	@PutMapping("/password")
-	public ResponseEntity<ApiResponse<String>> updatePassword(@RequestHeader("X-User-Id") Long id,
+	public ResponseEntity<ApiResponse<SimpleResponse>> updatePassword(@RequestHeader("X-User-Id") Long id,
 		@Valid @RequestBody AdminUpdatePasswordRequest request) {
-		adminService.updateAdminPassword(id, request);
-		return ResponseEntity.ok(ApiResponse.success("비밀번호가 성공적으로 변경되었습니다."));
+		SimpleResponse response = adminService.updateAdminPassword(id, request);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
 	@PutMapping("/{adminId}/role")
@@ -89,8 +90,8 @@ public class AdminController {
 	}
 
 	@DeleteMapping("/{adminId}")
-	public ResponseEntity<ApiResponse<String>> deleteAdmin(@PathVariable Long adminId) {
-		adminService.deleteAdmin(adminId);
-		return ResponseEntity.ok(ApiResponse.success("관리자가 성공적으로 삭제되었습니다."));
+	public ResponseEntity<ApiResponse<SimpleResponse>> deleteAdmin(@PathVariable Long adminId) {
+		SimpleResponse response = adminService.deleteAdmin(adminId);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 }
