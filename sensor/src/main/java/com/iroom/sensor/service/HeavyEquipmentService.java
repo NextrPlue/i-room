@@ -13,6 +13,7 @@ import com.iroom.sensor.repository.HeavyEquipmentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +26,7 @@ public class HeavyEquipmentService {
 	private final KafkaProducerService kafkaProducerService;
 
 	//등록 기능
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public EquipmentRegisterResponse register(EquipmentRegisterRequest request) {
 		HeavyEquipment equipment = HeavyEquipment.builder()
 			.name(request.name())
@@ -43,6 +45,7 @@ public class HeavyEquipmentService {
 	}
 
 	//위치 업데이트 기능
+	@PreAuthorize("hasAuthority('ROLE_EQUIPMENT_SYSTEM')")
 	public EquipmentUpdateLocationResponse updateLocation(EquipmentUpdateLocationRequest request) {
 		HeavyEquipment equipment = heavyEquipmentRepository.findById(request.id())
 			.orElseThrow(() -> new EntityNotFoundException("장비 없음 "));
