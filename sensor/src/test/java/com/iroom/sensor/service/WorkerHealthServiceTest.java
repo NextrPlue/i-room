@@ -52,7 +52,7 @@ public class WorkerHealthServiceTest {
 		assertThat(response.workerId()).isEqualTo(workerId);
 		assertThat(response.latitude()).isEqualTo(latitude);
 		assertThat(response.longitude()).isEqualTo(longitude);
-		verify(kafkaProducerService).publishMessage(eq("Worker_Location"), any());
+		verify(kafkaProducerService).publishMessage(eq("WORKER_LOCATION_UPDATED"), any());
 		verify(workerRepository).findByWorkerId(workerId);
 	}
 

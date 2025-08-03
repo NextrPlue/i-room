@@ -34,7 +34,7 @@ public class WorkerHealthService {
 			request.latitude(),
 			request.longitude()
 		);
-		kafkaProducerService.publishMessage("Worker_Location", workerLocationEvent);
+		kafkaProducerService.publishMessage("WORKER_LOCATION_UPDATED", workerLocationEvent);
 		return new WorkerUpdateLocationResponse(health.getWorkerId(), health.getLatitude(), health.getLongitude());
 	}
 
