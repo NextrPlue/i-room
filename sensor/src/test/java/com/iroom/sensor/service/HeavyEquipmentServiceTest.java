@@ -4,7 +4,6 @@ import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterRequest;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationRequest;
 import com.iroom.sensor.entity.HeavyEquipment;
 import com.iroom.sensor.repository.HeavyEquipmentRepository;
-import com.iroom.sensor.service.HeavyEquipmentService;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -22,7 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
-public class EquipmentServiceTest {
+public class HeavyEquipmentServiceTest {
 
 	@Mock
 	private HeavyEquipmentRepository equipmentRepository;

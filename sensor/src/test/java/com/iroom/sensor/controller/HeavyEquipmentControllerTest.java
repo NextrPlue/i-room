@@ -18,7 +18,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = HeavyEquipmentController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
-public class EquipmentControllerTest {
+public class HeavyEquipmentControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;
