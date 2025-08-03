@@ -1,10 +1,12 @@
 import React, {useState, useEffect} from 'react';
 import {userAPI} from '../api/api';
+import {useNavigate} from 'react-router-dom';
 import styles from '../styles/WorkerManagement.module.css';
 import WorkerEditModal from '../components/WorkerEditModal';
 import WorkerAddModal from '../components/WorkerAddModal';
 
 const WorkerManagementPage = () => {
+    const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [searchTarget, setSearchTarget] = useState('name'); // 검색 타겟 추가
 
@@ -66,6 +68,12 @@ const WorkerManagementPage = () => {
     //     worker.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     //     worker.occupation?.toLowerCase().includes(searchTerm.toLowerCase())
     // );
+
+    const handleDetailClick = (worker) => {
+        console.log('상세 버튼 클릭됨:', worker);
+        console.log('이동할 경로:', `/admin/worker/${worker.id}`);
+        navigate(`/admin/worker/${worker.id}`);
+    };
 
     // 수정 모달 열기
     const handleEditClick = (worker) => {
@@ -281,7 +289,7 @@ const WorkerManagementPage = () => {
                                             </span>
                                     </td>
                                     <td className={styles.actionCell}>
-                                        <button className={styles.detailBtn}>상세</button>
+                                        <button className={styles.detailBtn} onClick={() => handleDetailClick(worker)}>상세</button>
                                         <button className={styles.editBtn} onClick={() => handleEditClick(worker)}>수정
                                         </button>
                                     </td>
