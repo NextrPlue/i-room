@@ -1,10 +1,10 @@
-import React, {useState, useEffect} from 'react';
-import {useParams, useNavigate} from 'react-router-dom';
-import {userAPI} from '../api/api';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { userAPI } from '../api/api';
 import styles from '../styles/WorkerDetail.module.css';
 
 const WorkerDetailPage = () => {
-    const {workerId} = useParams();
+    const { workerId } = useParams();
     const navigate = useNavigate();
     const [worker, setWorker] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -235,8 +235,39 @@ const WorkerDetailPage = () => {
                                     </div>
                                 </div>
                             ))}
-                            
 
+                            {/* 페이지네이션 */}
+                            {totalPages > 1 && (
+                                <div className={styles.educationPagination}>
+                                    <button
+                                        className={styles.pageBtn}
+                                        onClick={() => handleEducationPageChange(currentPage - 1)}
+                                        disabled={currentPage === 0}
+                                    >
+                                        이전
+                                    </button>
+
+                                    {Array.from({ length: totalPages }, (_, index) => (
+                                        <button
+                                            key={index}
+                                            className={`${styles.pageBtn} ${
+                                                currentPage === index ? styles.active : ''
+                                            }`}
+                                            onClick={() => handleEducationPageChange(index)}
+                                        >
+                                            {index + 1}
+                                        </button>
+                                    ))}
+
+                                    <button
+                                        className={styles.pageBtn}
+                                        onClick={() => handleEducationPageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages - 1}
+                                    >
+                                        다음
+                                    </button>
+                                </div>
+                            )}
                         </>
                     )}
 
