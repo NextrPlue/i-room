@@ -46,7 +46,7 @@ const CommonLayout = ({ children, currentPage }) => {
 
 // 임시 페이지 컴포넌트들
 const PlaceholderPage = ({ title }) => (
-    <main style={{ flex: '1', padding: '24px', backgroundColor: '#ffffff' }}>
+    <main style={{ width: '100%', padding: '24px', backgroundColor: '#ffffff' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
             <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', marginBottom: '24px' }}>
                 {title}
