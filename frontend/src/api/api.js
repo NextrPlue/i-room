@@ -28,18 +28,36 @@ const apiRequest = async (url, options = {}) => {
 
         // 응답 처리
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('API 오류 응답:', errorText);
+            let errorData;
+            const contentType = response.headers.get('content-type');
+            
+            // JSON 응답인지 확인
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    errorData = await response.json();
+                    console.error('API JSON 오류 응답:', errorData);
+                } catch (e) {
+                    const errorText = await response.text();
+                    console.error('API 텍스트 오류 응답:', errorText);
+                    errorData = { message: errorText };
+                }
+            } else {
+                const errorText = await response.text();
+                console.error('API 텍스트 오류 응답:', errorText);
+                errorData = { message: errorText };
+            }
 
-            throw new Error(
-                response.status === 404
-                    ? '요청한 리소스를 찾을 수 없습니다.'
-                    : response.status === 500
-                        ? '서버 내부 오류가 발생했습니다.'
-                        : response.status === 400
-                            ? errorText || '잘못된 요청입니다.'
-                            : `HTTP ${response.status}: ${response.statusText}`
-            );
+            // 구체적인 에러 메시지 추출
+            let errorMessage = errorData?.message || `HTTP ${response.status}: ${response.statusText}`;
+            
+            // 유효성 검증 에러의 경우 상세 메시지 추출
+            if (response.status === 400 && errorData?.errors) {
+                errorMessage = errorData.errors.map(err => err.message || err.defaultMessage).join(', ');
+            } else if (response.status === 403 && errorData?.message) {
+                errorMessage = errorData.message;
+            }
+
+            throw new Error(errorMessage);
         }
 
         // JSON 응답 파싱
