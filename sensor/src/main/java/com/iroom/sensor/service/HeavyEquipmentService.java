@@ -49,6 +49,15 @@ public class HeavyEquipmentService {
 
 		equipment.updateLocation(request.latitude(), request.longitude());
 
+		EquipmentLocationEvent equipmentLocationEvent = new EquipmentLocationEvent(
+			equipment.getId(),
+			equipment.getLatitude(),
+			equipment.getLongitude(),
+			equipment.getRadius()
+		);
+
+		kafkaProducerService.publishMessage("HEAVY_EQUIPMENT_LOCATION_UPDATED", equipmentLocationEvent);
+
 		return new EquipmentUpdateLocationResponse(equipment.getId(), equipment.getLatitude(),
 			equipment.getLongitude());
 	}

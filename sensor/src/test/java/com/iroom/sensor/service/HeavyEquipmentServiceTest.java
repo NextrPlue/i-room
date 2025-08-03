@@ -76,6 +76,7 @@ public class HeavyEquipmentServiceTest {
 		assertThat(response.id()).isEqualTo(equipmentId);
 		assertThat(response.latitude()).isEqualTo(latitude);
 		assertThat(response.longitude()).isEqualTo(longitude);
+		verify(kafkaProducerService).publishMessage(eq("HEAVY_EQUIPMENT_LOCATION_UPDATED"), any());
 	}
 
 	@Test
