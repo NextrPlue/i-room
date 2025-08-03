@@ -88,6 +88,60 @@ export const userAPI = {
         return await apiRequest(url);
     },
 
+    /**
+     * 근로자 등록
+     * @param {object} workerData - 등록할 근로자 데이터
+     * @param {string} workerData.name - 이름
+     * @param {string} workerData.email - 이메일
+     * @param {string} workerData.password - 비밀번호
+     * @param {string} workerData.phone - 연락처
+     * @param {string} workerData.bloodType - 혈액형
+     * @param {string} workerData.gender - 성별
+     * @param {number} workerData.age - 나이
+     * @param {number} workerData.weight - 몸무게
+     * @param {number} workerData.height - 키
+     * @param {string} workerData.jobTitle - 직책
+     * @param {string} workerData.occupation - 직종
+     * @param {string} workerData.department - 부서
+     * @param {string} workerData.faceImageUrl - 얼굴 이미지 URL  # 얜 나중에 없애야함
+     * @returns {Promise} 등록된 근로자 정보
+     */
+    createWorker: async (workerData) => {
+        const url = `${API_CONFIG.gateway}/api/user/workers/register`;
+        return await apiRequest(url, {
+            method: 'POST',
+            body: JSON.stringify(workerData)
+        });
+    },
+
+
+    /**
+     * 근로자 상세 정보 조회
+     * @param {string} workerId - 근로자 ID
+     * @returns {Promise} 근로자 상세 정보
+     */
+    getWorkerDetail: async (workerId) => {
+        const url = `${API_CONFIG.gateway}/api/user/workers/${workerId}`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 근로자 안전교육 이력 조회
+     * @param {string} workerId - 근로자 ID
+     * @param {number} page - 페이지 번호 (기본값: 0)
+     * @param {number} size - 페이지당 개수 (기본값: 10)
+     * @returns {Promise} 안전교육 이력 데이터
+     */
+    getWorkerEducation: async (workerId, page = 0, size = 10) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString()
+        });
+        
+        const url = `${API_CONFIG.gateway}/api/management/worker-education/workers/${workerId}?${queryParams.toString()}`;
+        console.log('[교육이력 요청 URL]', url);
+        return await apiRequest(url);
+    },
 
     /**
      * 근로자 정보 수정

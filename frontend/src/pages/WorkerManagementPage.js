@@ -1,9 +1,12 @@
 import React, {useState, useEffect} from 'react';
 import {userAPI} from '../api/api';
+import {useNavigate} from 'react-router-dom';
 import styles from '../styles/WorkerManagement.module.css';
 import WorkerEditModal from '../components/WorkerEditModal';
+import WorkerAddModal from '../components/WorkerAddModal';
 
 const WorkerManagementPage = () => {
+    const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [searchTarget, setSearchTarget] = useState('name'); // 검색 타겟 추가
 
@@ -23,6 +26,7 @@ const WorkerManagementPage = () => {
 
     const [selectedWorker, setSelectedWorker] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const [currentPage, setCurrentPage] = useState(0); // 백엔드는 0부터 시작
     const [pageSize] = useState(10);
@@ -65,6 +69,12 @@ const WorkerManagementPage = () => {
     //     worker.occupation?.toLowerCase().includes(searchTerm.toLowerCase())
     // );
 
+    const handleDetailClick = (worker) => {
+        console.log('상세 버튼 클릭됨:', worker);
+        console.log('이동할 경로:', `/admin/worker/${worker.id}`);
+        navigate(`/admin/worker/${worker.id}`);
+    };
+
     // 수정 모달 열기
     const handleEditClick = (worker) => {
         setSelectedWorker(worker);
@@ -77,7 +87,65 @@ const WorkerManagementPage = () => {
         setSelectedWorker(null);
     };
 
-    // 저장
+    // 등록 모달 열기
+    const handleAddClick = () => {
+        setIsAddModalOpen(true);
+    };
+
+    // 등록 모달 닫기
+    const handleAddModalClose = () => {
+        setIsAddModalOpen(false);
+    };
+
+    // 등록 저장
+    const handleAddSave = async (addForm) => {
+        try {
+            // API 호출을 위한 데이터 변환
+            const createData = {
+                name: addForm.name,
+                email: addForm.email || "",
+                password: addForm.password,
+                phone: addForm.phone,
+                bloodType: addForm.bloodType,
+                gender: addForm.gender || "MALE",
+                age: parseInt(addForm.age) || 0,
+                weight: parseFloat(addForm.weight) || 0,
+                height: parseFloat(addForm.height) || 0,
+                jobTitle: addForm.jobTitle,
+                occupation: addForm.occupation,
+                department: addForm.department,
+                faceImageUrl: addForm.faceImageUrl || ""
+            };
+
+            // API 호출
+            const response = await userAPI.createWorker(createData);
+
+            console.log('등록 API 응답:', response);
+
+            if (response) {
+                alert('근로자 등록이 완료되었습니다!');
+                // 근로자 목록 새로고침
+                const params = {
+                    page: currentPage,
+                    size: pageSize
+                };
+                if (searchTerm) {
+                    params.target = searchTarget;
+                    params.keyword = searchTerm;
+                }
+                const data = await userAPI.getWorkers(params);
+                setWorkers(data.content || []);
+                setTotalPages(data.totalPages);
+                handleAddModalClose();
+            }
+        } catch (error) {
+            console.error('등록 실패:', error);
+            alert('등록에 실패했습니다: ' + (error.message || '알 수 없는 오류'));
+        }
+    };
+
+
+    // 수정 저장
     const handleSave = async (editForm) => {
         try {
             // Worker ID가 없으면 에러
@@ -176,7 +244,7 @@ const WorkerManagementPage = () => {
                         }}
                     />
                 </div>
-                <button className={styles.addButton}>
+                <button className={styles.addButton} onClick={handleAddClick}>
                     + 신규 근로자 등록
                 </button>
             </section>
@@ -221,7 +289,7 @@ const WorkerManagementPage = () => {
                                             </span>
                                     </td>
                                     <td className={styles.actionCell}>
-                                        <button className={styles.detailBtn}>상세</button>
+                                        <button className={styles.detailBtn} onClick={() => handleDetailClick(worker)}>상세</button>
                                         <button className={styles.editBtn} onClick={() => handleEditClick(worker)}>수정
                                         </button>
                                     </td>
@@ -271,6 +339,13 @@ const WorkerManagementPage = () => {
                 worker={selectedWorker}
                 onClose={handleModalClose}
                 onSave={handleSave}
+            />
+
+            {/* 등록 모달 */}
+            <WorkerAddModal
+                isOpen={isAddModalOpen}
+                onClose={handleAddModalClose}
+                onSave={handleAddSave}
             />
         </div>
     );
