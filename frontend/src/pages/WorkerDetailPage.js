@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { userAPI } from '../api/api';
+import EducationAddModal from '../components/EducationAddModal';
 import styles from '../styles/WorkerDetail.module.css';
 
 const WorkerDetailPage = () => {
@@ -16,6 +17,9 @@ const WorkerDetailPage = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [pageSize] = useState(3); // 교육이력은 3개씩 표시
+    
+    // 교육등록 모달 관련 상태
+    const [isEducationAddModalOpen, setIsEducationAddModalOpen] = useState(false);
 
     // 교육이력 조회 함수
     const fetchWorkerEducation = async (page = 0) => {
@@ -69,6 +73,36 @@ const WorkerDetailPage = () => {
     // 교육이력 페이지 변경 핸들러
     const handleEducationPageChange = (page) => {
         fetchWorkerEducation(page);
+    };
+
+    // 교육등록 모달 열기
+    const handleEducationAddClick = () => {
+        setIsEducationAddModalOpen(true);
+    };
+
+    // 교육등록 모달 닫기
+    const handleEducationAddModalClose = () => {
+        setIsEducationAddModalOpen(false);
+    };
+
+    // 교육등록 저장
+    const handleEducationAddSave = async (educationData) => {
+        try {
+            console.log('교육등록 시작:', educationData);
+            const response = await userAPI.createWorkerEducation(educationData);
+            console.log('교육등록 성공:', response);
+            
+            alert('안전교육이 등록되었습니다!');
+            
+            // 교육이력 목록 새로고침 (첫 번째 페이지로)
+            await fetchWorkerEducation(0);
+            
+            // 모달 닫기
+            handleEducationAddModalClose();
+        } catch (error) {
+            console.error('교육등록 실패:', error);
+            alert('교육등록에 실패했습니다: ' + (error.message || '알 수 없는 오류'));
+        }
     };
 
     if (loading) {
@@ -271,7 +305,10 @@ const WorkerDetailPage = () => {
                         </>
                     )}
 
-                    <button className={styles.registerCertificateBtn}>
+                    <button 
+                        className={styles.registerCertificateBtn}
+                        onClick={handleEducationAddClick}
+                    >
                         📋 이수증 등록
                     </button>
                 </div>
@@ -302,6 +339,15 @@ const WorkerDetailPage = () => {
             <button className={styles.backButton} onClick={handleBackClick}>
                 ← 목록으로 돌아가기
             </button>
+
+            {/* 교육등록 모달 */}
+            <EducationAddModal
+                isOpen={isEducationAddModalOpen}
+                onClose={handleEducationAddModalClose}
+                onSave={handleEducationAddSave}
+                workerId={workerId}
+                workerName={worker?.name}
+            />
         </div>
     );
 };
