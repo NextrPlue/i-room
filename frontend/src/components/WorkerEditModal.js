@@ -39,6 +39,61 @@ const WorkerEditModal = ({ isOpen, worker, onClose, onSave }) => {
     };
 
     const handleSave = () => {
+        // 필수 필드 검증
+        if (!editForm.name || !editForm.name.trim()) {
+            alert('이름을 입력해주세요.');
+            return;
+        }
+
+        if (!editForm.department || !editForm.department.trim()) {
+            alert('부서를 입력해주세요.');
+            return;
+        }
+
+        if (!editForm.occupation || !editForm.occupation.trim()) {
+            alert('직종을 입력해주세요.');
+            return;
+        }
+
+        if (!editForm.phone || !editForm.phone.trim()) {
+            alert('연락처를 입력해주세요.');
+            return;
+        }
+
+        // 연락처 형식 검증
+        const phoneRegex = /^010-\d{4}-\d{4}$/;
+        if (!phoneRegex.test(editForm.phone.trim())) {
+            alert('연락처는 010-0000-0000 형식으로 입력해주세요.');
+            return;
+        }
+
+        // 이메일 유효성 검사 (선택사항이지만 입력했다면 형식 검증)
+        if (editForm.email && editForm.email.trim()) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(editForm.email.trim())) {
+                alert('올바른 형식의 이메일 주소를 입력해주세요.');
+                return;
+            }
+        }
+
+        // 나이 검증
+        if (editForm.age && (isNaN(editForm.age))) {
+            alert('나이는 숫자로 입력해주세요.');
+            return;
+        }
+
+        // 키 검증
+        if (editForm.height && (isNaN(editForm.height))) {
+            alert('키는 숫자로 입력해주세요.');
+            return;
+        }
+
+        // 몸무게 검증
+        if (editForm.weight && (isNaN(editForm.weight))) {
+            alert('몸무게는 숫자로 입력해주세요.');
+            return;
+        }
+
         onSave(editForm);
     };
 
