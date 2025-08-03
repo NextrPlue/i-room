@@ -2,7 +2,6 @@ import React, {useState} from 'react';
 import {BrowserRouter as Router, Navigate, Route, Routes, useNavigate} from 'react-router-dom';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import MainContent from './components/MainContent';
 import AdminLogin from './pages/AdminLogin';
 import WorkerDetailPage from './pages/WorkerDetailPage';
 import WorkerManagementPage from './pages/WorkerManagementPage';
@@ -95,7 +94,7 @@ const App = () => {
                 {/* 대시보드 */}
                 <Route path="/admin/dashboard" element={
                     <CommonLayout currentPage="dashboard">
-                        <MainContent/>
+                        <PlaceholderPage title="대시보드"/>
                     </CommonLayout>
                 }/>
 
