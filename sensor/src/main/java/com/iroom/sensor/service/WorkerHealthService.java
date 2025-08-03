@@ -1,5 +1,6 @@
 package com.iroom.sensor.service;
 
+import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationRequest;
 import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationResponse;
 import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsRequest;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @RequiredArgsConstructor
 public class WorkerHealthService {
+
 	private final KafkaProducerService kafkaProducerService;
 	private final WorkerHealthRepository repository;
 
