@@ -32,13 +32,13 @@ const WorkerDetailPage = () => {
 
         try {
             console.log('교육이력 조회 시작:', workerId, '페이지:', page);
-            const data = await userAPI.getWorkerEducation(workerId, page, pageSize);
-            console.log('교육이력 조회 성공:', data);
-            console.log('교육이력 content:', data.content);
-            console.log('첫 번째 교육이력 항목:', data.content?.[0]);
+            const response = await userAPI.getWorkerEducation(workerId, page, pageSize);
+            console.log('교육이력 조회 성공:', response);
+            console.log('교육이력 content:', response.data.content);
+            console.log('첫 번째 교육이력 항목:', response.data.content?.[0]);
 
-            setEducations(data.content || []);
-            setTotalPages(data.totalPages || 0);
+            setEducations(response.data.content || []);
+            setTotalPages(response.data.totalPages || 0);
             setCurrentPage(page);
         } catch (error) {
             console.error('교육이력 조회 실패:', error);
@@ -53,9 +53,9 @@ const WorkerDetailPage = () => {
         const fetchWorkerDetail = async () => {
             try {
                 console.log('근로자 상세 정보 조회 시작:', workerId);
-                const data = await userAPI.getWorkerDetail(workerId);
-                console.log('근로자 상세 정보 조회 성공:', data);
-                setWorker(data);
+                const response = await userAPI.getWorkerDetail(workerId);
+                console.log('근로자 상세 정보 조회 성공:', response);
+                setWorker(response.data);
             } catch (error) {
                 console.error('근로자 상세 정보 조회 실패:', error);
                 setWorker(null);
@@ -129,8 +129,8 @@ const WorkerDetailPage = () => {
             alert('근로자 정보가 수정되었습니다!');
             
             // 근로자 상세 정보 새로고침
-            const data = await userAPI.getWorkerDetail(workerId);
-            setWorker(data);
+            const detailResponse = await userAPI.getWorkerDetail(workerId);
+            setWorker(detailResponse.data);
             
             // 모달 닫기
             handleWorkerEditModalClose();
