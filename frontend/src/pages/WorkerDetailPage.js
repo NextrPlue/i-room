@@ -1,13 +1,45 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { userAPI } from '../api/api';
+import React, {useState, useEffect} from 'react';
+import {useParams, useNavigate} from 'react-router-dom';
+import {userAPI} from '../api/api';
 import styles from '../styles/WorkerDetail.module.css';
 
 const WorkerDetailPage = () => {
-    const { workerId } = useParams();
+    const {workerId} = useParams();
     const navigate = useNavigate();
     const [worker, setWorker] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    // 교육이력 관련 상태
+    const [educations, setEducations] = useState([]);
+    const [educationLoading, setEducationLoading] = useState(false);
+    const [educationError, setEducationError] = useState(null);
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [pageSize] = useState(3); // 교육이력은 3개씩 표시
+
+    // 교육이력 조회 함수
+    const fetchWorkerEducation = async (page = 0) => {
+        setEducationLoading(true);
+        setEducationError(null);
+
+        try {
+            console.log('교육이력 조회 시작:', workerId, '페이지:', page);
+            const data = await userAPI.getWorkerEducation(workerId, page, pageSize);
+            console.log('교육이력 조회 성공:', data);
+            console.log('교육이력 content:', data.content);
+            console.log('첫 번째 교육이력 항목:', data.content?.[0]);
+
+            setEducations(data.content || []);
+            setTotalPages(data.totalPages || 0);
+            setCurrentPage(page);
+        } catch (error) {
+            console.error('교육이력 조회 실패:', error);
+            setEducationError(error.message || '교육이력을 불러오는데 실패했습니다.');
+            setEducations([]);
+        } finally {
+            setEducationLoading(false);
+        }
+    };
 
     useEffect(() => {
         const fetchWorkerDetail = async () => {
@@ -26,11 +58,17 @@ const WorkerDetailPage = () => {
 
         if (workerId) {
             fetchWorkerDetail();
+            fetchWorkerEducation(0); // 교육이력도 함께 조회
         }
     }, [workerId]);
 
     const handleBackClick = () => {
         navigate('/admin/worker');
+    };
+
+    // 교육이력 페이지 변경 핸들러
+    const handleEducationPageChange = (page) => {
+        fetchWorkerEducation(page);
     };
 
     if (loading) {
@@ -138,29 +176,69 @@ const WorkerDetailPage = () => {
                 <div className={styles.infoCard}>
                     <h3 className={styles.cardTitleCentered}>안전교육이력</h3>
                     <div className={styles.sectionDivider}></div>
-                    <div className={styles.educationItem}>
-                        <div className={styles.educationHeader}>
-                            <div className={styles.educationColorBar} style={{backgroundColor: '#10B981'}}></div>
-                            <div className={styles.educationContent}>
-                                <span className={styles.educationTitle}>건설현장 기초 안전 교육</span>
-                                <span className={styles.educationDate}>교육 일시: 2025.07.01</span>
-                                <span className={styles.completeBadge}>이수완료</span>
-                            </div>
-                            <button className={styles.certificateBtn}>이수증 보기</button>
-                        </div>
-                    </div>
 
-                    <div className={styles.educationItem}>
-                        <div className={styles.educationHeader}>
-                            <div className={styles.educationColorBar} style={{backgroundColor: '#F59E0B'}}></div>
-                            <div className={styles.educationContent}>
-                                <span className={styles.educationTitle}>전기 안전 교육</span>
-                                <span className={styles.educationDate}>교육 일시: 2025.07.01</span>
-                                <span className={styles.inProgressBadge}>미이수</span>
-                            </div>
-                            <button className={styles.certificateBtnDisabled}>이수증 보기</button>
+                    {educationLoading ? (
+                        <div className={styles.educationLoading}>
+                            <p>교육이력을 불러오는 중...</p>
                         </div>
-                    </div>
+                    ) : educationError ? (
+                        <div className={styles.educationError}>
+                            <p>{educationError}</p>
+                            <button
+                                className={styles.retryBtn}
+                                onClick={() => fetchWorkerEducation(currentPage)}
+                            >
+                                다시 시도
+                            </button>
+                        </div>
+                    ) : educations.length === 0 ? (
+                        <div className={styles.educationEmpty}>
+                            <p>등록된 교육이력이 없습니다.</p>
+                        </div>
+                    ) : (
+                        <>
+                            {educations.map((education) => (
+                                <div key={education.id} className={styles.educationItem}>
+                                    <div className={styles.educationHeader}>
+                                        <div
+                                            className={styles.educationColorBar}
+                                            style={{
+                                                backgroundColor: education.certUrl ? '#10B981' : '#F59E0B'
+                                            }}
+                                        ></div>
+                                        <div className={styles.educationContent}>
+                                            <span className={styles.educationTitle}>
+                                                {education.name || '교육명 없음'}
+                                            </span>
+                                            <span className={styles.educationDate}>
+                                                교육 일시: {education.eduDate || '날짜 없음'}
+                                            </span>
+                                            <span className={
+                                                education.certUrl
+                                                    ? styles.completeBadge
+                                                    : styles.inProgressBadge
+                                            }>
+                                                {education.certUrl ? '이수완료' : '미이수'}
+                                            </span>
+                                        </div>
+                                        <button
+                                            className={
+                                                education.certUrl
+                                                    ? styles.certificateBtn
+                                                    : styles.certificateBtnDisabled
+                                            }
+                                            disabled={!education.certUrl}
+                                            onClick={() => education.certUrl && window.open(education.certUrl, '_blank')}
+                                        >
+                                            이수증 보기
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                            
+
+                        </>
+                    )}
 
                     <button className={styles.registerCertificateBtn}>
                         📋 이수증 등록
