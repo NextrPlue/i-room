@@ -1,4 +1,4 @@
-package com.iroom.sensor.dto.event;
+package com.iroom.modulecommon.dto.event;
 
 public record WorkerVitalSignsEvent(
 	Long workerId,

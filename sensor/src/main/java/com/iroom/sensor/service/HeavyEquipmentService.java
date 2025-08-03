@@ -5,8 +5,8 @@ import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationRequest;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationResponse;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterRequest;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterResponse;
-import com.iroom.sensor.dto.event.EquipmentEvent;
-import com.iroom.sensor.dto.event.EquipmentLocationEvent;
+import com.iroom.modulecommon.dto.event.EquipmentEvent;
+import com.iroom.modulecommon.dto.event.EquipmentLocationEvent;
 import com.iroom.sensor.entity.HeavyEquipment;
 import com.iroom.sensor.repository.HeavyEquipmentRepository;
 
