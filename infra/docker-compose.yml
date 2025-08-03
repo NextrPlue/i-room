@@ -1,4 +1,16 @@
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password
+
   kafka:
     image: confluentinc/cp-kafka:latest
     container_name: kafka
@@ -47,4 +59,5 @@ services:
       DYNAMIC_CONFIG_ENABLED: 'true'
 
 volumes:
+  mysql-data:
   kafka-data:
