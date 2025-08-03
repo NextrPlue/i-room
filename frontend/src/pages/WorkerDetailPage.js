@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { userAPI } from '../api/api';
 import EducationAddModal from '../components/EducationAddModal';
+import WorkerEditModal from '../components/WorkerEditModal';
 import styles from '../styles/WorkerDetail.module.css';
 
 const WorkerDetailPage = () => {
@@ -20,6 +21,9 @@ const WorkerDetailPage = () => {
     
     // 교육등록 모달 관련 상태
     const [isEducationAddModalOpen, setIsEducationAddModalOpen] = useState(false);
+    
+    // 근로자 수정 모달 관련 상태
+    const [isWorkerEditModalOpen, setIsWorkerEditModalOpen] = useState(false);
 
     // 교육이력 조회 함수
     const fetchWorkerEducation = async (page = 0) => {
@@ -105,6 +109,37 @@ const WorkerDetailPage = () => {
         }
     };
 
+    // 근로자 수정 모달 열기
+    const handleWorkerEditClick = () => {
+        setIsWorkerEditModalOpen(true);
+    };
+
+    // 근로자 수정 모달 닫기
+    const handleWorkerEditModalClose = () => {
+        setIsWorkerEditModalOpen(false);
+    };
+
+    // 근로자 수정 저장
+    const handleWorkerEditSave = async (editForm) => {
+        try {
+            console.log('근로자 정보 수정 시작:', editForm);
+            const response = await userAPI.updateWorker(workerId, editForm);
+            console.log('근로자 정보 수정 성공:', response);
+            
+            alert('근로자 정보가 수정되었습니다!');
+            
+            // 근로자 상세 정보 새로고침
+            const data = await userAPI.getWorkerDetail(workerId);
+            setWorker(data);
+            
+            // 모달 닫기
+            handleWorkerEditModalClose();
+        } catch (error) {
+            console.error('근로자 정보 수정 실패:', error);
+            alert('근로자 정보 수정에 실패했습니다: ' + (error.message || '알 수 없는 오류'));
+        }
+    };
+
     if (loading) {
         return (
             <div className={styles.loadingContainer}>
@@ -151,10 +186,19 @@ const WorkerDetailPage = () => {
                 <div className={styles.greetingContent}>
                     <h1 className={styles.workerName}>{worker.name}</h1>
                     <p className={styles.workerPosition}>{worker.department} {worker.occupation}</p>
-                    <p className={styles.workerSubtitle}>근무자 상세 정보</p>
+                    <p className={styles.workerJobTitle}>{worker.jobTitle || '직책 미설정'}</p>
+                    <div className={styles.workerContactInfo}>
+                        <span className={styles.contactText}>📧 {worker.email || '이메일 미등록'}</span>
+                        <span className={styles.contactText}>📞 {worker.phone || '연락처 미등록'}</span>
+                    </div>
                 </div>
 
-                <button className={styles.editButton}>수정</button>
+                <button 
+                    className={styles.editButton}
+                    onClick={handleWorkerEditClick}
+                >
+                    수정
+                </button>
             </div>
 
             {/* 하단 상세 정보 섹션 */}
@@ -164,19 +208,38 @@ const WorkerDetailPage = () => {
                     <h3 className={styles.cardTitleCentered}>개인정보</h3>
                     <div className={styles.sectionDivider}></div>
                     <div className={styles.contactSection}>
+
                         <div className={styles.contactItem}>
-                            <div className={styles.contactIcon}>📞</div>
+                            <div className={styles.contactIcon}>👤</div>
                             <div className={styles.contactInfo}>
-                                <span className={styles.contactLabel}>연락처</span>
-                                <span className={styles.contactValue}>{worker.phone}</span>
+                                <span className={styles.contactLabel}>성별</span>
+                                <span className={styles.contactValue}>
+                                    {worker.gender === 'MALE' ? '남성' : worker.gender === 'FEMALE' ? '여성' : '미설정'}
+                                </span>
                             </div>
                         </div>
 
                         <div className={styles.contactItem}>
-                            <div className={styles.contactIcon}>✉️</div>
+                            <div className={styles.contactIcon}>🎂</div>
                             <div className={styles.contactInfo}>
-                                <span className={styles.contactLabel}>이메일</span>
-                                <span className={styles.contactValue}>{worker.email || 'test@example.com'}</span>
+                                <span className={styles.contactLabel}>나이</span>
+                                <span className={styles.contactValue}>{worker.age ? `${worker.age}세` : '미설정'}</span>
+                            </div>
+                        </div>
+
+                        <div className={styles.contactItem}>
+                            <div className={styles.contactIcon}>📏</div>
+                            <div className={styles.contactInfo}>
+                                <span className={styles.contactLabel}>키</span>
+                                <span className={styles.contactValue}>{worker.height ? `${worker.height}cm` : '미설정'}</span>
+                            </div>
+                        </div>
+
+                        <div className={styles.contactItem}>
+                            <div className={styles.contactIcon}>⚖️</div>
+                            <div className={styles.contactInfo}>
+                                <span className={styles.contactLabel}>몸무게</span>
+                                <span className={styles.contactValue}>{worker.weight ? `${worker.weight}kg` : '미설정'}</span>
                             </div>
                         </div>
 
@@ -347,6 +410,14 @@ const WorkerDetailPage = () => {
                 onSave={handleEducationAddSave}
                 workerId={workerId}
                 workerName={worker?.name}
+            />
+
+            {/* 근로자 수정 모달 */}
+            <WorkerEditModal
+                isOpen={isWorkerEditModalOpen}
+                worker={worker}
+                onClose={handleWorkerEditModalClose}
+                onSave={handleWorkerEditSave}
             />
         </div>
     );
