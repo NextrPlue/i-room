@@ -91,6 +91,7 @@ public class WorkerHealthServiceTest {
 		assertThat(response.workerId()).isEqualTo(workerId);
 		assertThat(response.heartRate()).isEqualTo(newHeartRate);
 		assertThat(response.bodyTemperature()).isEqualTo(newTemperature);
+		verify(kafkaProducerService).publishMessage(eq("WORKER_VITAL_SIGNS_UPDATED"), any());
 		verify(workerRepository).findByWorkerId(workerId);
 	}
 

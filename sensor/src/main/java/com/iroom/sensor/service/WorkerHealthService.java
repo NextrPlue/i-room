@@ -6,6 +6,7 @@ import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationResponse;
 import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsRequest;
 import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsResponse;
 import com.iroom.sensor.dto.event.WorkerLocationEvent;
+import com.iroom.sensor.dto.event.WorkerVitalSignsEvent;
 import com.iroom.sensor.entity.WorkerHealth;
 import com.iroom.sensor.repository.WorkerHealthRepository;
 
@@ -30,11 +31,13 @@ public class WorkerHealthService {
 
 		health.updateLocation(request.latitude(), request.longitude());
 		WorkerLocationEvent workerLocationEvent = new WorkerLocationEvent(
-			request.workerId(),
-			request.latitude(),
-			request.longitude()
+			health.getWorkerId(),
+			health.getLatitude(),
+			health.getLongitude()
 		);
+
 		kafkaProducerService.publishMessage("WORKER_LOCATION_UPDATED", workerLocationEvent);
+
 		return new WorkerUpdateLocationResponse(health.getWorkerId(), health.getLatitude(), health.getLongitude());
 	}
 
@@ -44,6 +47,13 @@ public class WorkerHealthService {
 			.orElseThrow(() -> new EntityNotFoundException("해당 근로자 없음"));
 
 		health.updateVitalSign(request.heartRate(), request.bodyTemperature());
+		WorkerVitalSignsEvent workerVitalSignsEvent = new WorkerVitalSignsEvent(
+			health.getWorkerId(),
+			health.getHeartRate(),
+			health.getBodyTemperature()
+		);
+
+		kafkaProducerService.publishMessage("WORKER_VITAL_SIGNS_UPDATED", workerVitalSignsEvent);
 
 		return new WorkerUpdateVitalSignsResponse(
 			health.getWorkerId(),
