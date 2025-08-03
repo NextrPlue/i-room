@@ -22,10 +22,12 @@ public class WorkerHealthRepositoryTest {
 	@DisplayName("근로자 생체정보 저장 후 ID로 조회 테스트")
 	void saveAndFindById() {
 		// given
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
 		WorkerHealth health = WorkerHealth.builder()
 			.workerId(1L)
 			.build();
-		health.updateLocation("35.8343, 128.4723");
+		health.updateLocation(latitude, longitude);
 		health.updateVitalSign(75, 36.5f);
 
 		// when
@@ -35,7 +37,8 @@ public class WorkerHealthRepositoryTest {
 		// then
 		assertThat(found).isPresent();
 		assertThat(found.get().getWorkerId()).isEqualTo(1L);
-		assertThat(found.get().getWorkerLocation()).isEqualTo("35.8343, 128.4723");
+		assertThat(found.get().getLatitude()).isEqualTo(latitude);
+		assertThat(found.get().getLongitude()).isEqualTo(longitude);
 		assertThat(found.get().getHeartRate()).isEqualTo(75);
 		assertThat(found.get().getBodyTemperature()).isEqualTo(36.5f);
 	}
@@ -44,10 +47,12 @@ public class WorkerHealthRepositoryTest {
 	@DisplayName("findByWorkerId 메서드 조회 테스트")
 	void findByWorkerIdTest() {
 		// given
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
 		WorkerHealth health = WorkerHealth.builder()
 			.workerId(2L)
 			.build();
-		health.updateLocation("23.8343, 78.4723");
+		health.updateLocation(latitude, longitude);
 		health.updateVitalSign(80, 36.8f);
 		workerHealthRepository.save(health);
 
@@ -56,7 +61,8 @@ public class WorkerHealthRepositoryTest {
 
 		// then
 		assertThat(result).isPresent();
-		assertThat(result.get().getWorkerLocation()).isEqualTo("23.8343, 78.4723");
+		assertThat(result.get().getLatitude()).isEqualTo(latitude);
+		assertThat(result.get().getLongitude()).isEqualTo(longitude);
 		assertThat(result.get().getHeartRate()).isEqualTo(80);
 		assertThat(result.get().getBodyTemperature()).isEqualTo(36.8f);
 	}
@@ -65,20 +71,23 @@ public class WorkerHealthRepositoryTest {
 	@DisplayName("updateLocation 메서드 위치 수정 테스트")
 	void updateLocationTest() {
 		// given
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
 		WorkerHealth health = WorkerHealth.builder()
 			.workerId(3L)
 			.build();
-		health.updateLocation("23.8343, 78.4723");
+		health.updateLocation(latitude, longitude);
 		WorkerHealth saved = workerHealthRepository.save(health);
 
 		// when
-		saved.updateLocation("65.8343, 34.5423");
+		saved.updateLocation(latitude, longitude);
 		WorkerHealth updated = workerHealthRepository.save(saved);
 		Optional<WorkerHealth> result = workerHealthRepository.findById(updated.getId());
 
 		// then
 		assertThat(result).isPresent();
-		assertThat(result.get().getWorkerLocation()).isEqualTo("65.8343, 34.5423");
+		assertThat(result.get().getLatitude()).isEqualTo(latitude);
+		assertThat(result.get().getLongitude()).isEqualTo(longitude);
 	}
 
 	@Test

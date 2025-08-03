@@ -1,10 +1,10 @@
 package com.iroom.sensor.service;
 
+import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterRequest;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationRequest;
 import com.iroom.sensor.entity.HeavyEquipment;
 import com.iroom.sensor.repository.HeavyEquipmentRepository;
-import com.iroom.sensor.service.HeavyEquipmentService;
 
 import jakarta.persistence.EntityNotFoundException;
 
@@ -20,12 +20,16 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.ArgumentMatchers.any;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-public class EquipmentServiceTest {
+public class HeavyEquipmentServiceTest {
 
 	@Mock
 	private HeavyEquipmentRepository equipmentRepository;
+
+	@Mock
+	private KafkaProducerService kafkaProducerService;
 
 	@InjectMocks
 	private HeavyEquipmentService equipmentService;
@@ -50,6 +54,7 @@ public class EquipmentServiceTest {
 		assertThat(response.name()).isEqualTo("크레인A-1");
 		assertThat(response.type()).isEqualTo("크레인");
 		assertThat(response.radius()).isEqualTo(15.0);
+		verify(kafkaProducerService).publishMessage(eq("HEAVY_EQUIPMENT_REGISTERED"), any());
 	}
 
 	@Test
@@ -57,8 +62,9 @@ public class EquipmentServiceTest {
 	void updateLocationTest() {
 		// given
 		Long equipmentId = 1L;
-		String newLocation = "35.8343, 128.4723";
-		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(equipmentId, newLocation);
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
+		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(equipmentId, latitude, longitude);
 		HeavyEquipment equipment = HeavyEquipment.builder().build();
 		setIdViaReflection(equipment, equipmentId);
 		given(equipmentRepository.findById(equipmentId)).willReturn(java.util.Optional.of(equipment));
@@ -68,7 +74,9 @@ public class EquipmentServiceTest {
 
 		// then
 		assertThat(response.id()).isEqualTo(equipmentId);
-		assertThat(response.location()).isEqualTo(newLocation);
+		assertThat(response.latitude()).isEqualTo(latitude);
+		assertThat(response.longitude()).isEqualTo(longitude);
+		verify(kafkaProducerService).publishMessage(eq("HEAVY_EQUIPMENT_LOCATION_UPDATED"), any());
 	}
 
 	@Test
@@ -76,7 +84,9 @@ public class EquipmentServiceTest {
 	void updateLocation_notFoundId() {
 		// given
 		Long invalidId = 999L;
-		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(invalidId, "354.8343, 128.4723");
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
+		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(invalidId, latitude, longitude);
 		given(equipmentRepository.findById(invalidId)).willReturn(java.util.Optional.empty());
 
 		// when & then

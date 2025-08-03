@@ -1,6 +1,4 @@
-package com.iroom.sensor.dto.event;
-
-import com.iroom.sensor.entity.WorkerHealth;
+package com.iroom.modulecommon.dto.event;
 
 public record WorkerLocationEvent(
 	Long workerId,

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -16,8 +17,8 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(HeavyEquipmentController.class)
-public class EquipmentControllerTest {
+@WebMvcTest(controllers = HeavyEquipmentController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
+public class HeavyEquipmentControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -52,8 +53,11 @@ public class EquipmentControllerTest {
 	@DisplayName("PUT /heavy-equipments/location - 위치 업데이트 테스트")
 	void updateLocation() throws Exception {
 		// given
-		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(1L, "354.8343, 128.4723");
-		EquipmentUpdateLocationResponse response = new EquipmentUpdateLocationResponse(1L, "354.8343, 128.4723");
+		Long workerId = 1L;
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
+		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(workerId, latitude, longitude);
+		EquipmentUpdateLocationResponse response = new EquipmentUpdateLocationResponse(workerId, latitude, longitude);
 
 		given(equipmentService.updateLocation(request)).willReturn(response);
 
@@ -63,6 +67,7 @@ public class EquipmentControllerTest {
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.id").value(1L))
-			.andExpect(jsonPath("$.location").value("354.8343, 128.4723"));
+			.andExpect(jsonPath("$.latitude").value(latitude))
+			.andExpect(jsonPath("$.longitude").value(longitude));
 	}
 }
