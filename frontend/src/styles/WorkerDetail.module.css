@@ -450,3 +450,76 @@
         display: none;
     }
 }
+
+/* 교육이력 페이지네이션 */
+.educationPagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px 0;
+    margin-top: 16px;
+}
+
+.pageBtn {
+    padding: 8px 12px;
+    border: 1px solid #D1D5DB;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    transition: all 0.2s ease;
+}
+
+.pageBtn:hover:not(:disabled) {
+    background-color: #f3f4f6;
+}
+
+.pageBtn:disabled {
+    color: #aaa;
+    cursor: not-allowed;
+    background-color: #f9fafb;
+}
+
+.pageBtn.active {
+    background-color: #1F2937;
+    color: white;
+    border-color: #1F2937;
+}
+
+.pageBtn.active:hover {
+    background-color: #374151;
+    border-color: #374151;
+}
+
+/* 교육이력 상태 메시지 */
+.educationLoading,
+.educationError,
+.educationEmpty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6B7280;
+    font-size: 14px;
+}
+
+.educationError {
+    color: #EF4444;
+}
+
+.retryBtn {
+    background: #1F2937;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 12px;
+    transition: background-color 0.2s ease;
+}
+
+.retryBtn:hover {
+    background: #374151;
+}
