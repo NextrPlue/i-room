@@ -169,7 +169,7 @@ class MainActivity : ComponentActivity() {
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val url = URL("https://my-wearos-test.free.beeceptor.com/")
+                val url = URL("https://my-wearos-test.free.beeceptor.com/api/sensor")
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "POST"
                 connection.setRequestProperty("Content-Type", "application/json")
