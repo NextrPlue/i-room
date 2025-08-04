@@ -20,9 +20,9 @@ import org.springframework.data.domain.Pageable;
 
 import com.iroom.dashboard.dto.request.BlueprintRequest;
 import com.iroom.dashboard.dto.response.BlueprintResponse;
-import com.iroom.dashboard.dto.response.PagedResponse;
 import com.iroom.dashboard.entity.Blueprint;
 import com.iroom.dashboard.repository.BlueprintRepository;
+import com.iroom.modulecommon.dto.response.PagedResponse;
 
 @ExtendWith(MockitoExtension.class)
 class BlueprintServiceTest {
