@@ -12,6 +12,7 @@ import com.iroom.alarm.config.StompHandler;
 import com.iroom.alarm.entity.Alarm;
 import com.iroom.alarm.repository.AlarmRepository;
 import com.iroom.modulecommon.dto.event.AlarmEvent;
+import com.iroom.modulecommon.service.KafkaProducerService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,11 +24,13 @@ public class AlarmService {
 	private final AlarmRepository alarmRepository;
 	private final SimpMessagingTemplate messagingTemplate;
 	private final StompHandler stompHandler;
+	private final KafkaProducerService kafkaProducerService;
 
 	// 외부 API 호출용
 	@PreAuthorize("hasAuthority('ROLE_PPE_SYSTEM')")
 	public void handleAlarmEventFromApi(AlarmEvent alarmEvent) {
 		processAlarmEvent(alarmEvent);
+		kafkaProducerService.publishMessage("PPE_VIOLATION", alarmEvent);
 	}
 
 	// 내부 Kafka 이벤트 수신용
