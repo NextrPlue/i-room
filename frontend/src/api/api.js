@@ -206,3 +206,27 @@ export const userAPI = {
     },
 
 };
+
+/**
+ * Blueprint API 서비스
+ */
+export const blueprintAPI = {
+    /**
+     * 도면 목록 조회
+     * @param {object} options
+     * @param {number} options.page - 페이지 번호 (기본값: 0)
+     * @param {number} options.size - 페이지당 개수 (기본값: 10)
+     * @returns {Promise} 도면 목록 데이터
+     */
+    getBlueprints: async ({page = 0, size = 10} = {}) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
+
+        const url = `${API_CONFIG.gateway}/api/dashboard/blueprints?${queryParams.toString()}`;
+        console.log('[도면목록 요청 URL]', url);
+        return await apiRequest(url);
+    },
+
+};
