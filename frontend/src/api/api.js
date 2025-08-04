@@ -30,7 +30,7 @@ const apiRequest = async (url, options = {}) => {
         if (!response.ok) {
             let errorData;
             const contentType = response.headers.get('content-type');
-            
+
             // JSON 응답인지 확인
             if (contentType && contentType.includes('application/json')) {
                 try {
@@ -39,20 +39,20 @@ const apiRequest = async (url, options = {}) => {
                 } catch (e) {
                     const errorText = await response.text();
                     console.error('API 텍스트 오류 응답:', errorText);
-                    errorData = { message: errorText };
+                    errorData = {message: errorText};
                 }
             } else {
                 const errorText = await response.text();
                 console.error('API 텍스트 오류 응답:', errorText);
-                errorData = { message: errorText };
+                errorData = {message: errorText};
             }
 
             // 구체적인 에러 메시지 추출
             let errorMessage = errorData?.message || `HTTP ${response.status}: ${response.statusText}`;
-            
+
             // 유효성 검증 에러의 경우 상세 메시지 추출
             if (response.status === 400 && errorData?.errors) {
-                errorMessage = errorData.errors.map(err => err.message || err.defaultMessage).join(', ');
+                errorMessage = errorData.errors.map(err => err.message).join(', ');
             } else if (response.status === 403 && errorData?.message) {
                 errorMessage = errorData.message;
             }
@@ -89,7 +89,7 @@ export const userAPI = {
      * @param {string} [options.target] - 검색 대상 (name, email)
      * @param {string} [options.keyword] - 검색어
      */
-    getWorkers: async ({ page = 0, size = 10, target = '', keyword = '' } = {}) => {
+    getWorkers: async ({page = 0, size = 10, target = '', keyword = ''} = {}) => {
         const queryParams = new URLSearchParams({
             page: page.toString(),
             size: size.toString(),
@@ -155,7 +155,7 @@ export const userAPI = {
             page: page.toString(),
             size: size.toString()
         });
-        
+
         const url = `${API_CONFIG.gateway}/api/management/worker-education/workers/${workerId}?${queryParams.toString()}`;
         console.log('[교육이력 요청 URL]', url);
         return await apiRequest(url);
