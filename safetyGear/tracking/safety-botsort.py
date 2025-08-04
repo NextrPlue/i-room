@@ -5,7 +5,7 @@ import psutil
 import logging
 from ultralytics import YOLO
 
-# -------------------- 설정 --------------------
+#설정 
 MODEL_PATH = 'model/best_8m_v4.pt'
 VIDEO_PATH = "test2.mp4"
 OUTPUT_VIDEO_PATH = "output_bot_sort_test.mp4"
@@ -16,17 +16,17 @@ CLASS_NAMES = {
     1: "helmet_on",
 }
 
-# -------------------- 장치 설정 --------------------
+# 장치 설정 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"📌 Using device: {device}")
+print(f"Using device: {device}")
 
 # FP16 모드 적용 (CUDA 전용)
 if device == "cuda":
     model = YOLO(MODEL_PATH).to(device).half()
-    print("✅ FP16(Half precision) 모드 활성화")
+    print("FP16(Half precision) 모드 활성화")
 else:
     model = YOLO(MODEL_PATH).to(device)
-    print("⚠️ CPU 모드: FP16 미지원, FP32로 실행")
+    print("CPU 모드: FP16 미지원, FP32로 실행")
 
 # -------------------- 로그 설정 --------------------
 logging.basicConfig(filename=LOG_PATH, level=logging.INFO)

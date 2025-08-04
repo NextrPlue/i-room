@@ -33,7 +33,7 @@ LOG_INTERVAL = 30  # 30프레임마다 로그 저장
 
 # -------------------- 3. 모델 및 비디오 초기화 --------------------
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"📌 Using device: {device}")
+print(f"Using device: {device}")
 
 model = YOLO(MODEL_PATH).to(device)
 
@@ -86,7 +86,7 @@ track_class_map = {}
 while cap.isOpened():
     ret, frame = cap.read()
     if not ret:
-        print("✅ 영상 종료 또는 프레임 없음")
+        print("영상 종료 또는 프레임 없음")
         break
 
     frame = cv2.resize(frame, TARGET_SIZE)
