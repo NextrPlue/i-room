@@ -1,6 +1,6 @@
 package com.iroom.sensor.repository;
 
-import com.iroom.sensor.entity.WorkerHealth;
+import com.iroom.sensor.entity.WorkerSensor;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,9 +14,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-public class WorkerHealthRepositoryTest {
+public class WorkerSensorRepositoryTest {
 	@Autowired
-	private WorkerHealthRepository workerHealthRepository;
+	private WorkerSensorRepository workerSensorRepository;
 
 	@Test
 	@DisplayName("근로자 생체정보 저장 후 ID로 조회 테스트")
@@ -24,15 +24,15 @@ public class WorkerHealthRepositoryTest {
 		// given
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		WorkerHealth health = WorkerHealth.builder()
+		WorkerSensor workerSensor = WorkerSensor.builder()
 			.workerId(1L)
 			.build();
-		health.updateLocation(latitude, longitude);
-		health.updateVitalSign(75, 36.5f);
+		workerSensor.updateLocation(latitude, longitude);
+		workerSensor.updateVitalSign(75, 36.5f);
 
 		// when
-		WorkerHealth saved = workerHealthRepository.save(health);
-		Optional<WorkerHealth> found = workerHealthRepository.findById(saved.getId());
+		WorkerSensor saved = workerSensorRepository.save(workerSensor);
+		Optional<WorkerSensor> found = workerSensorRepository.findById(saved.getId());
 
 		// then
 		assertThat(found).isPresent();
@@ -49,15 +49,15 @@ public class WorkerHealthRepositoryTest {
 		// given
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		WorkerHealth health = WorkerHealth.builder()
+		WorkerSensor workerSensor = WorkerSensor.builder()
 			.workerId(2L)
 			.build();
-		health.updateLocation(latitude, longitude);
-		health.updateVitalSign(80, 36.8f);
-		workerHealthRepository.save(health);
+		workerSensor.updateLocation(latitude, longitude);
+		workerSensor.updateVitalSign(80, 36.8f);
+		workerSensorRepository.save(workerSensor);
 
 		// when
-		Optional<WorkerHealth> result = workerHealthRepository.findByWorkerId(2L);
+		Optional<WorkerSensor> result = workerSensorRepository.findByWorkerId(2L);
 
 		// then
 		assertThat(result).isPresent();
@@ -73,16 +73,16 @@ public class WorkerHealthRepositoryTest {
 		// given
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		WorkerHealth health = WorkerHealth.builder()
+		WorkerSensor workerSensor = WorkerSensor.builder()
 			.workerId(3L)
 			.build();
-		health.updateLocation(latitude, longitude);
-		WorkerHealth saved = workerHealthRepository.save(health);
+		workerSensor.updateLocation(latitude, longitude);
+		WorkerSensor saved = workerSensorRepository.save(workerSensor);
 
 		// when
 		saved.updateLocation(latitude, longitude);
-		WorkerHealth updated = workerHealthRepository.save(saved);
-		Optional<WorkerHealth> result = workerHealthRepository.findById(updated.getId());
+		WorkerSensor updated = workerSensorRepository.save(saved);
+		Optional<WorkerSensor> result = workerSensorRepository.findById(updated.getId());
 
 		// then
 		assertThat(result).isPresent();
@@ -94,16 +94,16 @@ public class WorkerHealthRepositoryTest {
 	@DisplayName("updateVitalSign 메서드 생체정보 수정 테스트")
 	void updateVitalSignTest() {
 		// given
-		WorkerHealth health = WorkerHealth.builder()
+		WorkerSensor workerSensor = WorkerSensor.builder()
 			.workerId(4L)
 			.build();
-		health.updateVitalSign(70, 36.0f);
-		WorkerHealth saved = workerHealthRepository.save(health);
+		workerSensor.updateVitalSign(70, 36.0f);
+		WorkerSensor saved = workerSensorRepository.save(workerSensor);
 
 		// when
 		saved.updateVitalSign(85, 37.2f);
-		WorkerHealth updated = workerHealthRepository.save(saved);
-		Optional<WorkerHealth> result = workerHealthRepository.findById(updated.getId());
+		WorkerSensor updated = workerSensorRepository.save(saved);
+		Optional<WorkerSensor> result = workerSensorRepository.findById(updated.getId());
 
 		// then
 		assertThat(result).isPresent();

@@ -1,10 +1,10 @@
 package com.iroom.sensor.controller;
 
-import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationRequest;
-import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationResponse;
-import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsRequest;
-import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsResponse;
-import com.iroom.sensor.service.WorkerHealthService;
+import com.iroom.sensor.dto.WorkerSensor.WorkerUpdateLocationRequest;
+import com.iroom.sensor.dto.WorkerSensor.WorkerUpdateLocationResponse;
+import com.iroom.sensor.dto.WorkerSensor.WorkerUpdateVitalSignsRequest;
+import com.iroom.sensor.dto.WorkerSensor.WorkerUpdateVitalSignsResponse;
+import com.iroom.sensor.service.WorkerSensorService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -12,18 +12,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/worker-health")
+@RequestMapping("/worker-sensor")
 @RequiredArgsConstructor
-public class WorkerHealthController {
+public class WorkerSensorController {
 
-	private final WorkerHealthService workerHealthService;
+	private final WorkerSensorService workerSensorService;
 
 	//위치 업데이트
 	@PostMapping("/location")
 	public ResponseEntity<WorkerUpdateLocationResponse> updateLocation(
 		@RequestBody WorkerUpdateLocationRequest request
 	) {
-		WorkerUpdateLocationResponse response = workerHealthService.updateLocation(request);
+		WorkerUpdateLocationResponse response = workerSensorService.updateLocation(request);
 		return ResponseEntity.ok(response);
 	}
 
@@ -32,7 +32,7 @@ public class WorkerHealthController {
 	public ResponseEntity<WorkerUpdateVitalSignsResponse> updateVitalSigns(
 		@RequestBody WorkerUpdateVitalSignsRequest request
 	) {
-		WorkerUpdateVitalSignsResponse response = workerHealthService.updateVitalSigns(request);
+		WorkerUpdateVitalSignsResponse response = workerSensorService.updateVitalSigns(request);
 		return ResponseEntity.ok(response);
 	}
 
@@ -41,7 +41,7 @@ public class WorkerHealthController {
 	public ResponseEntity<WorkerUpdateLocationResponse> getWorkerLocation(
 		@PathVariable Long workerId
 	) {
-		WorkerUpdateLocationResponse response = workerHealthService.getWorkerLocation(workerId);
+		WorkerUpdateLocationResponse response = workerSensorService.getWorkerLocation(workerId);
 		return ResponseEntity.ok(response);
 	}
 }

@@ -1,6 +1,6 @@
-package com.iroom.sensor.dto.WorkerHealth;
+package com.iroom.sensor.dto.WorkerSensor;
 
-import com.iroom.sensor.entity.WorkerHealth;
+import com.iroom.sensor.entity.WorkerSensor;
 
 public record WorkerUpdateLocationResponse(
 	Long workerId,
@@ -8,7 +8,7 @@ public record WorkerUpdateLocationResponse(
 	Double longitude
 ) {
 	// 엔티티 → DTO 변환 생성자
-	public WorkerUpdateLocationResponse(WorkerHealth entity) {
+	public WorkerUpdateLocationResponse(WorkerSensor entity) {
 		this(
 			entity.getWorkerId(),
 			entity.getLatitude(),

@@ -7,13 +7,13 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
-@Table(name = "WorkerHealth_table")
+@Table(name = "WorkerSensors")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class WorkerHealth {
+public class WorkerSensor {
 
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
 	@Column(nullable = false)
@@ -26,7 +26,7 @@ public class WorkerHealth {
 	private Float bodyTemperature;
 
 	@Builder
-	public WorkerHealth(Long workerId) {
+	public WorkerSensor(Long workerId) {
 		this.workerId = workerId;
 	}
 

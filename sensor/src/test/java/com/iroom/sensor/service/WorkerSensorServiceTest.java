@@ -13,19 +13,19 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.iroom.modulecommon.service.KafkaProducerService;
-import com.iroom.sensor.dto.WorkerHealth.*;
-import com.iroom.sensor.entity.WorkerHealth;
+import com.iroom.sensor.dto.WorkerSensor.*;
+import com.iroom.sensor.entity.WorkerSensor;
 import com.iroom.sensor.entity.WorkerReadModel;
-import com.iroom.sensor.repository.WorkerHealthRepository;
+import com.iroom.sensor.repository.WorkerSensorRepository;
 import com.iroom.sensor.repository.WorkerReadModelRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
-public class WorkerHealthServiceTest {
+public class WorkerSensorServiceTest {
 
 	@Mock
-	private WorkerHealthRepository workerRepository;
+	private WorkerSensorRepository workerRepository;
 
 	@Mock
 	private WorkerReadModelRepository workerReadModelRepository;
@@ -34,7 +34,7 @@ public class WorkerHealthServiceTest {
 	private KafkaProducerService kafkaProducerService;
 
 	@InjectMocks
-	private WorkerHealthService workerService;
+	private WorkerSensorService workerService;
 
 	@Test
 	@DisplayName("근로자 위치 업데이트 테스트")
@@ -51,10 +51,10 @@ public class WorkerHealthServiceTest {
 			.build();
 		given(workerReadModelRepository.findById(workerId)).willReturn(Optional.of(workerReadModel));
 
-		WorkerHealth workerHealth = WorkerHealth.builder()
+		WorkerSensor workerSensor = WorkerSensor.builder()
 			.workerId(workerId)
 			.build();
-		given(workerRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerHealth));
+		given(workerRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerSensor));
 
 		// when
 		var response = workerService.updateLocation(request);
@@ -100,8 +100,8 @@ public class WorkerHealthServiceTest {
 			.build();
 		given(workerReadModelRepository.findById(workerId)).willReturn(Optional.of(workerReadModel));
 
-		WorkerHealth workerHealth = WorkerHealth.builder().workerId(workerId).build();
-		given(workerRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerHealth));
+		WorkerSensor workerSensor = WorkerSensor.builder().workerId(workerId).build();
+		given(workerRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerSensor));
 
 		// when
 		var response = workerService.updateVitalSigns(request);
@@ -136,9 +136,9 @@ public class WorkerHealthServiceTest {
 		Long workerId = 1L;
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		WorkerHealth workerHealth = WorkerHealth.builder().workerId(workerId).build();
-		workerHealth.updateLocation(latitude, longitude);
-		given(workerRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerHealth));
+		WorkerSensor workerSensor = WorkerSensor.builder().workerId(workerId).build();
+		workerSensor.updateLocation(latitude, longitude);
+		given(workerRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerSensor));
 
 		// when
 		WorkerUpdateLocationResponse response = workerService.getWorkerLocation(workerId);

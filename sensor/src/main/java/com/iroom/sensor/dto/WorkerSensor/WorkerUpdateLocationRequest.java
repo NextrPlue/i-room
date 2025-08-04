@@ -1,4 +1,4 @@
-package com.iroom.sensor.dto.WorkerHealth;
+package com.iroom.sensor.dto.WorkerSensor;
 
 public record WorkerUpdateLocationRequest(
 	Long workerId,

@@ -1,14 +1,14 @@
 package com.iroom.sensor.service;
 
 import com.iroom.modulecommon.service.KafkaProducerService;
-import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationRequest;
-import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationResponse;
-import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsRequest;
-import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsResponse;
+import com.iroom.sensor.dto.WorkerSensor.WorkerUpdateLocationRequest;
+import com.iroom.sensor.dto.WorkerSensor.WorkerUpdateLocationResponse;
+import com.iroom.sensor.dto.WorkerSensor.WorkerUpdateVitalSignsRequest;
+import com.iroom.sensor.dto.WorkerSensor.WorkerUpdateVitalSignsResponse;
 import com.iroom.modulecommon.dto.event.WorkerLocationEvent;
 import com.iroom.modulecommon.dto.event.WorkerVitalSignsEvent;
-import com.iroom.sensor.entity.WorkerHealth;
-import com.iroom.sensor.repository.WorkerHealthRepository;
+import com.iroom.sensor.entity.WorkerSensor;
+import com.iroom.sensor.repository.WorkerSensorRepository;
 import com.iroom.sensor.repository.WorkerReadModelRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -21,10 +21,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class WorkerHealthService {
+public class WorkerSensorService {
 
 	private final KafkaProducerService kafkaProducerService;
-	private final WorkerHealthRepository workerHealthRepository;
+	private final WorkerSensorRepository workerSensorRepository;
 	private final WorkerReadModelRepository workerReadModelRepository;
 
 	//위치 업데이트 기능
@@ -33,23 +33,24 @@ public class WorkerHealthService {
 		workerReadModelRepository.findById(request.workerId())
 			.orElseThrow(() -> new EntityNotFoundException("유효하지 않은 근로자"));
 
-		WorkerHealth health = workerHealthRepository.findByWorkerId(request.workerId())
+		WorkerSensor workerSensor = workerSensorRepository.findByWorkerId(request.workerId())
 			.orElseGet(() -> {
-				WorkerHealth newHealth = WorkerHealth.builder().workerId(request.workerId()).build();
-				return workerHealthRepository.save(newHealth);
+				WorkerSensor newSensor = WorkerSensor.builder().workerId(request.workerId()).build();
+				return workerSensorRepository.save(newSensor);
 			});
 
-		health.updateLocation(request.latitude(), request.longitude());
+		workerSensor.updateLocation(request.latitude(), request.longitude());
 
 		WorkerLocationEvent workerLocationEvent = new WorkerLocationEvent(
-			health.getWorkerId(),
-			health.getLatitude(),
-			health.getLongitude()
+			workerSensor.getWorkerId(),
+			workerSensor.getLatitude(),
+			workerSensor.getLongitude()
 		);
 
 		kafkaProducerService.publishMessage("WORKER_LOCATION_UPDATED", workerLocationEvent);
 
-		return new WorkerUpdateLocationResponse(health.getWorkerId(), health.getLatitude(), health.getLongitude());
+		return new WorkerUpdateLocationResponse(workerSensor.getWorkerId(), workerSensor.getLatitude(),
+			workerSensor.getLongitude());
 	}
 
 	//생체정보 업데이트 기능
@@ -58,35 +59,35 @@ public class WorkerHealthService {
 		workerReadModelRepository.findById(request.workerId())
 			.orElseThrow(() -> new EntityNotFoundException("유효하지 않은 근로자"));
 
-		WorkerHealth health = workerHealthRepository.findByWorkerId(request.workerId())
+		WorkerSensor workerSensor = workerSensorRepository.findByWorkerId(request.workerId())
 			.orElseGet(() -> {
-				WorkerHealth newHealth = WorkerHealth.builder().workerId(request.workerId()).build();
-				return workerHealthRepository.save(newHealth);
+				WorkerSensor newSensor = WorkerSensor.builder().workerId(request.workerId()).build();
+				return workerSensorRepository.save(newSensor);
 			});
 
-		health.updateVitalSign(request.heartRate(), request.bodyTemperature());
+		workerSensor.updateVitalSign(request.heartRate(), request.bodyTemperature());
 
 		WorkerVitalSignsEvent workerVitalSignsEvent = new WorkerVitalSignsEvent(
-			health.getWorkerId(),
-			health.getHeartRate(),
-			health.getBodyTemperature()
+			workerSensor.getWorkerId(),
+			workerSensor.getHeartRate(),
+			workerSensor.getBodyTemperature()
 		);
 
 		kafkaProducerService.publishMessage("WORKER_VITAL_SIGNS_UPDATED", workerVitalSignsEvent);
 
 		return new WorkerUpdateVitalSignsResponse(
-			health.getWorkerId(),
-			health.getHeartRate(),
-			health.getBodyTemperature()
+			workerSensor.getWorkerId(),
+			workerSensor.getHeartRate(),
+			workerSensor.getBodyTemperature()
 		);
 	}
 
 	//위치 조회 기능
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
 	public WorkerUpdateLocationResponse getWorkerLocation(Long workerId) {
-		WorkerHealth health = workerHealthRepository.findByWorkerId(workerId)
+		WorkerSensor workerSensor = workerSensorRepository.findByWorkerId(workerId)
 			.orElseThrow(() -> new EntityNotFoundException("해당 근로자 없음"));
 
-		return new WorkerUpdateLocationResponse(health);
+		return new WorkerUpdateLocationResponse(workerSensor);
 	}
 }

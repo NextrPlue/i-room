@@ -14,14 +14,14 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationRequest;
-import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateLocationResponse;
-import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsRequest;
-import com.iroom.sensor.dto.WorkerHealth.WorkerUpdateVitalSignsResponse;
-import com.iroom.sensor.service.WorkerHealthService;
+import com.iroom.sensor.dto.WorkerSensor.WorkerUpdateLocationRequest;
+import com.iroom.sensor.dto.WorkerSensor.WorkerUpdateLocationResponse;
+import com.iroom.sensor.dto.WorkerSensor.WorkerUpdateVitalSignsRequest;
+import com.iroom.sensor.dto.WorkerSensor.WorkerUpdateVitalSignsResponse;
+import com.iroom.sensor.service.WorkerSensorService;
 
-@WebMvcTest(controllers = WorkerHealthController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
-public class WorkerHealthControllerTest {
+@WebMvcTest(controllers = WorkerSensorController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
+public class WorkerSensorControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -30,10 +30,10 @@ public class WorkerHealthControllerTest {
 	private ObjectMapper objectMapper;
 
 	@MockitoBean
-	private WorkerHealthService workerService;
+	private WorkerSensorService workerService;
 
 	@Test
-	@DisplayName("POST /worker-health/location - 위치 업데이트 테스트")
+	@DisplayName("POST /worker-sensor/location - 위치 업데이트 테스트")
 	void updateLocationTest() throws Exception {
 		// given
 		Double latitude = 35.8343;
@@ -43,7 +43,7 @@ public class WorkerHealthControllerTest {
 		given(workerService.updateLocation(request)).willReturn(response);
 
 		// when & then
-		mockMvc.perform(post("/worker-health/location")
+		mockMvc.perform(post("/worker-sensor/location")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
@@ -53,7 +53,7 @@ public class WorkerHealthControllerTest {
 	}
 
 	@Test
-	@DisplayName("POST /worker-health/vital-signs - 생체 정보 업데이트 테스트")
+	@DisplayName("POST /worker-sensor/vital-signs - 생체 정보 업데이트 테스트")
 	void updateVitalSignsTest() throws Exception {
 		// given
 		WorkerUpdateVitalSignsRequest request = new WorkerUpdateVitalSignsRequest(2L, 88, 37.5F);
@@ -61,7 +61,7 @@ public class WorkerHealthControllerTest {
 		given(workerService.updateVitalSigns(request)).willReturn(response);
 
 		// when & then
-		mockMvc.perform(post("/worker-health/vital-signs")
+		mockMvc.perform(post("/worker-sensor/vital-signs")
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
@@ -71,7 +71,7 @@ public class WorkerHealthControllerTest {
 	}
 
 	@Test
-	@DisplayName("GET /worker-health/{workerId}/location - 위치 조회 테스트")
+	@DisplayName("GET /worker-sensor/{workerId}/location - 위치 조회 테스트")
 	void getWorkerLocationTest() throws Exception {
 		// given
 		Long workerId = 3L;
@@ -81,7 +81,7 @@ public class WorkerHealthControllerTest {
 		given(workerService.getWorkerLocation(workerId)).willReturn(response);
 
 		// when & then
-		mockMvc.perform(get("/worker-health/{workerId}/location", workerId))
+		mockMvc.perform(get("/worker-sensor/{workerId}/location", workerId))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.workerId").value(workerId))
 			.andExpect(jsonPath("$.latitude").value(latitude))
