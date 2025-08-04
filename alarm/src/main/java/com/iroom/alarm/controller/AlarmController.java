@@ -25,7 +25,7 @@ public class AlarmController {
 	// 보호구 탐지 AI 서버 전용 API
 	@PostMapping("/ppe")
 	public ResponseEntity<String> createAlarm(@RequestBody AlarmEvent alarmEvent) {
-		alarmService.handleAlarmEvent(alarmEvent);
+		alarmService.handleAlarmEventFromApi(alarmEvent);
 		return ResponseEntity.ok("Alarm created");
 	}
 

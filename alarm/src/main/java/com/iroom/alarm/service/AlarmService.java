@@ -24,8 +24,19 @@ public class AlarmService {
 	private final SimpMessagingTemplate messagingTemplate;
 	private final StompHandler stompHandler;
 
-	// 알림을 생성해서 저장(Kafka 이벤트 수신 시 사용)
+	// 외부 API 호출용
+	@PreAuthorize("hasAuthority('ROLE_PPE_SYSTEM')")
+	public void handleAlarmEventFromApi(AlarmEvent alarmEvent) {
+		processAlarmEvent(alarmEvent);
+	}
+
+	// 내부 Kafka 이벤트 수신용
 	public void handleAlarmEvent(AlarmEvent alarmEvent) {
+		processAlarmEvent(alarmEvent);
+	}
+
+	// 실제 알림 처리 로직
+	private void processAlarmEvent(AlarmEvent alarmEvent) {
 		Alarm alarm = Alarm.builder()
 			.workerId(alarmEvent.workerId())
 			.occurredAt(alarmEvent.occurredAt())
