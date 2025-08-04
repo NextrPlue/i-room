@@ -114,6 +114,7 @@ class MainActivity : ComponentActivity() {
                     DataType.LOCATION
                 )
             )
+            .setIsGpsEnabled(true)
             .build()
 
         lifecycleScope.launch {
