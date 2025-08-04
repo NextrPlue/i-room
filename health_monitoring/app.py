@@ -16,7 +16,7 @@ class HealthInput(BaseModel):
     heart_rate: float
 
 # === 모델 로드 ===
-with open("model/lgb_model2.pkl", "rb") as f:
+with open("models/lgb_model2.pkl", "rb") as f:
     model = pickle.load(f)
 
 # === 기본 엔드포인트 ===
