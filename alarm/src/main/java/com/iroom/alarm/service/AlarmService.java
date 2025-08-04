@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.iroom.alarm.config.StompHandler;
 import com.iroom.alarm.entity.Alarm;
 import com.iroom.alarm.repository.AlarmRepository;
+import com.iroom.modulecommon.dto.event.AlarmEvent;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,25 +25,25 @@ public class AlarmService {
 	private final StompHandler stompHandler;
 
 	// 알림을 생성해서 저장(Kafka 이벤트 수신 시 사용)
-	public void handleAlarmEvent(Long workerId, String type, Long incidentId, String description) {
+	public void handleAlarmEvent(AlarmEvent alarmEvent) {
 		Alarm alarm = Alarm.builder()
-			.workerId(workerId)
-			.incidentId(incidentId)
-			.incidentType(type)
-			.incidentDescription(description)
+			.workerId(alarmEvent.workerId())
+			.incidentId(alarmEvent.incidentId())
+			.incidentType(alarmEvent.incidentType())
+			.incidentDescription(alarmEvent.incidentDescription())
 			.build();
 
 		alarmRepository.save(alarm);
 
 		// WebSocket 실시간 전송
-		String adminMessage = String.format("[%s] %s (작업자 ID: %d)", type, description, workerId);
-		String workerMessage = String.format("[%s] %s", type, description);
+		String adminMessage = String.format("[%s] %s (작업자 ID: %d)", alarmEvent.incidentType(), alarmEvent.incidentDescription(), alarmEvent.workerId());
+		String workerMessage = String.format("[%s] %s", alarmEvent.incidentType(), alarmEvent.incidentDescription());
 
 		// 관리자에게 모든 알람 전송
 		messagingTemplate.convertAndSend("/topic/alarms/admin", adminMessage);
 
 		// 해당 근로자에게만 개별 알람 전송
-		String sessionId = stompHandler.getSessionIdByUserId(workerId.toString());
+		String sessionId = stompHandler.getSessionIdByUserId(alarmEvent.workerId().toString());
 		if (sessionId != null) {
 			String workerDestination = "/queue/alarms-" + sessionId;
 			messagingTemplate.convertAndSend(workerDestination, workerMessage);
