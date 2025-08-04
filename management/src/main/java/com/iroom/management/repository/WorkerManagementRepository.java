@@ -10,4 +10,5 @@ import com.iroom.management.entity.WorkerManagement;
 @RepositoryRestResource(exported = false)
 public interface WorkerManagementRepository extends JpaRepository<WorkerManagement, Long> {
 	Optional<WorkerManagement> findByWorkerId(Long workerId);
+	Optional<WorkerManagement> findTopByWorkerIdOrderByEnterDateDesc(Long workerId);
 }

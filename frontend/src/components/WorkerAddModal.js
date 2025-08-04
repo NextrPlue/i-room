@@ -22,6 +22,78 @@ const WorkerAddModal = ({ isOpen, onClose, onSave }) => {
     };
 
     const handleSave = () => {
+        // 필수 필드 검증
+        if (!addForm.name || !addForm.name.trim()) {
+            alert('이름을 입력해주세요.');
+            return;
+        }
+
+        if (!addForm.department || !addForm.department.trim()) {
+            alert('부서를 입력해주세요.');
+            return;
+        }
+
+        if (!addForm.occupation || !addForm.occupation.trim()) {
+            alert('직종을 입력해주세요.');
+            return;
+        }
+
+        if (!addForm.phone || !addForm.phone.trim()) {
+            alert('연락처를 입력해주세요.');
+            return;
+        }
+
+        // 연락처 형식 검증
+        const phoneRegex = /^010-\d{4}-\d{4}$/;
+        if (!phoneRegex.test(addForm.phone.trim())) {
+            alert('연락처는 010-0000-0000 형식으로 입력해주세요.');
+            return;
+        }
+
+        // 이메일 유효성 검사 (선택사항이지만 입력했다면 형식 검증)
+        if (addForm.email && addForm.email.trim()) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(addForm.email.trim())) {
+                alert('올바른 형식의 이메일 주소를 입력해주세요.');
+                return;
+            }
+        }
+
+        // 비밀번호 검증
+        if (!addForm.password || !addForm.password.trim()) {
+            alert('비밀번호를 입력해주세요.');
+            return;
+        }
+
+        if (addForm.password.length < 8) {
+            alert('비밀번호는 8자 이상이어야 합니다.');
+            return;
+        }
+
+        const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
+        if (!passwordRegex.test(addForm.password)) {
+            alert('비밀번호는 영문과 숫자를 포함하여 8자 이상이어야 합니다.');
+            return;
+        }
+
+        // 나이 검증
+        if (addForm.age && (isNaN(addForm.age))) {
+            alert('나이는 숫자로 입력해주세요.');
+            return;
+        }
+
+        // 키 검증
+        if (addForm.height && (isNaN(addForm.height))) {
+            alert('키는 숫자로 입력해주세요.');
+            return;
+        }
+
+        // 몸무게 검증
+        if (addForm.weight && (isNaN(addForm.weight))) {
+            alert('몸무게는 숫자로 입력해주세요.');
+            return;
+        }
+
         onSave(addForm);
         // 폼 초기화
         setAddForm({

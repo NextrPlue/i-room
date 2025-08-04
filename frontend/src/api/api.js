@@ -28,18 +28,36 @@ const apiRequest = async (url, options = {}) => {
 
         // 응답 처리
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('API 오류 응답:', errorText);
+            let errorData;
+            const contentType = response.headers.get('content-type');
 
-            throw new Error(
-                response.status === 404
-                    ? '요청한 리소스를 찾을 수 없습니다.'
-                    : response.status === 500
-                        ? '서버 내부 오류가 발생했습니다.'
-                        : response.status === 400
-                            ? errorText || '잘못된 요청입니다.'
-                            : `HTTP ${response.status}: ${response.statusText}`
-            );
+            // JSON 응답인지 확인
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    errorData = await response.json();
+                    console.error('API JSON 오류 응답:', errorData);
+                } catch (e) {
+                    const errorText = await response.text();
+                    console.error('API 텍스트 오류 응답:', errorText);
+                    errorData = {message: errorText};
+                }
+            } else {
+                const errorText = await response.text();
+                console.error('API 텍스트 오류 응답:', errorText);
+                errorData = {message: errorText};
+            }
+
+            // 구체적인 에러 메시지 추출
+            let errorMessage = errorData?.message || `HTTP ${response.status}: ${response.statusText}`;
+
+            // 유효성 검증 에러의 경우 상세 메시지 추출
+            if (response.status === 400 && errorData?.errors) {
+                errorMessage = errorData.errors.map(err => err.message).join(', ');
+            } else if (response.status === 403 && errorData?.message) {
+                errorMessage = errorData.message;
+            }
+
+            throw new Error(errorMessage);
         }
 
         // JSON 응답 파싱
@@ -71,7 +89,7 @@ export const userAPI = {
      * @param {string} [options.target] - 검색 대상 (name, email)
      * @param {string} [options.keyword] - 검색어
      */
-    getWorkers: async ({ page = 0, size = 10, target = '', keyword = '' } = {}) => {
+    getWorkers: async ({page = 0, size = 10, target = '', keyword = ''} = {}) => {
         const queryParams = new URLSearchParams({
             page: page.toString(),
             size: size.toString(),
@@ -137,10 +155,29 @@ export const userAPI = {
             page: page.toString(),
             size: size.toString()
         });
-        
+
         const url = `${API_CONFIG.gateway}/api/management/worker-education/workers/${workerId}?${queryParams.toString()}`;
         console.log('[교육이력 요청 URL]', url);
         return await apiRequest(url);
+    },
+
+    /**
+     * 안전교육 등록
+     * @param {object} educationData - 등록할 교육 데이터
+     * @param {string} educationData.workerId - 근로자 ID
+     * @param {string} educationData.name - 교육명
+     * @param {string} educationData.eduDate - 교육 일시 (YYYY-MM-DD)
+     * @param {string} educationData.certUrl - 수료증 URL
+     * @returns {Promise} 등록된 교육 정보
+     */
+    createWorkerEducation: async (educationData) => {
+        const url = `${API_CONFIG.gateway}/api/management/worker-education`;
+        console.log('[교육등록 요청 URL]', url);
+        console.log('[교육등록 데이터]', educationData);
+        return await apiRequest(url, {
+            method: 'POST',
+            body: JSON.stringify(educationData)
+        });
     },
 
     /**
@@ -155,6 +192,17 @@ export const userAPI = {
             method: 'PUT',
             body: JSON.stringify(workerData)
         });
+    },
+
+    /**
+     * 근로자 출입현황 조회
+     * @param {string} workerId - 근로자 ID
+     * @returns {Promise} 출입현황 데이터 { id, workerId, enterDate, outDate }
+     */
+    getWorkerAttendance: async (workerId) => {
+        const url = `${API_CONFIG.gateway}/api/management/entries/${workerId}`;
+        console.log('[출입현황 요청 URL]', url);
+        return await apiRequest(url);
     },
 
 };
