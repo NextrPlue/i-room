@@ -18,13 +18,13 @@ const WorkerDetailPage = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [pageSize] = useState(3); // 교육이력은 3개씩 표시
-    
+
     // 교육등록 모달 관련 상태
     const [isEducationAddModalOpen, setIsEducationAddModalOpen] = useState(false);
-    
+
     // 근로자 수정 모달 관련 상태
     const [isWorkerEditModalOpen, setIsWorkerEditModalOpen] = useState(false);
-    
+
     // 출입현황 관련 상태
     const [attendance, setAttendance] = useState(null);
     const [attendanceLoading, setAttendanceLoading] = useState(false);
@@ -39,7 +39,7 @@ const WorkerDetailPage = () => {
             console.log('출입현황 조회 시작:', workerId);
             const response = await userAPI.getWorkerAttendance(workerId);
             console.log('출입현황 조회 성공:', response);
-            
+
             // 응답 구조에 따른 안전한 처리
             if (response && response.data) {
                 setAttendance(response.data);
@@ -66,7 +66,7 @@ const WorkerDetailPage = () => {
             console.log('교육이력 조회 시작:', workerId, '페이지:', page);
             const response = await userAPI.getWorkerEducation(workerId, page, pageSize);
             console.log('교육이력 조회 성공:', response);
-            
+
             // 응답 구조 확인 및 안전한 처리
             if (response && response.data && response.data.content) {
                 // 새로운 구조: { status, message, data: { content, totalPages } }
@@ -112,9 +112,11 @@ const WorkerDetailPage = () => {
         };
 
         if (workerId) {
-            fetchWorkerDetail();
-            fetchWorkerEducation(0); // 교육이력도 함께 조회
-            fetchWorkerAttendance(); // 출입현황도 함께 조회
+            (async () =>{
+                await fetchWorkerDetail();
+                await fetchWorkerEducation(0); // 교육이력도 함께 조회
+                await fetchWorkerAttendance(); // 출입현황도 함께 조회
+            })();
         }
     }, [workerId]);
 
@@ -124,7 +126,9 @@ const WorkerDetailPage = () => {
 
     // 교육이력 페이지 변경 핸들러
     const handleEducationPageChange = (page) => {
-        fetchWorkerEducation(page);
+        (async () => {
+            await fetchWorkerEducation(page);
+        })();
     };
 
     // 교육등록 모달 열기
@@ -143,12 +147,12 @@ const WorkerDetailPage = () => {
             console.log('교육등록 시작:', educationData);
             const response = await userAPI.createWorkerEducation(educationData);
             console.log('교육등록 성공:', response);
-            
+
             alert('안전교육이 등록되었습니다!');
-            
+
             // 교육이력 목록 새로고침 (첫 번째 페이지로)
             await fetchWorkerEducation(0);
-            
+
             // 모달 닫기
             handleEducationAddModalClose();
         } catch (error) {
@@ -173,13 +177,13 @@ const WorkerDetailPage = () => {
             console.log('근로자 정보 수정 시작:', editForm);
             const response = await userAPI.updateWorker(workerId, editForm);
             console.log('근로자 정보 수정 성공:', response);
-            
+
             alert('근로자 정보가 수정되었습니다!');
-            
+
             // 근로자 상세 정보 새로고침
             const detailResponse = await userAPI.getWorkerDetail(workerId);
             setWorker(detailResponse.data);
-            
+
             // 모달 닫기
             handleWorkerEditModalClose();
         } catch (error) {
@@ -216,19 +220,11 @@ const WorkerDetailPage = () => {
             {/* 상단 프로필 소개 카드 */}
             <div className={styles.profileIntroCard}>
                 <div className={styles.profileImageContainer}>
-                    {worker.profileImage ? (
-                        <img
-                            src={worker.profileImage}
-                            alt={worker.name}
-                            className={styles.profileImage}
-                        />
-                    ) : (
-                        <div className={styles.profileImagePlaceholder}>
-                            <span className={styles.profileInitial}>
-                                {worker.name.charAt(0)}
-                            </span>
-                        </div>
-                    )}
+                    <div className={styles.profileImagePlaceholder}>
+                      <span className={styles.profileInitial}>
+                        {worker.name.charAt(0)}
+                      </span>
+                    </div>
                 </div>
 
                 <div className={styles.greetingContent}>
@@ -241,7 +237,7 @@ const WorkerDetailPage = () => {
                     </div>
                 </div>
 
-                <button 
+                <button
                     className={styles.editButton}
                     onClick={handleWorkerEditClick}
                 >
@@ -253,8 +249,7 @@ const WorkerDetailPage = () => {
             <div className={styles.detailSection}>
                 {/* 좌측: 개인정보 */}
                 <div className={styles.infoCard}>
-                    <h3 className={styles.cardTitleCentered}>개인정보</h3>
-                    <div className={styles.sectionDivider}></div>
+                    <h3>개인정보</h3>
                     <div className={styles.contactSection}>
 
                         <div className={styles.contactItem}>
@@ -317,8 +312,7 @@ const WorkerDetailPage = () => {
 
                 {/* 중앙: 안전교육이력 */}
                 <div className={styles.infoCard}>
-                    <h3 className={styles.cardTitleCentered}>안전교육이력</h3>
-                    <div className={styles.sectionDivider}></div>
+                    <h3>안전교육이력</h3>
 
                     {educationLoading ? (
                         <div className={styles.educationLoading}>
@@ -414,7 +408,7 @@ const WorkerDetailPage = () => {
                         </>
                     )}
 
-                    <button 
+                    <button
                         className={styles.registerCertificateBtn}
                         onClick={handleEducationAddClick}
                     >
@@ -424,9 +418,8 @@ const WorkerDetailPage = () => {
 
                 {/* 우측: 출입현황 */}
                 <div className={styles.infoCard}>
-                    <h3 className={styles.cardTitleCentered}>출입현황</h3>
-                    <div className={styles.sectionDivider}></div>
-                    
+                    <h3>출입현황</h3>
+
                     {attendanceLoading ? (
                         <div className={styles.educationLoading}>
                             <p>출입현황을 불러오는 중...</p>
@@ -445,67 +438,70 @@ const WorkerDetailPage = () => {
                         <div className={styles.educationEmpty}>
                             <p>출입 기록이 없습니다.</p>
                         </div>
-                    ) : (
-                        <>
-                            <div className={styles.statusItem}>
-                                <div className={styles.statusRow}>
-                                    <span className={styles.statusLabel}>출근시간 :</span>
-                                    <div className={styles.statusTimeContainer}>
-                                        {attendance.enterDate ? (
-                                            <>
-                                                <span className={styles.statusDate}>
-                                                    {new Date(attendance.enterDate).toLocaleDateString('ko-KR', {
-                                                        month: '2-digit',
-                                                        day: '2-digit'
-                                                    })}
-                                                </span>
-                                                <span className={styles.statusTime}>
-                                                    {new Date(attendance.enterDate).toLocaleTimeString('ko-KR', { 
-                                                        hour: '2-digit', 
-                                                        minute: '2-digit' 
-                                                    })}
-                                                </span>
-                                            </>
-                                        ) : (
-                                            <span className={styles.statusTime}>-</span>
-                                        )}
+                    ) : (() => {
+                        const { enterDate, outDate } = attendance;
+                        return (
+                            <>
+                                <div className={styles.statusItem}>
+                                    <div className={styles.statusRow}>
+                                        <span className={styles.statusLabel}>출근시간 :</span>
+                                        <div className={styles.statusTimeContainer}>
+                                            {enterDate ? (
+                                                <>
+                                                    <span className={styles.statusDate}>
+                                                        {new Date(enterDate).toLocaleDateString('ko-KR', {
+                                                            month: '2-digit',
+                                                            day: '2-digit'
+                                                        })}
+                                                    </span>
+                                                    <span className={styles.statusTime}>
+                                                        {new Date(enterDate).toLocaleTimeString('ko-KR', {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span className={styles.statusTime}>-</span>
+                                            )}
+                                        </div>
+                                        <span className={enterDate ? styles.attendanceBadge : styles.workingBadge}>
+                                            {enterDate ? '출근 완료' : '미출근'}
+                                        </span>
                                     </div>
-                                    <span className={attendance.enterDate ? styles.attendanceBadge : styles.workingBadge}>
-                                        {attendance.enterDate ? '출근 완료' : '미출근'}
-                                    </span>
                                 </div>
-                            </div>
 
-                            <div className={styles.statusItem}>
-                                <div className={styles.statusRow}>
-                                    <span className={styles.statusLabel}>퇴근시간 :</span>
-                                    <div className={styles.statusTimeContainer}>
-                                        {attendance.outDate ? (
-                                            <>
-                                                <span className={styles.statusDate}>
-                                                    {new Date(attendance.outDate).toLocaleDateString('ko-KR', {
-                                                        month: '2-digit',
-                                                        day: '2-digit'
-                                                    })}
-                                                </span>
-                                                <span className={styles.statusTime}>
-                                                    {new Date(attendance.outDate).toLocaleTimeString('ko-KR', { 
-                                                        hour: '2-digit', 
-                                                        minute: '2-digit' 
-                                                    })}
-                                                </span>
-                                            </>
-                                        ) : (
-                                            <span className={styles.statusTime}>-</span>
-                                        )}
+                                <div className={styles.statusItem}>
+                                    <div className={styles.statusRow}>
+                                        <span className={styles.statusLabel}>퇴근시간 :</span>
+                                        <div className={styles.statusTimeContainer}>
+                                            {outDate ? (
+                                                <>
+                                                    <span className={styles.statusDate}>
+                                                        {new Date(outDate).toLocaleDateString('ko-KR', {
+                                                            month: '2-digit',
+                                                            day: '2-digit'
+                                                        })}
+                                                    </span>
+                                                    <span className={styles.statusTime}>
+                                                        {new Date(outDate).toLocaleTimeString('ko-KR', {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </span>
+                                                </>
+                                            ) : (
+                                                <span className={styles.statusTime}>-</span>
+                                            )}
+                                        </div>
+                                        <span className={outDate ? styles.attendanceBadge : styles.workingBadge}>
+                                            {outDate ? '퇴근 완료' : '근무중'}
+                                        </span>
                                     </div>
-                                    <span className={attendance.outDate ? styles.attendanceBadge : styles.workingBadge}>
-                                        {attendance.outDate ? '퇴근 완료' : '근무중'}
-                                    </span>
                                 </div>
-                            </div>
-                        </>
-                    )}
+                            </>
+                        );
+                    })()}
                 </div>
             </div>
 
