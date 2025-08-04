@@ -6,6 +6,9 @@
 
     <uses-feature android:name="android.hardware.type.watch" />
 
+    <!-- 인터넷 권한 추가 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <!-- 센서 권한 -->
     <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />

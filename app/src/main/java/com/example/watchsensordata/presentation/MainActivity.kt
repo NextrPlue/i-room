@@ -29,20 +29,34 @@ import androidx.health.services.client.endExercise
 import androidx.health.services.client.startExercise
 import androidx.lifecycle.lifecycleScope
 import com.example.watchsensordata.R
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.net.HttpURLConnection
+import java.net.URL
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var exerciseClient: ExerciseClient
     private lateinit var updateCallback: ExerciseUpdateCallback
 
+    private var sensorJob: Job? = null
+
     private lateinit var locationPermissionRequest: ActivityResultLauncher<Array<String>>
     private val locationText = mutableStateOf("위치 정보 없음")
     private var isTracking = mutableStateOf(false)
 
-    private val locationPermissions = arrayOf(
-        Manifest.permission.ACCESS_FINE_LOCATION
-    )
+    private val locationPermissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+
+    //센서값 전역 변수
+    private var heartRateBpm: Double? = null
+    private var steps: Long? = null
+    private var speed: Double? = null
+    private var pace: Double? = null
+    private var stepPerMinute: Long? = null
 
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,39 +96,25 @@ class MainActivity : ComponentActivity() {
                 override fun onAvailabilityChanged(dataType: DataType<*, *>, availability: Availability) {}
 
                 override fun onExerciseUpdateReceived(update: ExerciseUpdate) {
-                    //심박수
-                    val heartRateData = update.latestMetrics.getData(DataType.HEART_RATE_BPM)
-                    if(heartRateData.isNotEmpty()){
-                        val bpm = heartRateData.last().value
-                        Log.d("SENSOR","Heart Rate: $bpm")
+                    update.latestMetrics.getData(DataType.HEART_RATE_BPM).lastOrNull()?.let {
+                        heartRateBpm = it.value
+                        Log.d("SENSOR", "Heart Rate: $heartRateBpm")
                     }
-
-                    //분당 걸음수
-                    val stepPerMinute = update.latestMetrics.getData(DataType.STEPS_PER_MINUTE)
-                    if(stepPerMinute.isNotEmpty()){
-                        val stepMinute = stepPerMinute.last().value
-                        Log.d("SENSOR", "Step per minutes: $stepMinute")
+                    update.latestMetrics.getData(DataType.STEPS_PER_MINUTE).lastOrNull()?.let {
+                        stepPerMinute = it.value
+                        Log.d("SENSOR", "Heart Rate: $stepPerMinute")
                     }
-
-                    // 시간당 거리
-                    val speedData = update.latestMetrics.getData(DataType.SPEED)
-                    if(speedData.isNotEmpty()){
-                        val speed = speedData.last().value
-                        Log.d("SENSOR", "Speed: $speed")
+                    update.latestMetrics.getData(DataType.SPEED).lastOrNull()?.let {
+                        speed = it.value
+                        Log.d("SENSOR", "Heart Rate: $speed")
                     }
-
-                    // 걸음수
-                    val stepsData = update.latestMetrics.getData(DataType.STEPS)
-                    if(stepsData.isNotEmpty()){
-                        val step = stepsData.last().value
-                        Log.d("SENSOR", "Steps: $step")
+                    update.latestMetrics.getData(DataType.STEPS).lastOrNull()?.let {
+                        steps = it.value
+                        Log.d("SENSOR", "Heart Rate: $steps")
                     }
-
-                    // 1km 당 걸리는 시간
-                    val paceData = update.latestMetrics.getData(DataType.PACE)
-                    if(paceData.isNotEmpty()){
-                        val pace = paceData.last().value
-                        Log.d("SENSOR", "Pace: $pace")
+                    update.latestMetrics.getData(DataType.PACE).lastOrNull()?.let {
+                        pace = it.value
+                        Log.d("SENSOR", "Heart Rate: $pace")
                     }
                 }
 
@@ -124,6 +124,21 @@ class MainActivity : ComponentActivity() {
             }
 
             exerciseClient.setUpdateCallback(updateCallback)
+
+            //5초마다 서버 전송
+            launch {
+                while (isActive) {
+                    sendSensorDataToServer(
+                        workerId = 1L,
+                        heartRate = heartRateBpm,
+                        steps = steps,
+                        speed = speed,
+                        pace = pace,
+                        stepPerMinute = stepPerMinute
+                    )
+                    delay(5000)
+                }
+            }
         }
 
         findViewById<Button>(R.id.startButton).setOnClickListener {
@@ -150,6 +165,43 @@ class MainActivity : ComponentActivity() {
         findViewById<Button>(R.id.stopButton).setOnClickListener {
             stopExercise()
             stopLocationService()
+        }
+    }
+
+    //센서 데이터 서버 전송
+    private fun sendSensorDataToServer(
+        workerId: Long,
+        heartRate: Double?,
+        steps: Long?,
+        speed: Double?,
+        pace: Double?,
+        stepPerMinute: Long?
+    ) {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val url = URL("https://my-wearos-test.free.beeceptor.com")
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.doOutput = true
+
+                val json = """
+                    {
+                        "workerId": 1L,
+                        "heartRate": $heartRate,
+                        "steps": $steps,
+                        "speed": $speed,
+                        "pace": $pace,
+                        "stepPerMinute": $stepPerMinute
+                    }
+                """.trimIndent()
+
+                connection.outputStream.use { it.write(json.toByteArray()) }
+                Log.d("SERVER", "응답 코드: ${connection.responseCode}")
+                connection.disconnect()
+            } catch (e: Exception) {
+                Log.e("SERVER", "전송 실패: ${e.message}")
+            }
         }
     }
 
@@ -182,6 +234,9 @@ class MainActivity : ComponentActivity() {
             try {
                 exerciseClient.endExercise()
                 Log.d("EXERCISE", "운동 종료됨")
+
+                sensorJob?.cancel()
+                sensorJob = null
             } catch (e: Exception) {
                 Log.e("EXERCISE", "운동 종료 실패: ${e.message}")
             }
