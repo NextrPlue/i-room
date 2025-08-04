@@ -2,6 +2,7 @@ package com.example.watchsensordata.presentation
 
 import android.Manifest
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
@@ -14,6 +15,8 @@ import com.google.android.gms.location.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -70,7 +73,7 @@ class ForegroundLocationService : Service() {
     // 위치 정보를 Broadcast로 전달하는 함수
     private fun sendLocationToUI(latitude: Double, longitude: Double) {
         val intent = Intent().apply {
-            setClassName(packageName, "com.example.watchgps2.presentation.LocationReceiver")
+            setClassName(packageName, "com.example.watchsensordata.presentation.LocationReceiver")
             action = "LOCATION_UPDATE"
             putExtra("latitude", latitude)
             putExtra("longitude", longitude)
@@ -81,31 +84,43 @@ class ForegroundLocationService : Service() {
 
     //서버 전송 함수
     private fun sendLocationToServer(workerId: Long, latitude: Double, longitude: Double) {
+        val prefs = getSharedPreferences("SensorPrefs", Context.MODE_PRIVATE)
+
+        // SharedPreferences에서 센서값 꺼내기
+        val heartRate = prefs.getFloat("heartRate", 0.0f).toDouble()
+        val steps = prefs.getLong("steps", 0L)
+        val speed = prefs.getFloat("speed", 0.0f).toDouble()
+        val pace = prefs.getFloat("pace", 0.0f).toDouble()
+        val stepPerMinute = prefs.getLong("stepPerMinute", 0L)
+
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                //서버 url 변경필요
-                val url = URL("https://my-wearos-test.free.beeceptor.com/api/location")
+                val url = URL("http://your.server.ip:port/api/sensor-data")  // 서버 주소로 바꾸기
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "POST"
-                connection.setRequestProperty("Content-Type", "application/json")
+                connection.setRequestProperty("Content-Type", "application/octet-stream")
                 connection.doOutput = true
 
-                val json = """
-                {
-                    "workerId": $workerId,
-                    "latitude": $latitude,
-                    "longitude": $longitude
-                }
-            """.trimIndent()
+                val bos = ByteArrayOutputStream()
+                val dos = DataOutputStream(bos)
 
-                connection.outputStream.use { it.write(json.toByteArray()) }
+                dos.writeLong(workerId)
+                dos.writeDouble(latitude)
+                dos.writeDouble(longitude)
+                dos.writeDouble(heartRate)
+                dos.writeLong(steps)
+                dos.writeDouble(speed)
+                dos.writeDouble(pace)
+                dos.writeLong(stepPerMinute)
+
+                connection.outputStream.use { it.write(bos.toByteArray()) }
 
                 val responseCode = connection.responseCode
-                Log.d("Server", "서버 응답 코드: $responseCode")
+                Log.d("SERVER", "서버 응답 코드: $responseCode")
 
                 connection.disconnect()
             } catch (e: Exception) {
-                Log.e("Server", "위치 전송 실패: ${e.message}")
+                Log.e("SERVER", "데이터 전송 실패: ${e.message}")
             }
         }
     }

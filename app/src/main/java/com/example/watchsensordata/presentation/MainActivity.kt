@@ -9,6 +9,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -45,11 +46,6 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var exerciseClient: ExerciseClient
     private lateinit var updateCallback: ExerciseUpdateCallback
-
-
-    private val workerId = 1L
-
-    private var sensorJob: Job? = null
 
     private lateinit var locationPermissionRequest: ActivityResultLauncher<Array<String>>
     private val locationText = mutableStateOf("위치 정보 없음")
@@ -122,6 +118,8 @@ class MainActivity : ComponentActivity() {
                         pace = it.value
                         Log.d("SENSOR", "PACE: $pace")
                     }
+
+                    saveSensorDataLocally()
                 }
 
                 override fun onLapSummaryReceived(lapSummary: ExerciseLapSummary) {  }
@@ -160,41 +158,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    //센서 데이터 서버 전송
-    private fun sendSensorDataToServer(
-        workerId: Long,
-        heartRate: Double?,
-        steps: Long?,
-        speed: Double?,
-        pace: Double?,
-        stepPerMinute: Long?
-    ) {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val url = URL("http://172.30.1.48:5000/sensor")
-                val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "POST"
-                connection.setRequestProperty("Content-Type", "application/octet-stream")
-                connection.doOutput = true
 
-                val bos = ByteArrayOutputStream()
-                val dos = DataOutputStream(bos)
-
-                dos.writeLong(workerId)                          // 8 bytes
-                dos.writeDouble(heartRate ?: 0.0)                // 8 bytes
-                dos.writeLong(steps ?: 0)                        // 8 bytes
-                dos.writeDouble(speed ?: 0.0)                    // 8 bytes
-                dos.writeDouble(pace ?: 0.0)                     // 8 bytes
-                dos.writeLong(stepPerMinute ?: 0)               // 8 bytes
-
-                val byteArray = bos.toByteArray()
-
-                connection.outputStream.use { it.write(byteArray) }
-                Log.d("SERVER", "응답 코드: ${connection.responseCode}")
-                connection.disconnect()
-            } catch (e: Exception) {
-                Log.e("SERVER", "전송 실패: ${e.message}")
-            }
+    private fun saveSensorDataLocally() {
+        val prefs = getSharedPreferences("SensorPrefs", Context.MODE_PRIVATE)
+        with(prefs.edit()) {
+            putFloat("heartRate", (heartRateBpm ?: 0.0).toFloat())
+            putLong("steps", steps ?: 0L)
+            putFloat("speed", (speed ?: 0.0).toFloat())
+            putFloat("pace", (pace ?: 0.0).toFloat())
+            putLong("stepPerMinute", stepPerMinute ?: 0L)
+            apply()
         }
     }
 
@@ -217,20 +190,6 @@ class MainActivity : ComponentActivity() {
                 exerciseClient.startExercise(config)
                 Log.d("EXERCISE", "운동 시작됨")
 
-                // 센서 전송 루프 시작
-                sensorJob = lifecycleScope.launch {
-                    while (isActive) {
-                        sendSensorDataToServer(
-                            workerId = 1L,
-                            heartRate = heartRateBpm,
-                            speed = speed,
-                            steps = steps,
-                            pace = pace,
-                            stepPerMinute = stepPerMinute
-                        )
-                        delay(5000)
-                    }
-                }
             } catch (e: Exception) {
                 Log.e("EXERCISE", "운동 시작 실패: ${e.message}")
             }
@@ -242,9 +201,6 @@ class MainActivity : ComponentActivity() {
             try {
                 exerciseClient.endExercise()
                 Log.d("EXERCISE", "운동 종료됨")
-
-                sensorJob?.cancelAndJoin()
-                sensorJob = null
 
             } catch (e: Exception) {
                 Log.e("EXERCISE", "운동 종료 실패: ${e.message}")
