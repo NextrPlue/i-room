@@ -50,9 +50,9 @@ const WorkerManagementPage = () => {
                     params.keyword = searchTerm;
                 }
 
-                const data = await userAPI.getWorkers(params);
-                setWorkers(data.content || []);
-                setTotalPages(data.totalPages); // 서버 응답 기반
+                const response = await userAPI.getWorkers(params);
+                setWorkers(response.data.content || []);
+                setTotalPages(response.data.totalPages); // 서버 응답 기반
             } catch (error) {
                 console.error('근로자 데이터 조회 실패:', error);
                 setWorkers([]);
@@ -133,9 +133,9 @@ const WorkerManagementPage = () => {
                     params.target = searchTarget;
                     params.keyword = searchTerm;
                 }
-                const data = await userAPI.getWorkers(params);
-                setWorkers(data.content || []);
-                setTotalPages(data.totalPages);
+                const response = await userAPI.getWorkers(params);
+                setWorkers(response.data.content || []);
+                setTotalPages(response.data.totalPages);
                 handleAddModalClose();
             }
         } catch (error) {
@@ -179,8 +179,8 @@ const WorkerManagementPage = () => {
             if (response) {
                 alert('저장이 완료되었습니다!');
                 // 근로자 목록 새로고침
-                const data = await userAPI.getWorkers();
-                setWorkers(data.content || []);
+                const listResponse = await userAPI.getWorkers();
+                setWorkers(listResponse.data.content || []);
                 handleModalClose();
             }
         } catch (error) {
