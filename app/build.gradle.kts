@@ -41,6 +41,9 @@ android {
 
 dependencies {
 
+    //health service
+    implementation("androidx.health:health-services-client:1.0.0")
+
     implementation(libs.play.services.wearable)
     implementation(platform(libs.compose.bom))
     implementation(libs.ui)
