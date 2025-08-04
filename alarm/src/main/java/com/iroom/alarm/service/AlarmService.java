@@ -34,12 +34,17 @@ public class AlarmService {
 			.latitude(alarmEvent.workerLatitude())
 			.longitude(alarmEvent.workerLongitude())
 			.incidentDescription(alarmEvent.incidentDescription())
+			.imageUrl(alarmEvent.workerImageUrl())
 			.build();
 
 		alarmRepository.save(alarm);
 
 		// WebSocket 실시간 전송
-		String adminMessage = String.format("[%s] %s (작업자 ID: %d)", alarmEvent.incidentType(), alarmEvent.incidentDescription(), alarmEvent.workerId());
+		String adminMessage = String.format("[%s] %s (작업자 ID: %d)", alarmEvent.incidentType(),
+			alarmEvent.incidentDescription(), alarmEvent.workerId());
+		if (alarmEvent.workerImageUrl() != null) {
+			adminMessage += " (" + alarmEvent.workerImageUrl() + ")";
+		}
 		String workerMessage = String.format("[%s] %s", alarmEvent.incidentType(), alarmEvent.incidentDescription());
 
 		// 관리자에게 모든 알람 전송

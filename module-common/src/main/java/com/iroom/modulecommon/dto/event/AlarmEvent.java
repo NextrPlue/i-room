@@ -9,6 +9,7 @@ public record AlarmEvent(
 	Long incidentId,
 	String workerLatitude,
 	String workerLongitude,
-	String incidentDescription
+	String incidentDescription,
+	String workerImageUrl
 ) {
 }
