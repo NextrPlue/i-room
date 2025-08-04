@@ -36,6 +36,8 @@ import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -106,19 +108,19 @@ class MainActivity : ComponentActivity() {
                     }
                     update.latestMetrics.getData(DataType.STEPS_PER_MINUTE).lastOrNull()?.let {
                         stepPerMinute = it.value
-                        Log.d("SENSOR", "Heart Rate: $stepPerMinute")
+                        Log.d("SENSOR", "STEPS_PER_MINUTE: $stepPerMinute")
                     }
                     update.latestMetrics.getData(DataType.SPEED).lastOrNull()?.let {
                         speed = it.value
-                        Log.d("SENSOR", "Heart Rate: $speed")
+                        Log.d("SENSOR", "SPEED: $speed")
                     }
                     update.latestMetrics.getData(DataType.STEPS).lastOrNull()?.let {
                         steps = it.value
-                        Log.d("SENSOR", "Heart Rate: $steps")
+                        Log.d("SENSOR", "STEPS: $steps")
                     }
                     update.latestMetrics.getData(DataType.PACE).lastOrNull()?.let {
                         pace = it.value
-                        Log.d("SENSOR", "Heart Rate: $pace")
+                        Log.d("SENSOR", "PACE: $pace")
                     }
                 }
 
@@ -169,24 +171,25 @@ class MainActivity : ComponentActivity() {
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val url = URL("https://my-wearos-test.free.beeceptor.com/api/sensor")
+                val url = URL("http://172.30.1.48:5000/sensor")
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "POST"
-                connection.setRequestProperty("Content-Type", "application/json")
+                connection.setRequestProperty("Content-Type", "application/octet-stream")
                 connection.doOutput = true
 
-                val json = """
-                    {
-                        "workerId": $workerId,
-                        "heartRate": $heartRate,
-                        "steps": $steps,
-                        "speed": $speed,
-                        "pace": $pace,
-                        "stepPerMinute": $stepPerMinute
-                    }
-                """.trimIndent()
+                val bos = ByteArrayOutputStream()
+                val dos = DataOutputStream(bos)
 
-                connection.outputStream.use { it.write(json.toByteArray()) }
+                dos.writeLong(workerId)                          // 8 bytes
+                dos.writeDouble(heartRate ?: 0.0)                // 8 bytes
+                dos.writeLong(steps ?: 0)                        // 8 bytes
+                dos.writeDouble(speed ?: 0.0)                    // 8 bytes
+                dos.writeDouble(pace ?: 0.0)                     // 8 bytes
+                dos.writeLong(stepPerMinute ?: 0)               // 8 bytes
+
+                val byteArray = bos.toByteArray()
+
+                connection.outputStream.use { it.write(byteArray) }
                 Log.d("SERVER", "응답 코드: ${connection.responseCode}")
                 connection.disconnect()
             } catch (e: Exception) {
