@@ -5,11 +5,22 @@
 
 package com.example.watchsensordata.presentation
 
+import android.Manifest
 import android.annotation.SuppressLint
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.runtime.mutableStateOf
+import androidx.core.app.ActivityCompat
 import androidx.health.services.client.ExerciseClient
 import androidx.health.services.client.HealthServices
 import androidx.health.services.client.ExerciseUpdateCallback
@@ -25,10 +36,43 @@ class MainActivity : ComponentActivity() {
     private lateinit var exerciseClient: ExerciseClient
     private lateinit var updateCallback: ExerciseUpdateCallback
 
+    private lateinit var locationPermissionRequest: ActivityResultLauncher<Array<String>>
+    private val locationText = mutableStateOf("위치 정보 없음")
+    private var isTracking = mutableStateOf(false)
+
+    private val locationPermissions = arrayOf(
+        Manifest.permission.ACCESS_FINE_LOCATION
+    )
+
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // 권한 요청 등록
+        locationPermissionRequest = registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+            if (granted) {
+                Toast.makeText(this, "GPS 권한 허용됨", Toast.LENGTH_SHORT).show()
+                startLocationService()
+            } else {
+                Toast.makeText(this, "GPS 권한 거부됨", Toast.LENGTH_SHORT).show()
+                locationText.value = "위치 권한이 필요합니다"
+            }
+        }
+
+        // 알림 채널 생성 (O 이상)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                "location_channel",
+                "위치 추적",
+                NotificationManager.IMPORTANCE_LOW
+            )
+            val manager = getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(channel)
+        }
 
         lifecycleScope.launch {
             // ExerciseClient 초기화
@@ -83,11 +127,29 @@ class MainActivity : ComponentActivity() {
         }
 
         findViewById<Button>(R.id.startButton).setOnClickListener {
-            startExercise()
+            val fineGranted = ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (fineGranted) {
+                startExercise()
+                startLocationService()
+            } else {
+                locationPermissionRequest.launch(
+                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
+                )
+                Toast.makeText(
+                    this,
+                    "GPS 권한이 필요합니다. 설정에서 항상 허용으로 변경해주세요.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
         }
 
         findViewById<Button>(R.id.stopButton).setOnClickListener {
             stopExercise()
+            stopLocationService()
         }
     }
 
@@ -124,5 +186,23 @@ class MainActivity : ComponentActivity() {
                 Log.e("EXERCISE", "운동 종료 실패: ${e.message}")
             }
         }
+    }
+
+    private fun startLocationService() {
+        val intent = Intent(this, ForegroundLocationService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+        isTracking.value = true
+        locationText.value = "위치 추적 시작됨"
+    }
+
+    private fun stopLocationService() {
+        val intent = Intent(this, ForegroundLocationService::class.java)
+        stopService(intent)
+        isTracking.value = false
+        locationText.value = "위치 추적 중지됨"
     }
 }
