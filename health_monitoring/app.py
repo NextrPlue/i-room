@@ -6,6 +6,8 @@ from pydantic import BaseModel
 
 import pickle
 import pandas as pd
+import os
+import joblib
 
 # === FastAPI 초기화 ===
 app = FastAPI()
@@ -16,8 +18,11 @@ class HealthInput(BaseModel):
     heart_rate: float
 
 # === 모델 로드 ===
-with open("models/lgb_model2.pkl", "rb") as f:
-    model = pickle.load(f)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "models", "lgb_model_2.pkl")
+
+with open(MODEL_PATH, "rb") as f:
+    model = joblib.load(f)
 
 # === 기본 엔드포인트 ===
 @app.get("/health")
