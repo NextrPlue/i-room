@@ -40,11 +40,14 @@ android {
 }
 
 dependencies {
-    //위치 
+    //위치
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
     //health service
     implementation("androidx.health:health-services-client:1.0.0")
+
+    // 코루틴
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
     implementation(libs.play.services.wearable)
     implementation(platform(libs.compose.bom))
