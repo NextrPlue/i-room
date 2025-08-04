@@ -12,8 +12,8 @@ import com.iroom.alarm.entity.Alarm;
 public interface AlarmRepository extends JpaRepository<Alarm, Long> {
 
 	// 근로자용 알림 조회
-	List<Alarm> findByWorkerIdOrderByOccuredAtDesc(Long workerId);
+	List<Alarm> findByWorkerIdOrderByOccurredAtDesc(Long workerId);
 
 	// 관리자용 알림 조회
-	List<Alarm> findByOccuredAtAfterOrderByOccuredAtDesc(LocalDateTime time);
+	List<Alarm> findByOccurredAtAfterOrderByOccurredAtDesc(LocalDateTime time);
 }

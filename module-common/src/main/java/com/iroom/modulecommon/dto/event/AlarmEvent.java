@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 public record AlarmEvent(
 	Long workerId,
-	LocalDateTime occuredAt,
+	LocalDateTime occurredAt,
 	String incidentType,
 	Long incidentId,
 	String workerLatitude,

@@ -28,8 +28,11 @@ public class AlarmService {
 	public void handleAlarmEvent(AlarmEvent alarmEvent) {
 		Alarm alarm = Alarm.builder()
 			.workerId(alarmEvent.workerId())
-			.incidentId(alarmEvent.incidentId())
+			.occurredAt(alarmEvent.occurredAt())
 			.incidentType(alarmEvent.incidentType())
+			.incidentId(alarmEvent.incidentId())
+			.latitude(alarmEvent.workerLatitude())
+			.longitude(alarmEvent.workerLongitude())
 			.incidentDescription(alarmEvent.incidentDescription())
 			.build();
 
@@ -54,7 +57,7 @@ public class AlarmService {
 	// 페이지네이션 적용 필요
 	@PreAuthorize("hasAuthority('ROLE_WORKER') and #workerId == authentication.principal")
 	public List<Alarm> getAlarmsForWorker(Long workerId) {
-		return alarmRepository.findByWorkerIdOrderByOccuredAtDesc(workerId);
+		return alarmRepository.findByWorkerIdOrderByOccurredAtDesc(workerId);
 	}
 
 	// 관리자용 전체 알림 목록을 조회
@@ -62,6 +65,6 @@ public class AlarmService {
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
 	public List<Alarm> getAlarmsForAdmin() {
 		LocalDateTime time = LocalDateTime.now().minusHours(3);
-		return alarmRepository.findByOccuredAtAfterOrderByOccuredAtDesc(time);
+		return alarmRepository.findByOccurredAtAfterOrderByOccurredAtDesc(time);
 	}
 }

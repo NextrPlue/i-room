@@ -23,11 +23,10 @@ public class Alarm {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private Long id;
 
-	@Column(nullable = false)
 	private Long workerId;
 
 	@Column(nullable = false)
-	private LocalDateTime occuredAt;
+	private LocalDateTime occurredAt;
 
 	@Column(nullable = false)
 	private String incidentType;
@@ -35,19 +34,28 @@ public class Alarm {
 	@Column(nullable = false)
 	private Long incidentId;
 
+	private String latitude;
+	private String longitude;
+
 	@Column(length = 1000)
 	private String incidentDescription;
 
+	@Column(nullable = false)
+	private LocalDateTime createdAt;
+
 	@PrePersist
 	public void prePersist() {
-		this.occuredAt = LocalDateTime.now();
+		this.createdAt = LocalDateTime.now();
 	}
 
 	@Builder
-	public Alarm(Long workerId, String incidentType, Long incidentId, String incidentDescription) {
+	public Alarm(Long workerId, LocalDateTime occurredAt, String incidentType, Long incidentId, String latitude, String longitude, String incidentDescription) {
 		this.workerId = workerId;
+		this.occurredAt = occurredAt;
 		this.incidentType = incidentType;
 		this.incidentId = incidentId;
+		this.latitude = latitude;
+		this.longitude = longitude;
 		this.incidentDescription = incidentDescription;
 	}
 }
