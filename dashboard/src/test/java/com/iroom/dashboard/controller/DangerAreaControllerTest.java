@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iroom.dashboard.dto.request.DangerAreaRequest;
 import com.iroom.dashboard.dto.response.DangerAreaResponse;
 import com.iroom.dashboard.service.DangerAreaService;
+import com.iroom.modulecommon.dto.response.PagedResponse;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
