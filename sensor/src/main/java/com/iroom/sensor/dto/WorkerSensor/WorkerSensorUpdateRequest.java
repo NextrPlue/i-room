@@ -1,8 +1,9 @@
 package com.iroom.sensor.dto.WorkerSensor;
 
-public record WorkerUpdateLocationRequest(
+public record WorkerSensorUpdateRequest(
 	Long workerId,
 	Double latitude,
-	Double longitude
+	Double longitude,
+	Integer heartRate
 ) {
 }

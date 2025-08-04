@@ -13,7 +13,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.iroom.modulecommon.service.KafkaProducerService;
-import com.iroom.sensor.dto.WorkerSensor.*;
+import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateRequest;
+import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateResponse;
+import com.iroom.sensor.dto.WorkerSensor.WorkerLocationResponse;
 import com.iroom.sensor.entity.WorkerSensor;
 import com.iroom.sensor.entity.WorkerReadModel;
 import com.iroom.sensor.repository.WorkerSensorRepository;
@@ -25,7 +27,7 @@ import jakarta.persistence.EntityNotFoundException;
 public class WorkerSensorServiceTest {
 
 	@Mock
-	private WorkerSensorRepository workerRepository;
+	private WorkerSensorRepository workerSensorRepository;
 
 	@Mock
 	private WorkerReadModelRepository workerReadModelRepository;
@@ -34,120 +36,197 @@ public class WorkerSensorServiceTest {
 	private KafkaProducerService kafkaProducerService;
 
 	@InjectMocks
-	private WorkerSensorService workerService;
+	private WorkerSensorService workerSensorService;
 
 	@Test
-	@DisplayName("근로자 위치 업데이트 테스트")
-	void updateLocationTest() {
+	@DisplayName("통합 센서 데이터 업데이트 테스트 - 모든 데이터")
+	void updateSensorAllDataTest() {
 		// given
 		Long workerId = 1L;
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		WorkerUpdateLocationRequest request = new WorkerUpdateLocationRequest(workerId, latitude, longitude);
+		Integer heartRate = 85;
+		
+		WorkerSensorUpdateRequest request = new WorkerSensorUpdateRequest(workerId, latitude, longitude, heartRate);
 
 		WorkerReadModel workerReadModel = WorkerReadModel.builder()
 			.id(workerId)
 			.name("테스트 근로자")
 			.build();
-		given(workerReadModelRepository.findById(workerId)).willReturn(Optional.of(workerReadModel));
 
 		WorkerSensor workerSensor = WorkerSensor.builder()
 			.workerId(workerId)
 			.build();
-		given(workerRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerSensor));
+
+		given(workerReadModelRepository.findById(workerId)).willReturn(Optional.of(workerReadModel));
+		given(workerSensorRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerSensor));
 
 		// when
-		var response = workerService.updateLocation(request);
+		WorkerSensorUpdateResponse response = workerSensorService.updateSensor(request);
 
 		// then
 		assertThat(response.workerId()).isEqualTo(workerId);
 		assertThat(response.latitude()).isEqualTo(latitude);
 		assertThat(response.longitude()).isEqualTo(longitude);
-		verify(kafkaProducerService).publishMessage(eq("WORKER_LOCATION_UPDATED"), any());
-		verify(workerReadModelRepository).findById(workerId);
-		verify(workerRepository).findByWorkerId(workerId);
+		assertThat(response.heartRate()).isEqualTo(heartRate);
+		
+		verify(kafkaProducerService).publishMessage(eq("WORKER_SENSOR_UPDATED"), any());
 	}
 
 	@Test
-	@DisplayName("없는 workerId로 위치 업데이트 시 실패 테스트")
-	void updateLocationFailTest() {
+	@DisplayName("통합 센서 데이터 업데이트 테스트 - 위치만")
+	void updateSensorLocationOnlyTest() {
 		// given
-		Long invalidId = 999L;
+		Long workerId = 2L;
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		WorkerUpdateLocationRequest request = new WorkerUpdateLocationRequest(invalidId, latitude, longitude);
-		given(workerReadModelRepository.findById(invalidId)).willReturn(Optional.empty());
-
-		// when & then
-		assertThatThrownBy(() -> workerService.updateLocation(request))
-			.isInstanceOf(EntityNotFoundException.class)
-			.hasMessageContaining("유효하지 않은 근로자");
-	}
-
-	@Test
-	@DisplayName("근로자 생체 정보 업데이트 테스트")
-	void updateVitalSignsTest() {
-		// given
-		Long workerId = 1L;
-		Integer newHeartRate = 85;
-		Float newTemperature = 36.8F;
-		WorkerUpdateVitalSignsRequest request = new WorkerUpdateVitalSignsRequest(workerId, newHeartRate,
-			newTemperature);
+		Integer heartRate = null;
+		
+		WorkerSensorUpdateRequest request = new WorkerSensorUpdateRequest(workerId, latitude, longitude, heartRate);
 
 		WorkerReadModel workerReadModel = WorkerReadModel.builder()
 			.id(workerId)
 			.name("테스트 근로자")
 			.build();
+
+		WorkerSensor workerSensor = WorkerSensor.builder()
+			.workerId(workerId)
+			.build();
+
 		given(workerReadModelRepository.findById(workerId)).willReturn(Optional.of(workerReadModel));
-
-		WorkerSensor workerSensor = WorkerSensor.builder().workerId(workerId).build();
-		given(workerRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerSensor));
+		given(workerSensorRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerSensor));
 
 		// when
-		var response = workerService.updateVitalSigns(request);
-
-		// then
-		assertThat(response.workerId()).isEqualTo(workerId);
-		assertThat(response.heartRate()).isEqualTo(newHeartRate);
-		assertThat(response.bodyTemperature()).isEqualTo(newTemperature);
-		verify(kafkaProducerService).publishMessage(eq("WORKER_VITAL_SIGNS_UPDATED"), any());
-		verify(workerReadModelRepository).findById(workerId);
-		verify(workerRepository).findByWorkerId(workerId);
-	}
-
-	@Test
-	@DisplayName("없는 workerId로 생체 정보 업데이트 시 실패 테스트")
-	void updateVitalSignsFailTest() {
-		// given
-		Long invalidId = 999L;
-		WorkerUpdateVitalSignsRequest request = new WorkerUpdateVitalSignsRequest(invalidId, 80, 36.5F);
-		given(workerReadModelRepository.findById(invalidId)).willReturn(Optional.empty());
-
-		// when & then
-		assertThatThrownBy(() -> workerService.updateVitalSigns(request))
-			.isInstanceOf(EntityNotFoundException.class)
-			.hasMessageContaining("유효하지 않은 근로자");
-	}
-
-	@Test
-	@DisplayName("workerId로 위치 조회 테스트")
-	void getWorkerLocationTest() {
-		//given
-		Long workerId = 1L;
-		Double latitude = 35.8343;
-		Double longitude = 128.4723;
-		WorkerSensor workerSensor = WorkerSensor.builder().workerId(workerId).build();
-		workerSensor.updateLocation(latitude, longitude);
-		given(workerRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerSensor));
-
-		// when
-		WorkerUpdateLocationResponse response = workerService.getWorkerLocation(workerId);
+		WorkerSensorUpdateResponse response = workerSensorService.updateSensor(request);
 
 		// then
 		assertThat(response.workerId()).isEqualTo(workerId);
 		assertThat(response.latitude()).isEqualTo(latitude);
 		assertThat(response.longitude()).isEqualTo(longitude);
-		verify(workerRepository).findByWorkerId(workerId);
+		assertThat(response.heartRate()).isNull();
+		
+		verify(kafkaProducerService).publishMessage(eq("WORKER_SENSOR_UPDATED"), any());
 	}
 
+	@Test
+	@DisplayName("통합 센서 데이터 업데이트 테스트 - 심박수만")
+	void updateSensorHeartRateOnlyTest() {
+		// given
+		Long workerId = 3L;
+		Double latitude = null;
+		Double longitude = null;
+		Integer heartRate = 90;
+		
+		WorkerSensorUpdateRequest request = new WorkerSensorUpdateRequest(workerId, latitude, longitude, heartRate);
+
+		WorkerReadModel workerReadModel = WorkerReadModel.builder()
+			.id(workerId)
+			.name("테스트 근로자")
+			.build();
+
+		WorkerSensor workerSensor = WorkerSensor.builder()
+			.workerId(workerId)
+			.build();
+
+		given(workerReadModelRepository.findById(workerId)).willReturn(Optional.of(workerReadModel));
+		given(workerSensorRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerSensor));
+
+		// when
+		WorkerSensorUpdateResponse response = workerSensorService.updateSensor(request);
+
+		// then
+		assertThat(response.workerId()).isEqualTo(workerId);
+		assertThat(response.latitude()).isNull();
+		assertThat(response.longitude()).isNull();
+		assertThat(response.heartRate()).isEqualTo(heartRate);
+		
+		verify(kafkaProducerService).publishMessage(eq("WORKER_SENSOR_UPDATED"), any());
+	}
+
+	@Test
+	@DisplayName("새 근로자 센서 생성 테스트")
+	void createNewWorkerSensorTest() {
+		// given
+		Long workerId = 4L;
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
+		Integer heartRate = 75;
+		
+		WorkerSensorUpdateRequest request = new WorkerSensorUpdateRequest(workerId, latitude, longitude, heartRate);
+
+		WorkerReadModel workerReadModel = WorkerReadModel.builder()
+			.id(workerId)
+			.name("신규 근로자")
+			.build();
+
+		WorkerSensor newWorkerSensor = WorkerSensor.builder()
+			.workerId(workerId)
+			.build();
+
+		given(workerReadModelRepository.findById(workerId)).willReturn(Optional.of(workerReadModel));
+		given(workerSensorRepository.findByWorkerId(workerId)).willReturn(Optional.empty());
+		given(workerSensorRepository.save(any(WorkerSensor.class))).willReturn(newWorkerSensor);
+
+		// when
+		WorkerSensorUpdateResponse response = workerSensorService.updateSensor(request);
+
+		// then
+		assertThat(response.workerId()).isEqualTo(workerId);
+		verify(workerSensorRepository).save(any(WorkerSensor.class));
+		verify(kafkaProducerService).publishMessage(eq("WORKER_SENSOR_UPDATED"), any());
+	}
+
+	@Test
+	@DisplayName("위치 정보 조회 테스트")
+	void getWorkerLocationTest() {
+		// given
+		Long workerId = 5L;
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
+		Integer heartRate = 80;
+
+		WorkerSensor workerSensor = WorkerSensor.builder()
+			.workerId(workerId)
+			.build();
+		workerSensor.updateSensor(latitude, longitude, heartRate);
+
+		given(workerSensorRepository.findByWorkerId(workerId)).willReturn(Optional.of(workerSensor));
+
+		// when
+		WorkerLocationResponse response = workerSensorService.getWorkerLocation(workerId);
+
+		// then
+		assertThat(response.workerId()).isEqualTo(workerId);
+		assertThat(response.latitude()).isEqualTo(latitude);
+		assertThat(response.longitude()).isEqualTo(longitude);
+	}
+
+	@Test
+	@DisplayName("존재하지 않는 근로자 업데이트 시 예외 발생 테스트")
+	void updateNonExistentWorkerTest() {
+		// given
+		Long workerId = 999L;
+		WorkerSensorUpdateRequest request = new WorkerSensorUpdateRequest(workerId, 35.0, 128.0, 80);
+
+		given(workerReadModelRepository.findById(workerId)).willReturn(Optional.empty());
+
+		// when & then
+		assertThatThrownBy(() -> workerSensorService.updateSensor(request))
+			.isInstanceOf(EntityNotFoundException.class)
+			.hasMessage("유효하지 않은 근로자");
+	}
+
+	@Test
+	@DisplayName("존재하지 않는 근로자 위치 조회 시 예외 발생 테스트")
+	void getNonExistentWorkerLocationTest() {
+		// given
+		Long workerId = 999L;
+
+		given(workerSensorRepository.findByWorkerId(workerId)).willReturn(Optional.empty());
+
+		// when & then
+		assertThatThrownBy(() -> workerSensorService.getWorkerLocation(workerId))
+			.isInstanceOf(EntityNotFoundException.class)
+			.hasMessage("해당 근로자 없음");
+	}
 }

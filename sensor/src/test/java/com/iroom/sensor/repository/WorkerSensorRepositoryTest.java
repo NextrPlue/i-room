@@ -19,16 +19,17 @@ public class WorkerSensorRepositoryTest {
 	private WorkerSensorRepository workerSensorRepository;
 
 	@Test
-	@DisplayName("근로자 생체정보 저장 후 ID로 조회 테스트")
+	@DisplayName("근로자 센서 데이터 저장 후 ID로 조회 테스트")
 	void saveAndFindById() {
 		// given
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
+		Integer heartRate = 75;
+		
 		WorkerSensor workerSensor = WorkerSensor.builder()
 			.workerId(1L)
 			.build();
-		workerSensor.updateLocation(latitude, longitude);
-		workerSensor.updateVitalSign(75, 36.5f);
+		workerSensor.updateSensor(latitude, longitude, heartRate);
 
 		// when
 		WorkerSensor saved = workerSensorRepository.save(workerSensor);
@@ -39,8 +40,7 @@ public class WorkerSensorRepositoryTest {
 		assertThat(found.get().getWorkerId()).isEqualTo(1L);
 		assertThat(found.get().getLatitude()).isEqualTo(latitude);
 		assertThat(found.get().getLongitude()).isEqualTo(longitude);
-		assertThat(found.get().getHeartRate()).isEqualTo(75);
-		assertThat(found.get().getBodyTemperature()).isEqualTo(36.5f);
+		assertThat(found.get().getHeartRate()).isEqualTo(heartRate);
 	}
 
 	@Test
@@ -49,11 +49,12 @@ public class WorkerSensorRepositoryTest {
 		// given
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
+		Integer heartRate = 80;
+		
 		WorkerSensor workerSensor = WorkerSensor.builder()
 			.workerId(2L)
 			.build();
-		workerSensor.updateLocation(latitude, longitude);
-		workerSensor.updateVitalSign(80, 36.8f);
+		workerSensor.updateSensor(latitude, longitude, heartRate);
 		workerSensorRepository.save(workerSensor);
 
 		// when
@@ -63,24 +64,73 @@ public class WorkerSensorRepositoryTest {
 		assertThat(result).isPresent();
 		assertThat(result.get().getLatitude()).isEqualTo(latitude);
 		assertThat(result.get().getLongitude()).isEqualTo(longitude);
-		assertThat(result.get().getHeartRate()).isEqualTo(80);
-		assertThat(result.get().getBodyTemperature()).isEqualTo(36.8f);
+		assertThat(result.get().getHeartRate()).isEqualTo(heartRate);
 	}
 
 	@Test
-	@DisplayName("updateLocation 메서드 위치 수정 테스트")
-	void updateLocationTest() {
+	@DisplayName("updateSensor 메서드 위치 데이터 수정 테스트")
+	void updateSensorLocationTest() {
 		// given
-		Double latitude = 35.8343;
-		Double longitude = 128.4723;
+		Double initialLatitude = 35.8343;
+		Double initialLongitude = 128.4723;
+		Double newLatitude = 37.5665;
+		Double newLongitude = 126.9780;
+		
 		WorkerSensor workerSensor = WorkerSensor.builder()
 			.workerId(3L)
 			.build();
-		workerSensor.updateLocation(latitude, longitude);
+		workerSensor.updateSensor(initialLatitude, initialLongitude, null);
 		WorkerSensor saved = workerSensorRepository.save(workerSensor);
 
 		// when
-		saved.updateLocation(latitude, longitude);
+		saved.updateSensor(newLatitude, newLongitude, null);
+		WorkerSensor updated = workerSensorRepository.save(saved);
+		Optional<WorkerSensor> result = workerSensorRepository.findById(updated.getId());
+
+		// then
+		assertThat(result).isPresent();
+		assertThat(result.get().getLatitude()).isEqualTo(newLatitude);
+		assertThat(result.get().getLongitude()).isEqualTo(newLongitude);
+	}
+
+	@Test
+	@DisplayName("updateSensor 메서드 심박수 데이터 수정 테스트")
+	void updateSensorHeartRateTest() {
+		// given
+		Integer initialHeartRate = 70;
+		Integer newHeartRate = 85;
+		
+		WorkerSensor workerSensor = WorkerSensor.builder()
+			.workerId(4L)
+			.build();
+		workerSensor.updateSensor(null, null, initialHeartRate);
+		WorkerSensor saved = workerSensorRepository.save(workerSensor);
+
+		// when
+		saved.updateSensor(null, null, newHeartRate);
+		WorkerSensor updated = workerSensorRepository.save(saved);
+		Optional<WorkerSensor> result = workerSensorRepository.findById(updated.getId());
+
+		// then
+		assertThat(result).isPresent();
+		assertThat(result.get().getHeartRate()).isEqualTo(newHeartRate);
+	}
+
+	@Test
+	@DisplayName("updateSensor 메서드 모든 데이터 통합 수정 테스트")
+	void updateSensorAllDataTest() {
+		// given
+		Double latitude = 35.8343;
+		Double longitude = 128.4723;
+		Integer heartRate = 75;
+		
+		WorkerSensor workerSensor = WorkerSensor.builder()
+			.workerId(5L)
+			.build();
+		WorkerSensor saved = workerSensorRepository.save(workerSensor);
+
+		// when
+		saved.updateSensor(latitude, longitude, heartRate);
 		WorkerSensor updated = workerSensorRepository.save(saved);
 		Optional<WorkerSensor> result = workerSensorRepository.findById(updated.getId());
 
@@ -88,26 +138,6 @@ public class WorkerSensorRepositoryTest {
 		assertThat(result).isPresent();
 		assertThat(result.get().getLatitude()).isEqualTo(latitude);
 		assertThat(result.get().getLongitude()).isEqualTo(longitude);
-	}
-
-	@Test
-	@DisplayName("updateVitalSign 메서드 생체정보 수정 테스트")
-	void updateVitalSignTest() {
-		// given
-		WorkerSensor workerSensor = WorkerSensor.builder()
-			.workerId(4L)
-			.build();
-		workerSensor.updateVitalSign(70, 36.0f);
-		WorkerSensor saved = workerSensorRepository.save(workerSensor);
-
-		// when
-		saved.updateVitalSign(85, 37.2f);
-		WorkerSensor updated = workerSensorRepository.save(saved);
-		Optional<WorkerSensor> result = workerSensorRepository.findById(updated.getId());
-
-		// then
-		assertThat(result).isPresent();
-		assertThat(result.get().getHeartRate()).isEqualTo(85);
-		assertThat(result.get().getBodyTemperature()).isEqualTo(37.2f);
+		assertThat(result.get().getHeartRate()).isEqualTo(heartRate);
 	}
 }
