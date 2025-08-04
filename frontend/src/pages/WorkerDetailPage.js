@@ -450,15 +450,26 @@ const WorkerDetailPage = () => {
                             <div className={styles.statusItem}>
                                 <div className={styles.statusRow}>
                                     <span className={styles.statusLabel}>출근시간 :</span>
-                                    <span className={styles.statusTime}>
-                                        {attendance.enterDate 
-                                            ? new Date(attendance.enterDate).toLocaleTimeString('ko-KR', { 
-                                                hour: '2-digit', 
-                                                minute: '2-digit' 
-                                            })
-                                            : '-'
-                                        }
-                                    </span>
+                                    <div className={styles.statusTimeContainer}>
+                                        {attendance.enterDate ? (
+                                            <>
+                                                <span className={styles.statusDate}>
+                                                    {new Date(attendance.enterDate).toLocaleDateString('ko-KR', {
+                                                        month: '2-digit',
+                                                        day: '2-digit'
+                                                    })}
+                                                </span>
+                                                <span className={styles.statusTime}>
+                                                    {new Date(attendance.enterDate).toLocaleTimeString('ko-KR', { 
+                                                        hour: '2-digit', 
+                                                        minute: '2-digit' 
+                                                    })}
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <span className={styles.statusTime}>-</span>
+                                        )}
+                                    </div>
                                     <span className={attendance.enterDate ? styles.attendanceBadge : styles.workingBadge}>
                                         {attendance.enterDate ? '출근 완료' : '미출근'}
                                     </span>
@@ -468,15 +479,26 @@ const WorkerDetailPage = () => {
                             <div className={styles.statusItem}>
                                 <div className={styles.statusRow}>
                                     <span className={styles.statusLabel}>퇴근시간 :</span>
-                                    <span className={styles.statusTime}>
-                                        {attendance.outDate 
-                                            ? new Date(attendance.outDate).toLocaleTimeString('ko-KR', { 
-                                                hour: '2-digit', 
-                                                minute: '2-digit' 
-                                            })
-                                            : '-'
-                                        }
-                                    </span>
+                                    <div className={styles.statusTimeContainer}>
+                                        {attendance.outDate ? (
+                                            <>
+                                                <span className={styles.statusDate}>
+                                                    {new Date(attendance.outDate).toLocaleDateString('ko-KR', {
+                                                        month: '2-digit',
+                                                        day: '2-digit'
+                                                    })}
+                                                </span>
+                                                <span className={styles.statusTime}>
+                                                    {new Date(attendance.outDate).toLocaleTimeString('ko-KR', { 
+                                                        hour: '2-digit', 
+                                                        minute: '2-digit' 
+                                                    })}
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <span className={styles.statusTime}>-</span>
+                                        )}
+                                    </div>
                                     <span className={attendance.outDate ? styles.attendanceBadge : styles.workingBadge}>
                                         {attendance.outDate ? '퇴근 완료' : '근무중'}
                                     </span>
