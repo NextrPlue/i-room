@@ -40,7 +40,7 @@ android {
 }
 
 dependencies {
-    //위치 권한 요청
+    //위치 
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
     //health service
