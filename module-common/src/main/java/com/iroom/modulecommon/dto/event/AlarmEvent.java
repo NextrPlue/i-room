@@ -2,7 +2,7 @@ package com.iroom.modulecommon.dto.event;
 
 import java.time.LocalDateTime;
 
-public record SafetyAlartEvent(
+public record AlarmEvent(
 	Long workerId,
 	LocalDateTime occuredAt,
 	String incidentType,
