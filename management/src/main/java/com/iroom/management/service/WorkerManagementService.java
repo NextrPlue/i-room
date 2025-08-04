@@ -49,9 +49,8 @@ public class WorkerManagementService {
 			throw new IllegalArgumentException("workerId는 null일 수 없습니다.");
 		}
 
-		WorkerManagement latest = repository.findTopByWorkerIdOrderByEnterDateDesc(workerId)
-			.orElseThrow(() -> new IllegalArgumentException("해당 근로자의 출입 기록이 존재하지 않습니다."));
-
-		return new WorkerManagementResponse(latest);
+		return repository.findTopByWorkerIdOrderByEnterDateDesc(workerId)
+			.map(WorkerManagementResponse::new)
+			.orElse(new WorkerManagementResponse(null, workerId, null, null));
 	}
 }
