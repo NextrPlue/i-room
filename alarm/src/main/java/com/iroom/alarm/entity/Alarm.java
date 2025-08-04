@@ -34,8 +34,8 @@ public class Alarm {
 	@Column(nullable = false)
 	private Long incidentId;
 
-	private String latitude;
-	private String longitude;
+	private Double latitude;
+	private Double longitude;
 
 	@Column(length = 1000)
 	private String incidentDescription;
@@ -51,8 +51,8 @@ public class Alarm {
 	}
 
 	@Builder
-	public Alarm(Long workerId, LocalDateTime occurredAt, String incidentType, Long incidentId, String latitude,
-		String longitude, String incidentDescription, String imageUrl) {
+	public Alarm(Long workerId, LocalDateTime occurredAt, String incidentType, Long incidentId, Double latitude,
+		Double longitude, String incidentDescription, String imageUrl) {
 		this.workerId = workerId;
 		this.occurredAt = occurredAt;
 		this.incidentType = incidentType;

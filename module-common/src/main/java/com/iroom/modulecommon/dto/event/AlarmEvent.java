@@ -7,8 +7,8 @@ public record AlarmEvent(
 	LocalDateTime occurredAt,
 	String incidentType,
 	Long incidentId,
-	String workerLatitude,
-	String workerLongitude,
+	Double workerLatitude,
+	Double workerLongitude,
 	String incidentDescription,
 	String workerImageUrl
 ) {
