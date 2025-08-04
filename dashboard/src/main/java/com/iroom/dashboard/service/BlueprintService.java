@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ public class BlueprintService {
 
 	private final BlueprintRepository blueprintRepository;
 
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public BlueprintResponse createBlueprint(BlueprintRequest request) {
 		Blueprint blueprint = Blueprint.builder()
 			.blueprintUrl(request.blueprintUrl())
@@ -31,6 +33,7 @@ public class BlueprintService {
 		return new BlueprintResponse(blueprintRepository.save(blueprint));
 	}
 
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public BlueprintResponse updateBlueprint(Long id, BlueprintRequest request) {
 		Blueprint blueprint = blueprintRepository.findById(id)
 			.orElseThrow(() -> new IllegalArgumentException("해당 도면이 존재하지 않습니다."));
@@ -38,6 +41,7 @@ public class BlueprintService {
 		return new BlueprintResponse(blueprint);
 	}
 
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public void deleteBlueprint(Long id) {
 		if (!blueprintRepository.existsById(id)) {
 			throw new IllegalArgumentException("해당 도면이 존재하지 않습니다.");
@@ -45,6 +49,7 @@ public class BlueprintService {
 		blueprintRepository.deleteById(id);
 	}
 
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
 	public PagedResponse<BlueprintResponse> getAllBlueprints(int page, int size) {
 		Pageable pageable = PageRequest.of(page, size);
 		Page<Blueprint> blueprints = blueprintRepository.findAll(pageable);
