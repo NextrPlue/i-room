@@ -3,7 +3,6 @@ package com.iroom.dashboard.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iroom.dashboard.dto.request.BlueprintRequest;
 import com.iroom.dashboard.dto.response.BlueprintResponse;
-import com.iroom.dashboard.dto.response.PagedResponse;
 import com.iroom.dashboard.service.BlueprintService;
 
 import org.junit.jupiter.api.DisplayName;

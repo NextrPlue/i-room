@@ -2,9 +2,9 @@ package com.iroom.dashboard.service;
 
 import com.iroom.dashboard.dto.request.DangerAreaRequest;
 import com.iroom.dashboard.dto.response.DangerAreaResponse;
-import com.iroom.dashboard.dto.response.PagedResponse;
 import com.iroom.dashboard.entity.DangerArea;
 import com.iroom.dashboard.repository.DangerAreaRepository;
+import com.iroom.modulecommon.dto.response.PagedResponse;
 
 import lombok.RequiredArgsConstructor;
 

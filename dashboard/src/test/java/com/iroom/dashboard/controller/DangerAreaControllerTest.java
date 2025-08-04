@@ -3,7 +3,6 @@ package com.iroom.dashboard.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iroom.dashboard.dto.request.DangerAreaRequest;
 import com.iroom.dashboard.dto.response.DangerAreaResponse;
-import com.iroom.dashboard.dto.response.PagedResponse;
 import com.iroom.dashboard.service.DangerAreaService;
 
 import org.junit.jupiter.api.DisplayName;

@@ -1,8 +1,8 @@
-package com.iroom.dashboard.dto.event;
+package com.iroom.modulecommon.dto.event;
 
 import java.time.LocalDateTime;
 
-public record DangerZoneAlarmEvent(
+public record SafetyAlartEvent(
 	Long workerId,
 	LocalDateTime occuredAt,
 	String incidentType,

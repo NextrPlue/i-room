@@ -5,10 +5,11 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.iroom.dashboard.dto.event.DangerZoneAlarmEvent;
+import com.iroom.modulecommon.dto.event.SafetyAlartEvent;
 import com.iroom.dashboard.dto.request.RiskManagementRequest;
 
 import com.iroom.dashboard.util.DistanceUtil;
+import com.iroom.modulecommon.service.KafkaProducerService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -29,21 +30,21 @@ public class RiskManagementService {
 		String workerLongitude = "126.97807";
 		String incidentDescription = "Worker entered restricted hazard zone near entrance A";
 
-		DangerZoneAlarmEvent dangerZoneAlarmEvent = new DangerZoneAlarmEvent(
-			workerId,                                // workerId
-			occuredAt,                  // occuredAt
-			incidentType,               // incidentType
-			incidentId,                                // incidentId
-			workerLatitude,                            // workerLatitude
-			workerLongitude,                           // workerLongitude
+		SafetyAlartEvent safetyAlartEvent = new SafetyAlartEvent(
+			workerId,           // workerId
+			occuredAt,          // occuredAt
+			incidentType,       // incidentType
+			incidentId,         // incidentId
+			workerLatitude,     // workerLatitude
+			workerLongitude,    // workerLongitude
 			incidentDescription // incidentDescription
 		);
-		double distance = DistanceUtil.calculateDistance(Double.valueOf(riskManagementRequest.latitude()),
-			Double.valueOf(riskManagementRequest.longitude()),
-			Double.valueOf(workerLatitude),
-			Double.valueOf(workerLongitude));
+		double distance = DistanceUtil.calculateDistance(Double.parseDouble(riskManagementRequest.latitude()),
+			Double.parseDouble(riskManagementRequest.longitude()),
+			Double.parseDouble(workerLatitude),
+			Double.parseDouble(workerLongitude));
 		if (distance < radius) {
-			kafkaProducerService.publishMessage("Hazard_Access_Detected", dangerZoneAlarmEvent);
+			kafkaProducerService.publishMessage("Hazard_Access_Detected", safetyAlartEvent);
 		}
 	}
 }
