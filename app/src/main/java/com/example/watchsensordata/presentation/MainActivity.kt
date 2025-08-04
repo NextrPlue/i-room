@@ -5,19 +5,11 @@
 
 package com.example.watchsensordata.presentation
 
-import android.Manifest
 import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
-import android.content.pm.PackageManager
-import android.net.Uri
 import android.util.Log
 import android.widget.Button
 import androidx.activity.ComponentActivity
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.health.services.client.ExerciseClient
 import androidx.health.services.client.HealthServices
 import androidx.health.services.client.ExerciseUpdateCallback
@@ -32,21 +24,6 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var exerciseClient: ExerciseClient
     private lateinit var updateCallback: ExerciseUpdateCallback
-
-    // 위치 권한 런타임 요청 등록
-    private val locationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            startExercise()
-        } else {
-            Log.e("PERMISSION", "위치 권한이 필요합니다.")
-            val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = Uri.fromParts("package", packageName, null)
-            }
-            startActivity(intent)
-        }
-    }
 
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,15 +72,6 @@ class MainActivity : ComponentActivity() {
                         val pace = paceData.last().value
                         Log.d("SENSOR", "Pace: $pace")
                     }
-
-                    //GPS 위치 정보
-                    val locationData = update.latestMetrics.getData(DataType.LOCATION)
-                    if(locationData.isNotEmpty()) {
-                        val location = locationData.last().value
-                        val latitude = location.latitude
-                        val longitude = location.longitude
-                        Log.d("SENSOR", "Location: ($latitude, $longitude)")
-                    }
                 }
 
                 override fun onLapSummaryReceived(lapSummary: ExerciseLapSummary) {  }
@@ -115,21 +83,11 @@ class MainActivity : ComponentActivity() {
         }
 
         findViewById<Button>(R.id.startButton).setOnClickListener {
-            checkLocationPermissionAndStartExercise()
+            startExercise()
         }
 
         findViewById<Button>(R.id.stopButton).setOnClickListener {
             stopExercise()
-        }
-    }
-
-    // 위치 권한 확인 + 없으면 요청, 있으면 운동 시작
-    private fun checkLocationPermissionAndStartExercise() {
-        val permission = Manifest.permission.ACCESS_FINE_LOCATION
-        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
-            startExercise()
-        } else {
-            locationPermissionLauncher.launch(permission)
         }
     }
 
@@ -142,7 +100,6 @@ class MainActivity : ComponentActivity() {
                     DataType.STEPS,
                     DataType.PACE,
                     DataType.STEPS_PER_MINUTE,
-                    DataType.LOCATION
                 )
             )
             .setIsGpsEnabled(true)
