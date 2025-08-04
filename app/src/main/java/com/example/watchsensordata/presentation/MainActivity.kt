@@ -32,6 +32,7 @@ import com.example.watchsensordata.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -42,6 +43,9 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var exerciseClient: ExerciseClient
     private lateinit var updateCallback: ExerciseUpdateCallback
+
+
+    private val workerId = 1L
 
     private var sensorJob: Job? = null
 
@@ -125,20 +129,6 @@ class MainActivity : ComponentActivity() {
 
             exerciseClient.setUpdateCallback(updateCallback)
 
-            //5초마다 서버 전송
-            launch {
-                while (isActive) {
-                    sendSensorDataToServer(
-                        workerId = 1L,
-                        heartRate = heartRateBpm,
-                        steps = steps,
-                        speed = speed,
-                        pace = pace,
-                        stepPerMinute = stepPerMinute
-                    )
-                    delay(5000)
-                }
-            }
         }
 
         findViewById<Button>(R.id.startButton).setOnClickListener {
@@ -179,7 +169,7 @@ class MainActivity : ComponentActivity() {
     ) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val url = URL("https://my-wearos-test.free.beeceptor.com")
+                val url = URL("https://my-wearos-test.free.beeceptor.com/")
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "POST"
                 connection.setRequestProperty("Content-Type", "application/json")
@@ -187,7 +177,7 @@ class MainActivity : ComponentActivity() {
 
                 val json = """
                     {
-                        "workerId": 1L,
+                        "workerId": $workerId,
                         "heartRate": $heartRate,
                         "steps": $steps,
                         "speed": $speed,
@@ -223,6 +213,21 @@ class MainActivity : ComponentActivity() {
             try {
                 exerciseClient.startExercise(config)
                 Log.d("EXERCISE", "운동 시작됨")
+
+                // 센서 전송 루프 시작
+                sensorJob = lifecycleScope.launch {
+                    while (isActive) {
+                        sendSensorDataToServer(
+                            workerId = 1L,
+                            heartRate = heartRateBpm,
+                            speed = speed,
+                            steps = steps,
+                            pace = pace,
+                            stepPerMinute = stepPerMinute
+                        )
+                        delay(5000)
+                    }
+                }
             } catch (e: Exception) {
                 Log.e("EXERCISE", "운동 시작 실패: ${e.message}")
             }
@@ -235,8 +240,9 @@ class MainActivity : ComponentActivity() {
                 exerciseClient.endExercise()
                 Log.d("EXERCISE", "운동 종료됨")
 
-                sensorJob?.cancel()
+                sensorJob?.cancelAndJoin()
                 sensorJob = null
+
             } catch (e: Exception) {
                 Log.e("EXERCISE", "운동 종료 실패: ${e.message}")
             }
