@@ -72,6 +72,15 @@ class MainActivity : ComponentActivity() {
                         val pace = paceData.last().value
                         Log.d("SENSOR", "Pace: $pace")
                     }
+
+                    //GPS 위치 정보
+                    val locationData = update.latestMetrics.getData(DataType.LOCATION)
+                    if(locationData.isNotEmpty()) {
+                        val location = locationData.last().value
+                        val latitude = location.latitude
+                        val longitude = location.longitude
+                        Log.d("SENSOR", "Location: ($latitude, $longitude)")
+                    }
                 }
 
                 override fun onLapSummaryReceived(lapSummary: ExerciseLapSummary) {  }
@@ -99,7 +108,10 @@ class MainActivity : ComponentActivity() {
                 setOf(
                     DataType.HEART_RATE_BPM,
                     DataType.SPEED,
-                    DataType.STEPS
+                    DataType.STEPS,
+                    DataType.PACE,
+                    DataType.STEPS_PER_MINUTE,
+                    DataType.LOCATION
                 )
             )
             .build()
