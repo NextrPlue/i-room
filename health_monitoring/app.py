@@ -1,6 +1,6 @@
-# health_monitoring/app/main.py
+# health_monitoring/app.py
 # FastAPI 엔트리포인트
-# uvicorn health_monitoring.app.main:app --reload
+# uvicorn health_monitoring.app:app --reload
 
 from fastapi import FastAPI
 
