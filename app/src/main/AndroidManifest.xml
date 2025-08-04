@@ -37,6 +37,12 @@
             </intent-filter>
         </receiver>
 
+        <!--foregroundLocationService 추가 -->
+        <service android:name=".presentation.ForegroundLocationService"
+            android:foregroundServiceType="location"
+            android:exported="false"
+            tools:ignore="ForegroundServicePermission" />
+
         <uses-library
             android:name="com.google.android.wearable"
             android:required="true" />
