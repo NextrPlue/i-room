@@ -1,6 +1,8 @@
 package com.iroom.modulecommon.exception;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -22,5 +24,27 @@ public class GlobalExceptionHandler {
 		ApiResponse<ErrorDetail> response = ApiResponse.error(e.getMessage(), errorDetail);
 
 		return ResponseEntity.status(e.getErrorCode().getStatus()).body(response);
+	}
+
+	@ExceptionHandler(AccessDeniedException.class)
+	public ResponseEntity<ApiResponse<ErrorDetail>> handleAccessDeniedException(AccessDeniedException e) {
+		log.error("AccessDeniedException occurred: {}", e.getMessage());
+
+		ErrorDetail errorDetail = new ErrorDetail(ErrorCode.USER_ACCESS_DENIED.getCode());
+
+		ApiResponse<ErrorDetail> response = ApiResponse.error(ErrorCode.USER_ACCESS_DENIED.getMessage(), errorDetail);
+
+		return ResponseEntity.status(ErrorCode.USER_ACCESS_DENIED.getStatus()).body(response);
+	}
+
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	public ResponseEntity<ApiResponse<ErrorDetail>> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+		log.error("HttpMessageNotReadableException occurred: {}", e.getMessage());
+
+		ErrorDetail errorDetail = new ErrorDetail(ErrorCode.USER_INVALID_REQUEST_FORMAT.getCode());
+
+		ApiResponse<ErrorDetail> response = ApiResponse.error(ErrorCode.USER_INVALID_REQUEST_FORMAT.getMessage(), errorDetail);
+
+		return ResponseEntity.status(ErrorCode.USER_INVALID_REQUEST_FORMAT.getStatus()).body(response);
 	}
 }
