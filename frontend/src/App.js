@@ -5,7 +5,7 @@ import Sidebar from './components/Sidebar';
 import AdminLogin from './pages/AdminLogin';
 import WorkerDetailPage from './pages/WorkerDetailPage';
 import WorkerManagementPage from './pages/WorkerManagementPage';
-import BlueprintManagementPage from './pages/BlueprintManagementPage';
+import BlueprintPage from './pages/BlueprintPage';
 import './App.css';
 
 // 공통 레이아웃 컴포넌트
@@ -113,7 +113,7 @@ const App = () => {
                 {/* 도면 관리 */}
                 <Route path="/admin/blueprint" element={
                     <CommonLayout currentPage="blueprint">
-                        <BlueprintManagementPage/>
+                        <BlueprintPage/>
                     </CommonLayout>
                 }/>
 
