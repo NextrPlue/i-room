@@ -21,7 +21,7 @@ for message in consumer:
     # JSON 유효성 검사
     try:
         raw = message.value.decode("utf-8") # JSON 파싱
-        data = message.value
+        data = json.loads(raw)  # JSON 변환
     except json.JSONDecodeError as e:
         print("JSON 파싱 오류:", e)
         print("잘못된 메시지 형식입니다.")
