@@ -16,6 +16,10 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -27,7 +31,7 @@ public class WorkerSensorService {
 
 	// 근로자 센서 업데이트
 	@PreAuthorize("hasAuthority('ROLE_WORKER')")
-	public WorkerSensorUpdateResponse updateSensor(Long workerId, WorkerSensorUpdateRequest request) {
+	public WorkerSensorUpdateResponse updateSensor(Long workerId, byte[] binaryData) throws IOException {
 		workerReadModelRepository.findById(workerId)
 			.orElseThrow(() -> new EntityNotFoundException("유효하지 않은 근로자"));
 
@@ -37,13 +41,20 @@ public class WorkerSensorService {
 				return workerSensorRepository.save(newSensor);
 			});
 
-		workerSensor.updateSensor(request.latitude(), request.longitude(), request.heartRate());
+		WorkerSensorUpdateRequest request = parseBinaryData(binaryData);
+
+		workerSensor.updateSensor(request.latitude(), request.longitude(), request.heartRate(),
+			request.steps(), request.speed(), request.pace(), request.stepPerMinute());
 
 		WorkerSensorEvent workerSensorEvent = new WorkerSensorEvent(
 			workerSensor.getWorkerId(),
 			workerSensor.getLatitude(),
 			workerSensor.getLongitude(),
-			workerSensor.getHeartRate()
+			workerSensor.getHeartRate(),
+			workerSensor.getSteps(),
+			workerSensor.getSpeed(),
+			workerSensor.getPace(),
+			workerSensor.getStepPerMinute()
 		);
 
 		kafkaProducerService.publishMessage("WORKER_SENSOR_UPDATED", workerSensorEvent);
@@ -58,5 +69,21 @@ public class WorkerSensorService {
 			.orElseThrow(() -> new EntityNotFoundException("해당 근로자 없음"));
 
 		return new WorkerLocationResponse(workerSensor);
+	}
+
+	private WorkerSensorUpdateRequest parseBinaryData(byte[] binaryData) throws IOException {
+		try (ByteArrayInputStream bis = new ByteArrayInputStream(binaryData);
+			 DataInputStream dis = new DataInputStream(bis)) {
+
+			Double latitude = dis.readDouble();
+			Double longitude = dis.readDouble();
+			Double heartRate = dis.readDouble();
+			Long steps = dis.readLong();
+			Double speed = dis.readDouble();
+			Double pace = dis.readDouble();
+			Long stepPerMinute = dis.readLong();
+
+			return new WorkerSensorUpdateRequest(latitude, longitude, heartRate, steps, speed, pace, stepPerMinute);
+		}
 	}
 }

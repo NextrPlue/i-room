@@ -6,14 +6,22 @@ public record WorkerSensorUpdateResponse(
 	Long workerId,
 	Double latitude,
 	Double longitude,
-	Integer heartRate
+	Double heartRate,
+	Long steps,
+	Double speed,
+	Double pace,
+	Long stepPerMinute
 ) {
 	public WorkerSensorUpdateResponse(WorkerSensor workerSensor) {
 		this(
 			workerSensor.getWorkerId(),
 			workerSensor.getLatitude(),
 			workerSensor.getLongitude(),
-			workerSensor.getHeartRate()
+			workerSensor.getHeartRate(),
+			workerSensor.getSteps(),
+			workerSensor.getSpeed(),
+			workerSensor.getPace(),
+			workerSensor.getStepPerMinute()
 		);
 	}
 }

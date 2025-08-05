@@ -1,7 +1,6 @@
 package com.iroom.sensor.controller;
 
 import com.iroom.sensor.dto.WorkerSensor.WorkerLocationResponse;
-import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateRequest;
 import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateResponse;
 import com.iroom.sensor.service.WorkerSensorService;
 
@@ -10,6 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+
 @RestController
 @RequestMapping("/worker-sensor")
 @RequiredArgsConstructor
@@ -17,12 +18,12 @@ public class WorkerSensorController {
 
 	private final WorkerSensorService workerSensorService;
 
-	@PostMapping("/update")
+	@PostMapping(value = "/update", consumes = "application/octet-stream")
 	public ResponseEntity<WorkerSensorUpdateResponse> updateWorkerSensor(
 		@RequestHeader("X-User-Id") Long workerId,
-		@RequestBody WorkerSensorUpdateRequest request
-	) {
-		WorkerSensorUpdateResponse response = workerSensorService.updateSensor(workerId, request);
+		@RequestBody byte[] binaryData
+	) throws IOException {
+		WorkerSensorUpdateResponse response = workerSensorService.updateSensor(workerId, binaryData);
 		return ResponseEntity.ok(response);
 	}
 

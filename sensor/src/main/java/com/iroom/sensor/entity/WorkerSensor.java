@@ -22,16 +22,24 @@ public class WorkerSensor {
 	private Double latitude;
 	private Double longitude;
 
-	private Integer heartRate;
+	private Double heartRate;
+	private Long steps;
+	private Double speed;
+	private Double pace;
+	private Long stepPerMinute;
 
 	@Builder
 	public WorkerSensor(Long workerId) {
 		this.workerId = workerId;
 	}
 
-	public void updateSensor(Double latitude, Double longitude, Integer heartRate) {
+	public void updateSensor(Double latitude, Double longitude, Double heartRate, Long steps, Double speed, Double pace, Long stepPerMinute) {
 		this.latitude = latitude;
 		this.longitude = longitude;
 		this.heartRate = heartRate;
+		this.steps = steps;
+		this.speed = speed;
+		this.pace = pace;
+		this.stepPerMinute = stepPerMinute;
 	}
 }
