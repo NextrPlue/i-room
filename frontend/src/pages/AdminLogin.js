@@ -4,8 +4,8 @@ import {adminAPI} from '../api/api';
 
 const AdminLogin = ({onLogin}) => {
     const [formData, setFormData] = useState({
-        email: '',
-        password: ''
+        email: 'admin@iroom.com',
+        password: 'admin123!'
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
