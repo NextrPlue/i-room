@@ -86,6 +86,10 @@ class ForegroundLocationService : Service() {
     private fun sendLocationToServer(workerId: Long, latitude: Double, longitude: Double) {
         val prefs = getSharedPreferences("SensorPrefs", Context.MODE_PRIVATE)
 
+        // 토큰 가져오기
+        val authPrefs = getSharedPreferences("auth", Context.MODE_PRIVATE)
+        val token = authPrefs.getString("token", null)
+
         // SharedPreferences에서 센서값 꺼내기
         val heartRate = prefs.getFloat("heartRate", 0.0f).toDouble()
         val steps = prefs.getLong("steps", 0L)
@@ -101,7 +105,9 @@ class ForegroundLocationService : Service() {
                 connection.setRequestProperty("Content-Type", "application/octet-stream")
 
                 //토큰 추가
-                connection.setRequestProperty("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJ0ZXN0QHRlc3QuY29tIiwicm9sZSI6IlJPTEVfV09SS0VSIiwiaWF0IjoxNzU0Mzc0MjQzLCJleHAiOjE3NTQ0NjA2NDN9.5s4MSKVJAq3R_psZuccLD27P91mAbE3ZXJvsR_U8wZ8")
+                token?.let {
+                    connection.setRequestProperty("Authorization", "Bearer $it")
+                }
 
                 connection.doOutput = true
 

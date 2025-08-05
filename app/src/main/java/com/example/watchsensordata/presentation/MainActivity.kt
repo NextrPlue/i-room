@@ -30,17 +30,14 @@ import androidx.health.services.client.endExercise
 import androidx.health.services.client.startExercise
 import androidx.lifecycle.lifecycleScope
 import com.example.watchsensordata.R
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
+import com.example.watchsensordata.presentation.data.model.LoginRequest
+import com.example.watchsensordata.presentation.data.model.LoginResponse
+import com.example.watchsensordata.presentation.data.remote.RetrofitClient
 import kotlinx.coroutines.launch
-import java.io.ByteArrayOutputStream
-import java.io.DataOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+
 
 class MainActivity : ComponentActivity() {
 
@@ -60,10 +57,36 @@ class MainActivity : ComponentActivity() {
     private var pace: Double? = null
     private var stepPerMinute: Long? = null
 
+
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val loginRequest = LoginRequest(
+            email = "test@test.com",
+            password = "!test123"
+        )
+
+        RetrofitClient.apiService.login(loginRequest)
+            .enqueue(object : Callback<LoginResponse> {
+                override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+                    if (response.isSuccessful) {
+                        val token = response.body()?.data?.token
+                        Log.d("LOGIN", "토큰 받음: $token")
+
+                        // SharedPreferences에 토큰 저장
+                        val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+                        prefs.edit().putString("token", token).apply()
+                    } else {
+                        Log.e("LOGIN", "응답 실패: ${response.code()}")
+                    }
+                }
+
+                override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                    Log.e("LOGIN", "요청 실패: ${t.message}")
+                }
+            })
 
         // 권한 요청 등록
         locationPermissionRequest = registerForActivityResult(
