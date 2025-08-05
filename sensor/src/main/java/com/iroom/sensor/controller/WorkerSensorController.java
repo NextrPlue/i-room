@@ -19,9 +19,10 @@ public class WorkerSensorController {
 
 	@PostMapping("/update")
 	public ResponseEntity<WorkerSensorUpdateResponse> updateWorkerSensor(
+		@RequestHeader("X-User-Id") Long workerId,
 		@RequestBody WorkerSensorUpdateRequest request
 	) {
-		WorkerSensorUpdateResponse response = workerSensorService.updateSensor(request);
+		WorkerSensorUpdateResponse response = workerSensorService.updateSensor(workerId, request);
 		return ResponseEntity.ok(response);
 	}
 

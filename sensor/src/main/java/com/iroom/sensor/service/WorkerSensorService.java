@@ -26,14 +26,14 @@ public class WorkerSensorService {
 	private final WorkerReadModelRepository workerReadModelRepository;
 
 	// 근로자 센서 업데이트
-	@PreAuthorize("hasAuthority('ROLE_WORKER_SYSTEM')")
-	public WorkerSensorUpdateResponse updateSensor(WorkerSensorUpdateRequest request) {
-		workerReadModelRepository.findById(request.workerId())
+	@PreAuthorize("hasAuthority('ROLE_WORKER')")
+	public WorkerSensorUpdateResponse updateSensor(Long workerId, WorkerSensorUpdateRequest request) {
+		workerReadModelRepository.findById(workerId)
 			.orElseThrow(() -> new EntityNotFoundException("유효하지 않은 근로자"));
 
-		WorkerSensor workerSensor = workerSensorRepository.findByWorkerId(request.workerId())
+		WorkerSensor workerSensor = workerSensorRepository.findByWorkerId(workerId)
 			.orElseGet(() -> {
-				WorkerSensor newSensor = WorkerSensor.builder().workerId(request.workerId()).build();
+				WorkerSensor newSensor = WorkerSensor.builder().workerId(workerId).build();
 				return workerSensorRepository.save(newSensor);
 			});
 
