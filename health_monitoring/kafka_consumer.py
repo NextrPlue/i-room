@@ -14,12 +14,19 @@ consumer = KafkaConsumer(
     bootstrap_servers=["localhost:9092"],
     auto_offset_reset="latest",
     enable_auto_commit=True,
-    group_id="health-service",
-    value_deserializer=lambda m: json.loads(m.decode("utf-8"))
+    group_id="health-service"
 )
 
 for message in consumer:
-    data = message.value
+    # JSON 유효성 검사
+    try:
+        raw = message.value.decode("utf-8") # JSON 파싱
+        data = message.value
+    except json.JSONDecodeError as e:
+        print("JSON 파싱 오류:", e)
+        print("잘못된 메시지 형식입니다.")
+        continue
+
     if data.get("eventType") == "WORKER_VITAL_SIGNS_UPDATED":
         print(f"근로자 센서 데이터 수신 완료!: {data}")
 
