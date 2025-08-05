@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.iroom.modulecommon.dto.event.SafetyAlartEvent;
+import com.iroom.modulecommon.dto.event.AlarmEvent;
 import com.iroom.dashboard.dto.request.RiskManagementRequest;
 
 import com.iroom.dashboard.util.DistanceUtil;
@@ -26,25 +26,26 @@ public class RiskManagementService {
 		LocalDateTime occuredAt = LocalDateTime.now();
 		String incidentType = "HazardAccessDetected";
 		Long incidentId = 456L;
-		String workerLatitude = "37.5665";
-		String workerLongitude = "126.97807";
+		Double workerLatitude = 37.5665;
+		Double workerLongitude = 126.97807;
 		String incidentDescription = "Worker entered restricted hazard zone near entrance A";
 
-		SafetyAlartEvent safetyAlartEvent = new SafetyAlartEvent(
+		AlarmEvent alarmEvent = new AlarmEvent(
 			workerId,           // workerId
 			occuredAt,          // occuredAt
 			incidentType,       // incidentType
 			incidentId,         // incidentId
 			workerLatitude,     // workerLatitude
 			workerLongitude,    // workerLongitude
-			incidentDescription // incidentDescription
+			incidentDescription, // incidentDescription
+			null
 		);
 		double distance = DistanceUtil.calculateDistance(Double.parseDouble(riskManagementRequest.latitude()),
 			Double.parseDouble(riskManagementRequest.longitude()),
-			Double.parseDouble(workerLatitude),
-			Double.parseDouble(workerLongitude));
+			workerLatitude,
+			workerLongitude);
 		if (distance < radius) {
-			kafkaProducerService.publishMessage("Hazard_Access_Detected", safetyAlartEvent);
+			kafkaProducerService.publishMessage("Hazard_Access_Detected", alarmEvent);
 		}
 	}
 }
