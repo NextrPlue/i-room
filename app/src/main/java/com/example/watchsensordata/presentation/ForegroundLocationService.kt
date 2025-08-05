@@ -99,12 +99,15 @@ class ForegroundLocationService : Service() {
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "POST"
                 connection.setRequestProperty("Content-Type", "application/octet-stream")
+
+                //토큰 추가
+                connection.setRequestProperty("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJ0ZXN0QHRlc3QuY29tIiwicm9sZSI6IlJPTEVfV09SS0VSIiwiaWF0IjoxNzU0Mzc0MjQzLCJleHAiOjE3NTQ0NjA2NDN9.5s4MSKVJAq3R_psZuccLD27P91mAbE3ZXJvsR_U8wZ8")
+
                 connection.doOutput = true
 
                 val bos = ByteArrayOutputStream()
                 val dos = DataOutputStream(bos)
 
-                dos.writeLong(workerId)
                 dos.writeDouble(latitude)
                 dos.writeDouble(longitude)
                 dos.writeDouble(heartRate)
