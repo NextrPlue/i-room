@@ -3,6 +3,8 @@
 
 from kafka import KafkaProducer
 import json
+import uuid
+from datetime import datetime
 
 producer = KafkaProducer(
     bootstrap_servers=["localhost:9092"],
@@ -10,7 +12,7 @@ producer = KafkaProducer(
 )
 
 def send_alert_event(worker_id, latitude, longitude, risk_level):
-    # incidentType과 설명 정의
+    # incidentType과 description 정의
     if risk_level == 1:
         incident_type = "이상"
         description = "건강 이상 상태가 감지되었습니다."
@@ -21,7 +23,12 @@ def send_alert_event(worker_id, latitude, longitude, risk_level):
     event = {
         "eventType": "HEALTH_ANOMALY",
         "workerId": worker_id,
-        "riskLevel": risk_level # 0=정상, 1=위험
+        "workerLatitude": latitude,
+        "workerLongitude": longitude,
+        "incidentId": str(uuid.uuid4()), # 고유 이벤트 ID
+        "occurredAt": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "incidentType": incident_type,
+        "incidentDescription": description
     }
 
     producer.send("iroom", event)   # iroom 토픽으로 이벤트 발행
