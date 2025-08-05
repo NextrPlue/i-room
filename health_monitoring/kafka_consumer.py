@@ -47,6 +47,8 @@ for message in consumer:
         # steps = data.get("steps")
 
         worker_id = data.get("workerId")
+        latitude = data.get("workerLatitude")
+        longitude = data.get("workerLongitude")
         age = data.get("age")
         heart_rate = data.get("heartRate")
 
