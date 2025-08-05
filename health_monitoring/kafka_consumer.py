@@ -2,13 +2,12 @@
 # 근로자 센서 이벤트 수신
 
 import json
-import threading
-from kafka import KafkaConsumer, KafkaProducer
+from kafka import KafkaConsumer
 
 # KafkaConsumer 정의
 consumer = KafkaConsumer(
     "iroom",
-    bootstrap_servers=["kafka:9093"],
+    bootstrap_servers=["localhost:9092"],
     auto_offset_reset="latest",
     enable_auto_commit=True,
     group_id="health-service",
