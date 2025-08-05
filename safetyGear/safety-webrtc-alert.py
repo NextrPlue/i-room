@@ -15,41 +15,32 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 
-## 10초마다 주기적으로 헬멧수, 안전벨트 객체 탐지의 수를 백엔드로 보냄
+# ===== 환경설정 =====
+load_dotenv()
+RTSP_URL = os.getenv("RTSP_URL")
+MODEL_PATH = os.getenv("MODEL_PATH", "model/best_8m_v4.pt")
+SHOW_FPS = os.getenv("SHOW_FPS", "false").lower() == "true"
 
-# 환경설정
-# ===== .env 로드 =====
-load_dotenv() # .env 파일에서 환경변수 불러오기
-RTSP_URL = os.getenv("RTSP_URL") # cctv 카메라 주소
-MODEL_PATH = os.getenv("MODEL_PATH", "model/best_8m_v4.pt") # YOLO 모델 가중치 파일 경로
-
-# RTSP_URL이 없으면 test2.mp4로 대체
 if not RTSP_URL or (not RTSP_URL.lower().startswith("rtsp") and not os.path.exists(RTSP_URL)):
     print("[WARN] RTSP_URL이 설정되지 않았거나 잘못됨 → test2.mp4 사용")
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    RTSP_URL = r"C:\Users\kalin\i-room-ai\safetyGear\test2.mp4"
+    RTSP_URL = os.path.join(BASE_DIR, "test2.mp4")
 
 app = FastAPI()
 
-# 전역 변수
+# ===== 전역 변수 =====
 cap = None
-latest_frame = None # 최근 프레임 저장 (브라우저 전송용)
-capture_task = None # 영상 캡처 작업(task) 관리
-clients_count = 0   # 현재 접속 중인 클라이언트 수
+capture_task = None
+clients_count = 0
 lock = asyncio.Lock()
-last_alert_time = 0
-ALERT_INTERVAL = 5   # 초 단위 알람 최소 간격
 frame_index = 0
-mismatch_count = 0  # 불일치 지속 프레임 수
-THRESHOLD_FRAMES = 150  # 보호구 불일치 지속 프레임 수 (예: 60프레임 ≈2초 @30fps)
+frame_queue = asyncio.Queue(maxsize=1)  # 항상 최신 프레임만 저장
 
-# 클래스 이름 매핑
 CLASS_NAMES = {
     0: "seatbelt_on",
     1: "helmet_on",
 }
 
-# 장치 설정, GPU 설정
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
 if device == "cuda":
@@ -62,134 +53,141 @@ else:
 logging.basicConfig(filename="botsort_inference_log.txt", level=logging.INFO)
 process = psutil.Process()
 
-
 # ===== RTSP 캡처 루프 =====
 async def capture_loop():
-    global cap, latest_frame, clients_count, last_alert_time
-    global frame_index
+    global cap, clients_count, frame_index
 
-    cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
-    print(f"Capture loop started → Source: {RTSP_URL}")
+    while clients_count > 0:   # 클라이언트 있을 때만 계속
+        try:
+            cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
+            if not cap.isOpened():
+                print("[ERROR] Cannot open video source")
+                await asyncio.sleep(2)
+                continue
 
-    prev_time = time.time()
-    frame_count = 0
-    fps = 0
+            print(f"Capture loop started → Source: {RTSP_URL}")
 
-    # 10초 주기 분석용 변수
-    interval_start = time.time()
-    helmet_frames = 0
-    seatbelt_frames = 0
-    total_frames = 0
-    INTERVAL_SEC = 10  # 10초 간격
+            prev_time = time.time()
+            frame_count = 0
+            fps = 0
 
-    try:
-        results = model.track(
-            source=RTSP_URL,
-            tracker="my_botsort.yaml",
-            stream=True,
-            device=device,
-            persist=True,
-            half=True,
-            conf=0.2,
-        )
+            # 10초 주기 분석용 변수
+            interval_start = time.time()
+            INTERVAL_SEC = 10
+            helmet_ids = set()
+            seatbelt_ids = set()
+            total_frames = 0
 
-        for r in results:
-            if clients_count <= 0:
-                break
+            results = model.track(
+                source=RTSP_URL,
+                tracker="my_botsort.yaml",
+                stream=True,
+                device=device,
+                persist=True,
+                half=True,
+                conf=0.2,
+            )
 
-            frame = r.orig_img.copy()
-            frame_index += 1
+            for r in results:
+                if clients_count <= 0:
+                    await asyncio.sleep(0.5)
+                    if clients_count <= 0:
+                        print("[DEBUG] No clients after wait → stopping capture loop")
+                        break
 
-            orig_h, orig_w = frame.shape[:2]
-            target_w, target_h = 640, 640
-            frame = cv2.resize(frame, (target_w, target_h))
+                if r is None or r.orig_img is None:
+                    print(f"[ERROR] Received empty frame at index={frame_index}")
+                    break
 
-            # FPS 계산
-            frame_count += 1
-            elapsed = time.time() - prev_time
-            if elapsed >= 1.0:
-                fps = frame_count / elapsed
-                frame_count = 0
-                prev_time = time.time()
+                frame = r.orig_img.copy()
+                frame_index += 1
 
-            cv2.putText(frame, f"FPS: {fps:.2f}", (20, 40),
-                        cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+                orig_h, orig_w = frame.shape[:2]
+                target_w, target_h = 640, 640
+                frame = cv2.resize(frame, (target_w, target_h))
 
-            helmet_detected = False
-            seatbelt_detected = False
+                # FPS 계산 (옵션)
+                frame_count += 1
+                elapsed = time.time() - prev_time
+                if elapsed >= 1.0:
+                    fps = frame_count / elapsed
+                    frame_count = 0
+                    prev_time = time.time()
 
-            for box in r.boxes:
-                x1, y1, x2, y2 = map(float, box.xyxy[0])
-                scale_x = target_w / orig_w
-                scale_y = target_h / orig_h
-                x1, y1, x2, y2 = int(x1 * scale_x), int(y1 * scale_y), int(x2 * scale_x), int(y2 * scale_y)
+                if SHOW_FPS:
+                    cv2.putText(frame, f"FPS: {fps:.2f}", (20, 40),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
-                cls_id = int(box.cls[0])
-                conf = float(box.conf[0])
-                track_id = int(box.id[0]) if box.id is not None else -1
+                # 탐지 결과 반영
+                for box in r.boxes:
+                    x1, y1, x2, y2 = map(float, box.xyxy[0])
+                    scale_x = target_w / orig_w
+                    scale_y = target_h / orig_h
+                    x1, y1, x2, y2 = int(x1 * scale_x), int(y1 * scale_y), int(x2 * scale_x), int(y2 * scale_y)
 
-                label = f"ID {track_id} | {CLASS_NAMES.get(cls_id, str(cls_id))} {conf:.2f}"
-                color = (0, 255, 0)
+                    cls_id = int(box.cls[0])
+                    conf = float(box.conf[0])
+                    track_id = int(box.id[0]) if box.id is not None else -1
 
-                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                cv2.putText(frame, label, (x1, y1 - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+                    label = f"ID {track_id} | {CLASS_NAMES.get(cls_id, str(cls_id))} {conf:.2f}"
+                    color = (0, 255, 0)
 
-                if cls_id == 0:
-                    seatbelt_detected = True
-                elif cls_id == 1:
-                    helmet_detected = True
+                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                    cv2.putText(frame, label, (x1, y1 - 10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
-            # 10초 요약용 카운트
-            total_frames += 1
-            if helmet_detected:
-                helmet_frames += 1
-            if seatbelt_detected:
-                seatbelt_frames += 1
+                    if cls_id == 0:
+                        seatbelt_ids.add(track_id)
+                    elif cls_id == 1:
+                        helmet_ids.add(track_id)
 
-            # 10초마다 알림 전송
-            current_time = time.time()
-            if current_time - interval_start >= INTERVAL_SEC:
-                helmet_ratio = helmet_frames / total_frames if total_frames > 0 else 0
-                seatbelt_ratio = seatbelt_frames / total_frames if total_frames > 0 else 0
+                total_frames += 1
 
-                helmet_ok = helmet_ratio >= 0.7  # 70% 이상에서 헬멧 감지 시 착용으로 판단
-                seatbelt_ok = seatbelt_ratio >= 0.7  # 70% 이상에서 안전벨트 감지 시 착용으로 판단
+                current_time = time.time()
+                if current_time - interval_start >= INTERVAL_SEC:
+                    helmet_count = len(helmet_ids)
+                    seatbelt_count = len(seatbelt_ids)
 
-                _, img_bytes = cv2.imencode(".jpg", frame)
-                status_items = {
-                    "helmet": helmet_ok,
-                    "seatbelt": seatbelt_ok
-                }
-                send_alert(img_bytes.tobytes(), [f"{k}:{v}" for k, v in status_items.items()])
-                print(f"[REPORT] 10초 요약: helmet={helmet_ok} ({helmet_ratio:.2f}), seatbelt={seatbelt_ok} ({seatbelt_ratio:.2f})")
+                    helmet_ratio = helmet_count / total_frames if total_frames > 0 else 0
+                    seatbelt_ratio = seatbelt_count / total_frames if total_frames > 0 else 0
 
-                # 다음 interval 준비
-                interval_start = current_time
-                helmet_frames = 0
-                seatbelt_frames = 0
-                total_frames = 0
+                    send_alert(frame, helmet_count, seatbelt_count)
 
-            latest_frame = frame
-            await asyncio.sleep(0)
+                    print(f"[REPORT] 10초 요약: helmet_count={helmet_count}, seatbelt_count={seatbelt_count}, "
+                          f"helmet_ratio={helmet_ratio:.2f}, seatbelt_ratio={seatbelt_ratio:.2f}")
 
-    finally:
-        if cap:
-            cap.release()
-            cap = None
-        latest_frame = None
-        print("Capture loop stopped")
+                    # 다음 interval 준비
+                    interval_start = current_time
+                    helmet_ids.clear()
+                    seatbelt_ids.clear()
+                    total_frames = 0
 
+                # 최신 프레임 큐에 교체 저장
+                if not frame_queue.empty():
+                    try:
+                        frame_queue.get_nowait()  # 이전 프레임 제거
+                    except asyncio.QueueEmpty:
+                        pass
+                await frame_queue.put(frame)
 
+        except Exception as e:
+            print(f"[ERROR] Exception in capture loop: {e}")
 
-# ===== WebRTC용 Track, 영상 스트리밍 =====
+        finally:
+            if cap:
+                cap.release()
+                cap = None
+            print(f"Capture loop stopped at frame {frame_index}")
+
+        if RTSP_URL.endswith(".mp4"):
+            break
+
+# ===== WebRTC용 Track =====
 class SharedCameraStreamTrack(VideoStreamTrack):
     async def recv(self):
-        global latest_frame
         pts, time_base = await self.next_timestamp()
-        while latest_frame is None:
-            await asyncio.sleep(0.01)
-        frame = latest_frame.copy()
+        # 최신 프레임 대기
+        frame = await frame_queue.get()
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         av_frame = av.VideoFrame.from_ndarray(frame, format="rgb24")
         av_frame.pts = pts
@@ -202,7 +200,7 @@ class Offer(BaseModel):
     sdp: str
     type: str
 
-# ===== HTML 페이지 (간단 테스트용) =====
+# ===== HTML 페이지 =====
 @app.get("/monitor", response_class=HTMLResponse)
 async def monitor_page():
     return """
@@ -235,7 +233,7 @@ async def monitor_page():
     </html>
     """
 
-# ===== WebRTC 시그널링 엔드포인트 =====
+# ===== WebRTC 시그널링 =====
 @app.post("/offer")
 async def offer(request: Request):
     global clients_count, capture_task
@@ -243,8 +241,9 @@ async def offer(request: Request):
 
     async with lock:
         clients_count += 1
-        if capture_task is None or capture_task.done():
-            capture_task = asyncio.create_task(capture_loop())
+
+    if capture_task is None or capture_task.done():
+        capture_task = asyncio.create_task(capture_loop())
 
     pc = RTCPeerConnection()
     pcs.add(pc)
@@ -277,7 +276,6 @@ async def on_shutdown():
     await asyncio.gather(*coros)
     pcs.clear()
 
-# ===== FastAPI 실행부 =====
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
