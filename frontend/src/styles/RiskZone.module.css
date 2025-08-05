@@ -1,0 +1,504 @@
+/* 전체 페이지 - 기존 스타일과 통일 */
+.page {
+    padding: 50px;
+    background-color: #FAFBFF;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    width: 100%;
+}
+
+/* 페이지 헤더 - 기존과 동일 */
+.pageHeader {
+    margin-bottom: 8px;
+}
+
+.pageTitle {
+    font-size: 30px;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0;
+}
+
+/* 상단 섹션 - 위험구역 설정 + 선택된 위치 정보 */
+.topSection {
+    display: grid;
+    grid-template-columns: 1fr 350px;
+    gap: 32px;
+    margin-bottom: 32px;
+}
+
+/* 좌측: 위험구역 설정 섹션 */
+.riskZoneSection {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.riskZoneHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.sectionTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0;
+}
+
+.floorSelect {
+    min-width: 120px;
+    padding: 8px 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    background: white;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+    padding-right: 32px;
+}
+
+.floorSelect:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 캔버스 컨테이너 */
+.canvasContainer {
+    flex: 1;
+    position: relative;
+    background: #F3F4F6;
+    border-radius: 8px;
+    overflow: hidden;
+    min-height: 400px;
+    border: 2px dashed #D1D5DB;
+    cursor: crosshair;
+}
+
+.canvasContainer.drawing {
+    cursor: crosshair;
+}
+
+.canvas {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+/* 위험구역 표시 */
+.riskZone {
+    position: absolute;
+    border: 2px solid #EF4444;
+    background-color: rgba(239, 68, 68, 0.1);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.riskZone:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+    border-color: #DC2626;
+}
+
+.riskZone.selected {
+    border-color: #3B82F6;
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.riskZone.selected:hover {
+    background-color: rgba(59, 130, 246, 0.2);
+}
+
+/* 임시 드래그 영역 */
+.dragArea {
+    position: absolute;
+    border: 2px dashed #3B82F6;
+    background-color: rgba(59, 130, 246, 0.1);
+    pointer-events: none;
+}
+
+/* 우측: 선택된 위치 정보 패널 */
+.locationPanel {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.panelTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0;
+}
+
+.coordinateInfo {
+    padding: 12px;
+    background: #F9FAFB;
+    border-radius: 6px;
+    border: 1px solid #E5E7EB;
+}
+
+.coordinateText {
+    font-size: 14px;
+    color: #374151;
+    margin: 0;
+    font-family: 'Courier New', monospace;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.formLabel {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.formInput {
+    padding: 10px 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.formInput:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.formInput:disabled {
+    background-color: #F9FAFB;
+    color: #6B7280;
+    cursor: not-allowed;
+}
+
+.buttonGroup {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.selectLocationBtn {
+    flex: 1;
+    padding: 10px 16px;
+    border: 1px solid #3B82F6;
+    background: white;
+    color: #3B82F6;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.selectLocationBtn:hover {
+    background: #3B82F6;
+    color: white;
+}
+
+.selectLocationBtn.active {
+    background: #3B82F6;
+    color: white;
+}
+
+.saveLocationBtn {
+    flex: 2;
+    padding: 10px 16px;
+    border: none;
+    background: #3B82F6;
+    color: white;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.saveLocationBtn:hover {
+    background: #2563EB;
+}
+
+.saveLocationBtn:disabled {
+    background: #D1D5DB;
+    cursor: not-allowed;
+}
+
+/* 하단: 위험구역 목록 테이블 */
+.tableSection {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tableTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0 0 20px 0;
+}
+
+/* 테이블 스타일 - 기존과 통일 */
+.dataTable {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #E5E7EB;
+}
+
+.dataTable thead {
+    background: #F9FAFB;
+}
+
+.dataTable th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.dataTable td {
+    padding: 16px;
+    font-size: 14px;
+    color: #1F2937;
+    border-bottom: 1px solid #F3F4F6;
+}
+
+.dataTable tbody tr:hover {
+    background: #F9FAFB;
+}
+
+.dataTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* 액션 버튼들 */
+.actionButtons {
+    display: flex;
+    gap: 8px;
+}
+
+.actionButton {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.2s ease;
+}
+
+.editButton {
+    background: #F59E0B;
+    color: white;
+}
+
+.editButton:hover {
+    background: #D97706;
+}
+
+.deleteButton {
+    background: #EF4444;
+    color: white;
+}
+
+.deleteButton:hover {
+    background: #DC2626;
+}
+
+/* 페이지네이션 - 기존과 동일 */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 20px 0 0 0;
+    margin-top: 20px;
+    border-top: 1px solid #E5E7EB;
+}
+
+.pageBtn {
+    padding: 8px 12px;
+    border: 1px solid #D1D5DB;
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    transition: all 0.2s ease;
+}
+
+.pageBtn:hover:not(:disabled) {
+    background-color: #F3F4F6;
+}
+
+.pageBtn:disabled {
+    color: #9CA3AF;
+    cursor: not-allowed;
+    background-color: #F9FAFB;
+}
+
+.pageBtn.active {
+    background-color: #3B82F6;
+    color: white;
+    border-color: #3B82F6;
+}
+
+/* 빈 상태 */
+.emptyState {
+    padding: 60px 20px;
+    text-align: center;
+    color: #9CA3AF;
+    font-style: italic;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+    .topSection {
+        grid-template-columns: 1fr 320px;
+        gap: 24px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .page {
+        padding: 30px 20px;
+        gap: 24px;
+    }
+
+    .topSection {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .locationPanel {
+        order: -1;
+    }
+
+    .riskZoneSection {
+        min-height: 350px;
+    }
+
+    .canvasContainer {
+        min-height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    .pageTitle {
+        font-size: 24px;
+    }
+
+    .riskZoneSection,
+    .locationPanel,
+    .tableSection {
+        padding: 16px;
+    }
+
+    .riskZoneHeader {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .buttonGroup {
+        flex-direction: column;
+    }
+
+    .dataTable {
+        font-size: 12px;
+    }
+
+    .dataTable th,
+    .dataTable td {
+        padding: 12px 8px;
+    }
+
+    /* 모바일에서 테이블을 카드 형태로 변경 */
+    .dataTable,
+    .dataTable thead,
+    .dataTable tbody,
+    .dataTable th,
+    .dataTable td,
+    .dataTable tr {
+        display: block;
+    }
+
+    .dataTable thead tr {
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+    }
+
+    .dataTable tr {
+        border: 1px solid #E5E7EB;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        padding: 16px;
+        background: white;
+    }
+
+    .dataTable td {
+        border: none;
+        padding: 8px 0;
+        position: relative;
+        padding-left: 30%;
+    }
+
+    .dataTable td:before {
+        content: attr(data-label) ": ";
+        position: absolute;
+        left: 6px;
+        width: 25%;
+        padding-right: 10px;
+        white-space: nowrap;
+        font-weight: 600;
+        color: #6B7280;
+    }
+}
+
+@media (max-width: 480px) {
+    .page {
+        padding: 20px 10px;
+    }
+
+    .canvasContainer {
+        min-height: 250px;
+    }
+
+    .actionButtons {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .actionButton {
+        width: 100%;
+        text-align: center;
+    }
+}
