@@ -5,16 +5,16 @@ from kafka import KafkaProducer
 import json
 
 producer = KafkaProducer(
-    bootstrap_server=["localhost:9092"],
+    bootstrap_servers=["localhost:9092"],
     value_serializer=lambda v: json.dumps(v).encode("utf-8")
 )
 
 def send_alert_event(worker_id, risk_level):
     event = {
-        "eventType": "WORKER_HEALTH_ALERT",
+        "eventType": "HEALTH_ANOMALY",
         "workerId": worker_id,
         "riskLevel": risk_level # 0=정상, 1=위험
     }
 
-    producer.send("worker_alerts", event)
+    producer.send("iroom", event)   # iroom 토픽으로 이벤트 발행
     print(f"예측 결과 전송 완료!: {event}")
