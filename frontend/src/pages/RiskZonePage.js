@@ -362,7 +362,7 @@ const RiskZonePage = () => {
                             onClick={handleSaveLocation}
                             disabled={!selectedZone || !locationInfo.name.trim()}
                         >
-                            위험구역 추가하룸
+                            위험구역 추가등록
                         </button>
                     </div>
                 </div>
