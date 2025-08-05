@@ -2,6 +2,7 @@
 
 import pickle
 import numpy as np
+import pandas as pd
 import os
 
 # 모델 경로 정의
@@ -12,11 +13,17 @@ MODEL_PATH = os.path.join(BASE_DIR, "models", "lgb_model_2.pkl")
 with open(MODEL_PATH, "rb") as f:
     model = pickle.load(f)
 
-def predict_worker_risk(age, heart_rate, step_per_minute, speed, pace, steps):
-    """
-    근로자 건강 이상 분류 함수
-    입력값은 모두 숫자형 (float or int)
-    """
-    input_vector = np.array([[age, heart_rate, step_per_minute, speed, pace, steps]])
-    pred = model.predict(input_vector)[0]
-    return int(pred)    # 0(정상), 1(위험)
+def predict_worker_risk(age, heart_rate):
+    try:
+        # 입력값 구성: 학습 시 사용한 컬럼명과 일치해야 함
+        input_df = pd.DataFrame([[
+            int(age),
+            float(heart_rate)
+        ]], columns=["age", "heartRate"])
+
+        # 예측 수행
+        pred = model.predict(input_df)[0]
+        return int(pred)    # 0(정상), 1(위험)
+    except Exception as e:
+        print("예측 오류: ", e)
+        return None
