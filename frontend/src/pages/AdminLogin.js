@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import styles from '../styles/AdminLogin.module.css';
-import { adminAPI } from '../api/api';
+import {adminAPI} from '../api/api';
 
 const AdminLogin = ({onLogin}) => {
     const [formData, setFormData] = useState({
@@ -12,7 +12,7 @@ const AdminLogin = ({onLogin}) => {
 
     // 입력 필드 변경 처리
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        const {name, value} = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -24,7 +24,7 @@ const AdminLogin = ({onLogin}) => {
     // 로그인 처리
     const handleLogin = async (e) => {
         e.preventDefault();
-        
+
         // 입력값 검증
         if (!formData.email || !formData.password) {
             setError('이메일과 비밀번호를 모두 입력해주세요.');
@@ -37,15 +37,6 @@ const AdminLogin = ({onLogin}) => {
 
             // 백엔드 API 호출
             const response = await adminAPI.login(formData);
-            
-            // 로그인 성공 시 처리
-            console.log('로그인 성공:', response);
-            
-            // 토큰이 있다면 localStorage에 저장
-            if (response.token) {
-                localStorage.setItem('adminToken', response.token);
-            }
-            
             // 부모 컴포넌트에 로그인 성공 알림
             onLogin(response);
 
@@ -106,8 +97,8 @@ const AdminLogin = ({onLogin}) => {
 
                     <div className={styles.buttonRow}>
                         <button type="button" className={styles.grayBtn}>관리자 회원가입</button>
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             className={styles.blackBtn}
                             disabled={loading}
                         >
