@@ -1,3 +1,5 @@
+import { authUtils } from '../utils/auth';
+
 // API 기본 설정
 const API_CONFIG = {
     gateway: "http://localhost:8080"
@@ -10,12 +12,20 @@ const API_CONFIG = {
  * @returns {Promise} 응답 데이터
  */
 const apiRequest = async (url, options = {}) => {
+    // 기본 헤더 설정
+    const baseHeaders = {
+        'Content-Type': 'application/json',
+        ...options.headers,
+    };
+
+    // 토큰이 있으면 Authorization 헤더 추가
+    const authHeader = authUtils.getAuthHeader();
+    if (authHeader) {
+        baseHeaders['Authorization'] = authHeader;
+    }
+
     const defaultOptions = {
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJhZG1pbkBpcm9vbS5jb20iLCJyb2xlIjoiUk9MRV9TVVBFUl9BRE1JTiIsImlhdCI6MTc1MzkyOTU5OCwiZXhwIjoxNzU0NzkzNTk4fQ.4JFItxcbWjOF2cD2Yb8R8QZctvG5_dZWbnEabYXWpFk',
-            ...options.headers,
-        },
+        headers: baseHeaders,
         ...options,
     };
 
@@ -223,16 +233,30 @@ export const adminAPI = {
         console.log('[관리자 로그인 요청 URL]', url);
         console.log('[로그인 데이터]', loginData);
         
-        // 로그인은 Authorization 헤더 없이 요청
-        return await apiRequest(url, {
+        // 로그인은 Authorization 헤더 없이 요청 (토큰 자동 추가 비활성화)
+        const response = await apiRequest(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-                // Authorization 헤더 제외
+                // Authorization 헤더 의도적으로 제외
             },
             body: JSON.stringify(loginData)
         });
-    }
+
+        // 로그인 성공 시 토큰 저장 (백엔드 응답 구조: response.data.token)
+        if (response && response.data && response.data.token) {
+            authUtils.setToken(response.data.token);
+            console.log('[로그인 성공] 토큰이 저장되었습니다.');
+        } else if (response && response.token) {
+            // 직접 토큰이 있는 경우 (다른 API 구조 대응)
+            authUtils.setToken(response.token);
+            console.log('[로그인 성공] 토큰이 저장되었습니다.');
+        } else {
+            console.warn('[경고] 응답에서 토큰을 찾을 수 없습니다.');
+        }
+
+        return response;
+    },
 };
 
 /**
