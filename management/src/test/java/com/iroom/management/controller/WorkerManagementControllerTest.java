@@ -61,8 +61,8 @@ class WorkerManagementControllerTest {
 		mockMvc.perform(post("/entries/10/check-in")
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.workerId").value(10L))
-			.andExpect(jsonPath("$.enterDate").value("2025-07-28T10:00:00"));
+			.andExpect(jsonPath("$.data.workerId").value(10L))
+			.andExpect(jsonPath("$.data.enterDate").value("2025-07-28T10:00:00"));
 	}
 
 	@Test
@@ -83,8 +83,31 @@ class WorkerManagementControllerTest {
 		mockMvc.perform(post("/entries/10/check-out")
 				.contentType(MediaType.APPLICATION_JSON))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.workerId").value(10L))
-			.andExpect(jsonPath("$.enterDate").value("2025-07-28T09:00:00"))
-			.andExpect(jsonPath("$.outDate").value("2025-07-28T18:00:00"));
+			.andExpect(jsonPath("$.data.workerId").value(10L))
+			.andExpect(jsonPath("$.data.enterDate").value("2025-07-28T09:00:00"))
+			.andExpect(jsonPath("$.data.outDate").value("2025-07-28T18:00:00"));
+	}
+
+	@Test
+	@DisplayName("근로자 출입현황 조회 성공")
+	void getEntryTest() throws Exception {
+		// given
+		WorkerManagementResponse response = new WorkerManagementResponse(
+			3L,
+			10L,
+			LocalDateTime.of(2025, 7, 28, 9, 0),
+			null
+		);
+
+		Mockito.when(workerManagementService.getEntryByWorkerId(anyLong()))
+			.thenReturn(response);
+
+		// when & then
+		mockMvc.perform(get("/entries/10")
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.workerId").value(10L))
+			.andExpect(jsonPath("$.data.enterDate").value("2025-07-28T09:00:00"))
+			.andExpect(jsonPath("$.data.outDate").doesNotExist());
 	}
 }

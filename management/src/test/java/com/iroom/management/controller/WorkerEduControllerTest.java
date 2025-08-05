@@ -77,8 +77,8 @@ class WorkerEduControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.name").value("근로자1"))
-			.andExpect(jsonPath("$.certUrl").value("https://cert.com/image.png"));
+			.andExpect(jsonPath("$.data.name").value("근로자1"))
+			.andExpect(jsonPath("$.data.certUrl").value("https://cert.com/image.png"));
 	}
 
 	@Test
@@ -95,9 +95,9 @@ class WorkerEduControllerTest {
 		when(workerEduService.getEduInfo(1L, 0, 10)).thenReturn(pagedResponse);
 
 		// when & then
-		mockMvc.perform(get("/worker-education//workers/1?page=0&size=10"))
+		mockMvc.perform(get("/worker-education/workers/1?page=0&size=10"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.content.length()").value(2))
-			.andExpect(jsonPath("$.content[0].name").value("근로자1"));
+			.andExpect(jsonPath("$.data.content.length()").value(2))
+			.andExpect(jsonPath("$.data.content[0].name").value("근로자1"));
 	}
 }

@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.iroom.management.dto.response.WorkerManagementResponse;
 import com.iroom.management.service.WorkerManagementService;
+import com.iroom.modulecommon.dto.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,20 +20,20 @@ public class WorkerManagementController {
 	private final WorkerManagementService workerManagementService;
 
 	@PostMapping("/{workerId}/check-in")
-	public ResponseEntity<WorkerManagementResponse> checkIn(@PathVariable Long workerId) {
+	public ResponseEntity<ApiResponse<WorkerManagementResponse>> checkIn(@PathVariable Long workerId) {
 		WorkerManagementResponse response = workerManagementService.enterWorker(workerId);
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
 	@PostMapping("/{workerId}/check-out")
-	public ResponseEntity<WorkerManagementResponse> exit(@PathVariable Long workerId) {
+	public ResponseEntity<ApiResponse<WorkerManagementResponse>> exit(@PathVariable Long workerId) {
 		WorkerManagementResponse response = workerManagementService.exitWorker(workerId);
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
 	@GetMapping("/{workerId}")
-	public ResponseEntity<WorkerManagementResponse> getEntry(@PathVariable Long workerId) {
+	public ResponseEntity<ApiResponse<WorkerManagementResponse>> getEntry(@PathVariable Long workerId) {
 		WorkerManagementResponse response = workerManagementService.getEntryByWorkerId(workerId);
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 }

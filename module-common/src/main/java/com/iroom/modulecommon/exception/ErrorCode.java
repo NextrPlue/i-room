@@ -23,7 +23,18 @@ public enum ErrorCode {
 
 	// User Service - Not Found (404)
 	USER_WORKER_NOT_FOUND("USER_1008", "해당하는 근로자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
-	USER_ADMIN_NOT_FOUND("USER_1009", "해당하는 관리자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+	USER_ADMIN_NOT_FOUND("USER_1009", "해당하는 관리자를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
+	// Management Service - Bad Request (400)
+	MANAGEMENT_INVALID_WORKER_ID("MANAGEMENT_2001", "workerId는 null일 수 없습니다.", HttpStatus.BAD_REQUEST),
+	MANAGEMENT_WORKER_ALREADY_ENTERED("MANAGEMENT_2002", "이미 입장한 근로자입니다.", HttpStatus.BAD_REQUEST),
+	MANAGEMENT_WORKER_NOT_ENTERED("MANAGEMENT_2003", "입장하지 않은 근로자는 퇴장할 수 없습니다.",
+		HttpStatus.BAD_REQUEST),
+
+	// Management Service - Not Found (404)
+	MANAGEMENT_WORKER_NOT_FOUND("MANAGEMENT_2004", "유효하지 않은 근로자입니다.", HttpStatus.NOT_FOUND),
+	MANAGEMENT_ENTRY_RECORD_NOT_FOUND("MANAGEMENT_2005", "해당 근로자의 출입 기록을 찾을 수 없습니다.",
+		HttpStatus.NOT_FOUND);
 
 	private final String code;
 	private final String message;

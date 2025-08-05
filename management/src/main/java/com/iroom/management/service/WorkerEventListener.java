@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iroom.modulecommon.dto.event.WorkerEvent;
 import com.iroom.management.entity.WorkerReadModel;
 import com.iroom.management.repository.WorkerReadModelRepository;
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -75,7 +77,7 @@ public class WorkerEventListener {
 
 	private void updateWorkerReadModel(WorkerEvent event) {
 		WorkerReadModel readModel = workerReadModelRepository.findById(event.id())
-			.orElseThrow(() -> new IllegalArgumentException("Worker read model not found: " + event.id()));
+			.orElseThrow(() -> new CustomException(ErrorCode.MANAGEMENT_WORKER_NOT_FOUND));
 
 		readModel.updateFromEvent(event);
 		workerReadModelRepository.save(readModel);
