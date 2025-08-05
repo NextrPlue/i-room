@@ -6,9 +6,8 @@ import AdminLogin from './pages/AdminLogin';
 import WorkerDetailPage from './pages/WorkerDetailPage';
 import WorkerManagementPage from './pages/WorkerManagementPage';
 import BlueprintPage from './pages/BlueprintPage';
-import AdminManagement from './pages/SettingsPage';
+import SettingsPage from './pages/SettingsPage';
 import './App.css';
-import SettingsPage from "./pages/SettingsPage";
 
 // 공통 레이아웃 컴포넌트
 const CommonLayout = ({ children, currentPage }) => {
