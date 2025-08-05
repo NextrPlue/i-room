@@ -6,6 +6,8 @@ from kafka import KafkaConsumer
 from utils.model_utils import predict_worker_risk
 from kafka_producer import send_alert_event
 
+print("\n\n***실시간 근로자 건강 이상 예측 AI 서비스 시작***\n\n")
+
 # KafkaConsumer 정의
 consumer = KafkaConsumer(
     "iroom",
