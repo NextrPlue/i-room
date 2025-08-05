@@ -229,4 +229,22 @@ export const blueprintAPI = {
         return await apiRequest(url);
     },
 
+    /**
+     * 도면 등록
+     * @param {object} blueprintData - 등록할 도면 데이터
+     * @param {string} blueprintData.blueprintUrl - 도면 이미지 URL
+     * @param {number} blueprintData.floor - 층수
+     * @param {number} blueprintData.width - 가로 크기
+     * @param {number} blueprintData.height - 세로 크기
+     * @returns {Promise} 등록된 도면 정보
+     */
+    createBlueprint: async (blueprintData) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/blueprints`;
+        console.log('[도면등록 요청 URL]', url);
+        console.log('[도면등록 데이터]', blueprintData);
+        return await apiRequest(url, {
+            method: 'POST',
+            body: JSON.stringify(blueprintData)
+        });
+    },
 };
