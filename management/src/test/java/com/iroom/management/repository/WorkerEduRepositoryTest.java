@@ -82,4 +82,27 @@ class WorkerEduRepositoryTest {
 		Optional<WorkerEdu> result = workerEduRepository.findById(workerEdu1.getId());
 		assertThat(result).isNotPresent();
 	}
+
+	@Test
+	@DisplayName("특정 근로자의 교육이력 조회 성공")
+	void findAllByWorkerId() {
+		// when
+		Page<WorkerEdu> result = workerEduRepository.findAllByWorkerId(1L, pageable);
+
+		// then
+		assertThat(result.getContent()).hasSize(1);
+		assertThat(result.getContent().get(0).getWorkerId()).isEqualTo(1L);
+		assertThat(result.getContent().get(0).getName()).isEqualTo("근로자1");
+	}
+
+	@Test
+	@DisplayName("존재하지 않는 근로자의 교육이력 조회 - 빈 결과")
+	void findAllByWorkerId_empty() {
+		// when
+		Page<WorkerEdu> result = workerEduRepository.findAllByWorkerId(999L, pageable);
+
+		// then
+		assertThat(result.getContent()).isEmpty();
+		assertThat(result.getTotalElements()).isZero();
+	}
 }

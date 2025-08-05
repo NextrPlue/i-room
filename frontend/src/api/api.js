@@ -208,6 +208,34 @@ export const userAPI = {
 };
 
 /**
+ * Admin API 서비스
+ */
+export const adminAPI = {
+    /**
+     * 관리자 로그인
+     * @param {object} loginData - 로그인 데이터
+     * @param {string} loginData.email - 이메일
+     * @param {string} loginData.password - 비밀번호
+     * @returns {Promise} 로그인 응답 (토큰 등)
+     */
+    login: async (loginData) => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/login`;
+        console.log('[관리자 로그인 요청 URL]', url);
+        console.log('[로그인 데이터]', loginData);
+        
+        // 로그인은 Authorization 헤더 없이 요청
+        return await apiRequest(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+                // Authorization 헤더 제외
+            },
+            body: JSON.stringify(loginData)
+        });
+    }
+};
+
+/**
  * Blueprint API 서비스
  */
 export const blueprintAPI = {
@@ -229,4 +257,22 @@ export const blueprintAPI = {
         return await apiRequest(url);
     },
 
+    /**
+     * 도면 등록
+     * @param {object} blueprintData - 등록할 도면 데이터
+     * @param {string} blueprintData.blueprintUrl - 도면 이미지 URL
+     * @param {number} blueprintData.floor - 층수
+     * @param {number} blueprintData.width - 가로 크기
+     * @param {number} blueprintData.height - 세로 크기
+     * @returns {Promise} 등록된 도면 정보
+     */
+    createBlueprint: async (blueprintData) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/blueprints`;
+        console.log('[도면등록 요청 URL]', url);
+        console.log('[도면등록 데이터]', blueprintData);
+        return await apiRequest(url, {
+            method: 'POST',
+            body: JSON.stringify(blueprintData)
+        });
+    },
 };

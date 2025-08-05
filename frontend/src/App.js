@@ -6,6 +6,7 @@ import AdminLogin from './pages/AdminLogin';
 import WorkerDetailPage from './pages/WorkerDetailPage';
 import WorkerManagementPage from './pages/WorkerManagementPage';
 import BlueprintPage from './pages/BlueprintPage';
+import SettingsPage from './pages/SettingsPage';
 import './App.css';
 
 // 공통 레이아웃 컴포넌트
@@ -135,7 +136,7 @@ const App = () => {
                 }/>
                 <Route path="/admin/settings" element={
                     <CommonLayout currentPage="settings">
-                        <PlaceholderPage title="설정"/>
+                        <SettingsPage/>
                     </CommonLayout>
                 }/>
             </Routes>
