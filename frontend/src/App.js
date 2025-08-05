@@ -3,11 +3,15 @@ import {BrowserRouter as Router, Navigate, Route, Routes, useNavigate} from 'rea
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import AdminLogin from './pages/AdminLogin';
+import DashboardPage from './pages/DashboardPage';
+import MonitoringPage from './pages/MonitoringPage';
 import WorkerDetailPage from './pages/WorkerDetailPage';
 import WorkerManagementPage from './pages/WorkerManagementPage';
 import BlueprintPage from './pages/BlueprintPage';
 import SettingsPage from './pages/SettingsPage';
 import './App.css';
+import RiskZonePage from "./pages/RiskZonePage";
+import ReportPage from "./pages/ReportPage";
 
 // 공통 레이아웃 컴포넌트
 const CommonLayout = ({ children, currentPage }) => {
@@ -95,7 +99,7 @@ const App = () => {
                 {/* 대시보드 */}
                 <Route path="/admin/dashboard" element={
                     <CommonLayout currentPage="dashboard">
-                        <PlaceholderPage title="대시보드"/>
+                        <DashboardPage/>
                     </CommonLayout>
                 }/>
 
@@ -121,17 +125,17 @@ const App = () => {
                 {/* 나머지 페이지들 (임시) */}
                 <Route path="/admin/monitoring" element={
                     <CommonLayout currentPage="monitoring">
-                        <PlaceholderPage title="실시간 모니터링"/>
+                        <MonitoringPage/>
                     </CommonLayout>
                 }/>
                 <Route path="/admin/risk" element={
                     <CommonLayout currentPage="risk">
-                        <PlaceholderPage title="위험구역 관리"/>
+                        <RiskZonePage/>
                     </CommonLayout>
                 }/>
                 <Route path="/admin/report" element={
                     <CommonLayout currentPage="report">
-                        <PlaceholderPage title="리포트"/>
+                        <ReportPage/>
                     </CommonLayout>
                 }/>
                 <Route path="/admin/settings" element={

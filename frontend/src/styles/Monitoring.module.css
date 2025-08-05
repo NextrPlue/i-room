@@ -1,0 +1,496 @@
+/* 전체 페이지 - 기존 스타일과 통일 */
+.page {
+    padding: 50px;
+    background-color: #FAFBFF;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    width: 100%;
+}
+
+/* 페이지 헤더 - 기존과 동일 */
+.pageHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.pageTitle {
+    font-size: 30px;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0;
+}
+
+.updateInfo {
+    font-size: 14px;
+    color: #6B7280;
+}
+
+/* 필터 섹션 */
+.filterSection {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.filterDropdown {
+    min-width: 140px;
+    padding: 12px 16px;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    background: white;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+}
+
+.filterDropdown:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* 메인 콘텐츠 섹션 */
+.contentSection {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 32px;
+    flex: 1;
+}
+
+/* 좌측: 도면 섹션 */
+.mapSection {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    min-height: 600px;
+}
+
+.mapTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0 0 24px 0;
+}
+
+/* 도면 컨테이너 */
+.mapContainer {
+    flex: 1;
+    position: relative;
+    background: #374151;
+    border-radius: 8px;
+    overflow: hidden;
+    min-height: 500px;
+}
+
+.mapCanvas {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    cursor: crosshair;
+}
+
+/* 작업자 위치 점들 */
+.workerDot {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.workerDot:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+}
+
+.workerDot.safe {
+    background-color: #10B981;
+}
+
+.workerDot.warning {
+    background-color: #F59E0B;
+}
+
+.workerDot.danger {
+    background-color: #EF4444;
+}
+
+/* 위험구역 표시 */
+.dangerZone {
+    position: absolute;
+    border: 3px solid #EF4444;
+    background-color: rgba(239, 68, 68, 0.1);
+    border-radius: 8px;
+}
+
+.dangerZone.high {
+    background-color: rgba(239, 68, 68, 0.2);
+    border-color: #DC2626;
+}
+
+.dangerZone.medium {
+    background-color: rgba(245, 158, 11, 0.15);
+    border-color: #F59E0B;
+}
+
+/* 범례 */
+.mapLegend {
+    display: flex;
+    gap: 24px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #E5E7EB;
+}
+
+.legendGroup {
+    display: flex;
+    gap: 16px;
+}
+
+.legendItem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #6B7280;
+}
+
+.legendColor {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 0 1px #D1D5DB;
+}
+
+.legendColor.safe {
+    background-color: #10B981;
+}
+
+.legendColor.warning {
+    background-color: #F59E0B;
+}
+
+.legendColor.danger {
+    background-color: #EF4444;
+}
+
+.legendZone {
+    width: 16px;
+    height: 12px;
+    border-radius: 2px;
+    border: 2px solid;
+}
+
+.legendZone.high {
+    background-color: rgba(239, 68, 68, 0.2);
+    border-color: #EF4444;
+}
+
+.legendZone.medium {
+    background-color: rgba(245, 158, 11, 0.15);
+    border-color: #F59E0B;
+}
+
+/* 우측: 정보 패널 */
+.infoPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* 현장 현황 위젯 */
+.statusWidget {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.widgetTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0 0 20px 0;
+}
+
+.statusSummary {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.statusIcon {
+    width: 32px;
+    height: 32px;
+    background: #FEF3C7;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.statusText {
+    flex: 1;
+}
+
+.statusLabel {
+    font-size: 14px;
+    color: #6B7280;
+    margin: 0 0 4px 0;
+}
+
+.statusValue {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0;
+}
+
+.statusDetails {
+    font-size: 14px;
+    color: #6B7280;
+    margin-bottom: 20px;
+}
+
+.statusButton {
+    background: #10B981;
+    color: white;
+    border: none;
+    border-radius: 24px;
+    padding: 12px 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: background-color 0.2s ease;
+}
+
+.statusButton:hover {
+    background: #059669;
+}
+
+/* 경고 알림 위젯 */
+.alertWidget {
+    background: #fff;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    flex: 1;
+}
+
+.alertList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.alertItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    border-radius: 8px;
+    background: #F9FAFB;
+    border-left: 4px solid #D1D5DB;
+    transition: all 0.2s ease;
+}
+
+.alertItem:hover {
+    background: #F3F4F6;
+}
+
+.alertItem.danger {
+    background: #FEE2E2;
+    border-left-color: #EF4444;
+}
+
+.alertItem.warning {
+    background: #FEF3C7;
+    border-left-color: #F59E0B;
+}
+
+.alertIcon {
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.alertIcon.danger {
+    background: #EF4444;
+}
+
+.alertIcon.warning {
+    background: #F59E0B;
+}
+
+.alertContent {
+    flex: 1;
+    min-width: 0;
+}
+
+.alertTitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0 0 4px 0;
+}
+
+.alertDesc {
+    font-size: 13px;
+    color: #6B7280;
+    margin: 0 0 4px 0;
+}
+
+.alertTime {
+    font-size: 12px;
+    color: #9CA3AF;
+    text-align: right;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+/* 빈 상태 */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 200px;
+    color: #9CA3AF;
+    font-style: italic;
+    text-align: center;
+}
+
+.emptyIcon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1200px) {
+    .contentSection {
+        grid-template-columns: 1fr 350px;
+        gap: 24px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .page {
+        padding: 30px 20px;
+        gap: 24px;
+    }
+
+    .contentSection {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .infoPanel {
+        grid-template-columns: repeat(2, 1fr);
+        display: grid;
+    }
+
+    .filterSection {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .filterDropdown {
+        min-width: 120px;
+    }
+}
+
+@media (max-width: 768px) {
+    .pageTitle {
+        font-size: 24px;
+    }
+
+    .pageHeader {
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .mapSection {
+        padding: 16px;
+        min-height: 400px;
+    }
+
+    .mapContainer {
+        min-height: 300px;
+    }
+
+    .statusWidget,
+    .alertWidget {
+        padding: 16px;
+    }
+
+    .infoPanel {
+        grid-template-columns: 1fr;
+    }
+
+    .mapLegend {
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .legendGroup {
+        gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .page {
+        padding: 20px 10px;
+    }
+
+    .filterSection {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filterDropdown {
+        min-width: auto;
+    }
+
+    .alertItem {
+        padding: 12px;
+    }
+
+    .statusSummary {
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+}
