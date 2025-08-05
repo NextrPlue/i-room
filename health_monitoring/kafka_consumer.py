@@ -60,4 +60,4 @@ for message in consumer:
         print(f"근로자 건강 상태: {'위험' if result == 1 else '정상'}")
 
         # 결과 이벤트 발행
-        send_alert_event(worker_id, result)
+        send_alert_event(worker_id, latitude, longitude, result)
