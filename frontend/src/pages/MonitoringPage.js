@@ -104,7 +104,7 @@ const MonitoringPage = () => {
         <div className={styles.page}>
             {/* 페이지 헤더 */}
             <header className={styles.pageHeader}>
-                <h1 className={styles.pageTitle}>위험구역 관리</h1>
+                <h1 className={styles.pageTitle}>실시간 모니터링</h1>
                 <span className={styles.updateInfo}>마지막 업데이트: 2초전</span>
             </header>
 
