@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateResponse;
 import com.iroom.sensor.dto.WorkerSensor.WorkerLocationResponse;
 import com.iroom.sensor.service.WorkerSensorService;
+import com.iroom.modulecommon.dto.response.ApiResponse;
 
 @WebMvcTest(controllers = WorkerSensorController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
 public class WorkerSensorControllerTest {
@@ -53,14 +54,15 @@ public class WorkerSensorControllerTest {
 				.contentType("application/octet-stream")
 				.content(binaryData))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.workerId").value(workerId))
-			.andExpect(jsonPath("$.latitude").value(latitude))
-			.andExpect(jsonPath("$.longitude").value(longitude))
-			.andExpect(jsonPath("$.heartRate").value(heartRate))
-			.andExpect(jsonPath("$.steps").value(steps))
-			.andExpect(jsonPath("$.speed").value(speed))
-			.andExpect(jsonPath("$.pace").value(pace))
-			.andExpect(jsonPath("$.stepPerMinute").value(stepPerMinute));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.workerId").value(workerId))
+			.andExpect(jsonPath("$.data.latitude").value(latitude))
+			.andExpect(jsonPath("$.data.longitude").value(longitude))
+			.andExpect(jsonPath("$.data.heartRate").value(heartRate))
+			.andExpect(jsonPath("$.data.steps").value(steps))
+			.andExpect(jsonPath("$.data.speed").value(speed))
+			.andExpect(jsonPath("$.data.pace").value(pace))
+			.andExpect(jsonPath("$.data.stepPerMinute").value(stepPerMinute));
 	}
 
 	@Test
@@ -87,10 +89,11 @@ public class WorkerSensorControllerTest {
 				.contentType("application/octet-stream")
 				.content(binaryData))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.workerId").value(workerId))
-			.andExpect(jsonPath("$.latitude").value(latitude))
-			.andExpect(jsonPath("$.longitude").value(longitude))
-			.andExpect(jsonPath("$.heartRate").value(heartRate));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.workerId").value(workerId))
+			.andExpect(jsonPath("$.data.latitude").value(latitude))
+			.andExpect(jsonPath("$.data.longitude").value(longitude))
+			.andExpect(jsonPath("$.data.heartRate").value(heartRate));
 	}
 
 	@Test
@@ -117,10 +120,11 @@ public class WorkerSensorControllerTest {
 				.contentType("application/octet-stream")
 				.content(binaryData))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.workerId").value(workerId))
-			.andExpect(jsonPath("$.latitude").value(latitude))
-			.andExpect(jsonPath("$.longitude").value(longitude))
-			.andExpect(jsonPath("$.heartRate").value(heartRate));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.workerId").value(workerId))
+			.andExpect(jsonPath("$.data.latitude").value(latitude))
+			.andExpect(jsonPath("$.data.longitude").value(longitude))
+			.andExpect(jsonPath("$.data.heartRate").value(heartRate));
 	}
 
 	@Test
@@ -137,9 +141,10 @@ public class WorkerSensorControllerTest {
 		// when & then
 		mockMvc.perform(get("/worker-sensor/{workerId}/location", workerId))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.workerId").value(workerId))
-			.andExpect(jsonPath("$.latitude").value(latitude))
-			.andExpect(jsonPath("$.longitude").value(longitude));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.workerId").value(workerId))
+			.andExpect(jsonPath("$.data.latitude").value(latitude))
+			.andExpect(jsonPath("$.data.longitude").value(longitude));
 	}
 
 	private byte[] createBinaryData(Double latitude, Double longitude, Double heartRate,

@@ -24,7 +24,8 @@ import com.iroom.sensor.entity.WorkerReadModel;
 import com.iroom.sensor.repository.WorkerSensorRepository;
 import com.iroom.sensor.repository.WorkerReadModelRepository;
 
-import jakarta.persistence.EntityNotFoundException;
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 public class WorkerSensorServiceTest {
@@ -239,8 +240,9 @@ public class WorkerSensorServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> workerSensorService.updateSensor(workerId, binaryData))
-			.isInstanceOf(EntityNotFoundException.class)
-			.hasMessage("유효하지 않은 근로자");
+			.isInstanceOf(CustomException.class)
+			.extracting(e -> ((CustomException) e).getErrorCode())
+			.isEqualTo(ErrorCode.SENSOR_WORKER_NOT_FOUND);
 	}
 
 	@Test
@@ -253,8 +255,9 @@ public class WorkerSensorServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> workerSensorService.getWorkerLocation(workerId))
-			.isInstanceOf(EntityNotFoundException.class)
-			.hasMessage("해당 근로자 없음");
+			.isInstanceOf(CustomException.class)
+			.extracting(e -> ((CustomException) e).getErrorCode())
+			.isEqualTo(ErrorCode.SENSOR_WORKER_NOT_FOUND);
 	}
 
 	private byte[] createBinaryData(Double latitude, Double longitude, Double heartRate, 

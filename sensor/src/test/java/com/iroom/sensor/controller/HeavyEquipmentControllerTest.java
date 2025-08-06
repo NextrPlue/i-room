@@ -42,10 +42,11 @@ public class HeavyEquipmentControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.id").value(1L))
-			.andExpect(jsonPath("$.name").value("크레인A-3"))
-			.andExpect(jsonPath("$.type").value("크레인"))
-			.andExpect(jsonPath("$.radius").value(15.0));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.id").value(1L))
+			.andExpect(jsonPath("$.data.name").value("크레인A-3"))
+			.andExpect(jsonPath("$.data.type").value("크레인"))
+			.andExpect(jsonPath("$.data.radius").value(15.0));
 
 	}
 
@@ -66,8 +67,9 @@ public class HeavyEquipmentControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.id").value(1L))
-			.andExpect(jsonPath("$.latitude").value(latitude))
-			.andExpect(jsonPath("$.longitude").value(longitude));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.id").value(1L))
+			.andExpect(jsonPath("$.data.latitude").value(latitude))
+			.andExpect(jsonPath("$.data.longitude").value(longitude));
 	}
 }
