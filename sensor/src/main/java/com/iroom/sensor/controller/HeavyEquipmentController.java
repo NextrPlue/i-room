@@ -31,7 +31,7 @@ public class HeavyEquipmentController {
 	public ResponseEntity<ApiResponse<EquipmentUpdateLocationResponse>> updateLocation(
 		@RequestBody byte[] binaryData
 	) {
-		EquipmentUpdateLocationResponse response = heavyEquipmentService.updateLocation(request);
+		EquipmentUpdateLocationResponse response = heavyEquipmentService.updateLocation(binaryData);
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
