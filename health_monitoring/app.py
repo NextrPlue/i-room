@@ -10,8 +10,6 @@ from utils.db import init_db, get_session
 from kafka_consumer import consume_worker_data
 from contextlib import asynccontextmanager
 
-app = FastAPI() # FastAPI 초기화
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("DB 초기화")
@@ -24,3 +22,5 @@ async def lifespan(app: FastAPI):
 
     # 종료 시 로직이 있다면 여기 작성
     print("서버 종료 중..")
+
+app = FastAPI(lifespan=lifespan) # FastAPI 초기화, lifespan 방식
