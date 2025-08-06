@@ -3,13 +3,14 @@
 
 import json
 from kafka import KafkaConsumer
-from utils.model_utils import predict_worker_risk
-from kafka_producer import send_alert_event
-from db.orm_models import Incident
+
+from health_monitoring.utils.model_utils import predict_worker_risk
+from health_monitoring.utils.db import SessionLocal
+from health_monitoring.db.orm_models import Incident
+from health_monitoring.kafka_producer import send_alert_event
+
 from sqlalchemy.orm import Session
-import uuid
 from datetime import datetime
-from utils.db import SessionLocal
 import threading
 
 # Kafka 메시지를 받아 건강 이상 여부를 판단하고 DB에 기록 및 결과 발행 함수
