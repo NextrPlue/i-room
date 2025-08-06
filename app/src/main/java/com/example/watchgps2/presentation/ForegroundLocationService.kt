@@ -86,10 +86,14 @@ class ForegroundLocationService : Service() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 //서버 url 변경필요
-                val url = URL("https://172.30.1.44:8080/api/sensor/heavy-equipments/location")
+                val url = URL("http://172.30.1.44:8080/api/sensor/heavy-equipments/location")
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "PUT"
                 connection.setRequestProperty("Content-Type", "application/json")
+
+                //토큰 추가
+                connection.setRequestProperty("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwibmFtZSI6IkVxdWlwbWVudCBTeXN0ZW0iLCJyb2xlIjoiUk9MRV9FUVVJUE1FTlRfU1lTVEVNIiwiaWF0IjoxNzU0NDU4MTcxLCJleHAiOjE3NTQ1NDQ1NzF9.SWWG7rE6aNj1pfiO0vzjiqFJYeNqeLXD0KNDEkxCBO0")
+
                 connection.doOutput = true
 
                 val json = """
