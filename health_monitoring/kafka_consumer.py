@@ -40,12 +40,8 @@ def process_message(data: dict, db: Session):
         incident_type = "정상"
         description = "건강 상태는 정상입니다."
 
-    # PK 정의
-    incident_id = str(uuid.uuid4())
-
     # DB 저장
     new_incident = Incident(
-        incidentId=incident_id,
         workerId=worker_id,
         workerLatitude=latitude,
         workerLongitude=longitude,
@@ -55,9 +51,10 @@ def process_message(data: dict, db: Session):
     )
     db.add(new_incident)
     db.commit()
+    db.refresh(new_incident)    # 자동 생성된 incidentId를 다시 불러옴
 
     # 결과 Kafka 전송
-    send_alert_event(worker_id, latitude, longitude, result)
+    send_alert_event(worker_id, latitude, longitude, result, new_incident.incidentId)
 
 def consume_worker_data():
     def run():
@@ -71,7 +68,7 @@ def consume_worker_data():
         )
 
         db = SessionLocal()
-        
+
         for message in consumer:
             try:
                 raw = message.value.decode("utf-8") # JSON 파싱
