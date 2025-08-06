@@ -71,7 +71,7 @@ def consume_worker_data():
         )
 
         db = SessionLocal()
-        print("Kafka 소비 시작")
+        
         for message in consumer:
             try:
                 raw = message.value.decode("utf-8") # JSON 파싱
