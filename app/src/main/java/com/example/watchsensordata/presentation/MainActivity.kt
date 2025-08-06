@@ -16,6 +16,7 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
@@ -61,33 +62,51 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("MissingInflatedId")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
 
-        val loginRequest = LoginRequest(
-            email = "test@test.com",
-            password = "!test123"
-        )
+        IpConfig.initialize(applicationContext)
 
-        RetrofitClient.apiService.login(loginRequest)
-            .enqueue(object : Callback<LoginResponse> {
-                override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
-                    if (response.isSuccessful) {
-                        val token = response.body()?.data?.token
-                        Log.d("LOGIN", "토큰 받음: $token")
+        // 이후 사용 가능
+        val url = IpConfig.getBaseUrl()
 
-                        // SharedPreferences에 토큰 저장
-                        val prefs = getSharedPreferences("auth", MODE_PRIVATE)
-                        prefs.edit().putString("token", token).apply()
-                    } else {
-                        Log.e("LOGIN", "응답 실패: ${response.code()}")
+        // 1. 처음에는 로그인 화면을 보여줌
+        setContentView(R.layout.activity_login)
+
+        // 2. 로그인 버튼 클릭 시
+        findViewById<Button>(R.id.loginButton).setOnClickListener {
+            val email = findViewById<EditText>(R.id.emailEdit).text.toString()
+            val password = findViewById<EditText>(R.id.passwordEdit).text.toString()
+
+            val loginRequest = LoginRequest(email, password)
+
+            RetrofitClient.apiService.login(loginRequest)
+                .enqueue(object : Callback<LoginResponse> {
+                    override fun onResponse(call: Call<LoginResponse>, response: Response<LoginResponse>) {
+                        if (response.isSuccessful) {
+                            val token = response.body()?.data?.token
+                            Log.d("LOGIN", "토큰 받음: $token")
+
+                            // 토큰 저장
+                            val prefs = getSharedPreferences("auth", MODE_PRIVATE)
+                            prefs.edit().putString("token", token).apply()
+
+                            // 3. 로그인 성공하면 메인 화면으로 전환
+                            setContentView(R.layout.activity_main)
+                            setupButtonScreen()
+                        } else {
+                            Toast.makeText(this@MainActivity, "로그인 실패", Toast.LENGTH_SHORT).show()
+                        }
                     }
-                }
 
-                override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                    Log.e("LOGIN", "요청 실패: ${t.message}")
-                }
-            })
+                    override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
+                        Log.e("LOGIN", "요청 실패: ${t.message}")
+                        Toast.makeText(this@MainActivity, "네트워크 오류", Toast.LENGTH_SHORT).show()
+                    }
+                })
+        }
+    }
 
+    // 4. 기존 버튼 화면 초기화 (start/stop 버튼 이벤트 설정 등)
+    private fun setupButtonScreen() {
         // 권한 요청 등록
         locationPermissionRequest = registerForActivityResult(
             ActivityResultContracts.RequestMultiplePermissions()
@@ -145,15 +164,15 @@ class MainActivity : ComponentActivity() {
                     saveSensorDataLocally()
                 }
 
-                override fun onLapSummaryReceived(lapSummary: ExerciseLapSummary) {  }
+                override fun onLapSummaryReceived(lapSummary: ExerciseLapSummary) {}
                 override fun onRegistered() {}
                 override fun onRegistrationFailed(throwable: Throwable) {}
             }
 
             exerciseClient.setUpdateCallback(updateCallback)
-
         }
 
+        // start 버튼
         findViewById<Button>(R.id.startButton).setOnClickListener {
             val fineGranted = ActivityCompat.checkSelfPermission(
                 this,
@@ -164,9 +183,7 @@ class MainActivity : ComponentActivity() {
                 startExercise()
                 startLocationService()
             } else {
-                locationPermissionRequest.launch(
-                    arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
-                )
+                locationPermissionRequest.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION))
                 Toast.makeText(
                     this,
                     "GPS 권한이 필요합니다. 설정에서 항상 허용으로 변경해주세요.",
@@ -175,6 +192,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // stop 버튼
         findViewById<Button>(R.id.stopButton).setOnClickListener {
             stopExercise()
             stopLocationService()

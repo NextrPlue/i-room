@@ -1,22 +1,23 @@
+import android.content.Context
 import java.io.FileInputStream
 import java.util.Properties
 
 object IpConfig {
-    private val props = Properties()
+    private var baseIp: String = "127.0.0.1"  // 기본값
 
-    init {
+    fun initialize(context: Context) {
         try {
-            val path = "ip_config.properties"  // 프로젝트 루트 기준
-            val input = FileInputStream(path)
-            props.load(input)
+            val props = Properties()
+            val inputStream = context.assets.open("ip_config.properties")
+            props.load(inputStream)
+            baseIp = props.getProperty("BASE_IP")
         } catch (e: Exception) {
-            throw RuntimeException("ip_config.properties 파일을 찾을 수 없거나 읽을 수 없습니다: ${e.message}")
+            throw RuntimeException("ip_config.properties 읽기 실패: ${e.message}")
         }
     }
 
-    val BASE_IP: String = props.getProperty("BASE_IP")
-    val PORT = "8080"
-
-    val BASE_URL: String
-        get() = "http://$BASE_IP:$PORT"
+    fun getBaseUrl(): String {
+        val port = "8080"
+        return "http://$baseIp:$port"
+    }
 }

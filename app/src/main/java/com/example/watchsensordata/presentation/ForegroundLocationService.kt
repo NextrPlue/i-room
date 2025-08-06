@@ -100,7 +100,7 @@ class ForegroundLocationService : Service() {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val url = URL("${IpConfig.BASE_URL}/api/sensor/worker-sensor/update")  // 서버 주소로 바꾸기
+                val url = URL("${IpConfig.getBaseUrl()}/api/sensor/worker-sensor/update")  // 서버 주소로 바꾸기
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "POST"
                 connection.setRequestProperty("Content-Type", "application/octet-stream")
