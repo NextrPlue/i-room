@@ -11,7 +11,7 @@ producer = KafkaProducer(
     value_serializer=lambda v: json.dumps(v).encode("utf-8")
 )
 
-def send_alert_event(worker_id, latitude, longitude, risk_level):
+def send_alert_event(worker_id, latitude, longitude, risk_level, incident_id):
     # incidentType과 description 정의
     if risk_level == 1:
         incident_type = "이상"
@@ -25,7 +25,7 @@ def send_alert_event(worker_id, latitude, longitude, risk_level):
         "workerId": worker_id,
         "workerLatitude": latitude,
         "workerLongitude": longitude,
-        "incidentId": str(uuid.uuid4()), # 고유 이벤트 ID
+        "incidentId": incident_id,      # DB에서 생성된 값을 사용
         "occurredAt": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "incidentType": incident_type,
         "incidentDescription": description
