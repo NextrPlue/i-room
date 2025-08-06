@@ -1,5 +1,6 @@
 package com.example.watchsensordata.presentation
 
+import IpConfig
 import android.Manifest
 import android.app.Service
 import android.content.Context
@@ -99,7 +100,7 @@ class ForegroundLocationService : Service() {
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                val url = URL("http://172.30.1.97:8080/api/sensor-data")  // 서버 주소로 바꾸기
+                val url = URL("${IpConfig.BASE_URL}/api/sensor/worker-sensor/update")  // 서버 주소로 바꾸기
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "POST"
                 connection.setRequestProperty("Content-Type", "application/octet-stream")
