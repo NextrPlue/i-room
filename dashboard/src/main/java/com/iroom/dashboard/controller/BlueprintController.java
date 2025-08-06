@@ -3,6 +3,7 @@ package com.iroom.dashboard.controller;
 import com.iroom.dashboard.dto.request.BlueprintRequest;
 import com.iroom.dashboard.dto.response.BlueprintResponse;
 import com.iroom.dashboard.service.BlueprintService;
+import com.iroom.modulecommon.dto.response.ApiResponse;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -23,11 +24,11 @@ public class BlueprintController {
 
 	// 도면 등록
 	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public ResponseEntity<BlueprintResponse> createBlueprint(
+	public ResponseEntity<ApiResponse<BlueprintResponse>> createBlueprint(
 		@RequestPart("file") MultipartFile file,
 		@RequestPart("data") BlueprintRequest blueprintUrl) {
 		BlueprintResponse response = blueprintService.createBlueprint(file, blueprintUrl);
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
 	// 도면 수정
