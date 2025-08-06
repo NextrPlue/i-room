@@ -68,13 +68,13 @@ else:
 logging.basicConfig(filename="botsort_inference_log.txt", level=logging.INFO)
 process = psutil.Process()
 
-# ===== RTSP 캡처 루프 =====
+# === 영상 캡처 + YOLO (객체 탐지) + BoT-SORT (객체 추적) + 알람 전송 ============
 async def capture_loop():
     global cap, clients_count, frame_index
 
     while clients_count > 0:   # 클라이언트 있을 때만 계속
         try:
-            cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
+            cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)    # RTSP/IP 카메라 재연결 가능성을 고려해서 while 안에서 VideoCapture 생성
             if not cap.isOpened():
                 print("[ERROR] Cannot open video source")
                 await asyncio.sleep(2)
@@ -86,19 +86,20 @@ async def capture_loop():
             frame_count = 0
             fps = 0
 
-            # 10초 주기 분석용 변수
+            # 10초 단위로 헬멧, 안전벨트 착용 여부를 집계
             interval_start = time.time()
             INTERVAL_SEC = 10
             helmet_ids = set()
             seatbelt_ids = set()
             total_frames = 0
 
+            # YOLO + BoT-SORT를 스트리밍 모드로 실행
             results = model.track(
                 source=RTSP_URL,
                 tracker="my_botsort.yaml",
-                stream=True,
+                stream=True,    # 프레임 단위로 제너레이터 변환
                 device=device,
-                persist=True,
+                persist=True,   # 이전 프레임의 추적 정보 유지
                 half=True,
                 conf=0.2,
             )
@@ -159,7 +160,7 @@ async def capture_loop():
                 total_frames += 1
 
                 current_time = time.time()
-                if current_time - interval_start >= INTERVAL_SEC:
+                if current_time - interval_start >= INTERVAL_SEC:   # 매 10초마다 send_alert() 호출 -> 서버/대시보드로 전송
                     helmet_count = len(helmet_ids)
                     seatbelt_count = len(seatbelt_ids)
 
@@ -171,13 +172,13 @@ async def capture_loop():
                     print(f"[REPORT] 10초 요약: helmet_count={helmet_count}, seatbelt_count={seatbelt_count}, "
                           f"helmet_ratio={helmet_ratio:.2f}, seatbelt_ratio={seatbelt_ratio:.2f}")
 
-                    # 다음 interval 준비
+                    # 집계 초기화 후, 다음 인터벌 시작
                     interval_start = current_time
                     helmet_ids.clear()
                     seatbelt_ids.clear()
                     total_frames = 0
 
-                # 최신 프레임 큐에 교체 저장
+                # 최신 프레임만 queue에 유지 (WebRTC 전송 시 지연 방지)
                 if not frame_queue.empty():
                     try:
                         frame_queue.get_nowait()  # 이전 프레임 제거
