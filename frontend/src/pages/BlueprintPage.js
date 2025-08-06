@@ -278,7 +278,7 @@ const BlueprintPage = () => {
 
                             {selectedBlueprint.blueprintUrl && !imageError ? (
                                 <img
-                                    src={selectedBlueprint.blueprintUrl}
+                                    src={`http://localhost:8080${selectedBlueprint.blueprintUrl}`}
                                     alt={`${selectedBlueprint.floor}층 도면 - 크기: ${selectedBlueprint.width}m × ${selectedBlueprint.height}m`}
                                     className={styles.previewImage}
                                     onError={handleImageError}
