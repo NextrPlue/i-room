@@ -1,7 +1,9 @@
 package com.example.watchgps2.presentation
 
+import IpConfig
 import android.Manifest
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.IBinder
@@ -83,16 +85,23 @@ class ForegroundLocationService : Service() {
 
     //서버 전송 함수
     private fun sendLocationToServer(equipmentId: Long, latitude: Double, longitude: Double) {
+
+        // 토큰 가져오기
+        val authPrefs = getSharedPreferences("auth", Context.MODE_PRIVATE)
+        val token = authPrefs.getString("token", null)
+
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 //서버 url 변경필요
-                val url = URL("http://172.30.1.44:8080/api/sensor/heavy-equipments/location")
+                val url = URL("${IpConfig.getBaseUrl()}/api/sensor/heavy-equipments/location")
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "PUT"
                 connection.setRequestProperty("Content-Type", "application/json")
 
                 //토큰 추가
-                connection.setRequestProperty("Authorization", "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIzIiwibmFtZSI6IkVxdWlwbWVudCBTeXN0ZW0iLCJyb2xlIjoiUk9MRV9FUVVJUE1FTlRfU1lTVEVNIiwiaWF0IjoxNzU0NDU4MTcxLCJleHAiOjE3NTQ1NDQ1NzF9.SWWG7rE6aNj1pfiO0vzjiqFJYeNqeLXD0KNDEkxCBO0")
+                token?.let {
+                    connection.setRequestProperty("Authorization", "Bearer $it")
+                }
 
                 connection.doOutput = true
 

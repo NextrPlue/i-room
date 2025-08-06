@@ -1,5 +1,6 @@
 package com.example.watchgps2.data.remote
 
+import IpConfig
 import android.content.Context
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -14,7 +15,7 @@ object RetrofitClient {
             .build()
 
         retrofit = Retrofit.Builder()
-            .baseUrl("http://172.30.1.44:8080")
+            .baseUrl(IpConfig.getBaseUrl())
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
