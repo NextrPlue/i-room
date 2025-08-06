@@ -1,5 +1,7 @@
 package com.iroom.sensor.service;
 
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationRequest;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationResponse;
@@ -10,7 +12,6 @@ import com.iroom.modulecommon.dto.event.EquipmentLocationEvent;
 import com.iroom.sensor.entity.HeavyEquipment;
 import com.iroom.sensor.repository.HeavyEquipmentRepository;
 
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,6 +29,10 @@ public class HeavyEquipmentService {
 	//등록 기능
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public EquipmentRegisterResponse register(EquipmentRegisterRequest request) {
+		if (request.radius() == null || request.radius() <= 0) {
+			throw new CustomException(ErrorCode.SENSOR_INVALID_RADIUS);
+		}
+
 		HeavyEquipment equipment = HeavyEquipment.builder()
 			.name(request.name())
 			.type(request.type())
@@ -48,7 +53,10 @@ public class HeavyEquipmentService {
 	@PreAuthorize("hasAuthority('ROLE_EQUIPMENT_SYSTEM')")
 	public EquipmentUpdateLocationResponse updateLocation(EquipmentUpdateLocationRequest request) {
 		HeavyEquipment equipment = heavyEquipmentRepository.findById(request.id())
-			.orElseThrow(() -> new EntityNotFoundException("장비 없음 "));
+			.orElseThrow(() -> new CustomException(ErrorCode.SENSOR_EQUIPMENT_NOT_FOUND));
+
+		// 위치 좌표 검증
+		validateCoordinates(request.latitude(), request.longitude());
 
 		equipment.updateLocation(request.latitude(), request.longitude());
 
@@ -65,4 +73,11 @@ public class HeavyEquipmentService {
 			equipment.getLongitude());
 	}
 
+	private void validateCoordinates(Double latitude, Double longitude) {
+		if (latitude == null || longitude == null ||
+			latitude < -90 || latitude > 90 ||
+			longitude < -180 || longitude > 180) {
+			throw new CustomException(ErrorCode.SENSOR_INVALID_COORDINATES);
+		}
+	}
 }

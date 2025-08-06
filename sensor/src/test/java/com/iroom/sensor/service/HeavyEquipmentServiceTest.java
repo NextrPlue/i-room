@@ -1,5 +1,7 @@
 package com.iroom.sensor.service;
 
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterRequest;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationRequest;
@@ -91,8 +93,9 @@ public class HeavyEquipmentServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> equipmentService.updateLocation(request))
-			.isInstanceOf(EntityNotFoundException.class)
-			.hasMessageContaining("장비 없음");
+			.isInstanceOf(CustomException.class)
+			.extracting(e -> ((CustomException)e).getErrorCode())
+			.isEqualTo(ErrorCode.SENSOR_EQUIPMENT_NOT_FOUND);
 	}
 
 	//테스트를 위한 id 값 주입

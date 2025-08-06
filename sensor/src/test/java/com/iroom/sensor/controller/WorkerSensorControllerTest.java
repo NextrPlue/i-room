@@ -4,29 +4,28 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateRequest;
 import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateResponse;
 import com.iroom.sensor.dto.WorkerSensor.WorkerLocationResponse;
 import com.iroom.sensor.service.WorkerSensorService;
+import com.iroom.modulecommon.dto.response.ApiResponse;
 
 @WebMvcTest(controllers = WorkerSensorController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
 public class WorkerSensorControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;
-
-	@Autowired
-	private ObjectMapper objectMapper;
 
 	@MockitoBean
 	private WorkerSensorService workerSensorService;
@@ -38,21 +37,32 @@ public class WorkerSensorControllerTest {
 		Long workerId = 1L;
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		Integer heartRate = 85;
-		
-		WorkerSensorUpdateRequest request = new WorkerSensorUpdateRequest(workerId, latitude, longitude, heartRate);
-		WorkerSensorUpdateResponse response = new WorkerSensorUpdateResponse(workerId, latitude, longitude, heartRate);
-		given(workerSensorService.updateSensor(request)).willReturn(response);
+		Double heartRate = 85.0;
+		Long steps = 1000L;
+		Double speed = 5.5;
+		Double pace = 10.9;
+		Long stepPerMinute = 120L;
+
+		byte[] binaryData = createBinaryData(latitude, longitude, heartRate, steps, speed, pace, stepPerMinute);
+		WorkerSensorUpdateResponse response = new WorkerSensorUpdateResponse(workerId, latitude, longitude, heartRate,
+			steps, speed, pace, stepPerMinute);
+		given(workerSensorService.updateSensor(workerId, binaryData)).willReturn(response);
 
 		// when & then
 		mockMvc.perform(post("/worker-sensor/update")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request)))
+				.header("X-User-Id", workerId)
+				.contentType("application/octet-stream")
+				.content(binaryData))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.workerId").value(workerId))
-			.andExpect(jsonPath("$.latitude").value(latitude))
-			.andExpect(jsonPath("$.longitude").value(longitude))
-			.andExpect(jsonPath("$.heartRate").value(heartRate));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.workerId").value(workerId))
+			.andExpect(jsonPath("$.data.latitude").value(latitude))
+			.andExpect(jsonPath("$.data.longitude").value(longitude))
+			.andExpect(jsonPath("$.data.heartRate").value(heartRate))
+			.andExpect(jsonPath("$.data.steps").value(steps))
+			.andExpect(jsonPath("$.data.speed").value(speed))
+			.andExpect(jsonPath("$.data.pace").value(pace))
+			.andExpect(jsonPath("$.data.stepPerMinute").value(stepPerMinute));
 	}
 
 	@Test
@@ -62,21 +72,28 @@ public class WorkerSensorControllerTest {
 		Long workerId = 2L;
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		Integer heartRate = null;
-		
-		WorkerSensorUpdateRequest request = new WorkerSensorUpdateRequest(workerId, latitude, longitude, heartRate);
-		WorkerSensorUpdateResponse response = new WorkerSensorUpdateResponse(workerId, latitude, longitude, heartRate);
-		given(workerSensorService.updateSensor(request)).willReturn(response);
+		Double heartRate = 0.0;
+		Long steps = 0L;
+		Double speed = 0.0;
+		Double pace = 0.0;
+		Long stepPerMinute = 0L;
+
+		byte[] binaryData = createBinaryData(latitude, longitude, heartRate, steps, speed, pace, stepPerMinute);
+		WorkerSensorUpdateResponse response = new WorkerSensorUpdateResponse(workerId, latitude, longitude, heartRate,
+			steps, speed, pace, stepPerMinute);
+		given(workerSensorService.updateSensor(workerId, binaryData)).willReturn(response);
 
 		// when & then
 		mockMvc.perform(post("/worker-sensor/update")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request)))
+				.header("X-User-Id", workerId)
+				.contentType("application/octet-stream")
+				.content(binaryData))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.workerId").value(workerId))
-			.andExpect(jsonPath("$.latitude").value(latitude))
-			.andExpect(jsonPath("$.longitude").value(longitude))
-			.andExpect(jsonPath("$.heartRate").isEmpty());
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.workerId").value(workerId))
+			.andExpect(jsonPath("$.data.latitude").value(latitude))
+			.andExpect(jsonPath("$.data.longitude").value(longitude))
+			.andExpect(jsonPath("$.data.heartRate").value(heartRate));
 	}
 
 	@Test
@@ -84,23 +101,30 @@ public class WorkerSensorControllerTest {
 	void updateWorkerSensorHeartRateOnlyTest() throws Exception {
 		// given
 		Long workerId = 3L;
-		Double latitude = null;
-		Double longitude = null;
-		Integer heartRate = 90;
-		
-		WorkerSensorUpdateRequest request = new WorkerSensorUpdateRequest(workerId, latitude, longitude, heartRate);
-		WorkerSensorUpdateResponse response = new WorkerSensorUpdateResponse(workerId, latitude, longitude, heartRate);
-		given(workerSensorService.updateSensor(request)).willReturn(response);
+		Double latitude = 0.0;
+		Double longitude = 0.0;
+		Double heartRate = 90.0;
+		Long steps = 0L;
+		Double speed = 0.0;
+		Double pace = 0.0;
+		Long stepPerMinute = 0L;
+
+		byte[] binaryData = createBinaryData(latitude, longitude, heartRate, steps, speed, pace, stepPerMinute);
+		WorkerSensorUpdateResponse response = new WorkerSensorUpdateResponse(workerId, latitude, longitude, heartRate,
+			steps, speed, pace, stepPerMinute);
+		given(workerSensorService.updateSensor(workerId, binaryData)).willReturn(response);
 
 		// when & then
 		mockMvc.perform(post("/worker-sensor/update")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request)))
+				.header("X-User-Id", workerId)
+				.contentType("application/octet-stream")
+				.content(binaryData))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.workerId").value(workerId))
-			.andExpect(jsonPath("$.latitude").isEmpty())
-			.andExpect(jsonPath("$.longitude").isEmpty())
-			.andExpect(jsonPath("$.heartRate").value(heartRate));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.workerId").value(workerId))
+			.andExpect(jsonPath("$.data.latitude").value(latitude))
+			.andExpect(jsonPath("$.data.longitude").value(longitude))
+			.andExpect(jsonPath("$.data.heartRate").value(heartRate));
 	}
 
 	@Test
@@ -110,15 +134,32 @@ public class WorkerSensorControllerTest {
 		Long workerId = 4L;
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		
+
 		WorkerLocationResponse response = new WorkerLocationResponse(workerId, latitude, longitude);
 		given(workerSensorService.getWorkerLocation(workerId)).willReturn(response);
 
 		// when & then
 		mockMvc.perform(get("/worker-sensor/{workerId}/location", workerId))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.workerId").value(workerId))
-			.andExpect(jsonPath("$.latitude").value(latitude))
-			.andExpect(jsonPath("$.longitude").value(longitude));
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.workerId").value(workerId))
+			.andExpect(jsonPath("$.data.latitude").value(latitude))
+			.andExpect(jsonPath("$.data.longitude").value(longitude));
+	}
+
+	private byte[] createBinaryData(Double latitude, Double longitude, Double heartRate,
+		Long steps, Double speed, Double pace, Long stepPerMinute) throws IOException {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(bos);
+
+		dos.writeDouble(latitude);
+		dos.writeDouble(longitude);
+		dos.writeDouble(heartRate);
+		dos.writeLong(steps);
+		dos.writeDouble(speed);
+		dos.writeDouble(pace);
+		dos.writeLong(stepPerMinute);
+
+		return bos.toByteArray();
 	}
 }

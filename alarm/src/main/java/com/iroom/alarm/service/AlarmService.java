@@ -3,6 +3,9 @@ package com.iroom.alarm.service;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -12,6 +15,8 @@ import com.iroom.alarm.config.StompHandler;
 import com.iroom.alarm.entity.Alarm;
 import com.iroom.alarm.repository.AlarmRepository;
 import com.iroom.modulecommon.dto.event.AlarmEvent;
+import com.iroom.modulecommon.dto.response.PagedResponse;
+import com.iroom.modulecommon.dto.response.SimpleResponse;
 import com.iroom.modulecommon.service.KafkaProducerService;
 
 import lombok.RequiredArgsConstructor;
@@ -28,9 +33,11 @@ public class AlarmService {
 
 	// 외부 API 호출용
 	@PreAuthorize("hasAuthority('ROLE_PPE_SYSTEM')")
-	public void handleAlarmEventFromApi(AlarmEvent alarmEvent) {
+	public SimpleResponse handleAlarmEventFromApi(AlarmEvent alarmEvent) {
 		processAlarmEvent(alarmEvent);
 		kafkaProducerService.publishMessage("PPE_VIOLATION", alarmEvent);
+
+		return new SimpleResponse("알람이 발행되었습니다.");
 	}
 
 	// 내부 Kafka 이벤트 수신용
@@ -73,17 +80,21 @@ public class AlarmService {
 	}
 
 	// 근로자의 알림 목록을 조회
-	// 페이지네이션 적용 필요
 	@PreAuthorize("hasAuthority('ROLE_WORKER') and #workerId == authentication.principal")
-	public List<Alarm> getAlarmsForWorker(Long workerId) {
-		return alarmRepository.findByWorkerIdOrderByOccurredAtDesc(workerId);
+	public PagedResponse<Alarm> getAlarmsForWorker(Long workerId, int page, int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		Page<Alarm> alarmPage = alarmRepository.findByWorkerIdOrderByOccurredAtDesc(workerId, pageable);
+
+		return PagedResponse.of(alarmPage);
 	}
 
 	// 관리자용 전체 알림 목록을 조회
-	// 페이지네이션 적용 필요
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
-	public List<Alarm> getAlarmsForAdmin() {
-		LocalDateTime time = LocalDateTime.now().minusHours(3);
-		return alarmRepository.findByOccurredAtAfterOrderByOccurredAtDesc(time);
+	public PagedResponse<Alarm> getAlarmsForAdmin(int page, int size, int hours) {
+		Pageable pageable = PageRequest.of(page, size);
+		LocalDateTime time = LocalDateTime.now().minusHours(hours);
+		Page<Alarm> alarmPage = alarmRepository.findByOccurredAtAfterOrderByOccurredAtDesc(time, pageable);
+
+		return PagedResponse.of(alarmPage);
 	}
 }

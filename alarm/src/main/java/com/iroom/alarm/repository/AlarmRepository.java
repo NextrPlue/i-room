@@ -3,6 +3,8 @@ package com.iroom.alarm.repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
@@ -12,8 +14,8 @@ import com.iroom.alarm.entity.Alarm;
 public interface AlarmRepository extends JpaRepository<Alarm, Long> {
 
 	// 근로자용 알림 조회
-	List<Alarm> findByWorkerIdOrderByOccurredAtDesc(Long workerId);
+	Page<Alarm> findByWorkerIdOrderByOccurredAtDesc(Long workerId, Pageable pageable);
 
 	// 관리자용 알림 조회
-	List<Alarm> findByOccurredAtAfterOrderByOccurredAtDesc(LocalDateTime time);
+	Page<Alarm> findByOccurredAtAfterOrderByOccurredAtDesc(LocalDateTime time, Pageable pageable);
 }

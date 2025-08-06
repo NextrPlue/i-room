@@ -1,5 +1,6 @@
 package com.iroom.sensor.controller;
 
+import com.iroom.modulecommon.dto.response.ApiResponse;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationRequest;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentUpdateLocationResponse;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterRequest;
@@ -19,19 +20,19 @@ public class HeavyEquipmentController {
 	private final HeavyEquipmentService heavyEquipmentService;
 
 	@PostMapping("/register")
-	public ResponseEntity<EquipmentRegisterResponse> register(
+	public ResponseEntity<ApiResponse<EquipmentRegisterResponse>> register(
 		@RequestBody EquipmentRegisterRequest request
 	) {
 		EquipmentRegisterResponse response = heavyEquipmentService.register(request);
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
 	@PutMapping("/location")
-	public ResponseEntity<EquipmentUpdateLocationResponse> updateLocation(
+	public ResponseEntity<ApiResponse<EquipmentUpdateLocationResponse>> updateLocation(
 		@RequestBody EquipmentUpdateLocationRequest request
 	) {
 		EquipmentUpdateLocationResponse response = heavyEquipmentService.updateLocation(request);
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
 }
