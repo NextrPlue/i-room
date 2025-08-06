@@ -5,30 +5,23 @@ from kafka import KafkaProducer
 import json
 import uuid
 from datetime import datetime
+from db.orm_models import Incident
 
 producer = KafkaProducer(
     bootstrap_servers=["localhost:9092"],
     value_serializer=lambda v: json.dumps(v).encode("utf-8")
 )
 
-def send_alert_event(worker_id, latitude, longitude, risk_level, incident_id):
-    # incidentType과 description 정의
-    if risk_level == 1:
-        incident_type = "이상"
-        description = "건강 이상 상태가 감지되었습니다."
-    else:
-        incident_type = "정상"
-        description = "건강 상태는 정상입니다."
-
+def send_alert_event(incident: Incident):
     event = {
         "eventType": "HEALTH_ANOMALY",
-        "workerId": worker_id,
-        "workerLatitude": latitude,
-        "workerLongitude": longitude,
-        "incidentId": incident_id,      # DB에서 생성된 값을 사용
-        "occurredAt": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "incidentType": incident_type,
-        "incidentDescription": description
+        "incidentId": incident.incidentId,  # DB에서 생성된 값을 사용
+        "workerId": incident.workerId,
+        "workerLatitude": incident.workerLatitude,
+        "workerLongitude": incident.workerLongitude,
+        "incidentType": incident.incidentType,
+        "incidentDescription": incident.incidentDescription,
+        "occurredAt": incident.occurredAt
     }
 
     producer.send("iroom", event)   # iroom 토픽으로 이벤트 발행

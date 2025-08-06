@@ -54,7 +54,7 @@ def process_message(data: dict, db: Session):
     db.refresh(new_incident)    # 자동 생성된 incidentId를 다시 불러옴
 
     # 결과 Kafka 전송
-    send_alert_event(worker_id, latitude, longitude, result, new_incident.incidentId)
+    send_alert_event(new_incident)
 
 def consume_worker_data():
     def run():
