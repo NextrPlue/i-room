@@ -65,8 +65,19 @@ class MainActivity : ComponentActivity() {
 
         IpConfig.initialize(applicationContext)
 
-        // 이후 사용 가능
-        val url = IpConfig.getBaseUrl()
+        // 권한 요청 등록
+        locationPermissionRequest = registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
+            if (granted) {
+                Toast.makeText(this, "GPS 권한 허용됨", Toast.LENGTH_SHORT).show()
+                startLocationService()
+            } else {
+                Toast.makeText(this, "GPS 권한 거부됨", Toast.LENGTH_SHORT).show()
+                locationText.value = "위치 권한이 필요합니다"
+            }
+        }
 
         // 1. 처음에는 로그인 화면을 보여줌
         setContentView(R.layout.activity_login)
@@ -107,19 +118,6 @@ class MainActivity : ComponentActivity() {
 
     // 4. 기존 버튼 화면 초기화 (start/stop 버튼 이벤트 설정 등)
     private fun setupButtonScreen() {
-        // 권한 요청 등록
-        locationPermissionRequest = registerForActivityResult(
-            ActivityResultContracts.RequestMultiplePermissions()
-        ) { permissions ->
-            val granted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false
-            if (granted) {
-                Toast.makeText(this, "GPS 권한 허용됨", Toast.LENGTH_SHORT).show()
-                startLocationService()
-            } else {
-                Toast.makeText(this, "GPS 권한 거부됨", Toast.LENGTH_SHORT).show()
-                locationText.value = "위치 권한이 필요합니다"
-            }
-        }
 
         // 알림 채널 생성 (O 이상)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
