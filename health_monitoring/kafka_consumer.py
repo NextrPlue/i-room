@@ -7,6 +7,8 @@ from utils.model_utils import predict_worker_risk
 from kafka_producer import send_alert_event
 from db.orm_models import Incident
 from sqlalchemy.orm import Session
+import uuid
+from datetime import datetime
 
 # Kafka 메시지를 받아 건강 이상 여부를 판단하고 DB에 기록 및 결과 발행 함수
 def process_message(data: dict, db: Session):
@@ -24,6 +26,33 @@ def process_message(data: dict, db: Session):
     print(f"{worker_id} 근로자 건강 이상 예측 시작!")
     result = predict_worker_risk(age, heart_rate)
     print(f"예측 완료: {'위험' if result else '정상'}")
+
+    # 예측 완료 시간 정의
+    occurred_at = datetime.now()
+
+    # incidentType, description 정의
+    if result == 1:
+        incident_type = "이상"
+        description = "건강 이상 상태가 감지되었습니다."
+    else:
+        incident_type = "정상"
+        description = "건강 상태는 정상입니다."
+
+    # PK 정의
+    incident_id = str(uuid.uuid4())
+
+    # DB 저장
+    new_incident = Incident(
+        incidentId=incident_id,
+        workerId=worker_id,
+        workerLatitude=latitude,
+        workerLongitude=longitude,
+        incidentType=incident_type,
+        incidentDescription=description,
+        occurredAt=occurred_at
+    )
+    db.add(new_incident)
+    db.commit()
 
 print("\n\n***실시간 근로자 건강 이상 예측 AI 서비스 시작***\n\n")
 
