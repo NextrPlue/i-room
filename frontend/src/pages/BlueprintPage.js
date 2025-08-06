@@ -181,6 +181,38 @@ const BlueprintPage = () => {
         console.log(`도면 회전: ${blueprintRotation}° → ${newRotation}°`);
     };
 
+    // 다운로드 버튼 클릭 핸들러
+    const handleDownloadClick = async () => {
+        if (!selectedBlueprint || !selectedBlueprint.blueprintUrl) {
+            setError('다운로드할 도면이 없습니다.');
+            return;
+        }
+
+        try {
+            const imageUrl = `http://localhost:8080${selectedBlueprint.blueprintUrl}`;
+            const fileName = `${selectedBlueprint.floor}층_도면.jpg`;
+            
+            // 이미지 다운로드
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            
+            // 다운로드 링크 생성
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(downloadUrl);
+            
+            console.log(`도면 다운로드 완료: ${fileName}`);
+        } catch (err) {
+            console.error('다운로드 실패:', err);
+            setError('도면 다운로드에 실패했습니다.');
+        }
+    };
+
     return (
         <div className={styles.page}>
             {/* 페이지 헤더 */}
@@ -327,6 +359,8 @@ const BlueprintPage = () => {
                                 onClick={() => {
                                     if (option.value === 'active') {
                                         handleRotateClick();
+                                    } else if (option.value === 'inactive') {
+                                        handleDownloadClick();
                                     } else {
                                         setSelectedFilter(option.value);
                                     }
@@ -365,7 +399,7 @@ const BlueprintPage = () => {
                                         <span className={styles.detailLabel}>도면 URL:</span>
                                         <span className={styles.detailValue}>
                                             <a
-                                                href={selectedBlueprint.blueprintUrl}
+                                                href={`http://localhost:8080${selectedBlueprint.blueprintUrl}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                             >
