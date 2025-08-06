@@ -16,6 +16,6 @@ class Incident(Base):
     workerId = Column(String)                       # 근로자 ID (kafka로 받음)
     workerLatitude = Column(Float)                  # 근로자 위치 위도 (kafka로 받음)
     workerLongitude = Column(Float)                 # 근로자 위치 경도 (kafka로 받음)
-    incidentType = Column(String)                   # 위험 정도 (정상 or 이상)
+    incidentType = Column(String)                   # 위험 정도 (정상 or 위험)
     incidentDescription = Column(String)            # 상세 설명
     occurredAt = Column(DateTime)                   # 위험 예측 시간
