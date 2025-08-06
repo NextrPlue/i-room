@@ -39,7 +39,7 @@ class ForegroundLocationService : Service() {
                     sendLocationToUI(it.latitude, it.longitude)
 
                     // 서버 전송
-                    sendLocationToServer(equipmentId = 1L, it.latitude, it.longitude)
+                    sendLocationToServer(1L, it.latitude, it.longitude)
                 }
             }
         }
@@ -98,7 +98,7 @@ class ForegroundLocationService : Service() {
 
                 val json = """
                 {
-                    "equipmentId": $equipmentId,
+                    "id": $equipmentId,
                     "latitude": $latitude,
                     "longitude": $longitude
                 }
