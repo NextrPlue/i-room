@@ -54,6 +54,9 @@ def process_message(data: dict, db: Session):
     db.add(new_incident)
     db.commit()
 
+    # 결과 Kafka 전송
+    send_alert_event(worker_id, latitude, longitude, result)
+
 print("\n\n***실시간 근로자 건강 이상 예측 AI 서비스 시작***\n\n")
 
 # KafkaConsumer 정의
