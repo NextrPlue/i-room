@@ -1,27 +1,21 @@
 package com.example.watchgps2.data.remote
 
-import IpConfig
 import android.content.Context
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitClient {
-    private lateinit var retrofit: Retrofit
-
-    fun init(context: Context) {
+    fun getApiService(context: Context): ApiService {
         val client = OkHttpClient.Builder()
             .addInterceptor(AuthInterceptor(context))
             .build()
 
-        retrofit = Retrofit.Builder()
+        return Retrofit.Builder()
             .baseUrl(IpConfig.getBaseUrl())
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
-    }
-
-    val apiService: ApiService by lazy {
-        retrofit.create(ApiService::class.java)
+            .create(ApiService::class.java)
     }
 }

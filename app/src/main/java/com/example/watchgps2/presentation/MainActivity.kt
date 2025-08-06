@@ -47,6 +47,8 @@ class MainActivity : ComponentActivity() {
     private val locationText = mutableStateOf("위치 정보 없음")
     private var isTracking = mutableStateOf(false)
 
+    private var equipmentId: Long? = null
+
     private val locationPermissions = arrayOf(
         Manifest.permission.ACCESS_FINE_LOCATION
     )
@@ -61,30 +63,30 @@ class MainActivity : ComponentActivity() {
 
         //Ip 초기화
         IpConfig.initialize(this)
-        // Retrofit 초기화
-        RetrofitClient.init(applicationContext)
-
 
         // 토큰 요청
-        val body = ApiKeyRequest("worker-system-api-key-ed720aef-ee6d-40fc-933f-ff9ce8e2bcae")
-        RetrofitClient.apiService.authenticate(body)
+        val apiKey = "equipment-system-api-key-a52d7775-bf12-4f06-bfc9-6fdfc1f8f108"
+        val apiService = RetrofitClient.getApiService(this)  // Context 전달
+
+        apiService.authenticate(ApiKeyRequest(apiKey))
             .enqueue(object : Callback<TokenResponse> {
                 override fun onResponse(call: Call<TokenResponse>, response: Response<TokenResponse>) {
                     if (response.isSuccessful) {
                         val token = response.body()?.data?.token
                         token?.let {
-                            TokenManager.saveToken(applicationContext, it)
-                            Log.d("TOKEN", "토큰 저장됨: $it")
+                            TokenManager.saveToken(this@MainActivity, it)
+                            Log.d("AUTH", "토큰 저장 완료: $it")
                         }
                     } else {
-                        Log.e("TOKEN", "토큰 요청 실패")
+                        Log.e("AUTH", "응답 실패: ${response.code()}")
                     }
                 }
 
                 override fun onFailure(call: Call<TokenResponse>, t: Throwable) {
-                    Log.e("TOKEN", "네트워크 오류: ${t.message}")
+                    Log.e("AUTH", "요청 실패: ${t.message}")
                 }
             })
+
 
         // 권한 요청 등록
         locationPermissionRequest = registerForActivityResult(
@@ -175,6 +177,8 @@ class MainActivity : ComponentActivity() {
                 delay(20000)
             }
         }
+
+        checkAndPromptEquipmentId()
     }
 
     private fun startLocationService() {
@@ -193,6 +197,42 @@ class MainActivity : ComponentActivity() {
         stopService(intent)
         isTracking.value = false
         locationText.value = "위치 추적 중지됨"
+    }
+
+    private fun checkAndPromptEquipmentId() {
+        val prefs = getSharedPreferences("equipment_prefs", Context.MODE_PRIVATE)
+        val savedId = prefs.getLong("equipmentId", -1L)
+
+        if (savedId != -1L) {
+            equipmentId = savedId
+            Log.d("EQUIPMENT", "저장된 ID 사용: $savedId")
+            return
+        }
+
+        val editText = android.widget.EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            hint = "숫자만 입력"
+        }
+
+        android.app.AlertDialog.Builder(this)
+            .setTitle("장비 ID 입력")
+            .setMessage("장비의 ID를 입력해주세요")
+            .setView(editText)
+            .setCancelable(false)
+            .setPositiveButton("확인") { _, _ ->
+                val input = editText.text.toString().trim()
+                val parsedId = input.toLongOrNull()
+                if (parsedId != null) {
+                    prefs.edit().putLong("equipmentId", parsedId).apply()
+                    equipmentId = parsedId
+                    Toast.makeText(this, "ID 저장 완료: $parsedId", Toast.LENGTH_SHORT).show()
+                    Log.d("EQUIPMENT", "새로 입력된 ID 저장: $parsedId")
+                } else {
+                    Toast.makeText(this, "유효한 숫자를 입력해주세요", Toast.LENGTH_SHORT).show()
+                    checkAndPromptEquipmentId()  // 재귀 호출
+                }
+            }
+            .show()
     }
 
 }

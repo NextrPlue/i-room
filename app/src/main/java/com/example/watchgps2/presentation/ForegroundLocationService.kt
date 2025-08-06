@@ -41,7 +41,14 @@ class ForegroundLocationService : Service() {
                     sendLocationToUI(it.latitude, it.longitude)
 
                     // 서버 전송
-                    sendLocationToServer(1L, it.latitude, it.longitude)
+                    val prefs = getSharedPreferences("equipment_prefs", Context.MODE_PRIVATE)
+                    val savedId = prefs.getLong("equipmentId", -1L)
+
+                    if (savedId != -1L) {
+                        sendLocationToServer(savedId, it.latitude, it.longitude)
+                    } else {
+                        Log.e("EQUIPMENT", "equipmentId가 설정되지 않았습니다.")
+                    }
                 }
             }
         }
