@@ -12,6 +12,10 @@ public enum ErrorCode {
 	GLOBAL_VALIDATION_FAILED("GLOBAL_0001", "입력 값 검증에 실패했습니다.", HttpStatus.BAD_REQUEST),
 	GLOBAL_ACCESS_DENIED("GLOBAL_0002", "해당 리소스에 대한 접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
 	GLOBAL_INVALID_REQUEST_FORMAT("GLOBAL_0003", "요청 형식이 올바르지 않습니다.", HttpStatus.BAD_REQUEST),
+	GLOBAL_UNSUPPORTED_MEDIA_TYPE("GLOBAL_0004", "지원되지 않는 미디어 타입입니다.", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
+	GLOBAL_METHOD_NOT_ALLOWED("GLOBAL_0005", "지원되지 않는 HTTP 메서드입니다.", HttpStatus.METHOD_NOT_ALLOWED),
+	GLOBAL_MISSING_PARAMETER("GLOBAL_0006", "필수 요청 파라미터가 누락되었습니다.", HttpStatus.BAD_REQUEST),
+	GLOBAL_INTERNAL_SERVER_ERROR("GLOBAL_0007", "서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
 	// User Service - Authentication & Authorization (401)
 	USER_UNREGISTERED_EMAIL("USER_1001", "가입되지 않은 이메일입니다.", HttpStatus.UNAUTHORIZED),

@@ -4,7 +4,10 @@ import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -67,5 +70,56 @@ public class GlobalExceptionHandler {
 		ApiResponse<ErrorDetail> response = ApiResponse.error(errorMessage, errorDetail);
 
 		return ResponseEntity.status(ErrorCode.GLOBAL_VALIDATION_FAILED.getStatus()).body(response);
+	}
+
+	@ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+	public ResponseEntity<ApiResponse<ErrorDetail>> handleHttpMediaTypeNotSupportedException(
+		HttpMediaTypeNotSupportedException e) {
+		log.error("HttpMediaTypeNotSupportedException occurred: {}", e.getMessage());
+
+		ErrorDetail errorDetail = new ErrorDetail(ErrorCode.GLOBAL_UNSUPPORTED_MEDIA_TYPE.getCode());
+
+		ApiResponse<ErrorDetail> response = ApiResponse.error(ErrorCode.GLOBAL_UNSUPPORTED_MEDIA_TYPE.getMessage(),
+			errorDetail);
+
+		return ResponseEntity.status(ErrorCode.GLOBAL_UNSUPPORTED_MEDIA_TYPE.getStatus()).body(response);
+	}
+
+	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+	public ResponseEntity<ApiResponse<ErrorDetail>> handleHttpRequestMethodNotSupportedException(
+		HttpRequestMethodNotSupportedException e) {
+		log.error("HttpRequestMethodNotSupportedException occurred: {}", e.getMessage());
+
+		ErrorDetail errorDetail = new ErrorDetail(ErrorCode.GLOBAL_METHOD_NOT_ALLOWED.getCode());
+
+		ApiResponse<ErrorDetail> response = ApiResponse.error(ErrorCode.GLOBAL_METHOD_NOT_ALLOWED.getMessage(),
+			errorDetail);
+
+		return ResponseEntity.status(ErrorCode.GLOBAL_METHOD_NOT_ALLOWED.getStatus()).body(response);
+	}
+
+	@ExceptionHandler(MissingServletRequestParameterException.class)
+	public ResponseEntity<ApiResponse<ErrorDetail>> handleMissingServletRequestParameterException(
+		MissingServletRequestParameterException e) {
+		log.error("MissingServletRequestParameterException occurred: {}", e.getMessage());
+
+		String message = String.format("필수 파라미터 '%s'가 누락되었습니다.", e.getParameterName());
+		ErrorDetail errorDetail = new ErrorDetail(ErrorCode.GLOBAL_MISSING_PARAMETER.getCode());
+
+		ApiResponse<ErrorDetail> response = ApiResponse.error(message, errorDetail);
+
+		return ResponseEntity.status(ErrorCode.GLOBAL_MISSING_PARAMETER.getStatus()).body(response);
+	}
+
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ApiResponse<ErrorDetail>> handleException(Exception e) {
+		log.error("Unexpected exception occurred: {}", e.getMessage(), e);
+
+		ErrorDetail errorDetail = new ErrorDetail(ErrorCode.GLOBAL_INTERNAL_SERVER_ERROR.getCode());
+
+		ApiResponse<ErrorDetail> response = ApiResponse.error(ErrorCode.GLOBAL_INTERNAL_SERVER_ERROR.getMessage(),
+			errorDetail);
+
+		return ResponseEntity.status(ErrorCode.GLOBAL_INTERNAL_SERVER_ERROR.getStatus()).body(response);
 	}
 }
