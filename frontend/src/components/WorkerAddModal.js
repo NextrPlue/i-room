@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 
 const WorkerAddModal = ({ isOpen, onClose, onSave }) => {
-    const [addForm, setAddForm] = useState({
-        name: '',
-        department: '',
-        occupation: '',
-        phone: '',
-        bloodType: '',
-        jobTitle: '',
-        age: '',
-        weight: '',
-        height: '',
-        email: '',
+    // 테스트용 초기값 정의
+    const initialFormData = {
+        name: '김철수',
+        department: '건설부',
+        occupation: '현장 작업자',
+        phone: '010-1234-5678',
+        bloodType: 'A',
+        jobTitle: '팀장',
+        age: '35',
+        weight: '75.5',
+        height: '175.0',
+        email: 'test@example.com',
         gender: 'MALE',
-        password: ''
-    });
+        password: 'password123'
+    };
+
+    const [addForm, setAddForm] = useState(initialFormData);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -95,39 +98,13 @@ const WorkerAddModal = ({ isOpen, onClose, onSave }) => {
         }
 
         onSave(addForm);
-        // 폼 초기화
-        setAddForm({
-            name: '',
-            department: '',
-            occupation: '',
-            phone: '',
-            bloodType: '',
-            jobTitle: '',
-            age: '',
-            weight: '',
-            height: '',
-            email: '',
-            gender: 'MALE',
-            password: ''
-        });
+        // 폼을 예시값으로 초기화
+        setAddForm(initialFormData);
     };
 
     const handleClose = () => {
-        // 폼 초기화
-        setAddForm({
-            name: '',
-            department: '',
-            occupation: '',
-            phone: '',
-            bloodType: '',
-            jobTitle: '',
-            age: '',
-            weight: '',
-            height: '',
-            email: '',
-            gender: 'MALE',
-            password: ''
-        });
+        // 폼을 예시값으로 초기화
+        setAddForm(initialFormData);
         onClose();
     };
 

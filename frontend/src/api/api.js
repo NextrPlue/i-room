@@ -293,10 +293,30 @@ export const blueprintAPI = {
     createBlueprint: async (blueprintData) => {
         const url = `${API_CONFIG.gateway}/api/dashboard/blueprints`;
         console.log('[도면등록 요청 URL]', url);
-        console.log('[도면등록 데이터]', blueprintData);
-        return await apiRequest(url, {
-            method: 'POST',
-            body: JSON.stringify(blueprintData)
+
+        const formData = new FormData();
+
+        // 도면 정보(JSON)를 Blob으로 감싸서 전달
+        const dataBlob = new Blob(
+            [JSON.stringify({
+                blueprintUrl: "", // 백엔드에서 파일 저장 후 경로 재설정하므로 빈 값
+                floor: blueprintData.floor,
+                width: blueprintData.width,
+                height: blueprintData.height
+            })],
+            { type: "application/json" }
+        );
+        formData.append("data", dataBlob);
+
+        // 파일 첨부
+        formData.append("file", blueprintData.file);
+
+        return await fetch(url, {
+            method: "POST",
+            headers: {
+                Authorization: authUtils.getAuthHeader()
+            },
+            body: formData
         });
     },
 };
