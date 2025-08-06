@@ -69,10 +69,10 @@ class BlueprintControllerTest {
 				.file(data)
 				.contentType(MediaType.MULTIPART_FORM_DATA))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.blueprintUrl").value("/uploads/blueprints/test-uuid.png"))
-			.andExpect(jsonPath("$.floor").value(1))
-			.andExpect(jsonPath("$.width").value(100.0))
-			.andExpect(jsonPath("$.height").value(200.0));
+			.andExpect(jsonPath("$.data.blueprintUrl").value("/uploads/blueprints/test-uuid.png"))
+			.andExpect(jsonPath("$.data.floor").value(1))
+			.andExpect(jsonPath("$.data.width").value(100.0))
+			.andExpect(jsonPath("$.data.height").value(200.0));
 	}
 
 	@Test
