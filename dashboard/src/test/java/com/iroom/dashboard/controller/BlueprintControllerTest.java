@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -18,7 +19,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -26,8 +29,9 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(BlueprintController.class)
-@Import(BlueprintControllerTest.MockConfig.class)
+@WebMvcTest(value = BlueprintController.class, excludeAutoConfiguration = {
+	org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class})
+@AutoConfigureMockMvc(addFilters = false)
 class BlueprintControllerTest {
 
 	@Autowired
@@ -49,18 +53,26 @@ class BlueprintControllerTest {
 	@DisplayName("도면 등록 성공")
 	void createBlueprintTest() throws Exception {
 		// given
-		BlueprintRequest request = new BlueprintRequest("url.png", 1, 100.0, 200.0);
-		BlueprintResponse response = new BlueprintResponse(1L, "url.png", 1, 100.0, 200.0);
+		BlueprintRequest request = new BlueprintRequest(null, 1, 100.0, 200.0);
+		BlueprintResponse response = new BlueprintResponse(1L, "/uploads/blueprints/test-uuid.png", 1, 100.0, 200.0);
 
-		Mockito.when(blueprintService.createBlueprint(any())).thenReturn(response);
+		MockMultipartFile file = new MockMultipartFile("file", "test.png", "image/png", "test content".getBytes());
+		MockMultipartFile data = new MockMultipartFile("data", "", "application/json", 
+			objectMapper.writeValueAsString(request).getBytes());
+
+		Mockito.when(blueprintService.createBlueprint(any(MultipartFile.class), any(BlueprintRequest.class)))
+			.thenReturn(response);
 
 		// when & then
-		mockMvc.perform(post("/blueprints")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request)))
+		mockMvc.perform(multipart("/blueprints")
+				.file(file)
+				.file(data)
+				.contentType(MediaType.MULTIPART_FORM_DATA))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.blueprintUrl").value("url.png"))
-			.andExpect(jsonPath("$.floor").value(1));
+			.andExpect(jsonPath("$.data.blueprintUrl").value("/uploads/blueprints/test-uuid.png"))
+			.andExpect(jsonPath("$.data.floor").value(1))
+			.andExpect(jsonPath("$.data.width").value(100.0))
+			.andExpect(jsonPath("$.data.height").value(200.0));
 	}
 
 	@Test
