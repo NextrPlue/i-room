@@ -20,6 +20,11 @@ def process_message(data: dict, db: Session):
     age = data.get("age")
     heart_rate = data.get("heartRate")
 
+    # 건강 이상 예측
+    print(f"{worker_id} 근로자 건강 이상 예측 시작!")
+    result = predict_worker_risk(age, heart_rate)
+    print(f"예측 완료: {'위험' if result else '정상'}")
+
 print("\n\n***실시간 근로자 건강 이상 예측 AI 서비스 시작***\n\n")
 
 # KafkaConsumer 정의
