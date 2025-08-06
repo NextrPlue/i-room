@@ -55,7 +55,9 @@ public class HeavyEquipmentService {
 
 	//위치 업데이트 기능
 	@PreAuthorize("hasAuthority('ROLE_EQUIPMENT_SYSTEM')")
-	public EquipmentUpdateLocationResponse updateLocation(EquipmentUpdateLocationRequest request) {
+	public EquipmentUpdateLocationResponse updateLocation(byte[] binaryData) {
+		EquipmentUpdateLocationRequest request = parseBinaryData(binaryData);
+
 		HeavyEquipment equipment = heavyEquipmentRepository.findById(request.id())
 			.orElseThrow(() -> new CustomException(ErrorCode.SENSOR_EQUIPMENT_NOT_FOUND));
 
