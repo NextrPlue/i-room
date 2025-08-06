@@ -9,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/worker-sensor")
@@ -22,7 +21,7 @@ public class WorkerSensorController {
 	public ResponseEntity<WorkerSensorUpdateResponse> updateWorkerSensor(
 		@RequestHeader("X-User-Id") Long workerId,
 		@RequestBody byte[] binaryData
-	) throws IOException {
+	) {
 		WorkerSensorUpdateResponse response = workerSensorService.updateSensor(workerId, binaryData);
 		return ResponseEntity.ok(response);
 	}

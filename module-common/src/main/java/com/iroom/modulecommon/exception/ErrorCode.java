@@ -33,8 +33,17 @@ public enum ErrorCode {
 
 	// Management Service - Not Found (404)
 	MANAGEMENT_WORKER_NOT_FOUND("MANAGEMENT_2004", "유효하지 않은 근로자입니다.", HttpStatus.NOT_FOUND),
-	MANAGEMENT_ENTRY_RECORD_NOT_FOUND("MANAGEMENT_2005", "해당 근로자의 출입 기록을 찾을 수 없습니다.",
-		HttpStatus.NOT_FOUND);
+
+	// Sensor Service - Bad Request (400)
+	SENSOR_INVALID_BINARY_DATA("SENSOR_3001", "센서 바이너리 데이터 형식이 올바르지 않습니다.",
+		HttpStatus.BAD_REQUEST),
+	SENSOR_INVALID_COORDINATES("SENSOR_3003", "유효하지 않은 위치 좌표입니다.", HttpStatus.BAD_REQUEST),
+	SENSOR_INVALID_BIOMETRIC_DATA("SENSOR_3004", "유효하지 않은 생체 데이터입니다.", HttpStatus.BAD_REQUEST),
+	SENSOR_INVALID_RADIUS("SENSOR_3007", "유효하지 않은 반경 값입니다.", HttpStatus.BAD_REQUEST),
+
+	// Sensor Service - Not Found (404)
+	SENSOR_WORKER_NOT_FOUND("SENSOR_3010", "유효하지 않은 근로자입니다.", HttpStatus.NOT_FOUND),
+	SENSOR_EQUIPMENT_NOT_FOUND("SENSOR_3011", "해당 중장비를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
 
 	private final String code;
 	private final String message;
