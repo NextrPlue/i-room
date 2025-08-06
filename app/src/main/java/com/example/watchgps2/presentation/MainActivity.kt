@@ -29,9 +29,17 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.Text
+import com.example.watchgps2.data.model.ApiKeyRequest
+import com.example.watchgps2.data.model.TokenResponse
+import com.example.watchgps2.data.remote.RetrofitClient
+import com.example.watchgps2.util.TokenManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class MainActivity : ComponentActivity() {
 
@@ -50,6 +58,30 @@ class MainActivity : ComponentActivity() {
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Retrofit 초기화
+        RetrofitClient.init(applicationContext)
+
+        // 토큰 요청
+        val body = ApiKeyRequest("worker-system-api-key-ed720aef-ee6d-40fc-933f-ff9ce8e2bcae")
+        RetrofitClient.apiService.authenticate(body)
+            .enqueue(object : Callback<TokenResponse> {
+                override fun onResponse(call: Call<TokenResponse>, response: Response<TokenResponse>) {
+                    if (response.isSuccessful) {
+                        val token = response.body()?.data?.token
+                        token?.let {
+                            TokenManager.saveToken(applicationContext, it)
+                            Log.d("TOKEN", "토큰 저장됨: $it")
+                        }
+                    } else {
+                        Log.e("TOKEN", "토큰 요청 실패")
+                    }
+                }
+
+                override fun onFailure(call: Call<TokenResponse>, t: Throwable) {
+                    Log.e("TOKEN", "네트워크 오류: ${t.message}")
+                }
+            })
 
         // 권한 요청 등록
         locationPermissionRequest = registerForActivityResult(
