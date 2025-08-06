@@ -1,15 +1,18 @@
 package com.iroom.alarm.repository;
 
 import com.iroom.alarm.entity.Alarm;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +33,7 @@ public class AlarmRepositoryTest {
 
 		alarm1 = Alarm.builder()
 			.workerId(1L)
+			.occurredAt(LocalDateTime.now())
 			.incidentId(101L)
 			.incidentType("위험요소")
 			.incidentDescription("작업자 침입 감지")
@@ -37,6 +41,7 @@ public class AlarmRepositoryTest {
 
 		alarm2 = Alarm.builder()
 			.workerId(2L)
+			.occurredAt(LocalDateTime.now())
 			.incidentId(102L)
 			.incidentType("건강 이상")
 			.incidentDescription("심박수 급증")
@@ -59,24 +64,26 @@ public class AlarmRepositoryTest {
 
 	@Test
 	@DisplayName("workerId로 알림 리스트 조회 성공")
-	void findByWorkerIdOrderByOccuredAtDesc() {
+	void findByWorkerIdOrderByOccurredAtDesc() {
 		// when
-		List<Alarm> result = alarmRepository.findByWorkerIdOrderByOccuredAtDesc(1L);
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Alarm> result = alarmRepository.findByWorkerIdOrderByOccurredAtDesc(1L, pageable);
 
 		// then
-		assertThat(result).isNotEmpty();
-		assertThat(result.get(0).getIncidentDescription()).isEqualTo("작업자 침입 감지");
+		assertThat(result.getContent()).isNotEmpty();
+		assertThat(result.getContent().get(0).getIncidentDescription()).isEqualTo("작업자 침입 감지");
 	}
 
 	@Test
 	@DisplayName("최근 3시간 이내 알림 조회 성공")
-	void findByOccuredAtAfterOrderByOccuredAtDesc() {
+	void findByOccurredAtAfterOrderByOccurredAtDesc() {
 		// when
 		LocalDateTime threeHoursAgo = LocalDateTime.now().minusHours(3);
-		List<Alarm> result = alarmRepository.findByOccuredAtAfterOrderByOccuredAtDesc(threeHoursAgo);
+		Pageable pageable = PageRequest.of(0, 10);
+		Page<Alarm> result = alarmRepository.findByOccurredAtAfterOrderByOccurredAtDesc(threeHoursAgo, pageable);
 
 		// then
-		assertThat(result).hasSize(2);
+		assertThat(result.getContent()).hasSize(2);
 	}
 
 	@Test
