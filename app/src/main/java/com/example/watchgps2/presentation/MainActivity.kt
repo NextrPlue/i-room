@@ -59,8 +59,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        //Ip 초기화
+        IpConfig.initialize(this)
         // Retrofit 초기화
         RetrofitClient.init(applicationContext)
+
 
         // 토큰 요청
         val body = ApiKeyRequest("worker-system-api-key-ed720aef-ee6d-40fc-933f-ff9ce8e2bcae")
