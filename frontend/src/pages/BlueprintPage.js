@@ -22,6 +22,7 @@ const BlueprintPage = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
+    const [blueprintRotation, setBlueprintRotation] = useState(0);
     const pageSize = 10;
 
     // 도면 목록 조회 함수
@@ -60,7 +61,6 @@ const BlueprintPage = () => {
 
     // 필터 옵션
     const filterOptions = [
-        { value: 'all', label: '전체', color: '#6B7280' },
         { value: 'active', label: '회전', color: '#3B82F6' },
         { value: 'inactive', label: '다운로드', color: '#10B981' },
         { value: 'maintenance', label: '수정', color: '#F59E0B' },
@@ -82,6 +82,7 @@ const BlueprintPage = () => {
     const handleBlueprintSelect = (blueprint) => {
         setSelectedBlueprint(blueprint);
         setImageError(false); // 새 도면 선택 시 에러 상태 초기화
+        setBlueprintRotation(0); // 새 도면 선택 시 회전 상태 초기화
     };
 
     // 이미지 에러 핸들러
@@ -169,6 +170,15 @@ const BlueprintPage = () => {
         setUploadPreview(null);
         setShowUploadForm(false);
         setError(null);
+    };
+
+    // 회전 버튼 클릭 핸들러
+    const handleRotateClick = () => {
+        if (!selectedBlueprint) return;
+        
+        const newRotation = (blueprintRotation + 90) % 360;
+        setBlueprintRotation(newRotation);
+        console.log(`도면 회전: ${blueprintRotation}° → ${newRotation}°`);
     };
 
     return (
@@ -282,6 +292,7 @@ const BlueprintPage = () => {
                                     alt={`${selectedBlueprint.floor}층 도면 - 크기: ${selectedBlueprint.width}m × ${selectedBlueprint.height}m`}
                                     className={styles.previewImage}
                                     onError={handleImageError}
+                                    style={{ transform: `rotate(${blueprintRotation}deg)` }}
                                 />
                             ) : (
                                 <div className={styles.previewError}>
@@ -313,7 +324,13 @@ const BlueprintPage = () => {
                                     backgroundColor: selectedFilter === option.value ? option.color : '#F3F4F6',
                                     color: selectedFilter === option.value ? '#fff' : '#374151'
                                 }}
-                                onClick={() => setSelectedFilter(option.value)}
+                                onClick={() => {
+                                    if (option.value === 'active') {
+                                        handleRotateClick();
+                                    } else {
+                                        setSelectedFilter(option.value);
+                                    }
+                                }}
                             >
                                 {option.label}
                             </button>
