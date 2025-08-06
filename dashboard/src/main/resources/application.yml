@@ -39,6 +39,12 @@ spring:
       max-file-size: 500MB
       max-request-size: 500MB
 
+  web:
+    resources:
+      static-locations: file:uploads/
+
+app:
+  upload-dir: uploads/blueprints
 
 openai: #gpt api
   model:

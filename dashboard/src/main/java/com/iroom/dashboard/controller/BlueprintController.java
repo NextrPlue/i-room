@@ -3,12 +3,15 @@ package com.iroom.dashboard.controller;
 import com.iroom.dashboard.dto.request.BlueprintRequest;
 import com.iroom.dashboard.dto.response.BlueprintResponse;
 import com.iroom.dashboard.service.BlueprintService;
+import com.iroom.modulecommon.dto.response.ApiResponse;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.Map;
 
@@ -20,10 +23,12 @@ public class BlueprintController {
 	private final BlueprintService blueprintService;
 
 	// 도면 등록
-	@PostMapping
-	public ResponseEntity<BlueprintResponse> createBlueprint(@RequestBody BlueprintRequest request) {
-		BlueprintResponse response = blueprintService.createBlueprint(request);
-		return ResponseEntity.ok(response);
+	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<ApiResponse<BlueprintResponse>> createBlueprint(
+		@RequestPart("file") MultipartFile file,
+		@RequestPart("data") BlueprintRequest blueprintUrl) {
+		BlueprintResponse response = blueprintService.createBlueprint(file, blueprintUrl);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
 	// 도면 수정

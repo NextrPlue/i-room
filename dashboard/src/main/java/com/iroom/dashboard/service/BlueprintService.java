@@ -1,5 +1,10 @@
 package com.iroom.dashboard.service;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.UUID;
+
 import com.iroom.dashboard.dto.request.BlueprintRequest;
 import com.iroom.dashboard.dto.response.BlueprintResponse;
 import com.iroom.dashboard.entity.Blueprint;
@@ -7,6 +12,7 @@ import com.iroom.dashboard.repository.BlueprintRepository;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +20,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @Transactional
@@ -22,10 +30,43 @@ public class BlueprintService {
 
 	private final BlueprintRepository blueprintRepository;
 
+	@Value("${app.upload-dir}")
+	private String uploadDir;
+
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
-	public BlueprintResponse createBlueprint(BlueprintRequest request) {
+	public BlueprintResponse createBlueprint(MultipartFile file,BlueprintRequest request) {
+		String rootPath = System.getProperty("user.dir");
+		String saveDirPath = Paths.get(rootPath, uploadDir).toString();
+
+		File directory = new File(saveDirPath);
+		if (!directory.exists()) {
+			boolean created = directory.mkdirs();
+			if (!created) {
+				throw new RuntimeException("디렉토리 생성 실패");
+			}
+		}
+
+		String originalFilename = file.getOriginalFilename();
+		if (originalFilename == null) {
+			throw new IllegalArgumentException("파일이 선택되지 않았습니다.");
+		}
+		
+		String cleanedFilename = StringUtils.cleanPath(originalFilename);
+		String fileExtension = cleanedFilename.substring(cleanedFilename.lastIndexOf("."));
+		String storedFilename = UUID.randomUUID() + fileExtension;
+
+		File destFile = new File(directory, storedFilename);
+		try {
+			file.transferTo(destFile);
+		} catch (IOException e) {
+			throw new RuntimeException("도면 파일 저장 중 오류 발생", e);
+		}
+
+		// 저장된 정적 파일의 접근 경로(URL)
+		String blueprintUrl = "/uploads/blueprints/" + storedFilename;
+
 		Blueprint blueprint = Blueprint.builder()
-			.blueprintUrl(request.blueprintUrl())
+			.blueprintUrl(blueprintUrl)
 			.floor(request.floor())
 			.width(request.width())
 			.height(request.height())
