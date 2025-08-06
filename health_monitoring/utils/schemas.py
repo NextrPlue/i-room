@@ -9,7 +9,7 @@ from datetime import datetime
 # 클라이언트가 확인 가능한 공개 정보
 class IncidentResponse(BaseModel):
     incidentId: int
-    workerId: str
+    workerId: int
     workerLatitude: float
     workerLongitude: float
     incidentType: str
@@ -17,4 +17,4 @@ class IncidentResponse(BaseModel):
     occurredAt: datetime
 
     class Config:
-        orm_mode = True # ORM 객체를 Pydantic 모델로 자동 변환
+        from_attributes = True # ORM 객체를 Pydantic 모델로 자동 변환
