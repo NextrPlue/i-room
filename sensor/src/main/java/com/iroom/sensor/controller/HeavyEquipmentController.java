@@ -27,9 +27,9 @@ public class HeavyEquipmentController {
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
-	@PutMapping("/location")
+	@PutMapping(value = "/location", consumes = "application/octet-stream")
 	public ResponseEntity<ApiResponse<EquipmentUpdateLocationResponse>> updateLocation(
-		@RequestBody EquipmentUpdateLocationRequest request
+		@RequestBody byte[] binaryData
 	) {
 		EquipmentUpdateLocationResponse response = heavyEquipmentService.updateLocation(request);
 		return ResponseEntity.ok(ApiResponse.success(response));
