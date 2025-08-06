@@ -5,6 +5,13 @@ import json
 from kafka import KafkaConsumer
 from utils.model_utils import predict_worker_risk
 from kafka_producer import send_alert_event
+from db.orm_models import Incident
+from sqlalchemy.orm import Session
+
+# Kafka 메시지를 받아 건강 이상 여부를 판단하고 DB에 기록 및 결과 발행 함수
+def process_message(data: dict, db: Session):
+    if data.get("eventType") != "WORKER_VITAL_SIGNS_UPDATED":   # 해당 메시지만 처리
+        return
 
 print("\n\n***실시간 근로자 건강 이상 예측 AI 서비스 시작***\n\n")
 
