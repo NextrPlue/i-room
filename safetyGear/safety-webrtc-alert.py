@@ -15,41 +15,56 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime
 
-# ===== 환경설정 =====
-load_dotenv()
+# === 환경설정 ===============================================================
+load_dotenv()   # 환경변수 로딩 (.env 파일의 환경변수를 로드)
+
+# RTSP 카메라 주소
 RTSP_URL = os.getenv("RTSP_URL")
-MODEL_PATH = os.getenv("MODEL_PATH", "model/best_8m_v4.pt")
+
+# 경로 설정
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))           # 현재 파일(safety-webrtc-alert.py) 기준 디렉토리 경로(safetyGear)
+MODEL_PATH = os.path.join(BASE_DIR, "model", "best_8m_v4.pt")   # safetyGear/model/best_8m_v4.py
+
+# FPS 표시 여부 설정
 SHOW_FPS = os.getenv("SHOW_FPS", "false").lower() == "true"
 
+# RTSP_URL이 비어있거나, 잘못된 경우 -> sample 동영상으로 대체
 if not RTSP_URL or (not RTSP_URL.lower().startswith("rtsp") and not os.path.exists(RTSP_URL)):
     print("[WARN] RTSP_URL이 설정되지 않았거나 잘못됨 → test2.mp4 사용")
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    RTSP_URL = os.path.join(BASE_DIR, "test2.mp4")
+    RTSP_URL = os.path.join(BASE_DIR, "test2.mp4")  # safetyGear/test2.mp4
+# ===========================================================================
 
+# FastAPI 실행
 app = FastAPI()
 
-# ===== 전역 변수 =====
-cap = None
-capture_task = None
-clients_count = 0
-lock = asyncio.Lock()
+# === 전역 변수 ==============================================================
+cap = None              # OpenCV VideoCapture 객체 (실제 영상 입력 장치)
+capture_task = None     # asyncio에서 실행되는 비동기 캡처 루프
+clients_count = 0       # 연결된 WebRTC 클라이언트 수
+lock = asyncio.Lock()   # 클라이언트 수 변경 시 동시 접근 방지
 frame_index = 0
-frame_queue = asyncio.Queue(maxsize=1)  # 항상 최신 프레임만 저장
+frame_queue = asyncio.Queue(maxsize=1)  # 항상 최신 프레임만 보관 (WebRTC 송출 시 사용)
+# ===========================================================================
 
+# YOLO 모델의 클래스 ID와 실제 라벨 이름 매핑
 CLASS_NAMES = {
-    0: "seatbelt_on",
-    1: "helmet_on",
+    0: "safety_belt_on",    # 안전벨트
+    1: "helmet_on",         # 안전모
 }
 
+# GPU 사용 가능 여부 확인 =====================================================
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print(f"Using device: {device}")
+
 if device == "cuda":
-    model = YOLO(MODEL_PATH).to(device).half()
+    model = YOLO(MODEL_PATH).to(device).half()  # 장치가 GPU면 FP16(half precision)으로 모델 로딩 -> 속도 향상
     print("FP16(Half precision) 모드 활성화")
 else:
-    model = YOLO(MODEL_PATH).to(device)
+    model = YOLO(MODEL_PATH).to(device)         # 장치가 CPU면 FP32(기본)로 로딩
     print("CPU 모드: FP16 미지원, FP32로 실행")
+# ===========================================================================
 
+# 모델 추론 결과에 대한 로그 저장
 logging.basicConfig(filename="botsort_inference_log.txt", level=logging.INFO)
 process = psutil.Process()
 
