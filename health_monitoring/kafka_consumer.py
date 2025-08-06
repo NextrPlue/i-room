@@ -12,6 +12,13 @@ from sqlalchemy.orm import Session
 def process_message(data: dict, db: Session):
     if data.get("eventType") != "WORKER_VITAL_SIGNS_UPDATED":   # 해당 메시지만 처리
         return
+    
+    # 센서 데이터 추출
+    worker_id = data.get("workerId")
+    latitude = data.get("workerLatitude")
+    longitude = data.get("workerLongitude")
+    age = data.get("age")
+    heart_rate = data.get("heartRate")
 
 print("\n\n***실시간 근로자 건강 이상 예측 AI 서비스 시작***\n\n")
 
