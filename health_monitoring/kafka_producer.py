@@ -3,9 +3,7 @@
 
 from kafka import KafkaProducer
 import json
-import uuid
-from datetime import datetime
-from db.orm_models import Incident
+from health_monitoring.db.orm_models import Incident
 
 producer = KafkaProducer(
     bootstrap_servers=["localhost:9092"],
@@ -21,7 +19,7 @@ def send_alert_event(incident: Incident):
         "workerLongitude": incident.workerLongitude,
         "incidentType": incident.incidentType,
         "incidentDescription": incident.incidentDescription,
-        "occurredAt": incident.occurredAt
+        "occurredAt": incident.occurredAt.strftime("%Y-%m-%d %H:%M:%S")
     }
 
     producer.send("iroom", event)   # iroom 토픽으로 이벤트 발행
