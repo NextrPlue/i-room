@@ -24,12 +24,16 @@ public class WorkerSensorRepositoryTest {
 		// given
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		Integer heartRate = 75;
-		
+		Double heartRate = 75.0;
+		Long steps = 1000L;
+		Double speed = 5.2;
+		Double pace = 11.5;
+		Long stepPerMinute = 120L;
+
 		WorkerSensor workerSensor = WorkerSensor.builder()
 			.workerId(1L)
 			.build();
-		workerSensor.updateSensor(latitude, longitude, heartRate);
+		workerSensor.updateSensor(latitude, longitude, heartRate, steps, speed, pace, stepPerMinute);
 
 		// when
 		WorkerSensor saved = workerSensorRepository.save(workerSensor);
@@ -41,6 +45,10 @@ public class WorkerSensorRepositoryTest {
 		assertThat(found.get().getLatitude()).isEqualTo(latitude);
 		assertThat(found.get().getLongitude()).isEqualTo(longitude);
 		assertThat(found.get().getHeartRate()).isEqualTo(heartRate);
+		assertThat(found.get().getSteps()).isEqualTo(steps);
+		assertThat(found.get().getSpeed()).isEqualTo(speed);
+		assertThat(found.get().getPace()).isEqualTo(pace);
+		assertThat(found.get().getStepPerMinute()).isEqualTo(stepPerMinute);
 	}
 
 	@Test
@@ -49,12 +57,16 @@ public class WorkerSensorRepositoryTest {
 		// given
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		Integer heartRate = 80;
-		
+		Double heartRate = 80.0;
+		Long steps = 800L;
+		Double speed = 4.1;
+		Double pace = 14.6;
+		Long stepPerMinute = 100L;
+
 		WorkerSensor workerSensor = WorkerSensor.builder()
 			.workerId(2L)
 			.build();
-		workerSensor.updateSensor(latitude, longitude, heartRate);
+		workerSensor.updateSensor(latitude, longitude, heartRate, steps, speed, pace, stepPerMinute);
 		workerSensorRepository.save(workerSensor);
 
 		// when
@@ -65,72 +77,31 @@ public class WorkerSensorRepositoryTest {
 		assertThat(result.get().getLatitude()).isEqualTo(latitude);
 		assertThat(result.get().getLongitude()).isEqualTo(longitude);
 		assertThat(result.get().getHeartRate()).isEqualTo(heartRate);
+		assertThat(result.get().getSteps()).isEqualTo(steps);
+		assertThat(result.get().getSpeed()).isEqualTo(speed);
+		assertThat(result.get().getPace()).isEqualTo(pace);
+		assertThat(result.get().getStepPerMinute()).isEqualTo(stepPerMinute);
 	}
 
 	@Test
-	@DisplayName("updateSensor 메서드 위치 데이터 수정 테스트")
-	void updateSensorLocationTest() {
-		// given
-		Double initialLatitude = 35.8343;
-		Double initialLongitude = 128.4723;
-		Double newLatitude = 37.5665;
-		Double newLongitude = 126.9780;
-		
-		WorkerSensor workerSensor = WorkerSensor.builder()
-			.workerId(3L)
-			.build();
-		workerSensor.updateSensor(initialLatitude, initialLongitude, null);
-		WorkerSensor saved = workerSensorRepository.save(workerSensor);
-
-		// when
-		saved.updateSensor(newLatitude, newLongitude, null);
-		WorkerSensor updated = workerSensorRepository.save(saved);
-		Optional<WorkerSensor> result = workerSensorRepository.findById(updated.getId());
-
-		// then
-		assertThat(result).isPresent();
-		assertThat(result.get().getLatitude()).isEqualTo(newLatitude);
-		assertThat(result.get().getLongitude()).isEqualTo(newLongitude);
-	}
-
-	@Test
-	@DisplayName("updateSensor 메서드 심박수 데이터 수정 테스트")
-	void updateSensorHeartRateTest() {
-		// given
-		Integer initialHeartRate = 70;
-		Integer newHeartRate = 85;
-		
-		WorkerSensor workerSensor = WorkerSensor.builder()
-			.workerId(4L)
-			.build();
-		workerSensor.updateSensor(null, null, initialHeartRate);
-		WorkerSensor saved = workerSensorRepository.save(workerSensor);
-
-		// when
-		saved.updateSensor(null, null, newHeartRate);
-		WorkerSensor updated = workerSensorRepository.save(saved);
-		Optional<WorkerSensor> result = workerSensorRepository.findById(updated.getId());
-
-		// then
-		assertThat(result).isPresent();
-		assertThat(result.get().getHeartRate()).isEqualTo(newHeartRate);
-	}
-
-	@Test
-	@DisplayName("updateSensor 메서드 모든 데이터 통합 수정 테스트")
+	@DisplayName("updateSensor 데이터 수정 테스트")
 	void updateSensorAllDataTest() {
 		// given
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		Integer heartRate = 75;
-		
+		Double heartRate = 75.0;
+		Long steps = 1500L;
+		Double speed = 6.3;
+		Double pace = 9.5;
+		Long stepPerMinute = 140L;
+
 		WorkerSensor workerSensor = WorkerSensor.builder()
 			.workerId(5L)
 			.build();
 		WorkerSensor saved = workerSensorRepository.save(workerSensor);
 
 		// when
-		saved.updateSensor(latitude, longitude, heartRate);
+		saved.updateSensor(latitude, longitude, heartRate, steps, speed, pace, stepPerMinute);
 		WorkerSensor updated = workerSensorRepository.save(saved);
 		Optional<WorkerSensor> result = workerSensorRepository.findById(updated.getId());
 
@@ -139,5 +110,9 @@ public class WorkerSensorRepositoryTest {
 		assertThat(result.get().getLatitude()).isEqualTo(latitude);
 		assertThat(result.get().getLongitude()).isEqualTo(longitude);
 		assertThat(result.get().getHeartRate()).isEqualTo(heartRate);
+		assertThat(result.get().getSteps()).isEqualTo(steps);
+		assertThat(result.get().getSpeed()).isEqualTo(speed);
+		assertThat(result.get().getPace()).isEqualTo(pace);
+		assertThat(result.get().getStepPerMinute()).isEqualTo(stepPerMinute);
 	}
 }
