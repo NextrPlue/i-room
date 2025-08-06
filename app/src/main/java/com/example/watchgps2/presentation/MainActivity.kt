@@ -116,7 +116,7 @@ class MainActivity : ComponentActivity() {
                         }
                     }) {
                         Text(
-                            if (isTracking.value) "위치 추적 중지" else "위치 추적 시작",
+                            if (isTracking.value) "중지" else "시작",
                             color = Color.White
                         )
                     }
@@ -124,7 +124,7 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        // 주기적 확인 루프
+        // 주기적 위치 확인 루프
         lifecycleScope.launch {
             while (isActive){
                 var prefs = getSharedPreferences("location_prefs", MODE_PRIVATE)

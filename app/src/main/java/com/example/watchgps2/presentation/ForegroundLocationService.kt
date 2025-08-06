@@ -28,7 +28,7 @@ class ForegroundLocationService : Service() {
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 20_000L)
+        val request = LocationRequest.Builder(Priority.PRIORITY_HIGH_ACCURACY, 5_000L)
             .build()
 
         locationCallback = object : LocationCallback() {
@@ -39,7 +39,7 @@ class ForegroundLocationService : Service() {
                     sendLocationToUI(it.latitude, it.longitude)
 
                     // 서버 전송
-                    sendLocationToServer(workerId = 1L, it.latitude, it.longitude)
+                    sendLocationToServer(equipmentId = 1L, it.latitude, it.longitude)
                 }
             }
         }
@@ -82,19 +82,19 @@ class ForegroundLocationService : Service() {
     }
 
     //서버 전송 함수
-    private fun sendLocationToServer(workerId: Long, latitude: Double, longitude: Double) {
+    private fun sendLocationToServer(equipmentId: Long, latitude: Double, longitude: Double) {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 //서버 url 변경필요
-                val url = URL("https://my-wearos-test.free.beeceptor.com/api/location")
+                val url = URL("https://172.30.1.44:8080/api/sensor/heavy-equipments/location")
                 val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "POST"
+                connection.requestMethod = "PUT"
                 connection.setRequestProperty("Content-Type", "application/json")
                 connection.doOutput = true
 
                 val json = """
                 {
-                    "workerId": $workerId,
+                    "equipmentId": $equipmentId,
                     "latitude": $latitude,
                     "longitude": $longitude
                 }
