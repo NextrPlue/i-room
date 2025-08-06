@@ -40,11 +40,19 @@ public class BlueprintService {
 
 		File directory = new File(saveDirPath);
 		if (!directory.exists()) {
-			directory.mkdirs();
+			boolean created = directory.mkdirs();
+			if (!created) {
+				throw new RuntimeException("디렉토리 생성 실패");
+			}
 		}
 
-		String originalFilename = StringUtils.cleanPath(file.getOriginalFilename());
-		String fileExtension = originalFilename.substring(originalFilename.lastIndexOf("."));
+		String originalFilename = file.getOriginalFilename();
+		if (originalFilename == null) {
+			throw new IllegalArgumentException("파일이 선택되지 않았습니다.");
+		}
+		
+		String cleanedFilename = StringUtils.cleanPath(originalFilename);
+		String fileExtension = cleanedFilename.substring(cleanedFilename.lastIndexOf("."));
 		String storedFilename = UUID.randomUUID() + fileExtension;
 
 		File destFile = new File(directory, storedFilename);
