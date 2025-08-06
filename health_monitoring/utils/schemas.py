@@ -8,7 +8,7 @@ from datetime import datetime
 # Swagger 문서에 자동 등록
 # 클라이언트가 확인 가능한 공개 정보
 class IncidentResponse(BaseModel):
-    incidentId: str
+    incidentId: int
     workerId: str
     workerLatitude: float
     workerLongitude: float
