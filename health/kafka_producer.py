@@ -3,7 +3,7 @@
 
 from kafka import KafkaProducer
 import json
-from health_monitoring.db.orm_models import Incident
+from health.db.orm_models import Incident
 
 producer = KafkaProducer(
     bootstrap_servers=["localhost:9092"],
