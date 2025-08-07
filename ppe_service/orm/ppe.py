@@ -1,15 +1,13 @@
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
-import datetime
+from sqlalchemy import Column, BigInteger, Integer, String, Text, DateTime
 from database import Base
+import datetime
 
-class PPEDetection(Base):
+class PPE(Base):
     __tablename__ = "ppe"
 
-    id = Column(Integer, primary_key=True, index=True)
-    workerId = Column(Integer, ForeignKey("watch.workerId"))
-    ppe_id = Column(Integer, nullable=True)
-    imageURL = Column(String(255))
-    confidenceScore = Column(Float)
-    helmet_on = Column(Integer, default=0)
-    seatbelt_on = Column(Integer, default=0)
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    ppe_id = Column(BigInteger, unique=True, nullable=False)
+    image_url = Column(Text)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
+    helmet_on_count = Column(Integer, default=0)
+    seatbelt_on_count = Column(Integer, default=0)
