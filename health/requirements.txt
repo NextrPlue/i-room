@@ -17,6 +17,7 @@ httpx==0.28.1
 idna==3.10
 Jinja2==3.1.6
 kafka-python==2.2.15
+lightgbm==4.6.0
 markdown-it-py==3.0.0
 MarkupSafe==3.0.2
 mdurl==0.1.2
@@ -33,6 +34,7 @@ PyYAML==6.0.2
 rich==14.1.0
 rich-toolkit==0.14.9
 rignore==0.6.4
+scipy==1.15.3
 sentry-sdk==2.34.1
 shellingham==1.5.4
 six==1.17.0
