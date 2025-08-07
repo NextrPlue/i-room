@@ -40,8 +40,8 @@ public class RiskManagementService {
 			incidentDescription, // incidentDescription
 			null
 		);
-		double distance = DistanceUtil.calculateDistance(Double.parseDouble(riskManagementRequest.latitude()),
-			Double.parseDouble(riskManagementRequest.longitude()),
+		double distance = DistanceUtil.calculateDistance(riskManagementRequest.latitude(),
+			riskManagementRequest.longitude(),
 			workerLatitude,
 			workerLongitude);
 		if (distance < radius) {
