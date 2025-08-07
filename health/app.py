@@ -1,13 +1,13 @@
-# health_monitoring/app.py
-# uvicorn health_monitoring.app:app --reload
+# health/app.py
+# uvicorn health.app:app --reload
 
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel
-from health_monitoring.utils.db import init_db, get_session
-from health_monitoring.kafka_consumer import consume_worker_data
+from health.utils.db import init_db, get_session
+from health.kafka_consumer import consume_worker_data
 from contextlib import asynccontextmanager
-from health_monitoring.utils.schemas import IncidentResponse
-from health_monitoring.db.orm_models import Incident
+from health.utils.schemas import IncidentResponse
+from health.db.orm_models import Incident
 from sqlalchemy.orm import Session
 
 @asynccontextmanager
