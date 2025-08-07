@@ -34,22 +34,23 @@ public class BlueprintController {
 
 	// 도면 수정
 	@PutMapping("/{id}")
-	public ResponseEntity<BlueprintResponse> updateBlueprint(@PathVariable Long id,
+	public ResponseEntity<ApiResponse<BlueprintResponse>> updateBlueprint(@PathVariable Long id,
 		@RequestBody BlueprintRequest request) {
 		BlueprintResponse response = blueprintService.updateBlueprint(id, request);
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
 	// 도면 삭제
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Map<String, Object>> deleteBlueprint(@PathVariable Long id) {
+	public ResponseEntity<ApiResponse<Map<String, Object>>> deleteBlueprint(@PathVariable Long id) {
 		blueprintService.deleteBlueprint(id);
-		return ResponseEntity.ok(Map.of("message", "도면 삭제 완료", "deletedId", id));
+		Map<String, Object> result = Map.of("message", "도면 삭제 완료", "deletedId", id);
+		return ResponseEntity.ok(ApiResponse.success(result));
 	}
 
 	// 도면 전체 조회
 	@GetMapping
-	public ResponseEntity<PagedResponse<BlueprintResponse>> getAllBlueprints(
+	public ResponseEntity<ApiResponse<PagedResponse<BlueprintResponse>>> getAllBlueprints(
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(defaultValue = "10") int size
 	) {
