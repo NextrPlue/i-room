@@ -43,7 +43,15 @@ public enum ErrorCode {
 
 	// Sensor Service - Not Found (404)
 	SENSOR_WORKER_NOT_FOUND("SENSOR_3010", "유효하지 않은 근로자입니다.", HttpStatus.NOT_FOUND),
-	SENSOR_EQUIPMENT_NOT_FOUND("SENSOR_3011", "해당 중장비를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+	SENSOR_EQUIPMENT_NOT_FOUND("SENSOR_3011", "해당 중장비를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
+	// Dashboard Service - Bad Request (400)
+	DASHBOARD_INVALID_FILE_TYPE("DASHBOARD_4001", "허용되지 않는 파일 형식입니다.", HttpStatus.BAD_REQUEST),
+	DASHBOARD_FILE_TOO_LARGE("DASHBOARD_4002", "파일 크기가 제한을 초과했습니다.", HttpStatus.BAD_REQUEST),
+	DASHBOARD_INVALID_FILE_NAME("DASHBOARD_4003", "유효하지 않은 파일명입니다.", HttpStatus.BAD_REQUEST),
+
+	// Dashboard Service - Not Found (404)
+	DASHBOARD_BLUEPRINT_NOT_FOUND("DASHBOARD_4004", "해당 도면을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
 
 	private final String code;
 	private final String message;
