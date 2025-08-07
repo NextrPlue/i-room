@@ -77,6 +77,13 @@ async def capture_loop():
     frame_count = 0
     fps = 0
 
+    # 10초 단위로 헬멧, 안전벨트 착용 여부를 집계
+    interval_start = time.time()
+    INTERVAL_SEC = 10
+    helmet_ids = set()
+    seatbelt_ids = set()
+    total_frames = 0
+
     while clients_count > 0:   # 클라이언트 있을 때만 계속
         try:
             cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)    # RTSP/IP 카메라 재연결 가능성을 고려해서 while 안에서 VideoCapture 생성
@@ -86,13 +93,6 @@ async def capture_loop():
                 continue
 
             print(f"Capture loop started → Source: {RTSP_URL}")
-
-            # 10초 단위로 헬멧, 안전벨트 착용 여부를 집계
-            interval_start = time.time()
-            INTERVAL_SEC = 10
-            helmet_ids = set()
-            seatbelt_ids = set()
-            total_frames = 0
 
             # YOLO + BoT-SORT를 스트리밍 모드로 실행
             results = model.track(
