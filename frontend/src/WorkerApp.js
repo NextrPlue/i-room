@@ -1,5 +1,6 @@
 import React from 'react';
 import {BrowserRouter as Router, Navigate, Route, Routes, useNavigate} from 'react-router-dom';
+import './WorkerApp.css';
 
 // 근로자 레이아웃 컴포넌트
 const WorkerLayout = ({ children }) => {

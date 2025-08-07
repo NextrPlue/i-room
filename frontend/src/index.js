@@ -4,6 +4,13 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+const IS_WORKER = process.env.REACT_APP_MODE === 'worker';
+console.log('App Mode:', IS_WORKER ? '근로자' : '관리자');
+
+const App = IS_WORKER
+    ? require('./WorkerApp').default
+    : require('./App').default;
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
   <React.StrictMode>
