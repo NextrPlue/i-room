@@ -61,4 +61,5 @@ class UploadPdfControllerTest {
 		mockMvc.perform(multipart("/upload-pdf"))
 			.andExpect(status().isInternalServerError())
 			.andExpect(content().contentType(MediaType.APPLICATION_JSON));
+	}
 }
