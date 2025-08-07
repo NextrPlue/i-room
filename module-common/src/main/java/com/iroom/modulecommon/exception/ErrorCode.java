@@ -15,7 +15,8 @@ public enum ErrorCode {
 	GLOBAL_UNSUPPORTED_MEDIA_TYPE("GLOBAL_0004", "지원되지 않는 미디어 타입입니다.", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
 	GLOBAL_METHOD_NOT_ALLOWED("GLOBAL_0005", "지원되지 않는 HTTP 메서드입니다.", HttpStatus.METHOD_NOT_ALLOWED),
 	GLOBAL_MISSING_PARAMETER("GLOBAL_0006", "필수 요청 파라미터가 누락되었습니다.", HttpStatus.BAD_REQUEST),
-	GLOBAL_INTERNAL_SERVER_ERROR("GLOBAL_0007", "서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+	GLOBAL_MISSING_HEADER("GLOBAL_0007", "필수 요청 헤더가 누락되었습니다.", HttpStatus.BAD_REQUEST),
+	GLOBAL_INTERNAL_SERVER_ERROR("GLOBAL_0008", "서버 내부 오류가 발생했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
 
 	// User Service - Authentication & Authorization (401)
 	USER_UNREGISTERED_EMAIL("USER_1001", "가입되지 않은 이메일입니다.", HttpStatus.UNAUTHORIZED),
