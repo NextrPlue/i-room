@@ -88,11 +88,17 @@ async def capture_loop():
         try:
             cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)    # RTSP/IP 카메라 재연결 가능성을 고려해서 while 안에서 VideoCapture 생성
             if not cap.isOpened():
-                print("[ERROR] Cannot open video source")
+                print("[ERROR] 영상 소스를 열수 없음. 2초 후 재시도.")
                 await asyncio.sleep(2)
                 continue
 
-            print(f"Capture loop started → Source: {RTSP_URL}")
+            print(f"[INFO] 캡처 시작 → Source: {RTSP_URL}")
+
+            while clients_count > 0 and cap.isOpened():
+                ret, frame = cap.read()
+                if not ret:
+                    print("[WARN] 프레임을 읽을 수 없음. 캡처 종료 후 재시도 예정")
+                    break
 
             # YOLO + BoT-SORT를 스트리밍 모드로 실행
             results = model.track(
