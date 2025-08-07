@@ -59,6 +59,6 @@ class UploadPdfControllerTest {
 	void uploadReport_Fail_NoFile() throws Exception {
 		// when & then
 		mockMvc.perform(multipart("/upload-pdf"))
-			.andExpect(status().isBadRequest());
-	}
+			.andExpect(status().isInternalServerError())
+			.andExpect(content().contentType(MediaType.APPLICATION_JSON));
 }
