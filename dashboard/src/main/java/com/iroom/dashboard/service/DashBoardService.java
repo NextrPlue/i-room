@@ -7,7 +7,7 @@ import java.util.Map;
 
 import com.iroom.dashboard.dto.request.ReportRequest;
 import com.iroom.dashboard.dto.response.DashBoardResponse;
-import com.iroom.dashboard.dto.response.MetricSummary;
+import com.iroom.dashboard.dto.response.MetricResponse;
 import com.iroom.dashboard.entity.DashBoard;
 import com.iroom.dashboard.repository.DashBoardRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +30,7 @@ public class DashBoardService {
     private final String QDRANT_SEARCH_URL = "http://localhost:6333/collections/safety_db/points/search";
     private final DashBoardRepository dashBoardRepository;
     @PreAuthorize("hasAnyAuthority('ROLE_WORKER', 'ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER', 'ROLE_WORKER_SYSTEM')")
-    public List<MetricSummary> getMetricScore(String interval) {
+    public List<MetricResponse> getMetricScore(String interval) {
         List<Object[]> rows = switch (interval.toLowerCase()) {
             case "day" -> dashBoardRepository.getDailyMetricSummaryRaw();
             case "week" -> dashBoardRepository.getWeeklyMetricSummaryRaw();
@@ -38,7 +38,7 @@ public class DashBoardService {
             default -> throw new IllegalArgumentException("Invalid interval: " + interval);
         };
         return rows.stream()
-            .map(row -> new MetricSummary(
+            .map(row -> new MetricResponse(
                 ((Date) row[0]).toLocalDate(),
                 (String) row[1],
                 ((Number) row[2]).intValue()

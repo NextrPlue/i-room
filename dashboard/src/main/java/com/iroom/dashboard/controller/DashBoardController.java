@@ -2,7 +2,7 @@ package com.iroom.dashboard.controller;
 
 import com.iroom.dashboard.dto.request.ReportRequest;
 import com.iroom.dashboard.dto.response.DashBoardResponse;
-import com.iroom.dashboard.dto.response.MetricSummary;
+import com.iroom.dashboard.dto.response.MetricResponse;
 import com.iroom.dashboard.service.ChatService;
 import com.iroom.dashboard.service.DashBoardService;
 import com.iroom.dashboard.service.PdfService;
@@ -24,7 +24,7 @@ public class DashBoardController {
 	private final PdfService pdfService;
 
 	@GetMapping(value = "/{interval}")
-	public  ResponseEntity<List<MetricSummary>> getMetricScore(@PathVariable String interval){//day,week,month
+	public  ResponseEntity<List<MetricResponse>> getMetricScore(@PathVariable String interval){//day,week,month
 		return ResponseEntity.ok(dashBoardService.getMetricScore(interval));
 	}
 	//대시보드 조회하기
