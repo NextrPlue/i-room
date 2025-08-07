@@ -1,7 +1,6 @@
 package com.iroom.alarm.service;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.iroom.alarm.config.StompHandler;
 import com.iroom.alarm.entity.Alarm;
 import com.iroom.alarm.repository.AlarmRepository;
+import com.iroom.alarm.repository.WorkerReadModelRepository;
 import com.iroom.modulecommon.dto.event.AlarmEvent;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.modulecommon.dto.response.SimpleResponse;
@@ -30,6 +30,7 @@ public class AlarmService {
 	private final SimpMessagingTemplate messagingTemplate;
 	private final StompHandler stompHandler;
 	private final KafkaProducerService kafkaProducerService;
+	private final WorkerReadModelRepository workerReadModelRepository;
 
 	// 외부 API 호출용
 	@PreAuthorize("hasAuthority('ROLE_PPE_SYSTEM')")
@@ -47,6 +48,9 @@ public class AlarmService {
 
 	// 실제 알림 처리 로직
 	private void processAlarmEvent(AlarmEvent alarmEvent) {
+		workerReadModelRepository.findById(alarmEvent.workerId())
+			.orElseThrow(() -> new IllegalArgumentException("근로자가 존재하지 않습니다."));
+
 		Alarm alarm = Alarm.builder()
 			.workerId(alarmEvent.workerId())
 			.occurredAt(alarmEvent.occurredAt())
@@ -82,6 +86,9 @@ public class AlarmService {
 	// 근로자의 알림 목록을 조회
 	@PreAuthorize("hasAuthority('ROLE_WORKER') and #workerId == authentication.principal")
 	public PagedResponse<Alarm> getAlarmsForWorker(Long workerId, int page, int size) {
+		workerReadModelRepository.findById(workerId)
+			.orElseThrow(() -> new IllegalArgumentException("근로자가 존재하지 않습니다."));
+
 		Pageable pageable = PageRequest.of(page, size);
 		Page<Alarm> alarmPage = alarmRepository.findByWorkerIdOrderByOccurredAtDesc(workerId, pageable);
 
