@@ -102,7 +102,7 @@ class ForegroundLocationService : Service() {
             try {
                 val url = URL("${IpConfig.getBaseUrl()}/api/sensor/worker-sensor/update")  // 서버 주소로 바꾸기
                 val connection = url.openConnection() as HttpURLConnection
-                connection.requestMethod = "POST"
+                connection.requestMethod = "PUT"
                 connection.setRequestProperty("Content-Type", "application/octet-stream")
 
                 //토큰 추가
