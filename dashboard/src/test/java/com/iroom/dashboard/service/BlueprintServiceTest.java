@@ -3,6 +3,7 @@ package com.iroom.dashboard.service;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.BDDMockito.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +29,8 @@ import com.iroom.dashboard.dto.response.BlueprintResponse;
 import com.iroom.dashboard.entity.Blueprint;
 import com.iroom.dashboard.repository.BlueprintRepository;
 import com.iroom.modulecommon.dto.response.PagedResponse;
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 
 @ExtendWith(MockitoExtension.class)
 class BlueprintServiceTest {
@@ -41,8 +45,10 @@ class BlueprintServiceTest {
 	private Pageable pageable;
 	private Page<Blueprint> blueprintPage;
 	private MultipartFile validFile;
-	private MultipartFile invalidFile;
+	private MultipartFile invalidMimeTypeFile;
+	private MultipartFile invalidExtensionFile;
 	private MultipartFile nullNameFile;
+	private MultipartFile largeSizeFile;
 
 	@BeforeEach
 	void setUp() {
@@ -71,10 +77,17 @@ class BlueprintServiceTest {
 			"test image content".getBytes()
 		);
 		
-		invalidFile = new MockMultipartFile(
+		invalidMimeTypeFile = new MockMultipartFile(
 			"file",
-			"test-blueprint", // 확장자 없음
-			"text/plain",
+			"test-blueprint.png",
+			"text/plain", // 잘못된 MIME 타입
+			"test content".getBytes()
+		);
+		
+		invalidExtensionFile = new MockMultipartFile(
+			"file",
+			"test-blueprint.txt", // 잘못된 확장자
+			"image/png",
 			"test content".getBytes()
 		);
 		
@@ -83,6 +96,15 @@ class BlueprintServiceTest {
 			null, // null 파일명
 			"image/png",
 			"test content".getBytes()
+		);
+		
+		// 큰 파일 생성 (10MB 초과)
+		byte[] largeContent = new byte[11 * 1024 * 1024]; // 11MB
+		largeSizeFile = new MockMultipartFile(
+			"file",
+			"large-blueprint.png",
+			"image/png",
+			largeContent
 		);
 		
 		// upload-dir 설정
@@ -116,35 +138,48 @@ class BlueprintServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> blueprintService.createBlueprint(nullNameFile, request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("파일명이 유효하지 않습니다.");
+			.isInstanceOf(CustomException.class)
+			.extracting("errorCode")
+			.isEqualTo(ErrorCode.DASHBOARD_INVALID_FILE_NAME);
 	}
 	
 	@Test
-	@DisplayName("도면 생성 실패 - 파일 확장자 없음")
-	void createBlueprintFailNoExtension() {
+	@DisplayName("도면 생성 실패 - 잘못된 MIME 타입")
+	void createBlueprintFailInvalidMimeType() {
 		// given
 		BlueprintRequest request = new BlueprintRequest(null, 1, 100.0, 200.0);
 
 		// when & then
-		assertThatThrownBy(() -> blueprintService.createBlueprint(invalidFile, request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("파일 확장자가 없습니다.");
+		assertThatThrownBy(() -> blueprintService.createBlueprint(invalidMimeTypeFile, request))
+			.isInstanceOf(CustomException.class)
+			.extracting("errorCode")
+			.isEqualTo(ErrorCode.DASHBOARD_INVALID_FILE_TYPE);
 	}
 	
 	@Test
-	@DisplayName("도면 생성 실패 - 디렉토리 생성 실패")
-	void createBlueprintFailDirectoryCreation() {
+	@DisplayName("도면 생성 실패 - 잘못된 파일 확장자")
+	void createBlueprintFailInvalidExtension() {
 		// given
 		BlueprintRequest request = new BlueprintRequest(null, 1, 100.0, 200.0);
-		
-		// 디렉토리 생성이 실패하는 시나리오를 위해 읽기 전용 경로 설정
-		ReflectionTestUtils.setField(blueprintService, "uploadDir", "/invalid/readonly/path");
 
 		// when & then
-		assertThatThrownBy(() -> blueprintService.createBlueprint(validFile, request))
-			.isInstanceOf(RuntimeException.class)
-			.hasMessage("디렉토리 생성 실패");
+		assertThatThrownBy(() -> blueprintService.createBlueprint(invalidExtensionFile, request))
+			.isInstanceOf(CustomException.class)
+			.extracting("errorCode")
+			.isEqualTo(ErrorCode.DASHBOARD_INVALID_FILE_TYPE);
+	}
+	
+	@Test
+	@DisplayName("도면 생성 실패 - 파일 크기 초과")
+	void createBlueprintFailFileTooLarge() {
+		// given
+		BlueprintRequest request = new BlueprintRequest(null, 1, 100.0, 200.0);
+
+		// when & then
+		assertThatThrownBy(() -> blueprintService.createBlueprint(largeSizeFile, request))
+			.isInstanceOf(CustomException.class)
+			.extracting("errorCode")
+			.isEqualTo(ErrorCode.DASHBOARD_FILE_TOO_LARGE);
 	}
 
 	@Test
@@ -174,8 +209,9 @@ class BlueprintServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> blueprintService.updateBlueprint(id, request))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("해당 도면이 존재하지 않습니다.");
+			.isInstanceOf(CustomException.class)
+			.extracting("errorCode")
+			.isEqualTo(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND);
 	}
 
 	@Test
@@ -201,8 +237,9 @@ class BlueprintServiceTest {
 
 		// when & then
 		assertThatThrownBy(() -> blueprintService.deleteBlueprint(id))
-			.isInstanceOf(IllegalArgumentException.class)
-			.hasMessage("해당 도면이 존재하지 않습니다.");
+			.isInstanceOf(CustomException.class)
+			.extracting("errorCode")
+			.isEqualTo(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND);
 	}
 
 	@Test
@@ -218,5 +255,76 @@ class BlueprintServiceTest {
 		assertThat(response.content()).hasSize(2);
 		assertThat(response.totalElements()).isEqualTo(2);
 		assertThat(response.content().get(0).floor()).isEqualTo(1);
+	}
+	
+	@Test
+	@DisplayName("도면 이미지 리소스 조회 성공")
+	void getBlueprintImageResourceTest() throws IOException {
+		// given
+		Long id = 1L;
+		
+		// 현재 작업 디렉토리에 테스트 파일 생성
+		String rootPath = System.getProperty("user.dir");
+		String uploadDirName = "test-uploads";
+		
+		// rootPath/uploadDir/filename 경로로 파일 생성
+		File uploadDir = new File(rootPath, uploadDirName);
+		uploadDir.mkdirs();
+		File testFile = new File(uploadDir, "test-image.png");
+		testFile.createNewFile();
+		testFile.deleteOnExit();
+		uploadDir.deleteOnExit();
+		
+		Blueprint blueprintWithImage = Blueprint.builder()
+			.blueprintUrl("/uploads/blueprints/test-image.png")
+			.floor(1)
+			.width(100.0)
+			.height(200.0)
+			.build();
+			
+		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprintWithImage));
+		ReflectionTestUtils.setField(blueprintService, "uploadDir", uploadDirName);
+		
+		// when
+		Resource resource = blueprintService.getBlueprintImageResource(id);
+		
+		// then
+		assertThat(resource).isNotNull();
+		assertThat(resource.exists()).isTrue();
+	}
+	
+	@Test
+	@DisplayName("도면 이미지 리소스 조회 실패 - 존재하지 않는 도면")
+	void getBlueprintImageResourceFailNotFound() {
+		// given
+		Long id = 999L;
+		given(blueprintRepository.findById(id)).willReturn(Optional.empty());
+
+		// when & then
+		assertThatThrownBy(() -> blueprintService.getBlueprintImageResource(id))
+			.isInstanceOf(CustomException.class)
+			.extracting("errorCode")
+			.isEqualTo(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND);
+	}
+	
+	@Test
+	@DisplayName("도면 이미지 리소스 조회 실패 - blueprintUrl이 null")
+	void getBlueprintImageResourceFailNullUrl() {
+		// given
+		Long id = 1L;
+		Blueprint blueprintWithNullUrl = Blueprint.builder()
+			.blueprintUrl(null)
+			.floor(1)
+			.width(100.0)
+			.height(200.0)
+			.build();
+			
+		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprintWithNullUrl));
+
+		// when & then
+		assertThatThrownBy(() -> blueprintService.getBlueprintImageResource(id))
+			.isInstanceOf(CustomException.class)
+			.extracting("errorCode")
+			.isEqualTo(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND);
 	}
 }
