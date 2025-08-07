@@ -15,6 +15,8 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -89,8 +91,8 @@ class BlueprintControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.blueprintUrl").value("new_url.png"))
-			.andExpect(jsonPath("$.floor").value(2));
+			.andExpect(jsonPath("$.data.blueprintUrl").value("new_url.png"))
+			.andExpect(jsonPath("$.data.floor").value(2));
 	}
 
 	@Test
@@ -102,8 +104,8 @@ class BlueprintControllerTest {
 		// when & then
 		mockMvc.perform(delete("/blueprints/1"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.message").value("도면 삭제 완료"))
-			.andExpect(jsonPath("$.deletedId").value(1));
+			.andExpect(jsonPath("$.data.message").value("도면 삭제 완료"))
+			.andExpect(jsonPath("$.data.deletedId").value(1));
 	}
 
 	@Test
@@ -122,8 +124,26 @@ class BlueprintControllerTest {
 		// when & then
 		mockMvc.perform(get("/blueprints?page=0&size=10"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.content").isArray())
-			.andExpect(jsonPath("$.content.length()").value(2))
-			.andExpect(jsonPath("$.content[0].floor").value(1));
+			.andExpect(jsonPath("$.data.content").isArray())
+			.andExpect(jsonPath("$.data.content.length()").value(2))
+			.andExpect(jsonPath("$.data.content[0].floor").value(1));
+	}
+	
+	@Test
+	@DisplayName("도면 이미지 조회 성공")
+	void getBlueprintImageTest() throws Exception {
+		// given
+		Long id = 1L;
+		byte[] imageContent = "test image content".getBytes();
+		Resource resource = new ByteArrayResource(imageContent);
+		
+		Mockito.when(blueprintService.getBlueprintImageResource(id)).thenReturn(resource);
+
+		// when & then
+		mockMvc.perform(get("/blueprints/" + id + "/image"))
+			.andExpect(status().isOk())
+			.andExpect(header().string("Content-Disposition", "inline"))
+			.andExpect(content().contentType(MediaType.IMAGE_JPEG))
+			.andExpect(content().bytes(imageContent));
 	}
 }

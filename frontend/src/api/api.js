@@ -319,4 +319,13 @@ export const blueprintAPI = {
             body: formData
         });
     },
+
+    /**
+     * 도면 이미지 조회
+     * @param {number} blueprintId - 도면 ID
+     * @returns {Promise} 이미지 URL
+     */
+    getBlueprintImage: (blueprintId) => {
+        return `${API_CONFIG.gateway}/api/dashboard/blueprints/${blueprintId}/image`;
+    }
 };
