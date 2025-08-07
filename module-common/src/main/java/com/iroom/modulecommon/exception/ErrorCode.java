@@ -48,7 +48,10 @@ public enum ErrorCode {
 
 	// Sensor Service - Not Found (404)
 	SENSOR_WORKER_NOT_FOUND("SENSOR_3005", "유효하지 않은 근로자입니다.", HttpStatus.NOT_FOUND),
-	SENSOR_EQUIPMENT_NOT_FOUND("SENSOR_3006", "해당 중장비를 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+	SENSOR_EQUIPMENT_NOT_FOUND("SENSOR_3006", "해당 중장비를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
+	// Alarm Service - Not Found (404)
+	ALARM_WORKER_NOT_FOUND("ALARM_4001", "유효하지 않은 근로자입니다.", HttpStatus.NOT_FOUND);
 
 	private final String code;
 	private final String message;
