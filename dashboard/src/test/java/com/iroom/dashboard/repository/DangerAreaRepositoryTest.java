@@ -32,16 +32,16 @@ public class DangerAreaRepositoryTest {
 
 		dangerArea1 = DangerArea.builder()
 			.blueprintId(1L)
-			.latitude("10")
-			.longitude("20")
+			.latitude(10.0)
+			.longitude(20.0)
 			.width(30.0)
 			.height(40.0)
 			.build();
 
 		DangerArea dangerArea2 = DangerArea.builder()
 			.blueprintId(1L)
-			.latitude("10")
-			.longitude("20")
+			.latitude(10.0)
+			.longitude(20.0)
 			.width(25.0)
 			.height(35.0)
 			.build();
@@ -60,8 +60,8 @@ public class DangerAreaRepositoryTest {
 
 		// then
 		assertThat(result).isPresent();
-		assertThat(result.get().getLatitude()).isEqualTo("10");
-		assertThat(result.get().getLongitude()).isEqualTo("20");
+		assertThat(result.get().getLatitude()).isEqualTo(10.0);
+		assertThat(result.get().getLongitude()).isEqualTo(20.0);
 	}
 
 	@Test
