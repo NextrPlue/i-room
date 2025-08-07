@@ -5,8 +5,8 @@ import com.iroom.dashboard.entity.DangerArea;
 public record DangerAreaResponse(
 	Long id,
 	Long blueprintId,
-	String latitude,
-	String longitude,
+	Double latitude,
+	Double longitude,
 	Double width,
 	Double height
 ) {

@@ -17,7 +17,7 @@ public class WorkerSensorController {
 
 	private final WorkerSensorService workerSensorService;
 
-	@PostMapping(value = "/update", consumes = "application/octet-stream")
+	@PutMapping(value = "/update", consumes = "application/octet-stream")
 	public ResponseEntity<ApiResponse<WorkerSensorUpdateResponse>> updateWorkerSensor(
 		@RequestHeader("X-User-Id") Long workerId,
 		@RequestBody byte[] binaryData
