@@ -1,13 +1,13 @@
-.worker-login-container {
+.workerLoginContainer {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #f8f9fd;
     padding: 20px;
 }
 
-.worker-login-box {
+.workerLoginBox {
     background: white;
     border-radius: 20px;
     padding: 40px 30px;
@@ -17,8 +17,7 @@
     text-align: center;
 }
 
-/* 프로필 아이콘 */
-.profile-icon {
+.profileIcon {
     margin: 0 auto 20px;
     width: 80px;
     height: 80px;
@@ -29,30 +28,28 @@
     justify-content: center;
 }
 
-/* 타이틀 */
-.login-title {
+.loginTitle {
     font-size: 20px;
     font-weight: 600;
     color: #333;
     margin-bottom: 8px;
 }
 
-.login-subtitle {
+.loginSubtitle {
     font-size: 14px;
     color: #666;
     margin-bottom: 30px;
 }
 
-/* 폼 스타일 */
-.login-form {
+.loginForm {
     text-align: left;
 }
 
-.form-group {
+.formGroup {
     margin-bottom: 20px;
 }
 
-.form-group label {
+.formGroup label {
     display: block;
     font-size: 14px;
     color: #333;
@@ -60,7 +57,7 @@
     font-weight: 500;
 }
 
-.form-group input {
+.formGroup input {
     width: 100%;
     padding: 12px 15px;
     border: 1px solid #e0e0e0;
@@ -70,18 +67,17 @@
     box-sizing: border-box;
 }
 
-.form-group input:focus {
+.formGroup input:focus {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
 }
 
-.form-group input::placeholder {
+.formGroup input::placeholder {
     color: #999;
 }
 
-/* 로그인 버튼 */
-.login-button {
+.loginButton {
     width: 100%;
     padding: 14px;
     background: #333;
@@ -95,35 +91,34 @@
     margin-top: 10px;
 }
 
-.login-button:hover {
+.loginButton:hover {
     background: #555;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
 }
 
-.login-button:active {
+.loginButton:active {
     transform: translateY(0);
 }
 
-/* 모바일 반응형 */
 @media (max-width: 480px) {
-    .worker-login-box {
+    .workerLoginBox {
         padding: 30px 20px;
     }
 
-    .login-title {
+    .loginTitle {
         font-size: 18px;
     }
 
-    .login-subtitle {
+    .loginSubtitle {
         font-size: 13px;
     }
 
-    .form-group input {
+    .formGroup input {
         font-size: 16px; /* iOS 줌 방지 */
     }
 
-    .login-button {
+    .loginButton {
         padding: 12px;
         font-size: 15px;
     }

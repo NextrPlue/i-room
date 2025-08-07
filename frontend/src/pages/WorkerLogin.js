@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styles from '../styles/WorkerLogin.css';
+import styles from '../styles/WorkerLogin.module.css';
 
 const WorkerLogin = ({ onLogin }) => {
     const [formData, setFormData] = useState({
@@ -23,28 +23,28 @@ const WorkerLogin = ({ onLogin }) => {
     };
 
     return (
-        <div className="worker-login-container">
-            <div className="worker-login-box">
+        <div className={styles.workerLoginContainer}>
+            <div className={styles.workerLoginBox}>
                 {/* 프로필 아이콘 */}
-                <div className="profile-icon">
+                <div className={styles.profileIcon}>
                     <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" fill="#e0e0e0"/>
-                        <path d="M12 12C13.6569 12 15 10.6569 15 9C15 7.34315 13.6569 6 12 6C10.3431 6 9 7.34315 9 9C9 10.6569 10.3431 12 12 12Z" fill="#999"/>
-                        <path d="M12 14C8.68629 14 6 16.6863 6 20H18C18 16.6863 15.3137 14 12 14Z" fill="#999"/>
+                        <circle cx="12" cy="12" r="10" fill="#e0e0e0" />
+                        <path d="M12 12C13.6569 12 15 10.6569 15 9C15 7.34315 13.6569 6 12 6C10.3431 6 9 7.34315 9 9C9 10.6569 10.3431 12 12 12Z" fill="#999" />
+                        <path d="M12 14C8.68629 14 6 16.6863 6 20H18C18 16.6863 15.3137 14 12 14Z" fill="#999" />
                     </svg>
                 </div>
 
                 {/* 타이틀 */}
-                <h1 className="login-title">
-                    안녕하세요 "김재환"님,
+                <h1 className={styles.loginTitle}>
+                    안녕하세요!
                 </h1>
-                <p className="login-subtitle">
+                <p className={styles.loginSubtitle}>
                     오늘도 안전하고 활기찬 하루 보내세요!
                 </p>
 
                 {/* 로그인 폼 */}
-                <form onSubmit={handleSubmit} className="login-form">
-                    <div className="form-group">
+                <form onSubmit={handleSubmit} className={styles.loginForm}>
+                    <div className={styles.formGroup}>
                         <label htmlFor="email">이메일</label>
                         <input
                             type="email"
@@ -57,7 +57,7 @@ const WorkerLogin = ({ onLogin }) => {
                         />
                     </div>
 
-                    <div className="form-group">
+                    <div className={styles.formGroup}>
                         <label htmlFor="password">비밀번호</label>
                         <input
                             type="password"
@@ -70,8 +70,8 @@ const WorkerLogin = ({ onLogin }) => {
                         />
                     </div>
 
-                    <button type="submit" className="login-button">
-                        🔒 로그인
+                    <button type="submit" className={styles.loginButton}>
+                        로그인
                     </button>
                 </form>
             </div>
