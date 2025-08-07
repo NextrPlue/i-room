@@ -151,13 +151,9 @@ async def capture_loop():
                     helmet_count = len(helmet_ids)
                     seatbelt_count = len(seatbelt_ids)
 
-                    helmet_ratio = helmet_count / total_frames if total_frames > 0 else 0
-                    seatbelt_ratio = seatbelt_count / total_frames if total_frames > 0 else 0
-
                     send_alert(frame, helmet_count, seatbelt_count)
 
-                    print(f"[REPORT] 10초 요약: helmet_count={helmet_count}, seatbelt_count={seatbelt_count}, "
-                          f"helmet_ratio={helmet_ratio:.2f}, seatbelt_ratio={seatbelt_ratio:.2f}")
+                    print(f"[REPORT] 10초 요약: helmet_count={helmet_count}, seatbelt_count={seatbelt_count}")
 
                     # 집계 초기화 후, 다음 인터벌 시작
                     interval_start = current_time
