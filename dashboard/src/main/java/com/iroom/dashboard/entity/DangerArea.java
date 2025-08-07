@@ -16,10 +16,10 @@ public class DangerArea {
 	private Long blueprintId;
 
 	@Column(nullable = false)
-	private String latitude;
+	private Double latitude;
 
 	@Column(nullable = false)
-	private String longitude;
+	private Double longitude;
 
 	@Column(nullable = false)
 	private Double width;
@@ -28,7 +28,7 @@ public class DangerArea {
 	private Double height;
 
 	@Builder
-	public DangerArea(Long blueprintId, String latitude, String longitude, Double width, Double height) {
+	public DangerArea(Long blueprintId, Double latitude, Double longitude, Double width, Double height) {
 		this.blueprintId = blueprintId;
 		this.latitude = latitude;
 		this.longitude = longitude;
@@ -36,7 +36,7 @@ public class DangerArea {
 		this.height = height;
 	}
 
-	public void update(String latitude, String longitude, Double width, Double height) {
+	public void update(Double latitude, Double longitude, Double width, Double height) {
 		this.latitude = latitude;
 		this.longitude = longitude;
 		this.width = width;
