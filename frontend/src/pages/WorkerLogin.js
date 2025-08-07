@@ -29,8 +29,6 @@ const WorkerLogin = ({ onLogin }) => {
                 <div className={styles.profileIcon}>
                     <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
                         <circle cx="12" cy="12" r="10" fill="#e0e0e0" />
-                        <path d="M12 12C13.6569 12 15 10.6569 15 9C15 7.34315 13.6569 6 12 6C10.3431 6 9 7.34315 9 9C9 10.6569 10.3431 12 12 12Z" fill="#999" />
-                        <path d="M12 14C8.68629 14 6 16.6863 6 20H18C18 16.6863 15.3137 14 12 14Z" fill="#999" />
                     </svg>
                 </div>
 
