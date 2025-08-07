@@ -1,165 +1,177 @@
 version: '2'
+
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:latest
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
     ports:
-      - 2181:2181
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --default-authentication-plugin=mysql_native_password
+
   kafka:
     image: confluentinc/cp-kafka:latest
-    container_name: my-kafka
-    depends_on:
-      - zookeeper
+    container_name: kafka
     ports:
-      - 9092:9092
+      - "9092:9092"   # 클라이언트 통신용
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://my-kafka:29092,PLAINTEXT_HOST://my-kafka:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # KRaft 모드 필수 설정
+      CLUSTER_ID: "kraft-cluster-01"
+      KAFKA_KRAFT_MODE: "true"
+      KAFKA_PROCESS_ROLES: "broker,controller"
+      KAFKA_NODE_ID: "1"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9094"
+
+      # 리스너 설정
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,INTERNAL://0.0.0.0:9093,CONTROLLER://0.0.0.0:9094
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,INTERNAL://kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      # 기타 필수 설정
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-topics --list --bootstrap-server localhost:9092 || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
-  admin:
-    depends_on: 
-      - kafka
-    image: adoptopenjdk/maven-openjdk11:latest
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    command: mvn spring-boot:run
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
     ports:
-      - 8082:8082
-    working_dir: /usr/src
-    volumes:
-      - ./admin:/usr/src
-      - ./maven-repo:/root/.m2
-      
-  dashboard:
-    depends_on: 
+      - "8090:8080"
+    depends_on:
       - kafka
-    image: adoptopenjdk/maven-openjdk11:latest
     environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    command: mvn spring-boot:run
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9093
+      DYNAMIC_CONFIG_ENABLED: 'true'
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
     ports:
-      - 8083:8083
-    working_dir: /usr/src
+      - "6333:6333"   # HTTP API
+      - "6334:6334"   # gRPC API
     volumes:
-      - ./dashboard:/usr/src
-      - ./maven-repo:/root/.m2
-      
-  worker:
-    depends_on: 
+      - qdrant-data:/qdrant/storage
+    environment:
+      # Qdrant 설정
+      QDRANT__SERVICE__HTTP_PORT: 6333
+      QDRANT__SERVICE__GRPC_PORT: 6334
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:6333/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  gateway-service:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    env_file:
+      - .env
+    depends_on:
+      - user-service
+      - management-service
+      - sensor-service
+      - alarm-service
+      - dashboard-service
+
+  user-service:
+    build:
+      context: ./user
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    env_file:
+      - .env
+    depends_on:
+      - mysql
       - kafka
-    image: adoptopenjdk/maven-openjdk11:latest
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    command: mvn spring-boot:run
+
+  management-service:
+    build:
+      context: ./management
+      dockerfile: Dockerfile
+    container_name: management-service
     ports:
-      - 8084:8084
-    working_dir: /usr/src
-    volumes:
-      - ./worker:/usr/src
-      - ./maven-repo:/root/.m2
-      
-  alarm:
-    depends_on: 
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    env_file:
+      - .env
+    depends_on:
+      - mysql
       - kafka
-    image: adoptopenjdk/maven-openjdk11:latest
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    command: mvn spring-boot:run
+
+  sensor-service:
+    build:
+      context: ./sensor
+      dockerfile: Dockerfile
+    container_name: sensor-service
     ports:
-      - 8085:8085
-    working_dir: /usr/src
-    volumes:
-      - ./alarm:/usr/src
-      - ./maven-repo:/root/.m2
-      
-  management:
-    depends_on: 
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    env_file:
+      - .env
+    depends_on:
+      - mysql
       - kafka
-    image: adoptopenjdk/maven-openjdk11:latest
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    command: mvn spring-boot:run
+
+  alarm-service:
+    build:
+      context: ./alarm
+      dockerfile: Dockerfile
+    container_name: alarm-service
     ports:
-      - 8086:8086
-    working_dir: /usr/src
-    volumes:
-      - ./management:/usr/src
-      - ./maven-repo:/root/.m2
-      
-  risk:
-    depends_on: 
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    env_file:
+      - .env
+    depends_on:
+      - mysql
       - kafka
-    image: adoptopenjdk/maven-openjdk11:latest
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    command: mvn spring-boot:run
+
+  dashboard-service:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: dashboard-service
     ports:
-      - 8087:8087
-    working_dir: /usr/src
-    volumes:
-      - ./risk:/usr/src
-      - ./maven-repo:/root/.m2
-      
-  idle:
-    depends_on: 
+      - "8085:8085"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+    env_file:
+      - .env
+    depends_on:
+      - mysql
       - kafka
-    image: adoptopenjdk/maven-openjdk11:latest
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    command: mvn spring-boot:run
-    ports:
-      - 8088:8088
-    working_dir: /usr/src
-    volumes:
-      - ./idle:/usr/src
-      - ./maven-repo:/root/.m2
-      
-  health:
-    depends_on: 
-      - kafka
-    image: adoptopenjdk/maven-openjdk11:latest
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    command: mvn spring-boot:run
-    ports:
-      - 8089:8089
-    working_dir: /usr/src
-    volumes:
-      - ./health:/usr/src
-      - ./maven-repo:/root/.m2
-      
-  eqipment:
-    depends_on: 
-      - kafka
-    image: adoptopenjdk/maven-openjdk11:latest
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    command: mvn spring-boot:run
-    ports:
-      - 8090:8090
-    working_dir: /usr/src
-    volumes:
-      - ./eqipment:/usr/src
-      - ./maven-repo:/root/.m2
-      
-  sensor:
-    depends_on: 
-      - kafka
-    image: adoptopenjdk/maven-openjdk11:latest
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    command: mvn spring-boot:run
-    ports:
-      - 8091:8091
-    working_dir: /usr/src
-    volumes:
-      - ./sensor:/usr/src
-      - ./maven-repo:/root/.m2
-      
+      - qdrant
+
+volumes:
+  mysql-data:
+  kafka-data:
+  qdrant-data:
