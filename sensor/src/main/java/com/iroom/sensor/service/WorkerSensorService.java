@@ -64,6 +64,8 @@ public class WorkerSensorService {
 
 		kafkaProducerService.publishMessage("WORKER_SENSOR_UPDATED", workerSensorEvent);
 
+		sendGpsToPythonServer(request.latitude(), request.longitude(), workerId);
+
 		return new WorkerSensorUpdateResponse(workerSensor);
 	}
 
