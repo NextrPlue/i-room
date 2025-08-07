@@ -1,5 +1,8 @@
 package com.iroom.sensor.service;
 
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+
 import com.iroom.modulecommon.exception.CustomException;
 import com.iroom.modulecommon.exception.ErrorCode;
 import com.iroom.modulecommon.service.KafkaProducerService;
@@ -9,6 +12,7 @@ import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterRequest;
 import com.iroom.sensor.dto.HeavyEquipment.EquipmentRegisterResponse;
 import com.iroom.modulecommon.dto.event.EquipmentEvent;
 import com.iroom.modulecommon.dto.event.EquipmentLocationEvent;
+import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateRequest;
 import com.iroom.sensor.entity.HeavyEquipment;
 import com.iroom.sensor.repository.HeavyEquipmentRepository;
 
@@ -51,7 +55,9 @@ public class HeavyEquipmentService {
 
 	//위치 업데이트 기능
 	@PreAuthorize("hasAuthority('ROLE_EQUIPMENT_SYSTEM')")
-	public EquipmentUpdateLocationResponse updateLocation(EquipmentUpdateLocationRequest request) {
+	public EquipmentUpdateLocationResponse updateLocation(byte[] binaryData) {
+		EquipmentUpdateLocationRequest request = parseBinaryData(binaryData);
+
 		HeavyEquipment equipment = heavyEquipmentRepository.findById(request.id())
 			.orElseThrow(() -> new CustomException(ErrorCode.SENSOR_EQUIPMENT_NOT_FOUND));
 
@@ -71,6 +77,22 @@ public class HeavyEquipmentService {
 
 		return new EquipmentUpdateLocationResponse(equipment.getId(), equipment.getLatitude(),
 			equipment.getLongitude());
+	}
+
+	private EquipmentUpdateLocationRequest parseBinaryData(byte [] binaryData) {
+		try (ByteArrayInputStream bis = new ByteArrayInputStream(binaryData);
+			 DataInputStream dis = new DataInputStream(bis)) {
+
+			Long id = dis.readLong();
+			Double latitude = dis.readDouble();
+			Double longitude = dis.readDouble();
+
+			validateCoordinates(latitude, longitude);
+
+			return new EquipmentUpdateLocationRequest(id, latitude, longitude);
+		} catch (Exception e) {
+			throw new CustomException(ErrorCode.SENSOR_INVALID_BINARY_DATA);
+		}
 	}
 
 	private void validateCoordinates(Double latitude, Double longitude) {
