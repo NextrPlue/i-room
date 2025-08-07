@@ -4,7 +4,9 @@ package com.iroom.dashboard.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import java.time.LocalDateTime;
+
+import java.time.LocalDate;
+
 
 
 @Entity
@@ -25,10 +27,15 @@ public class DashBoard {
     private Integer metricValue;
 
     @Column
-    private LocalDateTime recordedAt;
+    private LocalDate recordedAt;
 
     @PrePersist
     protected void onCreate() {
-        this.recordedAt = LocalDateTime.now();
+        this.recordedAt = LocalDate.now();
+    }
+
+
+    public void updateMetricValue(){
+        this.metricValue+=1;
     }
 }

@@ -3,7 +3,8 @@ package com.iroom.dashboard.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+
 
 import com.iroom.dashboard.dto.response.DashBoardResponse;
 import com.iroom.dashboard.entity.DashBoard;
@@ -34,7 +35,7 @@ class DashBoardServiceTest {
 		dashBoard = DashBoard.builder()
 			.metricType("t")
 			.metricValue(123)
-			.recordedAt(LocalDateTime.now())
+			.recordedAt(LocalDate.now())
 			.build();
 	}
 
