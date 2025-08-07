@@ -55,7 +55,7 @@ public class HeavyEquipmentControllerTest {
 	}
 
 	@Test
-	@DisplayName("POST /heavy-equipments/location - 장비 위치 업데이트 테스트 (binary 데이터)")
+	@DisplayName("PUT /heavy-equipments/location - 장비 위치 업데이트 테스트 (binary 데이터)")
 	void updateEquipmentLocationTest() throws Exception {
 		// given
 		Long equipmentId = 1L;
@@ -71,7 +71,7 @@ public class HeavyEquipmentControllerTest {
 		given(equipmentService.updateLocation(binaryData)).willReturn(response);
 
 		// when & then
-		mockMvc.perform(post("/heavy-equipments/location")
+		mockMvc.perform(put("/heavy-equipments/location")
 				.contentType("application/octet-stream")
 				.content(binaryData))
 			.andExpect(status().isOk())

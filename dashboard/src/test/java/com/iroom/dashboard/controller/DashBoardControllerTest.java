@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
@@ -34,7 +35,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(DashBoardController.class)
+@WebMvcTest(controllers = DashBoardController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
 @Import(DashBoardControllerTest.MockConfig.class)
 class DashBoardControllerTest {
 
@@ -128,8 +129,8 @@ class DashBoardControllerTest {
 
 		// when & then
 		mockMvc.perform(post("/dashboards/report")
-						.contentType(MediaType.APPLICATION_JSON)
-						.content(objectMapper.writeValueAsString(request)))
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_PDF))
 			.andExpect(header().string("Content-Disposition",

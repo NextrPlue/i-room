@@ -31,7 +31,7 @@ public class WorkerSensorControllerTest {
 	private WorkerSensorService workerSensorService;
 
 	@Test
-	@DisplayName("POST /worker-sensor/update - 통합 센서 데이터 업데이트 테스트 (모든 데이터)")
+	@DisplayName("PUT /worker-sensor/update - 센서 데이터 업데이트 테스트")
 	void updateWorkerSensorAllDataTest() throws Exception {
 		// given
 		Long workerId = 1L;
@@ -49,7 +49,7 @@ public class WorkerSensorControllerTest {
 		given(workerSensorService.updateSensor(workerId, binaryData)).willReturn(response);
 
 		// when & then
-		mockMvc.perform(post("/worker-sensor/update")
+		mockMvc.perform(put("/worker-sensor/update")
 				.header("X-User-Id", workerId)
 				.contentType("application/octet-stream")
 				.content(binaryData))
@@ -63,68 +63,6 @@ public class WorkerSensorControllerTest {
 			.andExpect(jsonPath("$.data.speed").value(speed))
 			.andExpect(jsonPath("$.data.pace").value(pace))
 			.andExpect(jsonPath("$.data.stepPerMinute").value(stepPerMinute));
-	}
-
-	@Test
-	@DisplayName("POST /worker-sensor/update - 통합 센서 데이터 업데이트 테스트 (위치만)")
-	void updateWorkerSensorLocationOnlyTest() throws Exception {
-		// given
-		Long workerId = 2L;
-		Double latitude = 35.8343;
-		Double longitude = 128.4723;
-		Double heartRate = 0.0;
-		Long steps = 0L;
-		Double speed = 0.0;
-		Double pace = 0.0;
-		Long stepPerMinute = 0L;
-
-		byte[] binaryData = createBinaryData(latitude, longitude, heartRate, steps, speed, pace, stepPerMinute);
-		WorkerSensorUpdateResponse response = new WorkerSensorUpdateResponse(workerId, latitude, longitude, heartRate,
-			steps, speed, pace, stepPerMinute);
-		given(workerSensorService.updateSensor(workerId, binaryData)).willReturn(response);
-
-		// when & then
-		mockMvc.perform(post("/worker-sensor/update")
-				.header("X-User-Id", workerId)
-				.contentType("application/octet-stream")
-				.content(binaryData))
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value("success"))
-			.andExpect(jsonPath("$.data.workerId").value(workerId))
-			.andExpect(jsonPath("$.data.latitude").value(latitude))
-			.andExpect(jsonPath("$.data.longitude").value(longitude))
-			.andExpect(jsonPath("$.data.heartRate").value(heartRate));
-	}
-
-	@Test
-	@DisplayName("POST /worker-sensor/update - 통합 센서 데이터 업데이트 테스트 (심박수만)")
-	void updateWorkerSensorHeartRateOnlyTest() throws Exception {
-		// given
-		Long workerId = 3L;
-		Double latitude = 0.0;
-		Double longitude = 0.0;
-		Double heartRate = 90.0;
-		Long steps = 0L;
-		Double speed = 0.0;
-		Double pace = 0.0;
-		Long stepPerMinute = 0L;
-
-		byte[] binaryData = createBinaryData(latitude, longitude, heartRate, steps, speed, pace, stepPerMinute);
-		WorkerSensorUpdateResponse response = new WorkerSensorUpdateResponse(workerId, latitude, longitude, heartRate,
-			steps, speed, pace, stepPerMinute);
-		given(workerSensorService.updateSensor(workerId, binaryData)).willReturn(response);
-
-		// when & then
-		mockMvc.perform(post("/worker-sensor/update")
-				.header("X-User-Id", workerId)
-				.contentType("application/octet-stream")
-				.content(binaryData))
-			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.status").value("success"))
-			.andExpect(jsonPath("$.data.workerId").value(workerId))
-			.andExpect(jsonPath("$.data.latitude").value(latitude))
-			.andExpect(jsonPath("$.data.longitude").value(longitude))
-			.andExpect(jsonPath("$.data.heartRate").value(heartRate));
 	}
 
 	@Test
