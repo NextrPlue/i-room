@@ -9,9 +9,6 @@ import java.util.UUID;
 
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 
 import com.iroom.dashboard.dto.request.BlueprintRequest;
 import com.iroom.dashboard.dto.response.BlueprintResponse;
@@ -151,7 +148,7 @@ public class BlueprintService {
 	}
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
-	public ResponseEntity<Resource> getBlueprintImage(Long id) {
+	public Resource getBlueprintImageResource(Long id) {
 		Blueprint blueprint = blueprintRepository.findById(id)
 			.orElseThrow(() -> new CustomException(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND));
 
@@ -171,12 +168,7 @@ public class BlueprintService {
 				throw new CustomException(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND);
 			}
 			
-			Resource resource = new FileSystemResource(file);
-			
-			return ResponseEntity.ok()
-				.header(HttpHeaders.CONTENT_DISPOSITION, "inline")
-				.contentType(MediaType.IMAGE_JPEG)
-				.body(resource);
+			return new FileSystemResource(file);
 				
 		} catch (Exception e) {
 			throw new CustomException(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND);

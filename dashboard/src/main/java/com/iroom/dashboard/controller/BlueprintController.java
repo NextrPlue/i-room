@@ -66,6 +66,10 @@ public class BlueprintController {
 	// 도면 이미지 조회
 	@GetMapping("/{id}/image")
 	public ResponseEntity<Resource> getBlueprintImage(@PathVariable Long id) {
-		return blueprintService.getBlueprintImage(id);
+		Resource resource = blueprintService.getBlueprintImageResource(id);
+		return ResponseEntity.ok()
+			.header("Content-Disposition", "inline")
+			.contentType(MediaType.IMAGE_JPEG)
+			.body(resource);
 	}
 }
