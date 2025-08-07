@@ -1,4 +1,4 @@
-# health_monitoring/kafka_consumer.py
+# health/kafka_consumer.py
 # 근로자 센서 이벤트 수신
 
 import json
