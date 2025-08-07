@@ -34,8 +34,21 @@ public class PdfService { //PDF로 변환
 		document.open();
 
 		// 한글 폰트 설정
-		String fontPath = "/System/Library/Fonts/Supplemental/AppleGothic.ttf"; // mac은 "/Library/Fonts/AppleGothic.ttf"
-		BaseFont baseFont = BaseFont.createFont(fontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+		BaseFont baseFont;
+		try {
+			// macOS
+			String macFontPath = "/System/Library/Fonts/Supplemental/AppleGothic.ttf";
+			baseFont = BaseFont.createFont(macFontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+		} catch (Exception e) {
+			try {
+				// Windows - 맑은 고딕
+				String windowsFontPath = "c:/windows/fonts/malgun.ttf";
+				baseFont = BaseFont.createFont(windowsFontPath, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+			} catch (Exception ex) {
+				// Fallback to built-in font
+				baseFont = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.CP1252, BaseFont.NOT_EMBEDDED);
+			}
+		}
 		Font headerFont = new Font(baseFont, 14, Font.BOLD);
 		Font bodyFont = new Font(baseFont, 12);
 
