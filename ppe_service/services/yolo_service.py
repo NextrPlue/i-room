@@ -55,13 +55,13 @@ async def run_detection_loop(interval_sec: int = 10):
             helmet_count = sum(1 for v in helmet_votes.values() if v / total_frames >= 0.5)
             seatbelt_count = sum(1 for v in seatbelt_votes.values() if v / total_frames >= 0.5)
 
-            # 위반 여부 검사
-            check_result = check_violation(helmet_count, seatbelt_count, frame, interval_sec)
+            # 위반 여부 검사 (total_workers는 내부 DB 조회로 처리)
+            check_result = check_violation(helmet_count, seatbelt_count)
             print(f"[CHECK] {check_result}")
 
             # 위반 발생 시 핸들러 호출
             if check_result["violation"]:
-                await handle_violation(helmet_count, seatbelt_count, frame, check_result)
+                handle_violation(helmet_count, seatbelt_count, frame, check_result)
 
             # 초기화
             helmet_votes.clear()
