@@ -1,4 +1,4 @@
-# health_monitoring/utils/model_utils.py
+# health/utils/model_utils.py
 
 import pickle
 import numpy as np

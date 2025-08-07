@@ -1,8 +1,8 @@
-# /utils/db.py
+# health/utils/db.py
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from health_monitoring.db.orm_models import Base
+from health.db.orm_models import Base
 import os
 from dotenv import load_dotenv
 from typing import Iterator

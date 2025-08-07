@@ -1,4 +1,4 @@
-# /utils/schemas.py
+# health/utils/schemas.py
 
 from pydantic import BaseModel
 from datetime import datetime
