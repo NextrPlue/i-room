@@ -133,19 +133,9 @@ async def capture_loop():
                 elif cls_id == 1:
                     helmet_ids.add(track_id)
 
-            for r in results:
-                if clients_count <= 0:
-                    await asyncio.sleep(0.5)
-                    if clients_count <= 0:
-                        print("[DEBUG] No clients after wait → stopping capture loop")
-                        break
-
-                if r is None or r.orig_img is None:
-                    print(f"[ERROR] Received empty frame at index={frame_index}")
-                    break
-
                 # FPS 계산 (옵션)
                 frame_count += 1
+                total_frames += 1
                 elapsed = time.time() - prev_time
                 if elapsed >= 1.0:
                     fps = frame_count / elapsed
@@ -155,8 +145,6 @@ async def capture_loop():
                 if SHOW_FPS:
                     cv2.putText(frame, f"FPS: {fps:.2f}", (20, 40),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
-
-                total_frames += 1
 
                 current_time = time.time()
                 if current_time - interval_start >= INTERVAL_SEC:   # 매 10초마다 send_alert() 호출 -> 서버/대시보드로 전송
