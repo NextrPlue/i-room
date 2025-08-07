@@ -25,4 +25,14 @@ subprojects {
             languageVersion = JavaLanguageVersion.of(17)
         }
     }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+    }
+
+    tasks.withType(Javadoc).tap {
+        configureEach {
+            options.encoding = 'UTF-8'
+        }
+    }
 }
