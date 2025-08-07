@@ -100,6 +100,14 @@ async def capture_loop():
                     print("[WARN] 프레임을 읽을 수 없음. 캡처 종료 후 재시도 예정")
                     break
 
+            # FPS 계산
+            frame_index += 1
+
+            # Resize
+            orig_h, orig_w = frame.shape[:2]
+            target_w, target_h = 640, 640
+            frame = cv2.resize(frame, (target_w, target_h))
+
             # YOLO + BoT-SORT를 스트리밍 모드로 실행
             results = model.track(
                 source=RTSP_URL,
@@ -121,13 +129,6 @@ async def capture_loop():
                 if r is None or r.orig_img is None:
                     print(f"[ERROR] Received empty frame at index={frame_index}")
                     break
-
-                frame = r.orig_img.copy()
-                frame_index += 1
-
-                orig_h, orig_w = frame.shape[:2]
-                target_w, target_h = 640, 640
-                frame = cv2.resize(frame, (target_w, target_h))
 
                 # FPS 계산 (옵션)
                 frame_count += 1
