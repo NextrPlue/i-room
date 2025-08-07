@@ -97,4 +97,37 @@ public class BlueprintService {
 		Page<BlueprintResponse> responsePage = blueprints.map(BlueprintResponse::new);
 		return PagedResponse.of(responsePage);
 	}
+
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
+	public ResponseEntity<Resource> getBlueprintImage(Long id) {
+		Blueprint blueprint = blueprintRepository.findById(id)
+			.orElseThrow(() -> new CustomException(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND));
+
+		if (blueprint.getBlueprintUrl() == null || blueprint.getBlueprintUrl().isEmpty()) {
+			throw new CustomException(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND);
+		}
+
+		try {
+			// 파일 경로에서 파일명 추출 (/uploads/blueprints/filename.jpg -> filename.jpg)
+			String filename = blueprint.getBlueprintUrl().substring(blueprint.getBlueprintUrl().lastIndexOf("/") + 1);
+			
+			String rootPath = System.getProperty("user.dir");
+			String filePath = Paths.get(rootPath, uploadDir, filename).toString();
+			
+			File file = new File(filePath);
+			if (!file.exists()) {
+				throw new CustomException(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND);
+			}
+			
+			Resource resource = new FileSystemResource(file);
+			
+			return ResponseEntity.ok()
+				.header(HttpHeaders.CONTENT_DISPOSITION, "inline")
+				.contentType(MediaType.IMAGE_JPEG)
+				.body(resource);
+				
+		} catch (Exception e) {
+			throw new CustomException(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND);
+		}
+	}
 }
