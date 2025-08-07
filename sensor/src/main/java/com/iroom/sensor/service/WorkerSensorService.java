@@ -12,17 +12,22 @@ import com.iroom.sensor.repository.WorkerSensorRepository;
 import com.iroom.sensor.repository.WorkerReadModelRepository;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @Transactional
 @RequiredArgsConstructor
+@Slf4j
 public class WorkerSensorService {
 
 	private final KafkaProducerService kafkaProducerService;
@@ -58,6 +63,8 @@ public class WorkerSensorService {
 		);
 
 		kafkaProducerService.publishMessage("WORKER_SENSOR_UPDATED", workerSensorEvent);
+
+		sendGpsToPythonServer(request.latitude(), request.longitude(), workerId);
 
 		return new WorkerSensorUpdateResponse(workerSensor);
 	}
@@ -115,6 +122,22 @@ public class WorkerSensorService {
 		}
 		if (stepPerMinute != null && stepPerMinute < 0) {
 			throw new CustomException(ErrorCode.SENSOR_INVALID_BIOMETRIC_DATA);
+		}
+	}
+
+	private void sendGpsToPythonServer(Double latitude, Double longitude, Long workerId) {
+		RestTemplate restTemplate = new RestTemplate();
+
+		Map<String, Object> gpsData = new HashMap<>();
+		gpsData.put("workerId", workerId);
+		gpsData.put("latitude", latitude);
+		gpsData.put("longitude", longitude);
+
+		try {
+			restTemplate.postForEntity("http://localhost:8000/gps/", gpsData, String.class);
+			log.info("Python 서버에 GPS 전송 완료: {}", gpsData);
+		} catch (Exception e) {
+			log.error("Python 서버 GPS 전송 실패", e);
 		}
 	}
 }
