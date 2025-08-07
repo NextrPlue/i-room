@@ -85,101 +85,93 @@ async def capture_loop():
     total_frames = 0
 
     while clients_count > 0:   # 클라이언트 있을 때만 계속
-        try:
-            cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)    # RTSP/IP 카메라 재연결 가능성을 고려해서 while 안에서 VideoCapture 생성
-            if not cap.isOpened():
-                print("[ERROR] 영상 소스를 열수 없음. 2초 후 재시도.")
-                await asyncio.sleep(2)
-                continue
+        cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)    # RTSP/IP 카메라 재연결 가능성을 고려해서 while 안에서 VideoCapture 생성
+        if not cap.isOpened():
+            print("[ERROR] 영상 소스를 열수 없음. 2초 후 재시도.")
+            await asyncio.sleep(2)
+            continue
 
-            print(f"[INFO] 캡처 시작 → Source: {RTSP_URL}")
+        print(f"[INFO] 캡처 시작 → Source: {RTSP_URL}")
 
-            while clients_count > 0 and cap.isOpened():
-                ret, frame = cap.read()
-                if not ret:
-                    print("[WARN] 프레임을 읽을 수 없음. 캡처 종료 후 재시도 예정")
-                    break
+        while clients_count > 0 and cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                print("[WARN] 프레임을 읽을 수 없음. 캡처 종료 후 재시도 예정")
+                break
 
-            # FPS 계산
-            frame_index += 1
+        # FPS 계산
+        frame_index += 1
 
-            # Resize
-            orig_h, orig_w = frame.shape[:2]
-            target_w, target_h = 640, 640
-            frame = cv2.resize(frame, (target_w, target_h))
+        # Resize
+        orig_h, orig_w = frame.shape[:2]
+        target_w, target_h = 640, 640
+        frame = cv2.resize(frame, (target_w, target_h))
 
-            # YOLO 결과
-            results = model.predict(frame, conf=0.2, verbose=False)[0]
+        # YOLO 결과
+        results = model.predict(frame, conf=0.2, verbose=False)[0]
 
-            # YOLO 결과 영상에 반영
-            for box in results.boxes:
-                x1, y1, x2, y2 = map(float, box.xyxy[0])
-                scale_x = target_w / orig_w
-                scale_y = target_h / orig_h
-                x1, y1, x2, y2 = int(x1 * scale_x), int(y1 * scale_y), int(x2 * scale_x), int(y2 * scale_y)
-                cls_id = int(box.cls[0])
-                conf = float(box.conf[0])
-                track_id = -1
+        # YOLO 결과 영상에 반영
+        for box in results.boxes:
+            x1, y1, x2, y2 = map(float, box.xyxy[0])
+            scale_x = target_w / orig_w
+            scale_y = target_h / orig_h
+            x1, y1, x2, y2 = int(x1 * scale_x), int(y1 * scale_y), int(x2 * scale_x), int(y2 * scale_y)
+            cls_id = int(box.cls[0])
+            conf = float(box.conf[0])
+            track_id = -1
 
-                label = f"ID {track_id} | {CLASS_NAMES.get(cls_id, str(cls_id))} {conf:.2f}"
-                color = (0, 255, 0)
+            label = f"ID {track_id} | {CLASS_NAMES.get(cls_id, str(cls_id))} {conf:.2f}"
+            color = (0, 255, 0)
 
-                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                cv2.putText(frame, label, (x1, y1 - 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+            cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+            cv2.putText(frame, label, (x1, y1 - 10),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
 
-                if cls_id == 0:
-                    seatbelt_ids.add(track_id)
-                elif cls_id == 1:
-                    helmet_ids.add(track_id)
+            if cls_id == 0:
+                seatbelt_ids.add(track_id)
+            elif cls_id == 1:
+                helmet_ids.add(track_id)
 
-                # FPS 계산 (옵션)
-                frame_count += 1
-                total_frames += 1
-                elapsed = time.time() - prev_time
-                if elapsed >= 1.0:
-                    fps = frame_count / elapsed
-                    frame_count = 0
-                    prev_time = time.time()
+            # FPS 계산 (옵션)
+            frame_count += 1
+            total_frames += 1
+            elapsed = time.time() - prev_time
+            if elapsed >= 1.0:
+                fps = frame_count / elapsed
+                frame_count = 0
+                prev_time = time.time()
 
-                if SHOW_FPS:
-                    cv2.putText(frame, f"FPS: {fps:.2f}", (20, 40),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+            if SHOW_FPS:
+                cv2.putText(frame, f"FPS: {fps:.2f}", (20, 40),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
 
-                current_time = time.time()
-                if current_time - interval_start >= INTERVAL_SEC:   # 매 10초마다 send_alert() 호출 -> 서버/대시보드로 전송
-                    helmet_count = len(helmet_ids)
-                    seatbelt_count = len(seatbelt_ids)
+            current_time = time.time()
+            if current_time - interval_start >= INTERVAL_SEC:   # 매 10초마다 send_alert() 호출 -> 서버/대시보드로 전송
+                helmet_count = len(helmet_ids)
+                seatbelt_count = len(seatbelt_ids)
 
-                    send_alert(frame, helmet_count, seatbelt_count)
+                send_alert(frame, helmet_count, seatbelt_count)
 
-                    print(f"[REPORT] 10초 요약: helmet_count={helmet_count}, seatbelt_count={seatbelt_count}")
+                print(f"[REPORT] 10초 요약: helmet_count={helmet_count}, seatbelt_count={seatbelt_count}")
 
-                    # 집계 초기화 후, 다음 인터벌 시작
-                    interval_start = current_time
-                    helmet_ids.clear()
-                    seatbelt_ids.clear()
-                    total_frames = 0
+                # 집계 초기화 후, 다음 인터벌 시작
+                interval_start = current_time
+                helmet_ids.clear()
+                seatbelt_ids.clear()
+                total_frames = 0
 
-                # 최신 프레임만 queue에 유지 (WebRTC 전송 시 지연 방지)
-                if not frame_queue.empty():
-                    try:
-                        frame_queue.get_nowait()  # 이전 프레임 제거
-                    except asyncio.QueueEmpty:
-                        pass
-                await frame_queue.put(frame)
+            # 최신 프레임만 queue에 유지 (WebRTC 전송 시 지연 방지)
+            if not frame_queue.empty():
+                try:
+                    frame_queue.get_nowait()  # 이전 프레임 제거
+                except asyncio.QueueEmpty:
+                    pass
+            await frame_queue.put(frame)
 
-        except Exception as e:
-            print(f"[ERROR] Exception in capture loop: {e}")
 
-        finally:
-            if cap:
-                cap.release()
-                cap = None
-            print(f"Capture loop stopped at frame {frame_index}")
-
-        if RTSP_URL.endswith(".mp4"):
-            break
+        cap.release()
+        print(f"[INFO] 캡처 루프 종료. 재연결 시도 예정...")
+        await asyncio.sleep(1)
 
 # ===== WebRTC용 Track =====
 class SharedCameraStreamTrack(VideoStreamTrack):
