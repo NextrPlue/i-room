@@ -1,13 +1,13 @@
-# health_monitoring/kafka_consumer.py
+# health/kafka_consumer.py
 # 근로자 센서 이벤트 수신
 
 import json
 from kafka import KafkaConsumer
 
-from health_monitoring.utils.model_utils import predict_worker_risk
-from health_monitoring.utils.db import SessionLocal
-from health_monitoring.db.orm_models import Incident
-from health_monitoring.kafka_producer import send_alert_event
+from health.utils.model_utils import predict_worker_risk
+from health.utils.db import SessionLocal
+from health.db.orm_models import Incident
+from health.kafka_producer import send_alert_event
 
 from sqlalchemy.orm import Session
 from datetime import datetime

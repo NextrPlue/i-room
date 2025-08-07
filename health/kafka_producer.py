@@ -1,9 +1,9 @@
-# health_monitoring/kafka_producer.py
+# health/kafka_producer.py
 # 근로자 건강 이상 분류 결과를 Kafka 토픽으로 발행
 
 from kafka import KafkaProducer
 import json
-from health_monitoring.db.orm_models import Incident
+from health.db.orm_models import Incident
 
 producer = KafkaProducer(
     bootstrap_servers=["localhost:9092"],
