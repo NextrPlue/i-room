@@ -57,9 +57,3 @@ spring:
               filters:
                 - JwtAuthenticationFilter
                 - RewritePath=/api/dashboard/(?<segment>.*), /$\{segment}
-            - id: dashboard-static-route
-              uri: http://localhost:8085
-              predicates:
-                - Path=/uploads/**
-              filters:
-                - StripPrefix=0
