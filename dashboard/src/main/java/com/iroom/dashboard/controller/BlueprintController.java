@@ -8,6 +8,7 @@ import com.iroom.modulecommon.dto.response.PagedResponse;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -58,6 +59,12 @@ public class BlueprintController {
 			size = 0;
 
 		PagedResponse<BlueprintResponse> responses = blueprintService.getAllBlueprints(page, size);
-		return ResponseEntity.ok(responses);
+		return ResponseEntity.ok(ApiResponse.success(responses));
+	}
+
+	// 도면 이미지 조회
+	@GetMapping("/{id}/image")
+	public ResponseEntity<Resource> getBlueprintImage(@PathVariable Long id) {
+		return blueprintService.getBlueprintImage(id);
 	}
 }
