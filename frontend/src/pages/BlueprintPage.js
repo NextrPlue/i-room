@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from '../styles/Blueprint.module.css';
 import { blueprintAPI } from '../api/api';
+import { authUtils } from '../utils/auth';
 
 const BlueprintPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -23,6 +24,7 @@ const BlueprintPage = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [totalElements, setTotalElements] = useState(0);
     const [blueprintRotation, setBlueprintRotation] = useState(0);
+    const [imageBlob, setImageBlob] = useState(null);
     const pageSize = 10;
 
     // 도면 목록 조회 함수
@@ -36,14 +38,16 @@ const BlueprintPage = () => {
                 size: pageSize
             });
 
-            setBlueprints(response.content || []);
-            setCurrentPage(response.page || 0);
-            setTotalPages(response.totalPages || 0);
-            setTotalElements(response.totalElements || 0);
+            const data = response.data || response;
+            
+            setBlueprints(data.content || []);
+            setCurrentPage(data.page || 0);
+            setTotalPages(data.totalPages || 0);
+            setTotalElements(data.totalElements || 0);
 
             // 첫 번째 도면을 기본 선택
-            if (response.content && response.content.length > 0) {
-                setSelectedBlueprint(response.content[0]);
+            if (data.content && data.content.length > 0) {
+                handleBlueprintSelect(data.content[0]);
             }
 
         } catch (err) {
@@ -58,6 +62,15 @@ const BlueprintPage = () => {
     useEffect(() => {
         fetchBlueprints(0);
     }, []);
+
+    // 컴포넌트 언마운트 시 blob URL 정리
+    useEffect(() => {
+        return () => {
+            if (imageBlob) {
+                URL.revokeObjectURL(imageBlob);
+            }
+        };
+    }, [imageBlob]);
 
     // 필터 옵션
     const filterOptions = [
@@ -78,11 +91,49 @@ const BlueprintPage = () => {
         return matchesSearch && matchesFilter;
     });
 
+    // 이미지 로드 함수
+    const loadBlueprintImage = async (blueprintId) => {
+        try {
+            const imageUrl = blueprintAPI.getBlueprintImage(blueprintId);
+            const authHeader = authUtils.getAuthHeader();
+            
+            const response = await fetch(imageUrl, {
+                headers: {
+                    Authorization: authHeader
+                }
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.log('- Error Response:', errorText);
+            }
+            
+            const blob = await response.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            setImageBlob(blobUrl);
+            setImageError(false);
+        } catch (error) {
+            console.error('이미지 로드 실패:', error);
+            setImageError(true);
+            setImageBlob(null);
+        }
+    };
+
     // 도면 선택 핸들러
     const handleBlueprintSelect = (blueprint) => {
         setSelectedBlueprint(blueprint);
         setImageError(false); // 새 도면 선택 시 에러 상태 초기화
         setBlueprintRotation(0); // 새 도면 선택 시 회전 상태 초기화
+        
+        // 이전 blob URL 정리
+        if (imageBlob) {
+            URL.revokeObjectURL(imageBlob);
+        }
+        
+        // 새 이미지 로드
+        if (blueprint && blueprint.id) {
+            loadBlueprintImage(blueprint.id);
+        }
     };
 
     // 이미지 에러 핸들러
@@ -189,11 +240,15 @@ const BlueprintPage = () => {
         }
 
         try {
-            const imageUrl = `http://localhost:8080${selectedBlueprint.blueprintUrl}`;
+            const imageUrl = blueprintAPI.getBlueprintImage(selectedBlueprint.id);
             const fileName = `${selectedBlueprint.floor}층_도면.jpg`;
             
-            // 이미지 다운로드
-            const response = await fetch(imageUrl);
+            // 이미지 다운로드 (JWT 토큰 포함)
+            const response = await fetch(imageUrl, {
+                headers: {
+                    Authorization: authUtils.getAuthHeader()
+                }
+            });
             const blob = await response.blob();
             
             // 다운로드 링크 생성
@@ -318,9 +373,9 @@ const BlueprintPage = () => {
                         <div className={styles.blueprintPreview}>
                             <h3 className={styles.previewTitle}>{selectedBlueprint.floor}층 도면</h3>
 
-                            {selectedBlueprint.blueprintUrl && !imageError ? (
+                            {selectedBlueprint.blueprintUrl && !imageError && imageBlob ? (
                                 <img
-                                    src={`http://localhost:8080${selectedBlueprint.blueprintUrl}`}
+                                    src={imageBlob}
                                     alt={`${selectedBlueprint.floor}층 도면 - 크기: ${selectedBlueprint.width}m × ${selectedBlueprint.height}m`}
                                     className={styles.previewImage}
                                     onError={handleImageError}
@@ -399,7 +454,7 @@ const BlueprintPage = () => {
                                         <span className={styles.detailLabel}>도면 URL:</span>
                                         <span className={styles.detailValue}>
                                             <a
-                                                href={`http://localhost:8080${selectedBlueprint.blueprintUrl}`}
+                                                href={imageBlob}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                             >
@@ -457,7 +512,7 @@ const BlueprintPage = () => {
                                         <div className={styles.fileDropArea}>
                                             <div className={styles.uploadIcon}>📁</div>
                                             <p>도면 이미지를 선택하세요</p>
-                                            <span>PNG, JPG, GIF 형식 (최대 10MB)</span>
+                                            <span>PNG, JPG 형식 (최대 10MB)</span>
                                         </div>
                                     )}
                                 </label>
