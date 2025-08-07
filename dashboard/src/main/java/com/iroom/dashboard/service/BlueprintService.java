@@ -3,15 +3,26 @@ package com.iroom.dashboard.service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
+
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 import com.iroom.dashboard.dto.request.BlueprintRequest;
 import com.iroom.dashboard.dto.response.BlueprintResponse;
 import com.iroom.dashboard.entity.Blueprint;
 import com.iroom.dashboard.repository.BlueprintRepository;
 import com.iroom.modulecommon.dto.response.PagedResponse;
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.data.domain.Page;
@@ -33,36 +44,14 @@ public class BlueprintService {
 	@Value("${app.upload-dir}")
 	private String uploadDir;
 
+	private static final List<String> ALLOWED_EXTENSIONS = Arrays.asList(".png", ".jpg", ".jpeg");
+	private static final List<String> ALLOWED_MIME_TYPES = Arrays.asList(
+		"image/png", "image/jpeg", "image/jpg");
+	private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
-	public BlueprintResponse createBlueprint(MultipartFile file,BlueprintRequest request) {
-		String rootPath = System.getProperty("user.dir");
-		String saveDirPath = Paths.get(rootPath, uploadDir).toString();
-
-		File directory = new File(saveDirPath);
-		if (!directory.exists()) {
-			boolean created = directory.mkdirs();
-			if (!created) {
-				throw new RuntimeException("디렉토리 생성 실패");
-			}
-		}
-
-		String originalFilename = file.getOriginalFilename();
-		if (originalFilename == null) {
-			throw new IllegalArgumentException("파일이 선택되지 않았습니다.");
-		}
-		
-		String cleanedFilename = StringUtils.cleanPath(originalFilename);
-		String fileExtension = cleanedFilename.substring(cleanedFilename.lastIndexOf("."));
-		String storedFilename = UUID.randomUUID() + fileExtension;
-
-		File destFile = new File(directory, storedFilename);
-		try {
-			file.transferTo(destFile);
-		} catch (IOException e) {
-			throw new RuntimeException("도면 파일 저장 중 오류 발생", e);
-		}
-
-		// 저장된 정적 파일의 접근 경로(URL)
+	public BlueprintResponse createBlueprint(MultipartFile file, BlueprintRequest request) {
+		String storedFilename = saveFile(file);
 		String blueprintUrl = "/uploads/blueprints/" + storedFilename;
 
 		Blueprint blueprint = Blueprint.builder()
@@ -74,10 +63,73 @@ public class BlueprintService {
 		return new BlueprintResponse(blueprintRepository.save(blueprint));
 	}
 
+	private String saveFile(MultipartFile file) {
+		// 파일 검증
+		validateFileBasic(file);
+		
+		File directory = createUploadDirectory();
+		String storedFilename = generateFilename(file);
+
+		File destFile = new File(directory, storedFilename);
+		try {
+			file.transferTo(destFile);
+		} catch (IOException e) {
+			throw new RuntimeException("도면 파일 저장 중 오류 발생", e);
+		}
+
+		return storedFilename;
+	}
+	
+	private void validateFileBasic(MultipartFile file) {
+		// 파일 크기 검증
+		if (file.getSize() > MAX_FILE_SIZE) {
+			throw new CustomException(ErrorCode.DASHBOARD_FILE_TOO_LARGE);
+		}
+
+		// MIME 타입 검증
+		String contentType = file.getContentType();
+		if (contentType == null || !ALLOWED_MIME_TYPES.contains(contentType)) {
+			throw new CustomException(ErrorCode.DASHBOARD_INVALID_FILE_TYPE);
+		}
+	}
+	
+	private String generateFilename(MultipartFile file) {
+		String originalFilename = file.getOriginalFilename();
+		if (originalFilename == null || originalFilename.trim().isEmpty()) {
+			throw new CustomException(ErrorCode.DASHBOARD_INVALID_FILE_NAME);
+		}
+
+		String cleanedFilename = StringUtils.cleanPath(originalFilename);
+		if (!cleanedFilename.contains(".")) {
+			throw new CustomException(ErrorCode.DASHBOARD_INVALID_FILE_NAME);
+		}
+
+		String fileExtension = cleanedFilename.substring(cleanedFilename.lastIndexOf(".")).toLowerCase();
+		if (!ALLOWED_EXTENSIONS.contains(fileExtension)) {
+			throw new CustomException(ErrorCode.DASHBOARD_INVALID_FILE_TYPE);
+		}
+		
+		return UUID.randomUUID() + fileExtension;
+	}
+
+	private File createUploadDirectory() {
+		String rootPath = System.getProperty("user.dir");
+		String saveDirPath = Paths.get(rootPath, uploadDir).toString();
+
+		File directory = new File(saveDirPath);
+		if (!directory.exists()) {
+			if (!directory.mkdirs()) {
+				throw new RuntimeException("업로드 디렉토리 생성에 실패했습니다: " + saveDirPath);
+			}
+		}
+		return directory;
+	}
+
+
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public BlueprintResponse updateBlueprint(Long id, BlueprintRequest request) {
 		Blueprint blueprint = blueprintRepository.findById(id)
-			.orElseThrow(() -> new IllegalArgumentException("해당 도면이 존재하지 않습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND));
 		blueprint.update(request.blueprintUrl(), request.floor(), request.width(), request.height());
 		return new BlueprintResponse(blueprint);
 	}
@@ -85,7 +137,7 @@ public class BlueprintService {
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public void deleteBlueprint(Long id) {
 		if (!blueprintRepository.existsById(id)) {
-			throw new IllegalArgumentException("해당 도면이 존재하지 않습니다.");
+			throw new CustomException(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND);
 		}
 		blueprintRepository.deleteById(id);
 	}
