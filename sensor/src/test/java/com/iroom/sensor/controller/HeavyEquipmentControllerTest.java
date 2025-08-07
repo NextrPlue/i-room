@@ -17,6 +17,10 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
 @WebMvcTest(controllers = HeavyEquipmentController.class, excludeAutoConfiguration = SecurityAutoConfiguration.class)
 public class HeavyEquipmentControllerTest {
 
@@ -51,25 +55,40 @@ public class HeavyEquipmentControllerTest {
 	}
 
 	@Test
-	@DisplayName("PUT /heavy-equipments/location - 위치 업데이트 테스트")
-	void updateLocation() throws Exception {
+	@DisplayName("POST /heavy-equipments/location - 장비 위치 업데이트 테스트 (binary 데이터)")
+	void updateEquipmentLocationTest() throws Exception {
 		// given
-		Long workerId = 1L;
+		Long equipmentId = 1L;
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(workerId, latitude, longitude);
-		EquipmentUpdateLocationResponse response = new EquipmentUpdateLocationResponse(workerId, latitude, longitude);
 
-		given(equipmentService.updateLocation(request)).willReturn(response);
+		byte[] binaryData = createBinaryData(equipmentId, latitude, longitude);
+
+		EquipmentUpdateLocationResponse response = new EquipmentUpdateLocationResponse(
+			equipmentId, latitude, longitude
+		);
+
+		given(equipmentService.updateLocation(binaryData)).willReturn(response);
 
 		// when & then
-		mockMvc.perform(put("/heavy-equipments/location")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request)))
+		mockMvc.perform(post("/heavy-equipments/location")
+				.contentType("application/octet-stream")
+				.content(binaryData))
 			.andExpect(status().isOk())
 			.andExpect(jsonPath("$.status").value("success"))
-			.andExpect(jsonPath("$.data.id").value(1L))
+			.andExpect(jsonPath("$.data.id").value(equipmentId))
 			.andExpect(jsonPath("$.data.latitude").value(latitude))
 			.andExpect(jsonPath("$.data.longitude").value(longitude));
+	}
+
+	private byte[] createBinaryData(Long equipmentId, Double latitude, Double longitude) throws IOException {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(bos);
+
+		dos.writeLong(equipmentId);
+		dos.writeDouble(latitude);
+		dos.writeDouble(longitude);
+
+		return bos.toByteArray();
 	}
 }

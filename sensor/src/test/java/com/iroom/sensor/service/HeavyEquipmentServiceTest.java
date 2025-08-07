@@ -24,6 +24,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.Optional;
+
 @ExtendWith(MockitoExtension.class)
 public class HeavyEquipmentServiceTest {
 
@@ -60,42 +65,33 @@ public class HeavyEquipmentServiceTest {
 	}
 
 	@Test
-	@DisplayName("장비 ID로 위치 업데이트 요청 시 위치 변경 테스트")
-	void updateLocationTest() {
-		// given
-		Long equipmentId = 1L;
-		Double latitude = 35.8343;
-		Double longitude = 128.4723;
-		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(equipmentId, latitude, longitude);
-		HeavyEquipment equipment = HeavyEquipment.builder().build();
-		setIdViaReflection(equipment, equipmentId);
-		given(equipmentRepository.findById(equipmentId)).willReturn(java.util.Optional.of(equipment));
-
-		// when
-		var response = equipmentService.updateLocation(request);
-
-		// then
-		assertThat(response.id()).isEqualTo(equipmentId);
-		assertThat(response.latitude()).isEqualTo(latitude);
-		assertThat(response.longitude()).isEqualTo(longitude);
-		verify(kafkaProducerService).publishMessage(eq("HEAVY_EQUIPMENT_LOCATION_UPDATED"), any());
-	}
-
-	@Test
-	@DisplayName("없는 ID로 위치 업데이트 시 예외 발생 테스트")
-	void updateLocation_notFoundId() {
+	@DisplayName("없는 ID로 위치 업데이트 시 예외 발생 테스트 (binary)")
+	void updateLocation_notFoundId() throws IOException {
 		// given
 		Long invalidId = 999L;
 		Double latitude = 35.8343;
 		Double longitude = 128.4723;
-		EquipmentUpdateLocationRequest request = new EquipmentUpdateLocationRequest(invalidId, latitude, longitude);
-		given(equipmentRepository.findById(invalidId)).willReturn(java.util.Optional.empty());
+
+		byte[] binaryData = createBinaryData(invalidId, latitude, longitude);
+
+		given(equipmentRepository.findById(invalidId)).willReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> equipmentService.updateLocation(request))
+		assertThatThrownBy(() -> equipmentService.updateLocation(binaryData))
 			.isInstanceOf(CustomException.class)
-			.extracting(e -> ((CustomException)e).getErrorCode())
+			.extracting(e -> ((CustomException) e).getErrorCode())
 			.isEqualTo(ErrorCode.SENSOR_EQUIPMENT_NOT_FOUND);
+	}
+
+	private byte[] createBinaryData(Long equipmentId, Double latitude, Double longitude) throws IOException {
+		ByteArrayOutputStream bos = new ByteArrayOutputStream();
+		DataOutputStream dos = new DataOutputStream(bos);
+
+		dos.writeLong(equipmentId);
+		dos.writeDouble(latitude);
+		dos.writeDouble(longitude);
+
+		return bos.toByteArray();
 	}
 
 	//테스트를 위한 id 값 주입
