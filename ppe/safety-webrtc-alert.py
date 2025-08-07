@@ -108,16 +108,8 @@ async def capture_loop():
             target_w, target_h = 640, 640
             frame = cv2.resize(frame, (target_w, target_h))
 
-            # YOLO + BoT-SORT를 스트리밍 모드로 실행
-            results = model.track(
-                source=RTSP_URL,
-                tracker="my_botsort.yaml",
-                stream=True,    # 프레임 단위로 제너레이터 변환
-                device=device,
-                persist=True,   # 이전 프레임의 추적 정보 유지
-                half=True,
-                conf=0.2,
-            )
+            # YOLO 결과
+            results = model.predict(frame, conf=0.2, verbose=False)[0]
 
             for r in results:
                 if clients_count <= 0:
