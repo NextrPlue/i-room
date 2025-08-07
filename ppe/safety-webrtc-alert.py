@@ -111,6 +111,28 @@ async def capture_loop():
             # YOLO 결과
             results = model.predict(frame, conf=0.2, verbose=False)[0]
 
+            # YOLO 결과 영상에 반영
+            for box in results.boxes:
+                x1, y1, x2, y2 = map(float, box.xyxy[0])
+                scale_x = target_w / orig_w
+                scale_y = target_h / orig_h
+                x1, y1, x2, y2 = int(x1 * scale_x), int(y1 * scale_y), int(x2 * scale_x), int(y2 * scale_y)
+                cls_id = int(box.cls[0])
+                conf = float(box.conf[0])
+                track_id = -1
+
+                label = f"ID {track_id} | {CLASS_NAMES.get(cls_id, str(cls_id))} {conf:.2f}"
+                color = (0, 255, 0)
+
+                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                cv2.putText(frame, label, (x1, y1 - 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
+
+                if cls_id == 0:
+                    seatbelt_ids.add(track_id)
+                elif cls_id == 1:
+                    helmet_ids.add(track_id)
+
             for r in results:
                 if clients_count <= 0:
                     await asyncio.sleep(0.5)
@@ -133,29 +155,6 @@ async def capture_loop():
                 if SHOW_FPS:
                     cv2.putText(frame, f"FPS: {fps:.2f}", (20, 40),
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
-
-                # 탐지 결과 반영
-                for box in r.boxes:
-                    x1, y1, x2, y2 = map(float, box.xyxy[0])
-                    scale_x = target_w / orig_w
-                    scale_y = target_h / orig_h
-                    x1, y1, x2, y2 = int(x1 * scale_x), int(y1 * scale_y), int(x2 * scale_x), int(y2 * scale_y)
-
-                    cls_id = int(box.cls[0])
-                    conf = float(box.conf[0])
-                    track_id = int(box.id[0]) if box.id is not None else -1
-
-                    label = f"ID {track_id} | {CLASS_NAMES.get(cls_id, str(cls_id))} {conf:.2f}"
-                    color = (0, 255, 0)
-
-                    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-                    cv2.putText(frame, label, (x1, y1 - 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, color, 2)
-
-                    if cls_id == 0:
-                        seatbelt_ids.add(track_id)
-                    elif cls_id == 1:
-                        helmet_ids.add(track_id)
 
                 total_frames += 1
 
