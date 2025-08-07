@@ -43,14 +43,16 @@ class DangerAreaServiceTest {
 	void setUp() {
 		dangerArea = DangerArea.builder()
 			.blueprintId(1L)
-			.location("X:10, Y:20")
+			.latitude(10.0)
+			.longitude(20.0)
 			.width(100.0)
 			.height(200.0)
 			.build();
 
 		DangerArea dangerArea2 = DangerArea.builder()
 			.blueprintId(2L)
-			.location("X:50, Y:60")
+			.latitude(50.0)
+			.longitude(60.0)
 			.width(150.0)
 			.height(250.0)
 			.build();
@@ -63,7 +65,7 @@ class DangerAreaServiceTest {
 	@DisplayName("위험구역 등록 성공")
 	void createDangerAreaTest() {
 		// given
-		DangerAreaRequest request = new DangerAreaRequest(1L, "X:10, Y:20", 100.0, 200.0);
+		DangerAreaRequest request = new DangerAreaRequest(1L, 10.0, 20.0, 100.0, 200.0);
 		given(dangerAreaRepository.save(any(DangerArea.class))).willReturn(dangerArea);
 
 		// when
@@ -71,7 +73,8 @@ class DangerAreaServiceTest {
 
 		// then
 		assertThat(response.blueprintId()).isEqualTo(1L);
-		assertThat(response.location()).isEqualTo("X:10, Y:20");
+		assertThat(response.latitude()).isEqualTo(10.0);
+		assertThat(response.longitude()).isEqualTo(20.0);
 	}
 
 	@Test
@@ -79,14 +82,15 @@ class DangerAreaServiceTest {
 	void updateDangerAreaTest() {
 		// given
 		Long id = 1L;
-		DangerAreaRequest request = new DangerAreaRequest(1L, "X:99, Y:88", 300.0, 400.0);
+		DangerAreaRequest request = new DangerAreaRequest(1L, 99.0, 88.0, 300.0, 400.0);
 		given(dangerAreaRepository.findById(id)).willReturn(Optional.of(dangerArea));
 
 		// when
 		DangerAreaResponse response = dangerAreaService.updateDangerArea(id, request);
 
 		// then
-		assertThat(response.location()).isEqualTo("X:99, Y:88");
+		assertThat(response.latitude()).isEqualTo(99.0);
+		assertThat(response.longitude()).isEqualTo(88.0);
 		assertThat(response.width()).isEqualTo(300.0);
 		assertThat(response.height()).isEqualTo(400.0);
 	}
@@ -96,7 +100,7 @@ class DangerAreaServiceTest {
 	void updateDangerAreaFail_NotFound() {
 		// given
 		Long id = 999L;
-		DangerAreaRequest request = new DangerAreaRequest(1L, "X:10, Y:10", 100.0, 100.0);
+		DangerAreaRequest request = new DangerAreaRequest(1L, 10.0, 10.0, 100.0, 100.0);
 		given(dangerAreaRepository.findById(id)).willReturn(Optional.empty());
 
 		// when & then
@@ -144,6 +148,7 @@ class DangerAreaServiceTest {
 		// then
 		assertThat(response.content()).hasSize(2);
 		assertThat(response.totalElements()).isEqualTo(2);
-		assertThat(response.content().get(0).location()).isEqualTo("X:10, Y:20");
+		assertThat(response.content().get(0).latitude()).isEqualTo(10.0);
+		assertThat(response.content().get(0).longitude()).isEqualTo(20.0);
 	}
 }

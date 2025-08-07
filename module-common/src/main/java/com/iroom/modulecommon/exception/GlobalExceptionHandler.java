@@ -7,6 +7,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -109,6 +110,19 @@ public class GlobalExceptionHandler {
 		ApiResponse<ErrorDetail> response = ApiResponse.error(message, errorDetail);
 
 		return ResponseEntity.status(ErrorCode.GLOBAL_MISSING_PARAMETER.getStatus()).body(response);
+	}
+
+	@ExceptionHandler(MissingRequestHeaderException.class)
+	public ResponseEntity<ApiResponse<ErrorDetail>> handleMissingRequestHeaderException(
+		MissingRequestHeaderException e) {
+		log.error("MissingRequestHeaderException occurred: {}", e.getMessage());
+
+		String message = String.format("필수 헤더 '%s'가 누락되었습니다.", e.getHeaderName());
+		ErrorDetail errorDetail = new ErrorDetail(ErrorCode.GLOBAL_MISSING_HEADER.getCode());
+
+		ApiResponse<ErrorDetail> response = ApiResponse.error(message, errorDetail);
+
+		return ResponseEntity.status(ErrorCode.GLOBAL_MISSING_HEADER.getStatus()).body(response);
 	}
 
 	@ExceptionHandler(Exception.class)
