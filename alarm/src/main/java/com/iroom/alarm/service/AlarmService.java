@@ -17,6 +17,8 @@ import com.iroom.alarm.repository.WorkerReadModelRepository;
 import com.iroom.modulecommon.dto.event.AlarmEvent;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.modulecommon.dto.response.SimpleResponse;
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 import com.iroom.modulecommon.service.KafkaProducerService;
 
 import lombok.RequiredArgsConstructor;
@@ -49,7 +51,7 @@ public class AlarmService {
 	// 실제 알림 처리 로직
 	private void processAlarmEvent(AlarmEvent alarmEvent) {
 		workerReadModelRepository.findById(alarmEvent.workerId())
-			.orElseThrow(() -> new IllegalArgumentException("근로자가 존재하지 않습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.ALARM_WORKER_NOT_FOUND));
 
 		Alarm alarm = Alarm.builder()
 			.workerId(alarmEvent.workerId())
@@ -87,7 +89,7 @@ public class AlarmService {
 	@PreAuthorize("hasAuthority('ROLE_WORKER') and #workerId == authentication.principal")
 	public PagedResponse<Alarm> getAlarmsForWorker(Long workerId, int page, int size) {
 		workerReadModelRepository.findById(workerId)
-			.orElseThrow(() -> new IllegalArgumentException("근로자가 존재하지 않습니다."));
+			.orElseThrow(() -> new CustomException(ErrorCode.ALARM_WORKER_NOT_FOUND));
 
 		Pageable pageable = PageRequest.of(page, size);
 		Page<Alarm> alarmPage = alarmRepository.findByWorkerIdOrderByOccurredAtDesc(workerId, pageable);
