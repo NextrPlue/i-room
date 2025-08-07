@@ -2,3 +2,5 @@
 .gradle
 !gradle/wrapper/gradle-wrapper.jar
 .env
+.venv
+*.mp4
