@@ -44,7 +44,7 @@ def send_alert_if_violation(violation_id: int, frame):
         data = {
             "id": violation.id,
             "worker_id": violation.worker_id,
-            "ppe_id": violation.ppe_id,
+            # "ppe_id": violation.ppe_id,
             "image_url": violation.image_url,
             "latitude": violation.latitude,
             "longitude": violation.longitude,

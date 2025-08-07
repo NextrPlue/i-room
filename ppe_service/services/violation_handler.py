@@ -16,7 +16,7 @@ def handle_violation(helmet_count, seatbelt_count, frame, violation_info):
     try:
         # PPE Detection 로그 저장 (전체 감지 결과 기록용)
         detection_record = PPEDetection(
-            ppe_id=None,              # 추후 필요 시 수정
+            # ppe_id=None,              # 추후 필요 시 수정
             image_url=None,           # PPE 테이블에서는 이미지 없이도 OK
             helmet_on_count=helmet_count,
             seatbelt_on_count=seatbelt_count
@@ -41,11 +41,11 @@ def handle_violation(helmet_count, seatbelt_count, frame, violation_info):
                 # Violation 테이블에 기록
                 violation_record = Violation(
                     worker_id=latest_watch.worker_id,
-                    ppe_id=detection_record.id,            # 감지 기록과 연결
+                    # ppe_id=detection_record.id,            # 감지 기록과 연결
                     image_url=img_url,                      # nullable=False → 필수!
                     latitude=latest_watch.latitude,
                     longitude=latest_watch.longitude,
-                    timestamp=latest_watch.timestamp,       # 또는 생략 가능
+                    timestamp=latest_watch.timestamp,     
                     helmet_on_count=helmet_count,
                     seatbelt_on_count=seatbelt_count
                 )

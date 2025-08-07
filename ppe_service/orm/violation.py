@@ -7,7 +7,7 @@ class Violation(Base):
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
     worker_id = Column(BigInteger, ForeignKey("watch.worker_id", ondelete="CASCADE"), nullable=False)
-    ppe_id = Column(BigInteger, nullable=True)
+    # ppe_id = Column(BigInteger, nullable=True)
     image_url = Column(Text, nullable=False)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
