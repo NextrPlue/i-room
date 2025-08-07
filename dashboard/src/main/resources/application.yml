@@ -23,11 +23,16 @@ spring:
         jdbc:
           batch_size: 1000
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: dashboard-service
+      auto-offset-reset: earliest
+
   cloud:
     stream:
       bindings:
         event-in:
-          group: dashboard
           destination: iroom
           contentType: application/json
         event-out:
@@ -65,11 +70,6 @@ spring:
   config:
     activate:
       on-profile: default
-  cloud:
-    stream:
-      kafka:
-        binder:
-          brokers: localhost:9092
 
 logging:
   level:
@@ -82,10 +82,7 @@ spring:
   config:
     activate:
       on-profile: docker
-  cloud:
-    stream:
-      kafka:
-        binder:
-          brokers: my-kafka:9092
-
-
+  datasource:
+    url: jdbc:mysql://mysql:3306/iroom_dashboard?serverTimezone=Asia/Seoul
+  kafka:
+    bootstrap-servers: kafka:9093
