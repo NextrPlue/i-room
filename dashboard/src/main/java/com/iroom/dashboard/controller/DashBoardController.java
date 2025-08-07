@@ -2,21 +2,18 @@ package com.iroom.dashboard.controller;
 
 import com.iroom.dashboard.dto.request.ReportRequest;
 import com.iroom.dashboard.dto.response.DashBoardResponse;
+import com.iroom.dashboard.dto.response.MetricSummary;
 import com.iroom.dashboard.service.ChatService;
 import com.iroom.dashboard.service.DashBoardService;
-import com.iroom.dashboard.service.EmbeddingService;
 import com.iroom.dashboard.service.PdfService;
 
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.RestTemplate;
 
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -26,7 +23,10 @@ public class DashBoardController {
 	private final ChatService chatService;
 	private final PdfService pdfService;
 
-
+	@GetMapping(value = "/{interval}")
+	public  ResponseEntity<List<MetricSummary>> getMetricScore(@PathVariable String interval){//day,week,month
+		return ResponseEntity.ok(dashBoardService.getMetricScore(interval));
+	}
 	//대시보드 조회하기
 	@GetMapping(value = "/{metricType}", produces = "application/json;charset=UTF-8")
 	public ResponseEntity<DashBoardResponse> getDashBoard(@PathVariable String metricType) {
