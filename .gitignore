@@ -6,3 +6,5 @@
 *.mp4
 **/__pycache__/
 *.pyc
+./infra/api-secrets.yaml
+./infra/mysql-values.yaml
