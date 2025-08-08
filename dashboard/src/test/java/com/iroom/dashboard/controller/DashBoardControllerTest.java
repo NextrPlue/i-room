@@ -25,7 +25,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -92,7 +91,7 @@ class DashBoardControllerTest {
 	@DisplayName("GET /dashboards/{metricType} - 대시보드 조회 성공")
 	void getDashBoard_Success() throws Exception {
 		// given
-		DashBoardResponse dashBoardResponse = new DashBoardResponse("t", 100, LocalDateTime.now());
+		DashBoardResponse dashBoardResponse = new DashBoardResponse("t", 100, LocalDate.now());
 		when(dashBoardService.getDashBoard("t")).thenReturn(dashBoardResponse);
 
 		// when & then
