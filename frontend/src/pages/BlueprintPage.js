@@ -25,6 +25,19 @@ const BlueprintPage = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [blueprintRotation, setBlueprintRotation] = useState(0);
     const [imageBlob, setImageBlob] = useState(null);
+    const [showEditForm, setShowEditForm] = useState(false);
+    
+    /** @type {[{id: number|null, file: File|null, floor: number, width: number, height: number}, Function]} */
+    const [editForm, setEditForm] = useState({
+        id: null,
+        file: null,
+        floor: 1,
+        width: 10.0,
+        height: 10.0
+    });
+
+    const [editPreview, setEditPreview] = useState(null);
+    const [editing, setEditing] = useState(false);
     const pageSize = 7;
 
     // 도면 목록 조회 함수
@@ -266,6 +279,133 @@ const BlueprintPage = () => {
         }
     };
 
+    // 수정 버튼 클릭 핸들러
+    const handleEditClick = async () => {
+        if (!selectedBlueprint) {
+            setError('수정할 도면을 선택해주세요.');
+            return;
+        }
+
+        // 선택된 도면의 정보로 수정 폼 초기화
+        setEditForm({
+            id: selectedBlueprint.id,
+            file: null,
+            floor: selectedBlueprint.floor,
+            width: selectedBlueprint.width,
+            height: selectedBlueprint.height
+        });
+
+        // 기존 이미지를 미리보기로 설정
+        if (imageBlob) {
+            setEditPreview(imageBlob);
+        }
+
+        setShowEditForm(true);
+        setError(null);
+    };
+
+    // 수정 파일 선택 핸들러
+    const handleEditFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // 파일 타입 검증
+            if (!file.type.startsWith('image/')) {
+                setError('이미지 파일만 업로드 가능합니다.');
+                return;
+            }
+
+            // 파일 크기 검증 (10MB 제한)
+            if (file.size > 10 * 1024 * 1024) {
+                setError('파일 크기는 10MB 이하여야 합니다.');
+                return;
+            }
+
+            setEditForm(prev => ({ ...prev, file: file }));
+
+            // 미리보기 생성
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (e.target?.result) {
+                    setEditPreview(e.target.result);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // 수정 폼 입력 핸들러
+    const handleEditFormChange = (field, value) => {
+        setEditForm(prev => ({
+            ...prev,
+            [field]: field === 'floor' ? parseInt(value, 10) : parseFloat(value)
+        }));
+    };
+
+    // 수정 제출 핸들러
+    const handleEditSubmit = async () => {
+        if (!editForm.id) {
+            setError('수정할 도면이 선택되지 않았습니다.');
+            return;
+        }
+
+        try {
+            setEditing(true);
+            setError(null);
+
+            // API 호출로 도면 정보 업데이트 (파일 포함 또는 정보만)
+            if (editForm.file) {
+                // 파일이 있으면 새 파일과 함께 수정
+                await blueprintAPI.updateBlueprint(editForm.id, {
+                    file: editForm.file,
+                    floor: editForm.floor,
+                    width: editForm.width,
+                    height: editForm.height
+                });
+            } else {
+                // 파일이 없으면 정보만 수정
+                await blueprintAPI.updateBlueprint(editForm.id, {
+                    floor: editForm.floor,
+                    width: editForm.width,
+                    height: editForm.height
+                });
+            }
+
+            // 목록 새로고침
+            await fetchBlueprints(currentPage);
+
+            // 수정 폼 초기화 및 닫기
+            setEditForm({
+                id: null,
+                file: null,
+                floor: 1,
+                width: 10.0,
+                height: 10.0
+            });
+            setEditPreview(null);
+            setShowEditForm(false);
+
+        } catch (err) {
+            console.error('도면 수정 실패:', err);
+            setError(err.message || '도면 수정에 실패했습니다.');
+        } finally {
+            setEditing(false);
+        }
+    };
+
+    // 수정 폼 취소
+    const handleEditCancel = () => {
+        setEditForm({
+            id: null,
+            file: null,
+            floor: 1,
+            width: 10.0,
+            height: 10.0
+        });
+        setEditPreview(null);
+        setShowEditForm(false);
+        setError(null);
+    };
+
     // 삭제 버튼 클릭 핸들러
     const handleDeleteClick = async () => {
         if (!selectedBlueprint) {
@@ -447,8 +587,10 @@ const BlueprintPage = () => {
                                         handleRotateClick();
                                     } else if (option.value === 'inactive') {
                                         handleDownloadClick().catch(console.error);
+                                    } else if (option.value === 'maintenance') {
+                                        handleEditClick().catch(console.error);
                                     } else if (option.value === 'urgent') {
-                                        handleDeleteClick();
+                                        handleDeleteClick().catch(console.error);
                                     } else {
                                         setSelectedFilter(option.value);
                                     }
@@ -522,6 +664,114 @@ const BlueprintPage = () => {
                 uploading={uploading}
                 error={error}
             />
+
+            {/* 도면 수정 모달*/}
+            {showEditForm && (
+                <div className={styles.uploadModal}>
+                    <div className={styles.uploadModalContent}>
+                        <div className={styles.uploadModalHeader}>
+                            <h2>도면 수정</h2>
+                            <button
+                                className={styles.closeButton}
+                                onClick={handleEditCancel}
+                                type="button"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        <form onSubmit={(e) => { e.preventDefault(); handleEditSubmit().catch(console.error); }} className={styles.uploadForm}>
+                            {/* 파일 선택 영역 */}
+                            <div className={styles.fileUploadArea}>
+                                <input
+                                    type="file"
+                                    id="editBlueprintFile"
+                                    accept="image/*"
+                                    onChange={handleEditFileSelect}
+                                    className={styles.fileInput}
+                                />
+                                <label htmlFor="editBlueprintFile" className={styles.fileLabel}>
+                                    {editPreview ? (
+                                        <img
+                                            src={typeof editPreview === 'string' ? editPreview : ''}
+                                            alt="수정 미리보기"
+                                            className={styles.uploadPreview}
+                                        />
+                                    ) : (
+                                        <div className={styles.fileDropArea}>
+                                            <div className={styles.uploadIcon}>📁</div>
+                                            <p>새 도면 이미지를 선택하세요 (선택사항)</p>
+                                            <span>PNG, JPG 형식 (최대 10MB)</span>
+                                        </div>
+                                    )}
+                                </label>
+                            </div>
+
+                            {/* 도면 정보 입력 */}
+                            <div className={styles.formGrid}>
+                                <div className={styles.formGroup}>
+                                    <label>층수</label>
+                                    <input
+                                        type="number"
+                                        value={editForm.floor}
+                                        onChange={(e) => handleEditFormChange('floor', e.target.value)}
+                                        min="1"
+                                        required
+                                    />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>가로 (m)</label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        value={editForm.width}
+                                        onChange={(e) => handleEditFormChange('width', e.target.value)}
+                                        min="0.1"
+                                        required
+                                    />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>세로 (m)</label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        value={editForm.height}
+                                        onChange={(e) => handleEditFormChange('height', e.target.value)}
+                                        min="0.1"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* 에러 메시지 */}
+                            {error && (
+                                <div className={styles.errorMessage}>
+                                    {error}
+                                </div>
+                            )}
+
+                            {/* 버튼 영역 */}
+                            <div className={styles.formButtons}>
+                                <button
+                                    type="button"
+                                    onClick={handleEditCancel}
+                                    className={styles.cancelButton}
+                                    disabled={editing}
+                                >
+                                    취소
+                                </button>
+                                <button
+                                    type="submit"
+                                    className={styles.submitButton}
+                                    disabled={editing}
+                                >
+                                    {editing ? '수정 중...' : '수정 완료'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
