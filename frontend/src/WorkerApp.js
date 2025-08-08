@@ -30,9 +30,16 @@ const WorkerApp = () => {
     return (
         <Router>
             <Routes>
-                {/* 기본 경로는 로그인으로 */}
+                {/* 근로자 로그인 페이지 */}
                 <Route path="/" element={<Navigate to="/login"/>}/>
                 <Route path="/login" element={<WorkerLoginPage/>}/>
+
+                {/* 근로자 상세 페이지 */}
+                <Route path="/home" element={
+                    <WorkerLayout>
+                        <WorkerHome/>
+                    </WorkerLayout>
+                }/>
             </Routes>
         </Router>
     );
