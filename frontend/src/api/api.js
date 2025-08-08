@@ -324,6 +324,118 @@ export const blueprintAPI = {
     },
 
     /**
+     * 도면 수정
+     * @param {number} blueprintId - 수정할 도면 ID
+     * @param {object} blueprintData - 수정할 도면 데이터
+     * @param {File} [blueprintData.file] - 새 이미지 파일 (선택사항)
+     * @param {number} blueprintData.floor - 층수
+     * @param {number} blueprintData.width - 가로 크기
+     * @param {number} blueprintData.height - 세로 크기
+     * @returns {Promise} 수정된 도면 정보
+     */
+    updateBlueprint: async (blueprintId, blueprintData) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/blueprints/${blueprintId}`;
+
+        if (blueprintData.file && blueprintData.file instanceof File) {
+            // 파일이 있는 경우 FormData로 전송
+            const formData = new FormData();
+            const dataBlob = new Blob(
+                [JSON.stringify({
+                    blueprintUrl: "",
+                    floor: blueprintData.floor,
+                    width: blueprintData.width,
+                    height: blueprintData.height
+                })],
+                {type: "application/json"}
+            );
+            formData.append("data", dataBlob);
+            formData.append("file", blueprintData.file);
+
+            const response = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    Authorization: authUtils.getAuthHeader()
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData?.message || errorMessage;
+                    } catch {
+                        // JSON 파싱 실패 시 기본 에러 메시지 사용
+                    }
+                } else {
+                    try {
+                        const errorText = await response.text();
+                        if (errorText) {
+                            errorMessage = errorText;
+                        }
+                    } catch {
+                        // 텍스트 파싱 실패 시 기본 에러 메시지 사용
+                    }
+                }
+
+                console.error('도면 수정 실패:', errorMessage);
+                throw new Error(errorMessage);
+            }
+
+            return await response.json();
+        } else {
+            // 파일이 없는 경우도 FormData로 전송 (data 필드만)
+            const formData = new FormData();
+            const dataBlob = new Blob(
+                [JSON.stringify({
+                    floor: blueprintData.floor,
+                    width: blueprintData.width,
+                    height: blueprintData.height
+                })],
+                {type: "application/json"}
+            );
+            formData.append("data", dataBlob);
+
+            const response = await fetch(url, {
+                method: "PUT",
+                headers: {
+                    Authorization: authUtils.getAuthHeader()
+                },
+                body: formData
+            });
+
+            if (!response.ok) {
+                let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    try {
+                        const errorData = await response.json();
+                        errorMessage = errorData?.message || errorMessage;
+                    } catch {
+                        // JSON 파싱 실패 시 기본 에러 메시지 사용
+                    }
+                } else {
+                    try {
+                        const errorText = await response.text();
+                        if (errorText) {
+                            errorMessage = errorText;
+                        }
+                    } catch {
+                        // 텍스트 파싱 실패 시 기본 에러 메시지 사용
+                    }
+                }
+
+                console.error('도면 수정 실패:', errorMessage);
+                throw new Error(errorMessage);
+            }
+
+            return await response.json();
+        }
+    },
+
+    /**
      * 도면 삭제
      * @param {number} blueprintId - 삭제할 도면 ID
      * @returns {Promise} 삭제 응답 데이터
