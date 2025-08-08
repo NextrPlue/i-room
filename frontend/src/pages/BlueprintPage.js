@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styles from '../styles/Blueprint.module.css';
 import { blueprintAPI } from '../api/api';
 import { authUtils } from '../utils/auth';
+import BlueprintAddModal from '../components/BlueprintAddModal';
 
 const BlueprintPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -22,10 +23,9 @@ const BlueprintPage = () => {
     const [error, setError] = useState(null);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
-    const [totalElements, setTotalElements] = useState(0);
     const [blueprintRotation, setBlueprintRotation] = useState(0);
     const [imageBlob, setImageBlob] = useState(null);
-    const pageSize = 10;
+    const pageSize = 7;
 
     // 도면 목록 조회 함수
     const fetchBlueprints = async (page = 0) => {
@@ -43,7 +43,6 @@ const BlueprintPage = () => {
             setBlueprints(data.content || []);
             setCurrentPage(data.page || 0);
             setTotalPages(data.totalPages || 0);
-            setTotalElements(data.totalElements || 0);
 
             // 첫 번째 도면을 기본 선택
             if (data.content && data.content.length > 0) {
@@ -60,13 +59,13 @@ const BlueprintPage = () => {
 
     // 컴포넌트 마운트 시 도면 목록 조회
     useEffect(() => {
-        fetchBlueprints(0);
+        fetchBlueprints(0).catch(console.error);
     }, []);
 
     // 컴포넌트 언마운트 시 blob URL 정리
     useEffect(() => {
         return () => {
-            if (imageBlob) {
+            if (imageBlob && typeof imageBlob === 'string') {
                 URL.revokeObjectURL(imageBlob);
             }
         };
@@ -126,13 +125,13 @@ const BlueprintPage = () => {
         setBlueprintRotation(0); // 새 도면 선택 시 회전 상태 초기화
         
         // 이전 blob URL 정리
-        if (imageBlob) {
+        if (imageBlob && typeof imageBlob === 'string') {
             URL.revokeObjectURL(imageBlob);
         }
         
         // 새 이미지 로드
         if (blueprint && blueprint.id) {
-            loadBlueprintImage(blueprint.id);
+            loadBlueprintImage(blueprint.id).catch(console.error);
         }
     };
 
@@ -161,7 +160,11 @@ const BlueprintPage = () => {
 
             // 미리보기 생성
             const reader = new FileReader();
-            reader.onload = (e) => setUploadPreview(e.target.result);
+            reader.onload = (e) => {
+                if (e.target?.result) {
+                    setUploadPreview(e.target.result);
+                }
+            };
             reader.readAsDataURL(file);
         }
     };
@@ -170,14 +173,12 @@ const BlueprintPage = () => {
     const handleUploadFormChange = (field, value) => {
         setUploadForm(prev => ({
             ...prev,
-            [field]: field === 'floor' ? parseInt(value) : parseFloat(value)
+            [field]: field === 'floor' ? parseInt(value, 10) : parseFloat(value)
         }));
     };
 
     // 도면 업로드 핸들러
-    const handleUploadSubmit = async (e) => {
-        e.preventDefault();
-
+    const handleUploadSubmit = async () => {
         if (!uploadForm.file) {
             setError('도면 파일을 선택해주세요.');
             return;
@@ -229,7 +230,6 @@ const BlueprintPage = () => {
         
         const newRotation = (blueprintRotation + 90) % 360;
         setBlueprintRotation(newRotation);
-        console.log(`도면 회전: ${blueprintRotation}° → ${newRotation}°`);
     };
 
     // 다운로드 버튼 클릭 핸들러
@@ -260,8 +260,6 @@ const BlueprintPage = () => {
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(downloadUrl);
-            
-            console.log(`도면 다운로드 완료: ${fileName}`);
         } catch (err) {
             console.error('다운로드 실패:', err);
             setError('도면 다운로드에 실패했습니다.');
@@ -307,7 +305,7 @@ const BlueprintPage = () => {
                         {error && (
                             <div className={styles.errorState}>
                                 {error}
-                                <button onClick={() => fetchBlueprints(currentPage)}>
+                                <button onClick={() => fetchBlueprints(currentPage).catch(console.error)}>
                                     다시 시도
                                 </button>
                             </div>
@@ -341,30 +339,33 @@ const BlueprintPage = () => {
                     </div>
 
                     {/* 페이지네이션 */}
-                    {!loading && !error && totalPages > 1 && (
-                        <div className={styles.pagination}>
-                            <button
-                                onClick={() => fetchBlueprints(currentPage - 1)}
-                                disabled={currentPage === 0}
-                                className={styles.pageButton}
-                            >
-                                이전
-                            </button>
+                    <div className={styles.pagination}>
+                        <button
+                            className={styles.pageBtn}
+                            onClick={() => fetchBlueprints(currentPage - 1).catch(console.error)}
+                            disabled={currentPage === 0}
+                        >
+                            이전
+                        </button>
 
-                            <span className={styles.pageInfo}>
-                                {currentPage + 1} / {totalPages}
-                                (총 {totalElements}개)
-                            </span>
-
+                        {Array.from({ length: totalPages }, (_, index) => (
                             <button
-                                onClick={() => fetchBlueprints(currentPage + 1)}
-                                disabled={currentPage >= totalPages - 1}
-                                className={styles.pageButton}
+                                key={index}
+                                className={`${styles.pageBtn} ${currentPage === index ? styles.active : ''}`}
+                                onClick={() => fetchBlueprints(index).catch(console.error)}
                             >
-                                다음
+                                {index + 1}
                             </button>
-                        </div>
-                    )}
+                        ))}
+
+                        <button
+                            className={styles.pageBtn}
+                            onClick={() => fetchBlueprints(currentPage + 1).catch(console.error)}
+                            disabled={currentPage >= totalPages - 1}
+                        >
+                            다음
+                        </button>
+                    </div>
                 </section>
 
                 {/* 중앙: 도면 미리보기 */}
@@ -375,7 +376,7 @@ const BlueprintPage = () => {
 
                             {selectedBlueprint.blueprintUrl && !imageError && imageBlob ? (
                                 <img
-                                    src={imageBlob}
+                                    src={typeof imageBlob === 'string' ? imageBlob : ''}
                                     alt={`${selectedBlueprint.floor}층 도면 - 크기: ${selectedBlueprint.width}m × ${selectedBlueprint.height}m`}
                                     className={styles.previewImage}
                                     onError={handleImageError}
@@ -415,7 +416,7 @@ const BlueprintPage = () => {
                                     if (option.value === 'active') {
                                         handleRotateClick();
                                     } else if (option.value === 'inactive') {
-                                        handleDownloadClick();
+                                        handleDownloadClick().catch(console.error);
                                     } else {
                                         setSelectedFilter(option.value);
                                     }
@@ -454,7 +455,7 @@ const BlueprintPage = () => {
                                         <span className={styles.detailLabel}>도면 URL:</span>
                                         <span className={styles.detailValue}>
                                             <a
-                                                href={imageBlob}
+                                                href={typeof imageBlob === 'string' ? imageBlob : '#'}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                             >
@@ -478,111 +479,17 @@ const BlueprintPage = () => {
             </div>
 
             {/* 파일 업로드 모달 */}
-            {showUploadForm && (
-                <div className={styles.uploadModal}>
-                    <div className={styles.uploadModalContent}>
-                        <div className={styles.uploadModalHeader}>
-                            <h2>새 도면 업로드</h2>
-                            <button
-                                className={styles.closeButton}
-                                onClick={handleUploadCancel}
-                            >
-                                ✕
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleUploadSubmit} className={styles.uploadForm}>
-                            {/* 파일 선택 영역 */}
-                            <div className={styles.fileUploadArea}>
-                                <input
-                                    type="file"
-                                    id="blueprintFile"
-                                    accept="image/*"
-                                    onChange={handleFileSelect}
-                                    className={styles.fileInput}
-                                />
-                                <label htmlFor="blueprintFile" className={styles.fileLabel}>
-                                    {uploadPreview ? (
-                                        <img
-                                            src={uploadPreview}
-                                            alt="업로드 미리보기"
-                                            className={styles.uploadPreview}
-                                        />
-                                    ) : (
-                                        <div className={styles.fileDropArea}>
-                                            <div className={styles.uploadIcon}>📁</div>
-                                            <p>도면 이미지를 선택하세요</p>
-                                            <span>PNG, JPG 형식 (최대 10MB)</span>
-                                        </div>
-                                    )}
-                                </label>
-                            </div>
-
-                            {/* 도면 정보 입력 */}
-                            <div className={styles.formGrid}>
-                                <div className={styles.formGroup}>
-                                    <label>층수</label>
-                                    <input
-                                        type="number"
-                                        value={uploadForm.floor}
-                                        onChange={(e) => handleUploadFormChange('floor', e.target.value)}
-                                        min="1"
-                                        required
-                                    />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>가로 (m)</label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        value={uploadForm.width}
-                                        onChange={(e) => handleUploadFormChange('width', e.target.value)}
-                                        min="0.1"
-                                        required
-                                    />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>세로 (m)</label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        value={uploadForm.height}
-                                        onChange={(e) => handleUploadFormChange('height', e.target.value)}
-                                        min="0.1"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {/* 에러 메시지 */}
-                            {error && (
-                                <div className={styles.errorMessage}>
-                                    {error}
-                                </div>
-                            )}
-
-                            {/* 버튼 영역 */}
-                            <div className={styles.formButtons}>
-                                <button
-                                    type="button"
-                                    onClick={handleUploadCancel}
-                                    className={styles.cancelButton}
-                                    disabled={uploading}
-                                >
-                                    취소
-                                </button>
-                                <button
-                                    type="submit"
-                                    className={styles.submitButton}
-                                    disabled={uploading || !uploadForm.file}
-                                >
-                                    {uploading ? '업로드 중...' : '업로드'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            <BlueprintAddModal
+                showModal={showUploadForm}
+                onClose={handleUploadCancel}
+                onSubmit={handleUploadSubmit}
+                uploadForm={uploadForm}
+                onFormChange={handleUploadFormChange}
+                onFileSelect={handleFileSelect}
+                uploadPreview={uploadPreview}
+                uploading={uploading}
+                error={error}
+            />
         </div>
     );
 };

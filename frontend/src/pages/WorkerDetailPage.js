@@ -36,9 +36,7 @@ const WorkerDetailPage = () => {
         setAttendanceError(null);
 
         try {
-            console.log('출입현황 조회 시작:', workerId);
             const response = await userAPI.getWorkerAttendance(workerId);
-            console.log('출입현황 조회 성공:', response);
 
             // 응답 구조에 따른 안전한 처리
             if (response && response.data) {
@@ -63,29 +61,9 @@ const WorkerDetailPage = () => {
         setEducationError(null);
 
         try {
-            console.log('교육이력 조회 시작:', workerId, '페이지:', page);
             const response = await userAPI.getWorkerEducation(workerId, page, pageSize);
-            console.log('교육이력 조회 성공:', response);
-
-            // 응답 구조 확인 및 안전한 처리
-            if (response && response.data && response.data.content) {
-                // 새로운 구조: { status, message, data: { content, totalPages } }
-                console.log('교육이력 content:', response.data.content);
-                console.log('첫 번째 교육이력 항목:', response.data.content?.[0]);
-                setEducations(response.data.content || []);
-                setTotalPages(response.data.totalPages || 0);
-            } else if (response && response.content) {
-                // 기존 구조: { content, totalPages }
-                console.log('교육이력 content (기존 구조):', response.content);
-                console.log('첫 번째 교육이력 항목 (기존 구조):', response.content?.[0]);
-                setEducations(response.content || []);
-                setTotalPages(response.totalPages || 0);
-            } else {
-                // 예상치 못한 구조
-                console.warn('예상치 못한 교육이력 응답 구조:', response);
-                setEducations([]);
-                setTotalPages(0);
-            }
+            setEducations(response.data.content || []);
+            setTotalPages(response.data.totalPages || 0);
             setCurrentPage(page);
         } catch (error) {
             console.error('교육이력 조회 실패:', error);
@@ -99,9 +77,7 @@ const WorkerDetailPage = () => {
     useEffect(() => {
         const fetchWorkerDetail = async () => {
             try {
-                console.log('근로자 상세 정보 조회 시작:', workerId);
                 const response = await userAPI.getWorkerDetail(workerId);
-                console.log('근로자 상세 정보 조회 성공:', response);
                 setWorker(response.data);
             } catch (error) {
                 console.error('근로자 상세 정보 조회 실패:', error);
@@ -114,8 +90,8 @@ const WorkerDetailPage = () => {
         if (workerId) {
             (async () =>{
                 await fetchWorkerDetail();
-                await fetchWorkerEducation(0); // 교육이력도 함께 조회
-                await fetchWorkerAttendance(); // 출입현황도 함께 조회
+                await fetchWorkerEducation(0);
+                await fetchWorkerAttendance();
             })();
         }
     }, [workerId]);
@@ -144,13 +120,9 @@ const WorkerDetailPage = () => {
     // 교육등록 저장
     const handleEducationAddSave = async (educationData) => {
         try {
-            console.log('교육등록 시작:', educationData);
-            const response = await userAPI.createWorkerEducation(educationData);
-            console.log('교육등록 성공:', response);
-
+            await userAPI.createWorkerEducation(educationData);
             alert('안전교육이 등록되었습니다!');
 
-            // 교육이력 목록 새로고침 (첫 번째 페이지로)
             await fetchWorkerEducation(0);
 
             // 모달 닫기
@@ -174,10 +146,7 @@ const WorkerDetailPage = () => {
     // 근로자 수정 저장
     const handleWorkerEditSave = async (editForm) => {
         try {
-            console.log('근로자 정보 수정 시작:', editForm);
-            const response = await userAPI.updateWorker(workerId, editForm);
-            console.log('근로자 정보 수정 성공:', response);
-
+            await userAPI.updateWorker(workerId, editForm);
             alert('근로자 정보가 수정되었습니다!');
 
             // 근로자 상세 정보 새로고침
@@ -210,7 +179,6 @@ const WorkerDetailPage = () => {
 
     return (
         <div className={styles.page}>
-            {/* 브레드크럼 */}
             <div className={styles.breadcrumb}>
                 <span className={styles.breadcrumbText}>근로자 상세보기</span>
                 <span className={styles.breadcrumbDivider}>•</span>
