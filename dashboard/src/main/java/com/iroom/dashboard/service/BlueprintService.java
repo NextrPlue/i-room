@@ -124,11 +124,36 @@ public class BlueprintService {
 
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
-	public BlueprintResponse updateBlueprint(Long id, BlueprintRequest request) {
+	public BlueprintResponse updateBlueprint(Long id, BlueprintRequest request, MultipartFile file) {
 		Blueprint blueprint = blueprintRepository.findById(id)
 			.orElseThrow(() -> new CustomException(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND));
-		blueprint.update(request.blueprintUrl(), request.floor(), request.width(), request.height());
+		
+		String blueprintUrl = blueprint.getBlueprintUrl();
+
+		if (file != null && !file.isEmpty()) {
+			deleteExistingFile(blueprint.getBlueprintUrl());
+			String storedFilename = saveFile(file);
+			blueprintUrl = "/uploads/blueprints/" + storedFilename;
+		}
+		
+		blueprint.update(blueprintUrl, request.floor(), request.width(), request.height());
 		return new BlueprintResponse(blueprint);
+	}
+	
+	private void deleteExistingFile(String blueprintUrl) {
+		if (blueprintUrl != null && !blueprintUrl.isEmpty()) {
+			try {
+				String filename = blueprintUrl.substring(blueprintUrl.lastIndexOf("/") + 1);
+				String rootPath = System.getProperty("user.dir");
+				String filePath = Paths.get(rootPath, uploadDir, filename).toString();
+				File file = new File(filePath);
+				if (file.exists()) {
+					file.delete();
+				}
+			} catch (Exception e) {
+				System.err.println("기존 파일 삭제 실패: " + e.getMessage());
+			}
+		}
 	}
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
