@@ -93,6 +93,25 @@ const WorkerHome = () => {
         alert('퇴근 처리되었습니다.');
     };
 
+    // 로딩 중일 때 표시
+    if (loading) {
+        return (
+            <div className={styles.loadingContainer}>
+                <div>로딩 중...</div>
+            </div>
+        );
+    }
+
+    // 에러 발생 시
+    if (error) {
+        return (
+            <div className={styles.errorContainer}>
+                <p>{error}</p>
+                <button onClick={loadWorkerData}>다시 시도</button>
+            </div>
+        );
+    }
+
     return (
         <div className={styles.workerDetailContainer}>
             <div className={styles.profileHeader}>
