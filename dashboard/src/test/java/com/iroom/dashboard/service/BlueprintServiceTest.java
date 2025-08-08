@@ -5,6 +5,7 @@ import static org.mockito.BDDMockito.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -183,20 +185,39 @@ class BlueprintServiceTest {
 	}
 
 	@Test
-	@DisplayName("도면 수정 성공")
-	void updateBlueprintTest() {
+	@DisplayName("도면 수정 성공 - 파일 없이 정보만 수정")
+	void updateBlueprintWithoutFileTest() {
 		// given
 		Long id = 1L;
-		BlueprintRequest request = new BlueprintRequest("new_url.png", 1, 120.0, 220.0);
+		BlueprintRequest request = new BlueprintRequest(null, 1, 120.0, 220.0);
 		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprint));
 
 		// when
-		BlueprintResponse response = blueprintService.updateBlueprint(id, request);
+		BlueprintResponse response = blueprintService.updateBlueprint(id, request, null);
 
 		// then
-		assertThat(response.blueprintUrl()).isEqualTo("new_url.png");
-		assertThat(response.width()).isEqualTo(120);
-		assertThat(response.height()).isEqualTo(220);
+		assertThat(response.blueprintUrl()).isEqualTo("/uploads/blueprints/test-uuid.png"); // 기존 URL 유지
+		assertThat(response.width()).isEqualTo(120.0);
+		assertThat(response.height()).isEqualTo(220.0);
+	}
+
+	@Test
+	@DisplayName("도면 수정 성공 - 새 파일과 함께 수정")
+	void updateBlueprintWithFileTest() {
+		// given
+		Long id = 1L;
+		BlueprintRequest request = new BlueprintRequest(null, 1, 120.0, 220.0);
+		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprint));
+
+		// when
+		BlueprintResponse response = blueprintService.updateBlueprint(id, request, validFile);
+
+		// then
+		assertThat(response.blueprintUrl()).contains("/uploads/blueprints/");
+		assertThat(response.blueprintUrl()).contains(".png");
+		assertThat(response.blueprintUrl()).isNotEqualTo("/uploads/blueprints/test-uuid.png"); // 새 URL로 변경
+		assertThat(response.width()).isEqualTo(120.0);
+		assertThat(response.height()).isEqualTo(220.0);
 	}
 
 	@Test
@@ -204,14 +225,29 @@ class BlueprintServiceTest {
 	void updateBlueprintFailNotFound() {
 		// given
 		Long id = 99L;
-		BlueprintRequest request = new BlueprintRequest("x.png", 2, 50.0, 50.0);
+		BlueprintRequest request = new BlueprintRequest(null, 2, 50.0, 50.0);
 		given(blueprintRepository.findById(id)).willReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> blueprintService.updateBlueprint(id, request))
+		assertThatThrownBy(() -> blueprintService.updateBlueprint(id, request, null))
 			.isInstanceOf(CustomException.class)
 			.extracting("errorCode")
 			.isEqualTo(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND);
+	}
+
+	@Test
+	@DisplayName("도면 수정 실패 - 잘못된 파일")
+	void updateBlueprintFailInvalidFile() {
+		// given
+		Long id = 1L;
+		BlueprintRequest request = new BlueprintRequest(null, 1, 120.0, 220.0);
+		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprint));
+
+		// when & then
+		assertThatThrownBy(() -> blueprintService.updateBlueprint(id, request, invalidMimeTypeFile))
+			.isInstanceOf(CustomException.class)
+			.extracting("errorCode")
+			.isEqualTo(ErrorCode.DASHBOARD_INVALID_FILE_TYPE);
 	}
 
 	@Test
@@ -219,13 +255,14 @@ class BlueprintServiceTest {
 	void deleteBlueprintTest() {
 		// given
 		Long id = 1L;
-		given(blueprintRepository.existsById(id)).willReturn(true);
+		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprint));
 
 		// when
 		blueprintService.deleteBlueprint(id);
 
 		// then
 		verify(blueprintRepository).deleteById(id);
+		verify(blueprintRepository).findById(id);
 	}
 
 	@Test
@@ -233,7 +270,7 @@ class BlueprintServiceTest {
 	void deleteBlueprintFailNotFound() {
 		// given
 		Long id = 999L;
-		given(blueprintRepository.existsById(id)).willReturn(false);
+		given(blueprintRepository.findById(id)).willReturn(Optional.empty());
 
 		// when & then
 		assertThatThrownBy(() -> blueprintService.deleteBlueprint(id))
