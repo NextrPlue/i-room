@@ -321,5 +321,17 @@ export const blueprintAPI = {
      */
     getBlueprintImage(blueprintId) {
         return `${API_CONFIG.gateway}/api/dashboard/blueprints/${blueprintId}/image`;
+    },
+
+    /**
+     * 도면 삭제
+     * @param {number} blueprintId - 삭제할 도면 ID
+     * @returns {Promise} 삭제 응답 데이터
+     */
+    deleteBlueprint: async (blueprintId) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/blueprints/${blueprintId}`;
+        return await apiRequest(url, {
+            method: 'DELETE'
+        });
     }
 };
