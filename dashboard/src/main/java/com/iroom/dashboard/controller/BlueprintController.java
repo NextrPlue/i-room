@@ -33,10 +33,13 @@ public class BlueprintController {
 	}
 
 	// 도면 수정
-	@PutMapping("/{id}")
-	public ResponseEntity<ApiResponse<BlueprintResponse>> updateBlueprint(@PathVariable Long id,
-		@RequestBody BlueprintRequest request) {
-		BlueprintResponse response = blueprintService.updateBlueprint(id, request);
+	@PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<ApiResponse<BlueprintResponse>> updateBlueprint(
+		@PathVariable Long id,
+		@RequestPart("data") BlueprintRequest request,
+		@RequestPart(value = "file", required = false) MultipartFile file) {
+			
+		BlueprintResponse response = blueprintService.updateBlueprint(id, request, file);
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 

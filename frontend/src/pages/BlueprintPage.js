@@ -3,6 +3,7 @@ import styles from '../styles/Blueprint.module.css';
 import { blueprintAPI } from '../api/api';
 import { authUtils } from '../utils/auth';
 import BlueprintAddModal from '../components/BlueprintAddModal';
+import BlueprintEditModal from '../components/BlueprintEditModal';
 
 const BlueprintPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -25,6 +26,19 @@ const BlueprintPage = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [blueprintRotation, setBlueprintRotation] = useState(0);
     const [imageBlob, setImageBlob] = useState(null);
+    const [showEditForm, setShowEditForm] = useState(false);
+    
+    /** @type {[{id: number|null, file: File|null, floor: number, width: number, height: number}, Function]} */
+    const [editForm, setEditForm] = useState({
+        id: null,
+        file: null,
+        floor: 1,
+        width: 10.0,
+        height: 10.0
+    });
+
+    const [editPreview, setEditPreview] = useState(null);
+    const [editing, setEditing] = useState(false);
     const pageSize = 7;
 
     // 도면 목록 조회 함수
@@ -266,6 +280,166 @@ const BlueprintPage = () => {
         }
     };
 
+    // 수정 버튼 클릭 핸들러
+    const handleEditClick = async () => {
+        if (!selectedBlueprint) {
+            setError('수정할 도면을 선택해주세요.');
+            return;
+        }
+
+        // 선택된 도면의 정보로 수정 폼 초기화
+        setEditForm({
+            id: selectedBlueprint.id,
+            file: null,
+            floor: selectedBlueprint.floor,
+            width: selectedBlueprint.width,
+            height: selectedBlueprint.height
+        });
+
+        // 기존 이미지를 미리보기로 설정
+        if (imageBlob) {
+            setEditPreview(imageBlob);
+        }
+
+        setShowEditForm(true);
+        setError(null);
+    };
+
+    // 수정 파일 선택 핸들러
+    const handleEditFileSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // 파일 타입 검증
+            if (!file.type.startsWith('image/')) {
+                setError('이미지 파일만 업로드 가능합니다.');
+                return;
+            }
+
+            // 파일 크기 검증 (10MB 제한)
+            if (file.size > 10 * 1024 * 1024) {
+                setError('파일 크기는 10MB 이하여야 합니다.');
+                return;
+            }
+
+            setEditForm(prev => ({ ...prev, file: file }));
+
+            // 미리보기 생성
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                if (e.target?.result) {
+                    setEditPreview(e.target.result);
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    // 수정 폼 입력 핸들러
+    const handleEditFormChange = (field, value) => {
+        setEditForm(prev => ({
+            ...prev,
+            [field]: field === 'floor' ? parseInt(value, 10) : parseFloat(value)
+        }));
+    };
+
+    // 수정 제출 핸들러
+    const handleEditSubmit = async () => {
+        if (!editForm.id) {
+            setError('수정할 도면이 선택되지 않았습니다.');
+            return;
+        }
+
+        try {
+            setEditing(true);
+            setError(null);
+
+            // API 호출로 도면 정보 업데이트 (파일 포함 또는 정보만)
+            if (editForm.file) {
+                // 파일이 있으면 새 파일과 함께 수정
+                await blueprintAPI.updateBlueprint(editForm.id, {
+                    file: editForm.file,
+                    floor: editForm.floor,
+                    width: editForm.width,
+                    height: editForm.height
+                });
+            } else {
+                // 파일이 없으면 정보만 수정
+                await blueprintAPI.updateBlueprint(editForm.id, {
+                    floor: editForm.floor,
+                    width: editForm.width,
+                    height: editForm.height
+                });
+            }
+
+            // 목록 새로고침
+            await fetchBlueprints(currentPage);
+
+            // 성공 메시지 표시
+            alert('도면이 성공적으로 수정되었습니다!');
+
+            // 수정 폼 초기화 및 닫기
+            setEditForm({
+                id: null,
+                file: null,
+                floor: 1,
+                width: 10.0,
+                height: 10.0
+            });
+            setEditPreview(null);
+            setShowEditForm(false);
+
+        } catch (err) {
+            console.error('도면 수정 실패:', err);
+            setError(err.message || '도면 수정에 실패했습니다.');
+        } finally {
+            setEditing(false);
+        }
+    };
+
+    // 수정 폼 취소
+    const handleEditCancel = () => {
+        setEditForm({
+            id: null,
+            file: null,
+            floor: 1,
+            width: 10.0,
+            height: 10.0
+        });
+        setEditPreview(null);
+        setShowEditForm(false);
+        setError(null);
+    };
+
+    // 삭제 버튼 클릭 핸들러
+    const handleDeleteClick = async () => {
+        if (!selectedBlueprint) {
+            setError('삭제할 도면을 선택해주세요.');
+            return;
+        }
+
+        if (!window.confirm(`${selectedBlueprint.floor}층 도면을 정말 삭제하시겠습니까?`)) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            await blueprintAPI.deleteBlueprint(selectedBlueprint.id);
+            
+            // 선택 해제
+            setSelectedBlueprint(null);
+            setImageBlob(null);
+            
+            // 목록 새로고침
+            await fetchBlueprints(currentPage);
+            
+        } catch (err) {
+            console.error('삭제 실패:', err);
+            setError(err.message || '도면 삭제에 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className={styles.page}>
             {/* 페이지 헤더 */}
@@ -417,6 +591,10 @@ const BlueprintPage = () => {
                                         handleRotateClick();
                                     } else if (option.value === 'inactive') {
                                         handleDownloadClick().catch(console.error);
+                                    } else if (option.value === 'maintenance') {
+                                        handleEditClick().catch(console.error);
+                                    } else if (option.value === 'urgent') {
+                                        handleDeleteClick().catch(console.error);
                                     } else {
                                         setSelectedFilter(option.value);
                                     }
@@ -468,13 +646,6 @@ const BlueprintPage = () => {
                         </div>
                     )}
 
-                    {/* 위험구역 표시 */}
-                    <div className={styles.dangerZoneSection}>
-                        <div className={styles.dangerZoneHeader}>
-                            <span className={styles.dangerIcon}>⚠️</span>
-                            <span>위험구역 오버레이 표시</span>
-                        </div>
-                    </div>
                 </section>
             </div>
 
@@ -488,6 +659,19 @@ const BlueprintPage = () => {
                 onFileSelect={handleFileSelect}
                 uploadPreview={uploadPreview}
                 uploading={uploading}
+                error={error}
+            />
+
+            {/* 도면 수정 모달 */}
+            <BlueprintEditModal
+                showModal={showEditForm}
+                onClose={handleEditCancel}
+                onSubmit={handleEditSubmit}
+                editForm={editForm}
+                onFormChange={handleEditFormChange}
+                onFileSelect={handleEditFileSelect}
+                editPreview={editPreview}
+                editing={editing}
                 error={error}
             />
         </div>
