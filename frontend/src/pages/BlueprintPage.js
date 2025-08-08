@@ -3,6 +3,7 @@ import styles from '../styles/Blueprint.module.css';
 import { blueprintAPI } from '../api/api';
 import { authUtils } from '../utils/auth';
 import BlueprintAddModal from '../components/BlueprintAddModal';
+import BlueprintEditModal from '../components/BlueprintEditModal';
 
 const BlueprintPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -373,6 +374,9 @@ const BlueprintPage = () => {
             // 목록 새로고침
             await fetchBlueprints(currentPage);
 
+            // 성공 메시지 표시
+            alert('도면이 성공적으로 수정되었습니다!');
+
             // 수정 폼 초기화 및 닫기
             setEditForm({
                 id: null,
@@ -658,113 +662,18 @@ const BlueprintPage = () => {
                 error={error}
             />
 
-            {/* 도면 수정 모달*/}
-            {showEditForm && (
-                <div className={styles.uploadModal}>
-                    <div className={styles.uploadModalContent}>
-                        <div className={styles.uploadModalHeader}>
-                            <h2>도면 수정</h2>
-                            <button
-                                className={styles.closeButton}
-                                onClick={handleEditCancel}
-                                type="button"
-                            >
-                                ✕
-                            </button>
-                        </div>
-
-                        <form onSubmit={(e) => { e.preventDefault(); handleEditSubmit().catch(console.error); }} className={styles.uploadForm}>
-                            {/* 파일 선택 영역 */}
-                            <div className={styles.fileUploadArea}>
-                                <input
-                                    type="file"
-                                    id="editBlueprintFile"
-                                    accept="image/*"
-                                    onChange={handleEditFileSelect}
-                                    className={styles.fileInput}
-                                />
-                                <label htmlFor="editBlueprintFile" className={styles.fileLabel}>
-                                    {editPreview ? (
-                                        <img
-                                            src={typeof editPreview === 'string' ? editPreview : ''}
-                                            alt="수정 미리보기"
-                                            className={styles.uploadPreview}
-                                        />
-                                    ) : (
-                                        <div className={styles.fileDropArea}>
-                                            <div className={styles.uploadIcon}>📁</div>
-                                            <p>새 도면 이미지를 선택하세요 (선택사항)</p>
-                                            <span>PNG, JPG 형식 (최대 10MB)</span>
-                                        </div>
-                                    )}
-                                </label>
-                            </div>
-
-                            {/* 도면 정보 입력 */}
-                            <div className={styles.formGrid}>
-                                <div className={styles.formGroup}>
-                                    <label>층수</label>
-                                    <input
-                                        type="number"
-                                        value={editForm.floor}
-                                        onChange={(e) => handleEditFormChange('floor', e.target.value)}
-                                        min="1"
-                                        required
-                                    />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>가로 (m)</label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        value={editForm.width}
-                                        onChange={(e) => handleEditFormChange('width', e.target.value)}
-                                        min="0.1"
-                                        required
-                                    />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>세로 (m)</label>
-                                    <input
-                                        type="number"
-                                        step="0.1"
-                                        value={editForm.height}
-                                        onChange={(e) => handleEditFormChange('height', e.target.value)}
-                                        min="0.1"
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            {/* 에러 메시지 */}
-                            {error && (
-                                <div className={styles.errorMessage}>
-                                    {error}
-                                </div>
-                            )}
-
-                            {/* 버튼 영역 */}
-                            <div className={styles.formButtons}>
-                                <button
-                                    type="button"
-                                    onClick={handleEditCancel}
-                                    className={styles.cancelButton}
-                                    disabled={editing}
-                                >
-                                    취소
-                                </button>
-                                <button
-                                    type="submit"
-                                    className={styles.submitButton}
-                                    disabled={editing}
-                                >
-                                    {editing ? '수정 중...' : '수정 완료'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            {/* 도면 수정 모달 */}
+            <BlueprintEditModal
+                showModal={showEditForm}
+                onClose={handleEditCancel}
+                onSubmit={handleEditSubmit}
+                editForm={editForm}
+                onFormChange={handleEditFormChange}
+                onFileSelect={handleEditFileSelect}
+                editPreview={editPreview}
+                editing={editing}
+                error={error}
+            />
         </div>
     );
 };
