@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alarm-deployment
+  labels:
+    app: alarm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alarm
+  template:
+    metadata:
+      labels:
+        app: alarm
+    spec:
+      containers:
+        - name: alarm
+          image: iroomregistry.azurecr.io/alarm:2025080801
+          ports:
+            - containerPort: 8084
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "k8s"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: i-room-secrets
+                  key: MYSQL_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: i-room-secrets
+                  key: JWT_SECRET
+            - name: JWT_EXPIRATION
+              valueFrom:
+                secretKeyRef:
+                  name: i-room-secrets
+                  key: JWT_EXPIRATION

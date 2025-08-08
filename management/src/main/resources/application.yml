@@ -61,3 +61,15 @@ spring:
     url: jdbc:mysql://mysql:3306/iroom_management?serverTimezone=Asia/Seoul
   kafka:
     bootstrap-servers: kafka:9093
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: k8s
+  datasource:
+    url: jdbc:mysql://i-room-mysql/iroom_management?serverTimezone=Asia/Seoul
+
+  kafka:
+    bootstrap-servers: i-room-kafka:9092

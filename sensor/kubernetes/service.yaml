@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sensor-service
+  labels:
+    app: sensor
+spec:
+  selector:
+    app: sensor
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8083
+  type: ClusterIP
