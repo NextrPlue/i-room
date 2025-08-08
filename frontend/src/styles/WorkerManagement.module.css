@@ -245,6 +245,12 @@
     cursor: not-allowed;
 }
 
+.pageBtn.active {
+    background-color: #3B82F6;
+    color: white;
+    border-color: #3B82F6;
+}
+
 
 .emptyState {
     padding: 60px 20px;

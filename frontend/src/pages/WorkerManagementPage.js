@@ -8,7 +8,7 @@ import WorkerAddModal from '../components/WorkerAddModal';
 const WorkerManagementPage = () => {
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchTarget, setSearchTarget] = useState('name'); // 검색 타겟 추가
+    const [searchTarget, setSearchTarget] = useState('name');
 
     /**
      * @typedef {Object} Worker
@@ -28,50 +28,37 @@ const WorkerManagementPage = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-    const [currentPage, setCurrentPage] = useState(0); // 백엔드는 0부터 시작
+    const [currentPage, setCurrentPage] = useState(0);
     const [pageSize] = useState(10);
     const [totalPages, setTotalPages] = useState(1);
 
+    const refreshWorkersList = async () => {
+        try {
+            const params = {
+                page: currentPage,
+                size: pageSize
+            };
+
+            // 검색어가 있을 때만 target과 keyword 추가
+            if (searchTerm) {
+                params.target = searchTarget;
+                params.keyword = searchTerm;
+            }
+
+            const response = await userAPI.getWorkers(params);
+            setWorkers(response.data.content || []);
+            setTotalPages(response.data.totalPages);
+        } catch (error) {
+            console.error('근로자 데이터 조회 실패:', error);
+            setWorkers([]);
+        }
+    };
 
     useEffect(() => {
-        console.log('[현재 페이지]:', currentPage);
-
-        const fetchWorkers = async () => {
-            try {
-                // API 명세서에 맞게 파라미터 수정
-                const params = {
-                    page: currentPage,
-                    size: pageSize
-                };
-
-                // 검색어가 있을 때만 target과 keyword 추가
-                if (searchTerm) {
-                    params.target = searchTarget;
-                    params.keyword = searchTerm;
-                }
-
-                const response = await userAPI.getWorkers(params);
-                setWorkers(response.data.content || []);
-                setTotalPages(response.data.totalPages); // 서버 응답 기반
-            } catch (error) {
-                console.error('근로자 데이터 조회 실패:', error);
-                setWorkers([]);
-            }
-        };
-
-        fetchWorkers().catch(console.error);
+        refreshWorkersList().catch(console.error);
     }, [currentPage, pageSize, searchTerm, searchTarget]);
 
-    // 검색 필터링
-    // const filteredWorkers = workers.filter(worker =>
-    //     worker.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    //     worker.department?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    //     worker.occupation?.toLowerCase().includes(searchTerm.toLowerCase())
-    // );
-
     const handleDetailClick = (worker) => {
-        console.log('상세 버튼 클릭됨:', worker);
-        console.log('이동할 경로:', `/admin/worker/${worker.id}`);
         navigate(`/admin/worker/${worker.id}`);
     };
 
@@ -120,22 +107,9 @@ const WorkerManagementPage = () => {
             // API 호출
             const response = await userAPI.createWorker(createData);
 
-            console.log('등록 API 응답:', response);
-
             if (response) {
                 alert('근로자 등록이 완료되었습니다!');
-                // 근로자 목록 새로고침
-                const params = {
-                    page: currentPage,
-                    size: pageSize
-                };
-                if (searchTerm) {
-                    params.target = searchTarget;
-                    params.keyword = searchTerm;
-                }
-                const response = await userAPI.getWorkers(params);
-                setWorkers(response.data.content || []);
-                setTotalPages(response.data.totalPages);
+                await refreshWorkersList();
                 handleAddModalClose();
             }
         } catch (error) {
@@ -148,7 +122,6 @@ const WorkerManagementPage = () => {
     // 수정 저장
     const handleSave = async (editForm) => {
         try {
-            // Worker ID가 없으면 에러
             if (!selectedWorker?.id) {
                 console.error('근로자 ID가 없습니다.');
                 alert('근로자 ID를 찾을 수 없습니다.');
@@ -171,10 +144,7 @@ const WorkerManagementPage = () => {
                 faceImageUrl: editForm.faceImageUrl || ""
             };
 
-            // API 호출
             const response = await userAPI.updateWorker(selectedWorker.id, updateData);
-
-            console.log('API 응답:', response);
 
             if (response) {
                 alert('저장이 완료되었습니다!');
@@ -314,7 +284,7 @@ const WorkerManagementPage = () => {
                         <button
                             key={index}
                             className={`${styles.pageBtn} ${currentPage === index ? styles.active : ''}`}
-                            onClick={() => {console.log(`[페이지 버튼 클릭] ${index}페이지로 이동`);
+                            onClick={() => {
                                 setCurrentPage(index)}
                             }
                         >
