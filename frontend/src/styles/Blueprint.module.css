@@ -48,7 +48,7 @@
     grid-template-areas: "list preview filters";
     gap: 32px;
     flex: 1;
-    min-height: 600px;
+    align-items: stretch;
 }
 
 /* 왼쪽: 리스트 섹션 */
@@ -58,8 +58,8 @@
     border-radius: 12px;
     padding: 24px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    max-height: 700px;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .sectionTitle {
@@ -73,6 +73,8 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    flex: 1;
+    overflow-y: auto;
 }
 
 .blueprintItem {
@@ -352,30 +354,34 @@
 .pagination {
     display: flex;
     justify-content: center;
-    align-items: center;
-    gap: 16px;
-    margin-top: 20px;
-    padding-top: 20px;
-    border-top: 1px solid #E5E7EB;
+    gap: 8px;
+    padding: 20px;
+    background: white;
 }
 
-.pageButton {
-    padding: 8px 16px;
+.pageBtn {
+    padding: 8px 12px;
     border: 1px solid #D1D5DB;
-    background: #fff;
+    background: white;
     border-radius: 6px;
-    font-size: 14px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    font-size: 14px;
+    font-weight: 500;
 }
 
-.pageButton:hover:not(:disabled) {
-    background: #F3F4F6;
+.pageBtn:hover:not(:disabled) {
+    background-color: #f3f4f6;
 }
 
-.pageButton:disabled {
-    opacity: 0.5;
+.pageBtn:disabled {
+    color: #aaa;
     cursor: not-allowed;
+}
+
+.pageBtn.active {
+    background-color: #3B82F6;
+    color: white;
+    border-color: #3B82F6;
 }
 
 .pageInfo {
