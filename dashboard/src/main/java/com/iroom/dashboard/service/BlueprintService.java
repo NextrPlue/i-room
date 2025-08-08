@@ -158,9 +158,9 @@ public class BlueprintService {
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN')")
 	public void deleteBlueprint(Long id) {
-		if (!blueprintRepository.existsById(id)) {
-			throw new CustomException(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND);
-		}
+		Blueprint blueprint = blueprintRepository.findById(id)
+			.orElseThrow(() -> new CustomException(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND));
+		deleteExistingFile(blueprint.getBlueprintUrl());
 		blueprintRepository.deleteById(id);
 	}
 
