@@ -78,20 +78,56 @@ class BlueprintControllerTest {
 	}
 
 	@Test
-	@DisplayName("도면 수정 성공")
-	void updateBlueprintTest() throws Exception {
+	@DisplayName("도면 수정 성공 - 파일 없이")
+	void updateBlueprintWithoutFileTest() throws Exception {
 		// given
-		BlueprintRequest request = new BlueprintRequest("new_url.png", 2, 150.0, 250.0);
-		BlueprintResponse response = new BlueprintResponse(1L, "new_url.png", 2, 150.0, 250.0);
+		BlueprintRequest request = new BlueprintRequest(null, 2, 150.0, 250.0);
+		BlueprintResponse response = new BlueprintResponse(1L, "/uploads/blueprints/original.png", 2, 150.0, 250.0);
 
-		Mockito.when(blueprintService.updateBlueprint(eq(1L), any())).thenReturn(response);
+		MockMultipartFile data = new MockMultipartFile("data", "", "application/json", 
+			objectMapper.writeValueAsString(request).getBytes());
+
+		Mockito.when(blueprintService.updateBlueprint(eq(1L), any(BlueprintRequest.class), eq(null)))
+			.thenReturn(response);
 
 		// when & then
-		mockMvc.perform(put("/blueprints/1")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request)))
+		mockMvc.perform(multipart("/blueprints/1")
+				.file(data)
+				.with(req -> {
+					req.setMethod("PUT");
+					return req;
+				})
+				.contentType(MediaType.MULTIPART_FORM_DATA))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.data.blueprintUrl").value("new_url.png"))
+			.andExpect(jsonPath("$.data.blueprintUrl").value("/uploads/blueprints/original.png"))
+			.andExpect(jsonPath("$.data.floor").value(2));
+	}
+
+	@Test
+	@DisplayName("도면 수정 성공 - 파일과 함께")
+	void updateBlueprintWithFileTest() throws Exception {
+		// given
+		BlueprintRequest request = new BlueprintRequest(null, 2, 150.0, 250.0);
+		BlueprintResponse response = new BlueprintResponse(1L, "/uploads/blueprints/new-uuid.png", 2, 150.0, 250.0);
+
+		MockMultipartFile file = new MockMultipartFile("file", "new-test.png", "image/png", "new test content".getBytes());
+		MockMultipartFile data = new MockMultipartFile("data", "", "application/json", 
+			objectMapper.writeValueAsString(request).getBytes());
+
+		Mockito.when(blueprintService.updateBlueprint(eq(1L), any(BlueprintRequest.class), any(MultipartFile.class)))
+			.thenReturn(response);
+
+		// when & then
+		mockMvc.perform(multipart("/blueprints/1")
+				.file(file)
+				.file(data)
+				.with(req -> {
+					req.setMethod("PUT");
+					return req;
+				})
+				.contentType(MediaType.MULTIPART_FORM_DATA))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.blueprintUrl").value("/uploads/blueprints/new-uuid.png"))
 			.andExpect(jsonPath("$.data.floor").value(2));
 	}
 
