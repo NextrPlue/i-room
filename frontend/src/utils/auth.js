@@ -16,7 +16,6 @@ export const authUtils = {
             return;
         }
         localStorage.setItem(TOKEN_KEY, token);
-        console.log('토큰이 저장되었습니다.');
     },
 
     /**

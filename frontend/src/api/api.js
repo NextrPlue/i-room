@@ -1,4 +1,4 @@
-import { authUtils } from '../utils/auth';
+import {authUtils} from '../utils/auth';
 
 // API 기본 설정
 const API_CONFIG = {
@@ -30,12 +30,7 @@ const apiRequest = async (url, options = {}) => {
     };
 
     try {
-        console.log(`API 요청: ${options.method || 'GET'} ${url}`);
-
         const response = await fetch(url, defaultOptions);
-
-        console.log(`API 응답: ${response.status} ${response.statusText}`);
-
         // 응답 처리
         if (!response.ok) {
             let errorData;
@@ -57,28 +52,17 @@ const apiRequest = async (url, options = {}) => {
                 errorData = {message: errorText};
             }
 
-            // 구체적인 에러 메시지 추출
             let errorMessage = errorData?.message || `HTTP ${response.status}: ${response.statusText}`;
-
-            // 유효성 검증 에러의 경우 상세 메시지 추출
             if (response.status === 400 && errorData?.errors) {
                 errorMessage = errorData.errors.map(err => err.message).join(', ');
             } else if (response.status === 403 && errorData?.message) {
                 errorMessage = errorData.message;
             }
-
             throw new Error(errorMessage);
         }
-
-        // JSON 응답 파싱
-        const data = await response.json();
-        console.log('API 응답 데이터:', data);
-
-        return data;
+        return await response.json();
     } catch (error) {
         console.error('API 요청 실패:', error);
-
-        // 네트워크 오류 처리
         if (error.name === 'TypeError' && error.message.includes('fetch')) {
             throw new Error('서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.');
         }
@@ -112,7 +96,6 @@ export const userAPI = {
         }
 
         const url = `${API_CONFIG.gateway}/api/user/workers?${queryParams.toString()}`;
-        console.log('[요청 URL]', url);
         return await apiRequest(url);
     },
 
@@ -167,7 +150,6 @@ export const userAPI = {
         });
 
         const url = `${API_CONFIG.gateway}/api/management/worker-education/workers/${workerId}?${queryParams.toString()}`;
-        console.log('[교육이력 요청 URL]', url);
         return await apiRequest(url);
     },
 
@@ -182,8 +164,6 @@ export const userAPI = {
      */
     createWorkerEducation: async (educationData) => {
         const url = `${API_CONFIG.gateway}/api/management/worker-education`;
-        console.log('[교육등록 요청 URL]', url);
-        console.log('[교육등록 데이터]', educationData);
         return await apiRequest(url, {
             method: 'POST',
             body: JSON.stringify(educationData)
@@ -211,7 +191,6 @@ export const userAPI = {
      */
     getWorkerAttendance: async (workerId) => {
         const url = `${API_CONFIG.gateway}/api/management/entries/${workerId}`;
-        console.log('[출입현황 요청 URL]', url);
         return await apiRequest(url);
     },
 
@@ -230,31 +209,21 @@ export const adminAPI = {
      */
     login: async (loginData) => {
         const url = `${API_CONFIG.gateway}/api/user/admins/login`;
-        console.log('[관리자 로그인 요청 URL]', url);
-        console.log('[로그인 데이터]', loginData);
-        
-        // 로그인은 Authorization 헤더 없이 요청 (토큰 자동 추가 비활성화)
         const response = await apiRequest(url, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-                // Authorization 헤더 의도적으로 제외
             },
             body: JSON.stringify(loginData)
         });
 
-        // 로그인 성공 시 토큰 저장 (백엔드 응답 구조: response.data.token)
         if (response && response.data && response.data.token) {
             authUtils.setToken(response.data.token);
-            console.log('[로그인 성공] 토큰이 저장되었습니다.');
         } else if (response && response.token) {
-            // 직접 토큰이 있는 경우 (다른 API 구조 대응)
             authUtils.setToken(response.token);
-            console.log('[로그인 성공] 토큰이 저장되었습니다.');
         } else {
             console.warn('[경고] 응답에서 토큰을 찾을 수 없습니다.');
         }
-
         return response;
     },
 };
@@ -277,14 +246,13 @@ export const blueprintAPI = {
         });
 
         const url = `${API_CONFIG.gateway}/api/dashboard/blueprints?${queryParams.toString()}`;
-        console.log('[도면목록 요청 URL]', url);
         return await apiRequest(url);
     },
 
     /**
      * 도면 등록
      * @param {object} blueprintData - 등록할 도면 데이터
-     * @param {string} blueprintData.blueprintUrl - 도면 이미지 URL
+     * @param {File} blueprintData.file - 업로드할 이미지 파일
      * @param {number} blueprintData.floor - 층수
      * @param {number} blueprintData.width - 가로 크기
      * @param {number} blueprintData.height - 세로 크기
@@ -292,40 +260,66 @@ export const blueprintAPI = {
      */
     createBlueprint: async (blueprintData) => {
         const url = `${API_CONFIG.gateway}/api/dashboard/blueprints`;
-        console.log('[도면등록 요청 URL]', url);
+
+        if (!blueprintData.file) {
+            throw new Error("도면 이미지 파일이 선택되지 않았습니다.");
+        }
 
         const formData = new FormData();
-
-        // 도면 정보(JSON)를 Blob으로 감싸서 전달
         const dataBlob = new Blob(
             [JSON.stringify({
-                blueprintUrl: "", // 백엔드에서 파일 저장 후 경로 재설정하므로 빈 값
+                blueprintUrl: "",
                 floor: blueprintData.floor,
                 width: blueprintData.width,
                 height: blueprintData.height
             })],
-            { type: "application/json" }
+            {type: "application/json"}
         );
         formData.append("data", dataBlob);
-
-        // 파일 첨부
         formData.append("file", blueprintData.file);
 
-        return await fetch(url, {
+        const response = await fetch(url, {
             method: "POST",
             headers: {
                 Authorization: authUtils.getAuthHeader()
             },
-            body: formData
+            body: /** @type {BodyInit} */ (formData)
         });
+
+        if (!response.ok) {
+            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData?.message || errorMessage;
+                } catch {
+                    // JSON 파싱 실패 시 기본 에러 메시지 사용
+                }
+            } else {
+                try {
+                    const errorText = await response.text();
+                    if (errorText) {
+                        errorMessage = errorText;
+                    }
+                } catch {
+                    // 텍스트 파싱 실패 시 기본 에러 메시지 사용
+                }
+            }
+
+            console.error('도면 업로드 실패:', errorMessage);
+            throw new Error(errorMessage);
+        }
+
+        return await response.json();
     },
 
     /**
-     * 도면 이미지 조회
+     * 도면 이미지 URL 생성
      * @param {number} blueprintId - 도면 ID
-     * @returns {Promise} 이미지 URL
+     * @returns {string} 이미지 URL
      */
-    getBlueprintImage: (blueprintId) => {
+    getBlueprintImage(blueprintId) {
         return `${API_CONFIG.gateway}/api/dashboard/blueprints/${blueprintId}/image`;
     }
 };
