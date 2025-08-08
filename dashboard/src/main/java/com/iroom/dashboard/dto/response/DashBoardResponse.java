@@ -2,10 +2,11 @@ package com.iroom.dashboard.dto.response;
 
 
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+
 
 public record DashBoardResponse(
         String metricType,
         Integer metricValue,
-        LocalDateTime recordedAt
+        LocalDate recordedAt
 ) {}
