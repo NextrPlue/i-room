@@ -266,6 +266,36 @@ const BlueprintPage = () => {
         }
     };
 
+    // 삭제 버튼 클릭 핸들러
+    const handleDeleteClick = async () => {
+        if (!selectedBlueprint) {
+            setError('삭제할 도면을 선택해주세요.');
+            return;
+        }
+
+        if (!window.confirm(`${selectedBlueprint.floor}층 도면을 정말 삭제하시겠습니까?`)) {
+            return;
+        }
+
+        try {
+            setLoading(true);
+            await blueprintAPI.deleteBlueprint(selectedBlueprint.id);
+            
+            // 선택 해제
+            setSelectedBlueprint(null);
+            setImageBlob(null);
+            
+            // 목록 새로고침
+            await fetchBlueprints(currentPage);
+            
+        } catch (err) {
+            console.error('삭제 실패:', err);
+            setError(err.message || '도면 삭제에 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className={styles.page}>
             {/* 페이지 헤더 */}
@@ -417,6 +447,8 @@ const BlueprintPage = () => {
                                         handleRotateClick();
                                     } else if (option.value === 'inactive') {
                                         handleDownloadClick().catch(console.error);
+                                    } else if (option.value === 'urgent') {
+                                        handleDeleteClick();
                                     } else {
                                         setSelectedFilter(option.value);
                                     }
