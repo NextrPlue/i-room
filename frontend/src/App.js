@@ -49,34 +49,6 @@ const CommonLayout = ({ children, currentPage }) => {
     );
 };
 
-// 임시 페이지 컴포넌트들
-const PlaceholderPage = ({ title }) => (
-    <main style={{ width: '100%', padding: '24px', backgroundColor: '#ffffff' }}>
-        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
-            <h2 style={{ fontSize: '24px', fontWeight: 'bold', color: '#111827', marginBottom: '24px' }}>
-                {title}
-            </h2>
-            <div style={{
-                backgroundColor: '#f9fafb',
-                borderRadius: '8px',
-                padding: '32px',
-                minHeight: '384px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign: 'center'
-            }}>
-                <p style={{ fontSize: '18px', color: '#6b7280', marginBottom: '8px' }}>
-                    {title} 페이지
-                </p>
-                <p style={{ fontSize: '14px', color: '#9ca3af' }}>
-                    선택된 메뉴의 콘텐츠가 여기에 표시됩니다.
-                </p>
-            </div>
-        </div>
-    </main>
-);
 
 const AdminLoginPage = () => {
     const navigate = useNavigate();
@@ -122,22 +94,28 @@ const App = () => {
                     </CommonLayout>
                 }/>
 
-                {/* 나머지 페이지들 (임시) */}
+                {/* 실시간 모니터링 */}
                 <Route path="/admin/monitoring" element={
                     <CommonLayout currentPage="monitoring">
                         <MonitoringPage/>
                     </CommonLayout>
                 }/>
+
+                {/* 위험구역 관리 */}
                 <Route path="/admin/risk" element={
                     <CommonLayout currentPage="risk">
                         <RiskZonePage/>
                     </CommonLayout>
                 }/>
+
+                {/* 보고서 */}
                 <Route path="/admin/report" element={
                     <CommonLayout currentPage="report">
                         <ReportPage/>
                     </CommonLayout>
                 }/>
+
+                {/* 설정 */}
                 <Route path="/admin/settings" element={
                     <CommonLayout currentPage="settings">
                         <SettingsPage/>
