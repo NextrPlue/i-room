@@ -5,47 +5,45 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iroom.dashboard.entity.DangerArea;
 import com.iroom.dashboard.entity.Incident;
+import com.iroom.dashboard.entity.WorkerInfoReadModel;
 import com.iroom.dashboard.repository.DangerAreaRepository;
 import com.iroom.dashboard.repository.IncidentRepository;
+import com.iroom.dashboard.repository.WorkerInfoReadModelRepository;
 import com.iroom.dashboard.util.DistanceUtil;
 import com.iroom.modulecommon.dto.event.AlarmEvent;
+import com.iroom.modulecommon.dto.event.WorkerSensorEvent;
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 import com.iroom.modulecommon.service.KafkaProducerService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Service
+@Component
 @RequiredArgsConstructor
+@Transactional
 @Slf4j
-public class LocationEventListener {
-	private final ObjectMapper objectMapper;
-	private final Map<String, Map<String, String>> workerCache = new HashMap<>();
-	private final Map<String, Map<String, String>> equipmentCache = new HashMap<>();
+public class LocationEventHandler {
+	private final Map<String, Map<String, String>>  workerCache =new HashMap<>();
+	private final Map<String, Map<String, String>>  equipmentCache = new HashMap<>();
 	private final DangerAreaRepository dangerAreaRepository;
+	private final WorkerInfoReadModelRepository workerInfoReadModelRepository;
 	private final KafkaProducerService kafkaProducerService;
 	private final IncidentRepository incidentRepository;
-
-	@KafkaListener(topics = "iroom", groupId = "dashboard-service")
-	public void handleLocationEvent(String message) {
+	private final ObjectMapper objectMapper;
+	public void handle(String eventType, JsonNode dataNode) {
 		try {
-			JsonNode eventNode = objectMapper.readTree(message);
-			String eventType = eventNode.get("eventType").asText();
-			JsonNode dataNode = eventNode.get("data");
-
-			log.info("Received Kafka message: eventType={}, data={}", eventType, dataNode);
-
-			// 캐시 초기화 또는 불러오기
-
-			// switch로 이벤트 구분
 			switch (eventType) {
 				case "WORKER_SENSOR_UPDATED" -> {
+					WorkerSensorEvent workerSensorEvent = objectMapper.treeToValue(dataNode, WorkerSensorEvent.class);
+					updateWorkerInfoReadModel(workerSensorEvent);
 					Map<String, String> info = new HashMap<>();
 					System.out.println("Worker_Location 발행");
 					double radius = 10.0;
@@ -95,7 +93,7 @@ public class LocationEventListener {
 					if (dataNode.hasNonNull("longitude")) {
 						info.put("workerLongitude", dataNode.get("longitude").asText());
 					}
-					workerCache.put(dataNode.get("workerId").asText(), info);
+					workerCache.put(dataNode.get("workerId").asText(),info);
 					// workerCache.put("workerReceived", true);
 				}
 				case "HEAVY_EQUIPMENT_LOCATION_UPDATED" -> {
@@ -111,23 +109,21 @@ public class LocationEventListener {
 					if (dataNode.hasNonNull("radius")) {
 						info.put("equipmentRadius", dataNode.get("radius").asText());
 					}
-					equipmentCache.put(dataNode.get("equipmentId").asText(), info);
-				}
-				default -> {
-					log.warn("Unknown eventType: {}", eventType);
-					return;
+					equipmentCache.put(dataNode.get("equipmentId").asText(),info);
 				}
 			}
+
+
 			for (Map.Entry<String, Map<String, String>> workerEntry : workerCache.entrySet()) {
 				for (Map.Entry<String, Map<String, String>> equipmentEntry : equipmentCache.entrySet()) {
-					double distance = DistanceUtil.calculateDistance(
-						Double.parseDouble(workerEntry.getValue().get("workerLatitude")),
+					double distance = DistanceUtil.calculateDistance(Double.parseDouble(workerEntry.getValue().get("workerLatitude")),
 						Double.parseDouble(workerEntry.getValue().get("workerLongitude")),
 						Double.parseDouble(equipmentEntry.getValue().get("equipmentLatitude")),
-						Double.parseDouble(equipmentEntry.getValue().get("equipmentLongitude")));
-					System.out.println("거리:  " + distance);
+						Double.parseDouble( equipmentEntry.getValue().get("equipmentLongitude")));
+					System.out.println("거리:  "+ distance);
 					//위험거리 접근시 알람 서비스에 메시지 발행
-					if (distance < Double.parseDouble(equipmentEntry.getValue().get("equipmentRadius"))) {
+					if(distance<Double.valueOf(equipmentEntry.getValue().get("equipmentRadius"))){
+
 
 						Long workerId = Long.valueOf(workerEntry.getKey());
 						LocalDateTime occurredAt = LocalDateTime.now();
@@ -135,13 +131,13 @@ public class LocationEventListener {
 
 						Double latitude = Double.valueOf(workerEntry.getValue().get("workerLatitude"));
 						Double longitude = Double.valueOf(workerEntry.getValue().get("workerLongitude"));
-						String incidentDescription = "Worker entered restricted hazard zone";
+						String incidentDescription ="Worker entered restricted hazard zone";
 						Incident incident = Incident.builder().
 							workerId(workerId).
 							occurredAt(occurredAt).
 							incidentType(incidentType).
-							latitude(latitude).
-							longitude(longitude).
+							latitude(Double.valueOf(latitude)).
+							longitude(Double.valueOf(longitude)).
 							incidentDescription(incidentDescription).
 							build();
 						incidentRepository.save(incident);
@@ -163,7 +159,13 @@ public class LocationEventListener {
 			}
 
 		} catch (Exception e) {
-			log.error("Failed to process Kafka message: {}", message, e);
+			log.error("Failed to process location event: {}", eventType, e);
 		}
+	}
+	public void updateWorkerInfoReadModel (WorkerSensorEvent event){
+		WorkerInfoReadModel readModel = workerInfoReadModelRepository.findById(event.workerId())
+			.orElseThrow(() -> new CustomException(ErrorCode.MANAGEMENT_WORKER_NOT_FOUND));
+		readModel.updateFromEvent(event);
+		workerInfoReadModelRepository.save(readModel);
 	}
 }

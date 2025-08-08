@@ -1,18 +1,19 @@
 package com.iroom.dashboard.service;
 
-import java.nio.charset.StandardCharsets;
+import java.sql.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.iroom.dashboard.dto.request.ReportRequest;
 import com.iroom.dashboard.dto.response.DashBoardResponse;
+import com.iroom.dashboard.dto.response.MetricResponse;
 import com.iroom.dashboard.entity.DashBoard;
 import com.iroom.dashboard.repository.DashBoardRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -28,7 +29,22 @@ public class DashBoardService {
     private final EmbeddingService embeddingService;
     private final String QDRANT_SEARCH_URL = "http://localhost:6333/collections/safety_db/points/search";
     private final DashBoardRepository dashBoardRepository;
-
+    @PreAuthorize("hasAnyAuthority('ROLE_WORKER', 'ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER', 'ROLE_WORKER_SYSTEM')")
+    public List<MetricResponse> getMetricScore(String interval) {
+        List<Object[]> rows = switch (interval.toLowerCase()) {
+            case "day" -> dashBoardRepository.getDailyMetricSummaryRaw();
+            case "week" -> dashBoardRepository.getWeeklyMetricSummaryRaw();
+            case "month" -> dashBoardRepository.getMonthlyMetricSummaryRaw();
+            default -> throw new IllegalArgumentException("Invalid interval: " + interval);
+        };
+        return rows.stream()
+            .map(row -> new MetricResponse(
+                ((Date) row[0]).toLocalDate(),
+                (String) row[1],
+                ((Number) row[2]).intValue()
+            ))
+            .toList();
+    }
     @PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
     public DashBoardResponse getDashBoard(String metricType){
         DashBoard dashBoard= dashBoardRepository.findTopByMetricTypeOrderByIdDesc(metricType);
