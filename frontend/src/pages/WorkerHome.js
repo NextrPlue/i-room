@@ -1,21 +1,70 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { workerAPI } from '../api/workerAPI';
 import styles from '../styles/WorkerHome.module.css'
 
 const WorkerHome = () => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('attendance');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
 
-    const workerInfo = {
-        name: '김재환',
+    // 상태 관리
+    const [workerInfo, setWorkerInfo] = useState({
+        name: '',
         greeting: '오늘도 안전하고 활기찬 하루 보내세요!',
-        email: 'jhwankim@example.com',
-        phone: '010-1234-5678',
-        company: '건설부',
-        position: '철근공',
-        bloodType: 'B형',
-        height: '178cm',
-        weight: '72kg'
+        email: '',
+        phone: '',
+        company: '',
+        position: '',
+        jobTitle: '',
+        bloodType: '',
+        height: '',
+        weight: '',
+        gender: '',
+        age: ''
+    });
+
+    // 컴포넌트 마운트 시 데이터 로드
+    useEffect(() => {
+        loadWorkerData();
+    }, []);
+
+    // 근로자 데이터 로드
+    const loadWorkerData = async () => {
+        try {
+            setLoading(true);
+
+            // 내 정보 조회
+            const infoResponse = await workerAPI.getMyInfo();
+            if (infoResponse.status === 'success' && infoResponse.data) {
+                const data = infoResponse.data;
+                setWorkerInfo({
+                    name: data.name || '근로자',
+                    greeting: '오늘도 안전하고 활기찬 하루 보내세요!',
+                    email: data.email || '',
+                    phone: data.phone || '',
+                    company: data.department || '미지정',
+                    position: data.occupation || '미지정',
+                    jobTitle: data.jobTitle || '미지정',
+                    bloodType: data.bloodType || '미지정',
+                    height: data.height ? `${data.height}cm` : '미지정',
+                    weight: data.weight ? `${data.weight}kg` : '미지정',
+                    gender: data.gender === 'MALE' ? '남성' : '여성',
+                    age: data.age || '미지정'
+                });
+            }
+        } catch (error) {
+            console.error('데이터 로드 실패:', error);
+            setError('정보를 불러오는데 실패했습니다.');
+
+            // 토큰이 없거나 만료된 경우 로그인 페이지로
+            if (error.message && error.message.includes('401')) {
+                navigate('/login');
+            }
+        } finally {
+            setLoading(false);
+        }
     };
 
     const attendanceData = {
@@ -35,6 +84,7 @@ const WorkerHome = () => {
     ];
 
     const handleLogout = () => {
+        workerAPI.logout();
         navigate('/login');
     };
 
@@ -42,6 +92,25 @@ const WorkerHome = () => {
         console.log('퇴근 처리');
         alert('퇴근 처리되었습니다.');
     };
+
+    // 로딩 중일 때 표시
+    if (loading) {
+        return (
+            <div className={styles.loadingContainer}>
+                <div>로딩 중...</div>
+            </div>
+        );
+    }
+
+    // 에러 발생 시
+    if (error) {
+        return (
+            <div className={styles.errorContainer}>
+                <p>{error}</p>
+                <button onClick={loadWorkerData}>다시 시도</button>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.workerDetailContainer}>
@@ -53,8 +122,8 @@ const WorkerHome = () => {
                         <path d="M12 14C8.68629 14 6 16.6863 6 20H18C18 16.6863 15.3137 14 12 14Z" fill="#888" />
                     </svg>
                 </div>
-                <h1 className={styles.workerName}>안녕하세요 "{workerInfo.name}"님,</h1>
-                <p className={styles.greetingMessage}>{workerInfo.greeting}</p>
+                <h1 className={styles.workerName}> 안녕하세요, {workerInfo?.name}님,</h1>
+                <p className={styles.greetingMessage}>오늘도 안전하고 활기찬 하루 보내세요!</p>
             </div>
 
             <div className={styles.infoSection}>
