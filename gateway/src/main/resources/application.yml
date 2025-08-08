@@ -2,8 +2,6 @@ server:
   port: 8080
 
 spring:
-  # application:
-    # name: gateway-service # Eureka 등 서비스 디스커버리 적용시 등록될 이름
   cloud:
     gateway:
       server:
@@ -30,35 +28,35 @@ spring:
                 - Path=/api/user/**
               filters:
                 - JwtAuthenticationFilter
-                - RewritePath=/api/user/(?<segment>.*), /$\{segment}
+                - RewritePath=/api/user/(?<segment>.*), /${segment}
             - id: management-service-route
               uri: http://localhost:8082
               predicates:
                 - Path=/api/management/**
               filters:
                 - JwtAuthenticationFilter
-                - RewritePath=/api/management/(?<segment>.*), /$\{segment}
+                - RewritePath=/api/management/(?<segment>.*), /${segment}
             - id: sensor-service-route
               uri: http://localhost:8083
               predicates:
                 - Path=/api/sensor/**
               filters:
                 - JwtAuthenticationFilter
-                - RewritePath=/api/sensor/(?<segment>.*), /$\{segment}
+                - RewritePath=/api/sensor/(?<segment>.*), /${segment}
             - id: alarm-service-route
               uri: http://localhost:8084
               predicates:
                 - Path=/api/alarm/**
               filters:
                 - JwtAuthenticationFilter
-                - RewritePath=/api/alarm/(?<segment>.*), /$\{segment}
+                - RewritePath=/api/alarm/(?<segment>.*), /${segment}
             - id: dashboard-service-route
               uri: http://localhost:8085
               predicates:
                 - Path=/api/dashboard/**
               filters:
                 - JwtAuthenticationFilter
-                - RewritePath=/api/dashboard/(?<segment>.*), /$\{segment}
+                - RewritePath=/api/dashboard/(?<segment>.*), /${segment}
 
 ---
 
@@ -68,39 +66,103 @@ spring:
       on-profile: docker
   cloud:
     gateway:
-      routes:
-        - id: user-service-route
-          uri: http://user-service:8081
-          predicates:
-            - Path=/api/user/**
-          filters:
-            - JwtAuthenticationFilter
-            - RewritePath=/api/user/(?<segment>.*), /$\{segment}
-        - id: management-service-route
-          uri: http://management-service:8082
-          predicates:
-            - Path=/api/management/**
-          filters:
-            - JwtAuthenticationFilter
-            - RewritePath=/api/management/(?<segment>.*), /$\{segment}
-        - id: sensor-service-route
-          uri: http://sensor-service:8083
-          predicates:
-            - Path=/api/sensor/**
-          filters:
-            - JwtAuthenticationFilter
-            - RewritePath=/api/sensor/(?<segment>.*), /$\{segment}
-        - id: alarm-service-route
-          uri: http://alarm-service:8084
-          predicates:
-            - Path=/api/alarm/**
-          filters:
-            - JwtAuthenticationFilter
-            - RewritePath=/api/alarm/(?<segment>.*), /$\{segment}
-        - id: dashboard-service-route
-          uri: http://dashboard-service:8085
-          predicates:
-            - Path=/api/dashboard/**
-          filters:
-            - JwtAuthenticationFilter
-            - RewritePath=/api/dashboard/(?<segment>.*), /$\{segment}
+      server:
+        webflux:
+          routes:
+            - id: user-service-route
+              uri: http://user-service:8081
+              predicates:
+                - Path=/api/user/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/user/(?<segment>.*), /${segment}
+            - id: management-service-route
+              uri: http://management-service:8082
+              predicates:
+                - Path=/api/management/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/management/(?<segment>.*), /${segment}
+            - id: sensor-service-route
+              uri: http://sensor-service:8083
+              predicates:
+                - Path=/api/sensor/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/sensor/(?<segment>.*), /${segment}
+            - id: alarm-service-route
+              uri: http://alarm-service:8084
+              predicates:
+                - Path=/api/alarm/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/alarm/(?<segment>.*), /${segment}
+            - id: dashboard-service-route
+              uri: http://dashboard-service:8085
+              predicates:
+                - Path=/api/dashboard/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/dashboard/(?<segment>.*), /${segment}
+
+---
+
+spring:
+  config:
+    activate:
+      on-profile: k8s # Kubernetes 환경을 위한 'k8s' 프로필
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                # Frontend 서비스의 외부 주소를 여기에 추가하거나, 개발 초기에는 "*" 허용
+                allowedOrigins: "http://localhost:3000" # 예시: 실제 프론트엔드 URL로 변경
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders: "*"
+                allowCredentials: true
+          routes:
+            # 모든 uri에서 포트 번호를 제거하고 Kubernetes 서비스 이름만 사용합니다.
+            # 각 마이크로서비스의 Kubernetes Service 이름과 일치해야 합니다.
+            - id: user-service-route
+              uri: http://user-service # user-service의 Kubernetes Service 이름
+              predicates:
+                - Path=/api/user/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/user/(?<segment>.*), /${segment}
+            - id: management-service-route
+              uri: http://management-service # management-service의 Kubernetes Service 이름
+              predicates:
+                - Path=/api/management/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/management/(?<segment>.*), /${segment}
+            - id: sensor-service-route
+              uri: http://sensor-service # sensor-service의 Kubernetes Service 이름
+              predicates:
+                - Path=/api/sensor/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/sensor/(?<segment>.*), /${segment}
+            - id: alarm-service-route
+              uri: http://alarm-service # alarm-service의 Kubernetes Service 이름
+              predicates:
+                - Path=/api/alarm/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/alarm/(?<segment>.*), /${segment}
+            - id: dashboard-service-route
+              uri: http://dashboard-service # dashboard-service의 Kubernetes Service 이름
+              predicates:
+                - Path=/api/dashboard/**
+              filters:
+                - JwtAuthenticationFilter
+                - RewritePath=/api/dashboard/(?<segment>.*), /${segment}
