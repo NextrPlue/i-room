@@ -9,6 +9,8 @@ const WorkerHome = () => {
     const workerInfo = {
         name: '김재환',
         greeting: '오늘도 안전하고 활기찬 하루 보내세요!',
+        email: 'jhwankim@example.com',
+        phone: '010-1234-5678',
         company: '건설부',
         position: '철근공',
         bloodType: 'B형',
@@ -58,22 +60,30 @@ const WorkerHome = () => {
             <div className={styles.infoSection}>
                 <div className={styles.infoGrid}>
                     <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>소속 :</span>
-                        <span className={styles.infoValue}>{workerInfo.company}</span>
+                        <span className={styles.infoLabel}>이메일 :</span>
+                        <span className={styles.infoValue}>{workerInfo.email}</span>
+                    </div>
+                    <div className={styles.infoRow}>
+                        <span className={styles.infoLabel}>연락처 :</span>
+                        <span className={styles.infoValue}>{workerInfo.phone}</span>
+                    </div>
+                    <div className={styles.infoRow}>
+                        <span className={styles.infoLabel}>소속 / 직종 :</span>
+                        <span className={styles.infoValue}>{workerInfo.company} / {workerInfo.position}</span>
                     </div>
                     <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>혈액형 :</span>
                         <span className={styles.infoValue}>{workerInfo.bloodType}</span>
                     </div>
                     <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>직종 :</span>
-                        <span className={styles.infoValue}>{workerInfo.position}</span>
-                    </div>
-                    <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>키 / 몸무게 :</span>
                         <span className={styles.infoValue}>{workerInfo.height} / {workerInfo.weight}</span>
                     </div>
                 </div>
+                <p className={styles.infoNotice}>
+                    개인정보 변경이 필요하거나 잘못된 정보가 있을 경우,<br />
+                    현장 관리자에게 문의해 주시기 바랍니다.
+                </p>
             </div>
 
             <div className={styles.tabMenu}>
