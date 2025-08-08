@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session
-from database import SessionLocal
-from orm.ppe import PPEDetection
-from orm.violation import Violation
-from orm.watch import Watch
-from utils.capture_util import save_capture
-from utils.alert_service import send_alert_if_violation
+from ppe.database import SessionLocal
+from ppe.orm.ppe import PPEDetection
+from ppe.orm.violation import Violation
+from ppe.orm.watch import Watch
+from ppe.utils.capture_util import save_capture
+from ppe.utils.alert_service import send_alert_if_violation
 
 
 def handle_violation(helmet_count, seatbelt_count, frame, violation_info):

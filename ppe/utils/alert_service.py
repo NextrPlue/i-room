@@ -3,11 +3,11 @@ import os
 from datetime import datetime
 import cv2
 from sqlalchemy.orm import Session
-from database import SessionLocal
-from orm.violation import Violation
+from ppe.database import SessionLocal
+from ppe.orm.violation import Violation
 
 # Spring Boot API endpoint
-SPRING_BOOT_API = "http://localhost:8080/api/alerts"
+SPRING_BOOT_API = "http://localhost:8086/api/alerts"
 
 # 이미지 저장 경로
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static", "alerts")
