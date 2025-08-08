@@ -1,5 +1,5 @@
 from sqlalchemy import Column, BigInteger, Integer, String, Text, DateTime
-from database import Base
+from ppe.database import Base
 import datetime
 
 class PPEDetection(Base):
