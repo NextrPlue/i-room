@@ -6,8 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from aiortc import RTCPeerConnection, VideoStreamTrack, RTCSessionDescription
 from pydantic import BaseModel
-from safetyGear.utils import detect_and_draw
-from safetyGear.alert_service import send_alert
+from model_utils import detect_and_draw
 import time
 from dotenv import load_dotenv
 import os
