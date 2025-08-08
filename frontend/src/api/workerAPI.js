@@ -1,5 +1,5 @@
 // src/api/workerAPI.js
-import { authUtils } from '../utils/auth';
+import { authUtils } from '../utils/workerAuth';
 
 // API 기본 설정
 const API_CONFIG = {
@@ -47,10 +47,12 @@ const apiRequest = async (url, options = {}) => {
                 errorData = { message: `HTTP ${response.status}: ${response.statusText}` };
             }
 
-            // 401 에러시 토큰 제거 및 로그인 페이지로 이동
             if (response.status === 401) {
-                authUtils.removeToken();
-                window.location.href = '/login';
+                const isLoginRequest = url.includes('/login');
+                if (!isLoginRequest) {
+                    authUtils.removeToken();
+                    window.location.href = '/login';
+                }
             }
 
             throw new Error(errorData.message || `요청 실패: ${response.status}`);

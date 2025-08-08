@@ -23,25 +23,33 @@ const WorkerLogin = ({ onLogin }) => {
         if (error) setError('');
     };
 
-    const handleSubmit = async (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        setLoading(true);
-        setError('');
+
+        if (!formData.email || !formData.password) {
+            setError('이메일과 비밀번호를 모두 입력해주세요.');
+            return;
+        }
 
         try {
-            // API 호출
+            setLoading(true);
+            setError('');
+
             const response = await workerAPI.login(formData);
 
             if (response.status === 'success') {
-                console.log('로그인 성공:', response.message);
-                // 홈 페이지로 이동
+                onLogin?.(response); // 선택적 콜백
                 navigate('/home');
             } else {
-                setError('로그인에 실패했습니다.');
+                setError(response.message || '로그인에 실패했습니다.');
             }
-        } catch (error) {
-            console.error('로그인 오류:', error);
-            setError(error.message || '로그인 중 오류가 발생했습니다.');
+        } catch (err) {
+            console.error('로그인 실패:', err);
+            const msg =
+                err?.response?.data?.message ||
+                err?.message ||
+                '로그인 중 오류가 발생했습니다.';
+            setError(msg);
         } finally {
             setLoading(false);
         }
@@ -66,7 +74,7 @@ const WorkerLogin = ({ onLogin }) => {
                 </p>
 
                 {/* 로그인 폼 */}
-                <form onSubmit={handleSubmit} className={styles.loginForm}>
+                <form onSubmit={handleLogin} className={styles.loginForm}>
                     <div className={styles.formGroup}>
                         <label htmlFor="email">이메일</label>
                         <input
@@ -93,8 +101,18 @@ const WorkerLogin = ({ onLogin }) => {
                         />
                     </div>
 
-                    <button type="submit" className={styles.loginButton}>
-                        로그인
+                    {error && (
+                        <div className={styles.errorMsg}>
+                            {error}
+                        </div>
+                    )}
+
+                    <button
+                        type="submit"
+                        className={styles.loginButton}
+                        disabled={loading}
+                    >
+                        {loading ? '로그인 중...' : '로그인'}
                     </button>
                 </form>
             </div>

@@ -90,7 +90,7 @@ const WorkerHome = () => {
                         <path d="M12 14C8.68629 14 6 16.6863 6 20H18C18 16.6863 15.3137 14 12 14Z" fill="#888" />
                     </svg>
                 </div>
-                <h1 className={styles.workerName}>안녕하세요,</h1>
+                <h1 className={styles.workerName}>안녕하세요, {workerInfo.name}</h1>
                 <p className={styles.greetingMessage}>오늘도 안전하고 활기찬 하루 보내세요!</p>
             </div>
 
