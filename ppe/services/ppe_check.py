@@ -1,6 +1,6 @@
-from orm.watch import Watch  # GPS 테이블 ORM
+from ppe.orm.watch import Watch  # GPS 테이블 ORM
 from sqlalchemy.orm import Session
-from database import SessionLocal
+from ppe.database import SessionLocal
 
 
 def check_violation(helmet_count: int, seatbelt_count: int) -> dict:
