@@ -1,70 +1,107 @@
-import cv2
-import time
-import torch
-import os
+# yolo_service.py
+import asyncio
+import cv2, time, torch, os
 from ultralytics import YOLO
-from services.ppe_check import check_violation
-from services.violation_handler import handle_violation
+from ppe.services.ppe_check import check_violation
+from ppe.services.violation_handler import handle_violation
+from ppe.services.webrtc_service import frame_queue
 
-# YOLO 추적 루프
-MODEL_PATH = os.getenv("MODEL_PATH", "model/best_8m_v5.pt")
-RTSP_URL = os.getenv("RTSP_URL", "test2.mp4")
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model = YOLO(MODEL_PATH).to(device)
+MODEL_PATH = os.getenv("MODEL_PATH", "ppe/model/best_8m_v4.pt")
+VIDEO_SRC  = os.getenv("RTSP_URL", "ppe/test2.mp4")
+device     = "cuda" if torch.cuda.is_available() else "cpu"
+model      = YOLO(MODEL_PATH).to(device)
 
-CLASS_NAMES = {0: "seatbelt_on", 1: "helmet_on"}
+_runner_task: asyncio.Task | None = None
+_stop_flag = False
+
+async def run_detection_loop(interval_sec: int = 10, loop_file: bool = False):
+    global _stop_flag
+    _stop_flag = False 
+
+    print(f"[INFO] YOLO detection started → {VIDEO_SRC}")
+
+    # Ultralytics의 stream 제너레이터를 비동기로 돌릴 수 있게 래핑 -> 서버 실행과 추적 시작을 분리
+    def gen():
+        return model.track(
+            source=VIDEO_SRC,
+            tracker="ppe/my_botsort.yaml",
+            stream=True,
+            device=device,
+            persist=True,
+            half=True,
+            conf=0.4,
+        )
+
+    while True:
+        prev_time = time.time()
+
+        helmet_seen, seatbelt_seen = set(), set()
+        total_frames = 0
+
+        try:
+            for r in gen():
+                if _stop_flag:
+                    print("[INFO] detection stop requested")
+                    return
+
+                frame = r.plot()
+                if frame is None:
+                    await asyncio.sleep(0)
+                    continue
+                total_frames += 1
+
+                # 변경: 프레임마다 등장한 track_id를 집합에 기록
+                for box in r.boxes:
+                    cls_id = int(box.cls[0])
+                    tid = int(box.id[0]) if box.id is not None else -1
+                    if cls_id == 0:      # seatbelt_on
+                        seatbelt_seen.add(tid)
+                    elif cls_id == 1:    # helmet_on
+                        helmet_seen.add(tid)
+
+                if not frame_queue.full():
+                    await frame_queue.put(frame)
+                
+                # 10초마다 "등장한 적이 있는" 객체 수로 카운트
+                if time.time() - prev_time >= interval_sec and total_frames > 0:
+                    # tid == -1 (ID 미할당) 처리: 그대로 두면 -1이 있으면 1개로 계산.
+                    helmet_count   = len(helmet_seen)
+                    seatbelt_count = len(seatbelt_seen)
+
+                    check_result = check_violation(helmet_count, seatbelt_count)
+                    print(f"[CHECK] {check_result}")
+
+                    if check_result["violation"]:
+                        handle_violation(helmet_count, seatbelt_count, frame, check_result)
+
+                    # 다음 10초 구간을 위해 초기화
+                    helmet_seen.clear()
+                    seatbelt_seen.clear()
+                    total_frames = 0
+                    prev_time = time.time()
+
+                await asyncio.sleep(0)
+
+        except Exception as e:
+            print("[ERROR] detection loop:", e)
 
 
-async def run_detection_loop(interval_sec: int = 10):
-    cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
-    if not cap.isOpened():
-        print("[ERROR] Cannot open video source")
-        return
+        # 파일 소스면 끝나고 나서 반복 여부
+        if os.path.isfile(VIDEO_SRC) and not loop_file:
+            print("[INFO] file source finished")
+            return
+        await asyncio.sleep(0.3)  # 재시도 텀
 
-    print(f"[INFO] YOLO detection started → {RTSP_URL}")
-    prev_time = time.time()
-    helmet_votes, seatbelt_votes, total_frames = {}, {}, 0
+async def start_detection(loop_file: bool = False) -> bool:
+    """이미 돌고 있지 않으면 백그라운드 태스크 시작"""
+    global _runner_task
+    if _runner_task and not _runner_task.done():
+        return False
+    _runner_task = asyncio.create_task(run_detection_loop(loop_file=loop_file))
+    return True
 
-    results = model.track(
-        source=RTSP_URL,
-        tracker="my_botsort.yaml",
-        stream=True,
-        device=device,
-        persist=True,
-        half=True,
-        conf=0.3
-    )
-
-    for r in results:
-        frame = r.orig_img
-        if frame is None:
-            continue
-        total_frames += 1
-
-        # 탐지 결과 집계
-        for box in r.boxes:
-            cls_id = int(box.cls[0])
-            track_id = int(box.id[0]) if box.id is not None else -1
-            if cls_id == 0:
-                seatbelt_votes[track_id] = seatbelt_votes.get(track_id, 0) + 1
-            elif cls_id == 1:
-                helmet_votes[track_id] = helmet_votes.get(track_id, 0) + 1
-
-        # interval마다 집계
-        if time.time() - prev_time >= interval_sec:
-            helmet_count = sum(1 for v in helmet_votes.values() if v / total_frames >= 0.5)
-            seatbelt_count = sum(1 for v in seatbelt_votes.values() if v / total_frames >= 0.5)
-
-            # 위반 여부 검사 (total_workers는 내부 DB 조회로 처리)
-            check_result = check_violation(helmet_count, seatbelt_count)
-            print(f"[CHECK] {check_result}")
-
-            # 위반 발생 시 핸들러 호출
-            if check_result["violation"]:
-                handle_violation(helmet_count, seatbelt_count, frame, check_result)
-
-            # 초기화
-            helmet_votes.clear()
-            seatbelt_votes.clear()
-            total_frames = 0
-            prev_time = time.time()
+def stop_detection() -> bool:
+    """루프 정지 플래그만 올림"""
+    global _stop_flag
+    _stop_flag = True
+    return True

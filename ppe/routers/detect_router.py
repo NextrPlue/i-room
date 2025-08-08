@@ -1,13 +1,13 @@
 # routers/detect_router.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from database import SessionLocal
-from orm.ppe import PPEDetection
-from schemas import ppe_schema
+from ppe.database import SessionLocal
+from ppe.orm.ppe import PPEDetection
+from ppe.schemas import ppe_schema
 
+# 기존 조회/등록 라우터 (그대로 유지)
 router = APIRouter(prefix="/detection", tags=["PPE Detection"])
 
-# DB 세션 의존성 주입
 def get_db():
     db = SessionLocal()
     try:
@@ -15,7 +15,6 @@ def get_db():
     finally:
         db.close()
 
-# 최근 탐지 결과 조회
 @router.get("/latest", response_model=ppe_schema.PPEDetectionResponse)
 def get_latest_detection(db: Session = Depends(get_db)):
     record = db.query(PPEDetection).order_by(PPEDetection.timestamp.desc()).first()
@@ -23,12 +22,10 @@ def get_latest_detection(db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No detection record found")
     return record
 
-# 모든 탐지 결과 조회
 @router.get("/", response_model=list[ppe_schema.PPEDetectionResponse])
 def get_all_detections(db: Session = Depends(get_db)):
     return db.query(PPEDetection).order_by(PPEDetection.timestamp.desc()).all()
 
-# 새로운 탐지 결과 수동 추가 (테스트용)
 @router.post("/", response_model=ppe_schema.PPEDetectionResponse)
 def create_detection(data: ppe_schema.PPEDetectionCreate, db: Session = Depends(get_db)):
     record = PPEDetection(
@@ -43,3 +40,27 @@ def create_detection(data: ppe_schema.PPEDetectionCreate, db: Session = Depends(
     db.commit()
     db.refresh(record)
     return record
+
+
+# (여기부터 추가) 추론 시작/중지 컨트롤 라우터
+from ppe.services.yolo_service import start_detection, stop_detection
+
+control = APIRouter(prefix="/detect", tags=["Detection Control"])
+
+@control.post("/start")
+async def detect_start(loop_file: bool = False):
+    """YOLO 추론 시작 (이미 실행 중이면 started=false 반환)"""
+    started = await start_detection(loop_file=loop_file)
+    return {"started": started}
+
+@control.post("/stop")
+def detect_stop():
+    """YOLO 추론 정지 플래그 설정"""
+    stopped = stop_detection()
+    return {"stopped": stopped}
+
+@control.get("/status")
+def detect_status():
+    """간단한 상태 확인용 (원하면 yolo_service에 상태값 노출해서 고도화 가능)"""
+    # 필요하면 yolo_service에 현재 실행 여부/소스 등을 저장해 반환하도록 확장
+    return {"ok": True}
