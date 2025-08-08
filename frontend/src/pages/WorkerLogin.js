@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { workerAPI } from '../api/workerAPI';
 import styles from '../styles/WorkerLogin.module.css';
 
 const WorkerLogin = ({ onLogin }) => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     });
+
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -13,12 +19,39 @@ const WorkerLogin = ({ onLogin }) => {
             ...prev,
             [name]: value
         }));
+        // 입력 시 에러 메시지 초기화
+        if (error) setError('');
     };
 
-    const handleSubmit = (e) => {
+    const handleLogin = async (e) => {
         e.preventDefault();
-        if (onLogin) {
-            onLogin(formData);
+
+        if (!formData.email || !formData.password) {
+            setError('이메일과 비밀번호를 모두 입력해주세요.');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            setError('');
+
+            const response = await workerAPI.login(formData);
+
+            if (response.status === 'success') {
+                onLogin?.(response); // 선택적 콜백
+                navigate('/home');
+            } else {
+                setError(response.message || '로그인에 실패했습니다.');
+            }
+        } catch (err) {
+            console.error('로그인 실패:', err);
+            const msg =
+                err?.response?.data?.message ||
+                err?.message ||
+                '로그인 중 오류가 발생했습니다.';
+            setError(msg);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -41,7 +74,7 @@ const WorkerLogin = ({ onLogin }) => {
                 </p>
 
                 {/* 로그인 폼 */}
-                <form onSubmit={handleSubmit} className={styles.loginForm}>
+                <form onSubmit={handleLogin} className={styles.loginForm}>
                     <div className={styles.formGroup}>
                         <label htmlFor="email">이메일</label>
                         <input
@@ -68,8 +101,18 @@ const WorkerLogin = ({ onLogin }) => {
                         />
                     </div>
 
-                    <button type="submit" className={styles.loginButton}>
-                        로그인
+                    {error && (
+                        <div className={styles.errorMsg}>
+                            {error}
+                        </div>
+                    )}
+
+                    <button
+                        type="submit"
+                        className={styles.loginButton}
+                        disabled={loading}
+                    >
+                        {loading ? '로그인 중...' : '로그인'}
                     </button>
                 </form>
             </div>
