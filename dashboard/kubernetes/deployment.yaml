@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-deployment
+  labels:
+    app: dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+    spec:
+      containers:
+        - name: dashboard
+          image: iroomregistry.azurecr.io/dashboard:2025080801
+          ports:
+            - containerPort: 8085
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "k8s"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: i-room-secrets
+                  key: MYSQL_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: i-room-secrets
+                  key: JWT_SECRET
+            - name: JWT_EXPIRATION
+              valueFrom:
+                secretKeyRef:
+                  name: i-room-secrets
+                  key: JWT_EXPIRATION
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: i-room-secrets
+                  key: OPENAI_API_KEY
+            - name: TRANSLATE_AUTH_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: i-room-secrets
+                  key: TRANSLATE_AUTH_KEY
