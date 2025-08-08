@@ -1,0 +1,12 @@
+.worker-app-container {
+    min-height: 100vh;
+    background: #f5f5f5;
+}
+
+.worker-layout {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    background: white;
+    min-height: 100vh;
+}
