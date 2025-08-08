@@ -642,13 +642,6 @@ const BlueprintPage = () => {
                         </div>
                     )}
 
-                    {/* 위험구역 표시 */}
-                    <div className={styles.dangerZoneSection}>
-                        <div className={styles.dangerZoneHeader}>
-                            <span className={styles.dangerIcon}>⚠️</span>
-                            <span>위험구역 오버레이 표시</span>
-                        </div>
-                    </div>
                 </section>
             </div>
 
