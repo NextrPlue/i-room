@@ -134,10 +134,18 @@ const WorkerHome = () => {
                         <h2 className={styles.sectionTitle}>안전교육이력</h2>
                         {safetyEducation.map(edu => (
                             <div key={edu.id} className={styles.educationCard}>
+                                {/* 이수증 보기 버튼 우측 상단 */}
+                                {edu.status === 'completed' && (
+                                    <button className={styles.certButton}>
+                                        이수증 보기
+                                    </button>
+                                )}
+
                                 <div className={styles.educationContent}>
                                     <h3 className={styles.educationTitle}>{edu.title}</h3>
                                     <p className={styles.educationDate}>교육 일시: {edu.date}</p>
                                 </div>
+
                                 <button
                                     className={`${styles.educationButton} ${edu.status === 'completed' ? styles.educationButtonCompleted : ''}`}
                                     disabled={edu.status === 'completed'}
