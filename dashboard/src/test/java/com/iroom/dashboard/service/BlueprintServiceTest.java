@@ -5,13 +5,16 @@ import static org.mockito.BDDMockito.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,6 +38,9 @@ import com.iroom.modulecommon.exception.ErrorCode;
 @ExtendWith(MockitoExtension.class)
 class BlueprintServiceTest {
 
+	@TempDir
+	Path tempDir;
+
 	@Mock
 	private BlueprintRepository blueprintRepository;
 
@@ -49,9 +55,16 @@ class BlueprintServiceTest {
 	private MultipartFile invalidExtensionFile;
 	private MultipartFile nullNameFile;
 	private MultipartFile largeSizeFile;
+	private String originalUserDir;
 
 	@BeforeEach
 	void setUp() {
+		// 원래 user.dir 백업
+		originalUserDir = System.getProperty("user.dir");
+
+		// 임시 디렉토리를 user.dir로 설정하여 파일이 tempDir에 생성되도록 함
+		System.setProperty("user.dir", tempDir.toString());
+
 		blueprint = Blueprint.builder()
 			.blueprintUrl("/uploads/blueprints/test-uuid.png")
 			.floor(1)
@@ -109,6 +122,12 @@ class BlueprintServiceTest {
 		
 		// upload-dir 설정
 		ReflectionTestUtils.setField(blueprintService, "uploadDir", "uploads/blueprints");
+	}
+
+	@AfterEach
+	void tearDown() {
+		// 원래 user.dir 복원
+		System.setProperty("user.dir", originalUserDir);
 	}
 
 	@Test
@@ -183,20 +202,39 @@ class BlueprintServiceTest {
 	}
 
 	@Test
-	@DisplayName("도면 수정 성공")
-	void updateBlueprintTest() {
+	@DisplayName("도면 수정 성공 - 파일 없이 정보만 수정")
+	void updateBlueprintWithoutFileTest() {
 		// given
 		Long id = 1L;
-		BlueprintRequest request = new BlueprintRequest("new_url.png", 1, 120.0, 220.0);
+		BlueprintRequest request = new BlueprintRequest(null, 1, 120.0, 220.0);
 		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprint));
 
 		// when
-		BlueprintResponse response = blueprintService.updateBlueprint(id, request);
+		BlueprintResponse response = blueprintService.updateBlueprint(id, request, null);
 
 		// then
-		assertThat(response.blueprintUrl()).isEqualTo("new_url.png");
-		assertThat(response.width()).isEqualTo(120);
-		assertThat(response.height()).isEqualTo(220);
+		assertThat(response.blueprintUrl()).isEqualTo("/uploads/blueprints/test-uuid.png"); // 기존 URL 유지
+		assertThat(response.width()).isEqualTo(120.0);
+		assertThat(response.height()).isEqualTo(220.0);
+	}
+
+	@Test
+	@DisplayName("도면 수정 성공 - 새 파일과 함께 수정")
+	void updateBlueprintWithFileTest() {
+		// given
+		Long id = 1L;
+		BlueprintRequest request = new BlueprintRequest(null, 1, 120.0, 220.0);
+		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprint));
+
+		// when
+		BlueprintResponse response = blueprintService.updateBlueprint(id, request, validFile);
+
+		// then
+		assertThat(response.blueprintUrl()).contains("/uploads/blueprints/");
+		assertThat(response.blueprintUrl()).contains(".png");
+		assertThat(response.blueprintUrl()).isNotEqualTo("/uploads/blueprints/test-uuid.png"); // 새 URL로 변경
+		assertThat(response.width()).isEqualTo(120.0);
+		assertThat(response.height()).isEqualTo(220.0);
 	}
 
 	@Test
@@ -204,14 +242,29 @@ class BlueprintServiceTest {
 	void updateBlueprintFailNotFound() {
 		// given
 		Long id = 99L;
-		BlueprintRequest request = new BlueprintRequest("x.png", 2, 50.0, 50.0);
+		BlueprintRequest request = new BlueprintRequest(null, 2, 50.0, 50.0);
 		given(blueprintRepository.findById(id)).willReturn(Optional.empty());
 
 		// when & then
-		assertThatThrownBy(() -> blueprintService.updateBlueprint(id, request))
+		assertThatThrownBy(() -> blueprintService.updateBlueprint(id, request, null))
 			.isInstanceOf(CustomException.class)
 			.extracting("errorCode")
 			.isEqualTo(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND);
+	}
+
+	@Test
+	@DisplayName("도면 수정 실패 - 잘못된 파일")
+	void updateBlueprintFailInvalidFile() {
+		// given
+		Long id = 1L;
+		BlueprintRequest request = new BlueprintRequest(null, 1, 120.0, 220.0);
+		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprint));
+
+		// when & then
+		assertThatThrownBy(() -> blueprintService.updateBlueprint(id, request, invalidMimeTypeFile))
+			.isInstanceOf(CustomException.class)
+			.extracting("errorCode")
+			.isEqualTo(ErrorCode.DASHBOARD_INVALID_FILE_TYPE);
 	}
 
 	@Test
@@ -219,13 +272,14 @@ class BlueprintServiceTest {
 	void deleteBlueprintTest() {
 		// given
 		Long id = 1L;
-		given(blueprintRepository.existsById(id)).willReturn(true);
+		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprint));
 
 		// when
 		blueprintService.deleteBlueprint(id);
 
 		// then
 		verify(blueprintRepository).deleteById(id);
+		verify(blueprintRepository).findById(id);
 	}
 
 	@Test
@@ -233,7 +287,7 @@ class BlueprintServiceTest {
 	void deleteBlueprintFailNotFound() {
 		// given
 		Long id = 999L;
-		given(blueprintRepository.existsById(id)).willReturn(false);
+		given(blueprintRepository.findById(id)).willReturn(Optional.empty());
 
 		// when & then
 		assertThatThrownBy(() -> blueprintService.deleteBlueprint(id))
@@ -263,17 +317,11 @@ class BlueprintServiceTest {
 		// given
 		Long id = 1L;
 		
-		// 현재 작업 디렉토리에 테스트 파일 생성
-		String rootPath = System.getProperty("user.dir");
-		String uploadDirName = "test-uploads";
-		
-		// rootPath/uploadDir/filename 경로로 파일 생성
-		File uploadDir = new File(rootPath, uploadDirName);
-		uploadDir.mkdirs();
-		File testFile = new File(uploadDir, "test-image.png");
+		// tempDir 내에 uploads/blueprints 디렉토리와 파일 생성
+		File uploadsDir = tempDir.resolve("uploads").resolve("blueprints").toFile();
+		uploadsDir.mkdirs();
+		File testFile = new File(uploadsDir, "test-image.png");
 		testFile.createNewFile();
-		testFile.deleteOnExit();
-		uploadDir.deleteOnExit();
 		
 		Blueprint blueprintWithImage = Blueprint.builder()
 			.blueprintUrl("/uploads/blueprints/test-image.png")
@@ -283,7 +331,6 @@ class BlueprintServiceTest {
 			.build();
 			
 		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprintWithImage));
-		ReflectionTestUtils.setField(blueprintService, "uploadDir", uploadDirName);
 		
 		// when
 		Resource resource = blueprintService.getBlueprintImageResource(id);

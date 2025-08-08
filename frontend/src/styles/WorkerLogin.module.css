@@ -101,6 +101,13 @@
     transform: translateY(0);
 }
 
+.errorMsg {
+    color: red;
+    font-size: 13px;
+    margin-top: 8px;
+    text-align: center;
+}
+
 @media (max-width: 480px) {
     .workerLoginBox {
         padding: 30px 20px;
