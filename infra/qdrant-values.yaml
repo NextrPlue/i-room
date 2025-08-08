@@ -1,0 +1,7 @@
+persistence:
+  enabled: true
+  size: 8Gi
+
+config:
+  service:
+    enable_https: false
