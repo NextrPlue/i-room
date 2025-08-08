@@ -19,6 +19,3 @@ def get_db():
     finally:
         db.close()
 
-# Table auto increment
-def create_tables():
-    Base.metadata.create_all(bind=engine)
