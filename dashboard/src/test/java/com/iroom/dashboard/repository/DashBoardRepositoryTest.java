@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -29,14 +29,14 @@ class DashBoardRepositoryTest {
 		dashBoard1 = DashBoard.builder()
 			.metricType("t")
 			.metricValue(100)
-			.recordedAt(LocalDateTime.now().minusDays(1))
+			.recordedAt(LocalDate.now().minusDays(1))
 			.build();
 		dashBoardRepository.save(dashBoard1);
 
 		dashBoard2 = DashBoard.builder()
 			.metricType("t")
 			.metricValue(200)
-			.recordedAt(LocalDateTime.now())
+			.recordedAt(LocalDate.now())
 			.build();
 		dashBoardRepository.save(dashBoard2);
 	}
