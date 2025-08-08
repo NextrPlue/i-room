@@ -1,11 +1,17 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { workerAPI } from '../api/workerAPI';
 import styles from '../styles/WorkerLogin.module.css';
 
 const WorkerLogin = ({ onLogin }) => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         email: '',
         password: ''
     });
+
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -13,12 +19,31 @@ const WorkerLogin = ({ onLogin }) => {
             ...prev,
             [name]: value
         }));
+        // 입력 시 에러 메시지 초기화
+        if (error) setError('');
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (onLogin) {
-            onLogin(formData);
+        setLoading(true);
+        setError('');
+
+        try {
+            // API 호출
+            const response = await workerAPI.login(formData);
+
+            if (response.status === 'success') {
+                console.log('로그인 성공:', response.message);
+                // 홈 페이지로 이동
+                navigate('/home');
+            } else {
+                setError('로그인에 실패했습니다.');
+            }
+        } catch (error) {
+            console.error('로그인 오류:', error);
+            setError(error.message || '로그인 중 오류가 발생했습니다.');
+        } finally {
+            setLoading(false);
         }
     };
 
