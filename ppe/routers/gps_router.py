@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from database import get_db
-from orm.watch import Watch
-from schemas.watch_schema import WatchCreate
+from ppe.database import get_db
+from ppe.orm.watch import Watch
+from ppe.schemas.watch_schema import WatchCreate
 from datetime import datetime
 
 router = APIRouter(prefix="/gps", tags=["GPS"])

@@ -1,28 +1,36 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-import asyncio
+from pathlib import Path
+from ppe.routers import gps_router, detect_router, monitor_router
+from ppe.database import Base, engine
 
-from routers import gps_router, detect_router, monitor_router
-from services.yolo_service import run_detection_loop
+import threading
+import webbrowser
+import time
 
-# Lifespan: 앱 실행 시 YOLO 루프 실행
+BASE_DIR = Path(__file__).resolve().parent
+STATIC_DIR = BASE_DIR / "static"
+STATIC_DIR.mkdir(parents=True, exist_ok=True)
+
 async def lifespan(app: FastAPI):
     print("PPE Start")
+    # DB 생성
+    Base.metadata.create_all(bind=engine)
 
-    # YOLO 탐지 루프 백그라운드로 실행
-    asyncio.create_task(run_detection_loop())
+    # 서버 시작 후 브라우저 열기, 테스트시 주석처리하세요
+    def open_browser():
+        time.sleep(1)
+        webbrowser.open("http://127.0.0.1:8000/monitor")
+    threading.Thread(target=open_browser).start()
 
     yield
-
     print("PPE Fin")
 
-# FastAPI 앱 생성
 app = FastAPI(lifespan=lifespan)
 
-# 라우터 등록
 app.include_router(gps_router.router)
-app.include_router(detect_router.router)
+app.include_router(detect_router.router)   
+app.include_router(detect_router.control)  
 app.include_router(monitor_router.router)
 
-# 정적 파일 제공 (/static → static/alerts 폴더 등)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
