@@ -1,390 +1,158 @@
-/* 전체 페이지 */
 .page {
     min-height: 100vh;
-    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
-}
-
-/* 메인 컨테이너 */
-.container {
-    background: white;
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    width: 100%;
-    max-width: 1000px;
-    min-height: 600px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    position: relative;
-}
-
-/* 좌측: 일러스트 섹션 */
-.illustrationSection {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    padding: 40px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
+    background-color: #FAFBFF;
+    font-family: 'Pretendard', sans-serif;
 }
 
-.illustrationContainer {
-    width: 100%;
-    max-width: 350px;
-    height: 250px;
+/* 상단바 동일 */
+.topBar {
+    height: 72px;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+}
+.circle { width:34px; height:32px; background:rgba(0,0,0,.1); border-radius:9999px; }
+.logoText { font-size:20px; font-weight:600; color:#111827; }
+
+/* 중앙 정렬 컨테이너 */
+.mainContent {
+    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 16px;
-    margin-bottom: 30px;
-    border: 3px solid rgba(102, 115, 218, 0.2);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    background: rgba(255, 255, 255, 0.8);
-    overflow: hidden;
+    padding: 48px 24px 80px;
 }
 
+/*2열 레이아웃 */
+.container {
+    width: 100%;
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: 1.08fr 1fr; /* 왼쪽 이미지가 조금 더 넓게 */
+    gap: 56px;
+    background: transparent;       /* 카드 배경 제거 */
+    border-radius: 0;              /* 카드 모서리 제거 */
+    box-shadow: none;              /* 카드 그림자 제거 */
+    align-items: center;           /* 전체 컨테이너 중앙 정렬 */
+}
+
+/* 좌측: 배경/보더/그림자 제거하고 이미지 키움 */
+.illustrationSection {
+    display: flex;
+    align-items: center;          /* 이미지를 섹션 내 중앙 정렬 */
+    padding-top: 0;               /* 불필요한 padding 제거 */
+}
+.illustrationContainer {
+    width: 100%;
+    max-width: 560px;              /* 이미지 크게 */
+    height: 360px;
+    margin: 0;
+    border: none;
+    background: transparent;
+    box-shadow: none;
+    border-radius: 16px;
+    overflow: hidden;
+}
 .illustrationImage {
     width: 100%;
     height: 100%;
-    object-fit: contain;
-    border-radius: 12px;
+    object-fit: cover;             /* 꽉 차게 */
+    border-radius: 14px;
 }
+/* 왼쪽 텍스트는 사용 안 함 */
+.brandTitle, .brandSubtitle, .brandDescription { display: none; }
 
-.brandTitle {
-    font-size: 32px;
-    font-weight: 700;
-    color: #2D3748;
-    margin: 20px 0 8px 0;
-    line-height: 1.2;
-}
+/* 우측: 큰 타이틀 + 언더라인 + 소제목 */
+.formSection { padding-top: 8px; }
 
-.brandSubtitle {
-    font-size: 14px;
-    color: #718096;
-    margin: 0 0 4px 0;
-    line-height: 1.5;
-}
-
-.brandDescription {
-    font-size: 14px;
-    color: #A0AEC0;
+.titleWrap { margin-bottom: 18px; }
+.bigTitle {
     margin: 0;
-    line-height: 1.6;
+    font-size: 48px;
+    line-height: 1.1;
+    font-weight: 800;
+    letter-spacing: 0.0125em;
+    color: #0f172a;
 }
-
-/* 우측: 회원가입 폼 섹션 */
-.formSection {
-    padding: 40px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
+.titleUnderline {
+    display: block;
+    height: 6px;
+    width: 240px;
+    background: #111;
+    margin-top: 10px;
+    border-radius: 3px;
 }
+.titleDesc {
+    margin: 14px 0 0;
+    padding: 0;
+    list-style: none;
+    color: #4b5563;
+}
+.titleDesc li { margin: 4px 0; }
 
 .formTitle {
-    font-size: 24px;
+    margin: 28px 0 18px;
+    font-size: 22px;
     font-weight: 700;
-    color: #2D3748;
-    margin: 0 0 30px 0;
-    text-align: center;
+    color: #1f2937;
+    text-align: left;
 }
 
-.form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
+/* 폼 그리드 */
+.form { display: flex; flex-direction: column; gap: 18px; }
+.formRow { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+.formGroup { display: flex; flex-direction: column; gap: 6px; }
+.formLabel { font-size: 14px; font-weight: 600; color: #111827; margin-bottom: 4px; }
 
-.formRow {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-}
-
-.formGroup {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
-.formLabel {
-    font-size: 14px;
-    font-weight: 600;
-    color: #4A5568;
-    margin-bottom: 4px;
-}
-
-.formInput,
-.formSelect {
+.formInput, .formSelect {
     padding: 12px 16px;
-    border: 2px solid #E2E8F0;
-    border-radius: 8px;
+    border: 1px solid #e5e7eb;    /* 2px → 1px로 가볍게 */
+    border-radius: 10px;
+    background: #f5f6f8;
     font-size: 14px;
-    transition: all 0.2s ease;
-    background: white;
-    color: #2D3748;
+    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
 }
-
-.formInput:focus,
-.formSelect:focus {
+.formInput:focus, .formSelect:focus {
     outline: none;
-    border-color: #6673da;
-    box-shadow: 0 0 0 3px rgba(102, 115, 218, 0.1);
+    background: #fff;
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(59,130,246,.15);
 }
 
-.formInput::placeholder {
-    color: #A0AEC0;
+/* 버튼 그룹 */
+.buttonGroup { display: flex; gap: 14px; margin-top: 8px; }
+.cancelButton, .submitButton {
+    height: 44px; min-width: 120px; padding: 0 18px;
+    border-radius: 10px; border: none; font-weight: 600; cursor: pointer;
+    transition: transform .02s ease, box-shadow .2s ease, background .2s ease;
 }
+.cancelButton { background: #c7cdd8; color: #fff; }
+.cancelButton:hover { background: #9aa3b2; }
+.submitButton { background: #111; color: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.18); }
+.submitButton:hover:enabled { background:#000; }
+.submitButton:disabled { background:#d1d5db; color:#9ca3af; cursor: not-allowed; box-shadow: none; }
 
-.formSelect {
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 16px;
-    padding-right: 40px;
+/* 검증 상태 */
+.formInput.error{ border-color:#E53E3E; box-shadow:0 0 0 3px rgba(229,62,62,.1); }
+.formInput.success{ border-color:#38A169; box-shadow:0 0 0 3px rgba(56,161,105,.1); }
+.errorMessage{ font-size:12px; color:#E53E3E; }
+.successMessage{ font-size:12px; color:#38A169; }
+
+/* 반응형 */
+@media (max-width: 1100px){
+    .bigTitle{ font-size: 40px; }
+    .titleUnderline{ width: 200px; }
 }
-
-.passwordGroup {
-    position: relative;
-}
-
-.passwordToggle {
-    position: absolute;
-    right: 12px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #A0AEC0;
-    font-size: 16px;
-    padding: 4px;
-}
-
-.passwordToggle:hover {
-    color: #6673da;
-}
-
-.buttonGroup {
-    display: flex;
-    gap: 12px;
-    margin-top: 20px;
-}
-
-.cancelButton,
-.submitButton {
-    flex: 1;
-    padding: 14px 24px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: none;
-    position: relative;
-    overflow: hidden;
-}
-
-.cancelButton {
-    background: #9CA3AF;
-    color: white;
-}
-
-.cancelButton:hover {
-    background: #6B7280;
-    transform: translateY(-1px);
-}
-
-.submitButton {
-    background: #1F2937;
-    color: white;
-}
-
-.submitButton:hover {
-    background: #374151;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(31, 41, 55, 0.3);
-}
-
-.submitButton:disabled {
-    background: #CBD5E0;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-/* 입력 검증 스타일 */
-.formInput.error {
-    border-color: #E53E3E;
-    box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.1);
-}
-
-.formInput.success {
-    border-color: #38A169;
-    box-shadow: 0 0 0 3px rgba(56, 161, 105, 0.1);
-}
-
-.errorMessage {
-    font-size: 12px;
-    color: #E53E3E;
-    margin-top: 4px;
-}
-
-.successMessage {
-    font-size: 12px;
-    color: #38A169;
-    margin-top: 4px;
-}
-
-/* 로딩 상태 */
-.loading {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.loadingSpinner {
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top: 2px solid white;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* 반응형 디자인 */
-@media (max-width: 1024px) {
-    .container {
-        grid-template-columns: 1fr;
-        max-width: 500px;
-    }
-
-    .illustrationSection {
-        padding: 30px;
-    }
-
-    .formSection {
-        padding: 30px;
-    }
-
-    .brandTitle {
-        font-size: 28px;
-    }
-
-    .formTitle {
-        font-size: 20px;
-        margin-bottom: 25px;
-    }
-}
-
-@media (max-width: 768px) {
-    .page {
-        padding: 15px;
-    }
-
-    .container {
-        border-radius: 16px;
-        min-height: auto;
-    }
-
-    .illustrationSection {
-        padding: 25px 20px;
-    }
-
-    .formSection {
-        padding: 25px 20px;
-    }
-
-    .formRow {
-        grid-template-columns: 1fr;
-        gap: 12px;
-    }
-
-    .brandTitle {
-        font-size: 24px;
-    }
-
-    .formTitle {
-        font-size: 18px;
-    }
-
-    .illustrationContainer {
-        height: 180px;
-    }
-}
-
-@media (max-width: 480px) {
-    .page {
-        padding: 10px;
-    }
-
-    .formSection {
-        padding: 20px 15px;
-    }
-
-    .illustrationSection {
-        padding: 20px 15px;
-    }
-
-    .form {
-        gap: 16px;
-    }
-
-    .formInput,
-    .formSelect,
-    .cancelButton,
-    .submitButton {
-        padding: 11px 14px;
-        font-size: 14px;
-    }
-}
-
-/* 특별 효과 */
-.container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #6673da 0%, #4fc3f7 100%);
-    z-index: 10;
-}
-
-/* 포커스 및 호버 효과 개선 */
-.formGroup:focus-within .formLabel {
-    color: #6673da;
-    transform: scale(1.02);
-    transition: all 0.2s ease;
-}
-
-/* 성공/에러 상태 애니메이션 */
-.errorMessage,
-.successMessage {
-    animation: slideIn 0.3s ease-out;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+@media (max-width: 900px){
+    .container{ grid-template-columns: 1fr; gap: 28px; }
+    .illustrationContainer{ max-width: 100%; height: 300px; }
+    .formRow{ grid-template-columns: 1fr; }
 }
