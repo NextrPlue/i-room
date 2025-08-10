@@ -302,14 +302,34 @@ export const adminAPI = {
             body: JSON.stringify(loginData)
         });
 
-        if (response && response.data && response.data.token) {
+        if (response.data && response.data.token) {
             authUtils.setToken(response.data.token);
-        } else if (response && response.token) {
+        } else if (response.token) {
             authUtils.setToken(response.token);
         } else {
             console.warn('[경고] 응답에서 토큰을 찾을 수 없습니다.');
         }
         return response;
+    },
+
+    /**
+     * 관리자 회원가입
+     * @param {object} signUpData - 회원가입 데이터
+     * @param {string} signUpData.name - 이름
+     * @param {string} signUpData.email - 이메일
+     * @param {string} signUpData.password - 비밀번호
+     * @param {string} signUpData.phone - 전화번호
+     * @returns {Promise} 회원가입 응답
+     */
+    signUp: async (signUpData) => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/signup`;
+        return await apiRequest(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(signUpData)
+        });
     },
 };
 
