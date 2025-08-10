@@ -3,6 +3,7 @@ import {BrowserRouter as Router, Navigate, Route, Routes, useNavigate} from 'rea
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import AdminLogin from './pages/AdminLogin';
+import AdminSignUpPage from './pages/AdminSignUpPage';
 import DashboardPage from './pages/DashboardPage';
 import MonitoringPage from './pages/MonitoringPage';
 import WorkerDetailPage from './pages/WorkerDetailPage';
@@ -67,6 +68,7 @@ const App = () => {
                 {/* 관리자 화면 */}
                 <Route path="/" element={<Navigate to="/admin/login"/>}/>
                 <Route path="/admin/login" element={<AdminLoginPage/>}/>
+                <Route path="/admin/signup" element={<AdminSignUpPage/>}/>
 
                 {/* 대시보드 */}
                 <Route path="/admin/dashboard" element={
