@@ -4,6 +4,7 @@ import Header from './components/Header';
 import Sidebar from './components/Sidebar';
 import AdminLogin from './pages/AdminLogin';
 import AdminSignUpPage from './pages/AdminSignUpPage';
+import PrivacyConsentPage from './pages/PrivacyConsentPage';
 import DashboardPage from './pages/DashboardPage';
 import MonitoringPage from './pages/MonitoringPage';
 import WorkerDetailPage from './pages/WorkerDetailPage';
@@ -69,6 +70,7 @@ const App = () => {
                 <Route path="/" element={<Navigate to="/admin/login"/>}/>
                 <Route path="/admin/login" element={<AdminLoginPage/>}/>
                 <Route path="/admin/signup" element={<AdminSignUpPage/>}/>
+                <Route path="/admin/privacy-consent" element={<PrivacyConsentPage/>}/>
 
                 {/* 대시보드 */}
                 <Route path="/admin/dashboard" element={
