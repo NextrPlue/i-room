@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { adminAPI } from '../api/api';
+import { userAPI } from '../api/api';
 import styles from '../styles/PrivacyConsent.module.css';
 
 const PrivacyConsentPage = () => {
@@ -30,7 +30,7 @@ const PrivacyConsentPage = () => {
             setIsLoading(true);
 
             // 회원가입 API 호출
-            await adminAPI.signUp(signUpData);
+            await userAPI.signUp(signUpData);
 
             alert('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.');
             navigate('/admin/login');

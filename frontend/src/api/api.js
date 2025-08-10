@@ -13,7 +13,7 @@ const API_CONFIG = {
 const handleFetchError = async (response) => {
     let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
     const contentType = response.headers.get('content-type');
-    
+
     if (contentType && contentType.includes('application/json')) {
         try {
             const errorData = await response.json();
@@ -31,7 +31,7 @@ const handleFetchError = async (response) => {
             // 텍스트 파싱 실패 시 기본 에러 메시지 사용
         }
     }
-    
+
     return errorMessage;
 };
 
@@ -55,13 +55,13 @@ const createBlueprintFormData = (blueprintData) => {
         })],
         {type: "application/json"}
     );
-    
+
     formData.append("data", dataBlob);
-    
+
     if (blueprintData.file) {
         formData.append("file", blueprintData.file);
     }
-    
+
     return formData;
 };
 
@@ -221,39 +221,6 @@ export const userAPI = {
         return await apiRequest(url);
     },
 
-    /**
-     * 근로자 안전교육 이력 조회
-     * @param {string} workerId - 근로자 ID
-     * @param {number} page - 페이지 번호 (기본값: 0)
-     * @param {number} size - 페이지당 개수 (기본값: 10)
-     * @returns {Promise} 안전교육 이력 데이터
-     */
-    getWorkerEducation: async (workerId, page = 0, size = 10) => {
-        const queryParams = new URLSearchParams({
-            page: page.toString(),
-            size: size.toString()
-        });
-
-        const url = `${API_CONFIG.gateway}/api/management/worker-education/workers/${workerId}?${queryParams.toString()}`;
-        return await apiRequest(url);
-    },
-
-    /**
-     * 안전교육 등록
-     * @param {object} educationData - 등록할 교육 데이터
-     * @param {string} educationData.workerId - 근로자 ID
-     * @param {string} educationData.name - 교육명
-     * @param {string} educationData.eduDate - 교육 일시 (YYYY-MM-DD)
-     * @param {string} educationData.certUrl - 수료증 URL
-     * @returns {Promise} 등록된 교육 정보
-     */
-    createWorkerEducation: async (educationData) => {
-        const url = `${API_CONFIG.gateway}/api/management/worker-education`;
-        return await apiRequest(url, {
-            method: 'POST',
-            body: JSON.stringify(educationData)
-        });
-    },
 
     /**
      * 근로자 정보 수정
@@ -269,22 +236,6 @@ export const userAPI = {
         });
     },
 
-    /**
-     * 근로자 출입현황 조회
-     * @param {string} workerId - 근로자 ID
-     * @returns {Promise} 출입현황 데이터 { id, workerId, enterDate, outDate }
-     */
-    getWorkerAttendance: async (workerId) => {
-        const url = `${API_CONFIG.gateway}/api/management/entries/${workerId}`;
-        return await apiRequest(url);
-    },
-
-};
-
-/**
- * Admin API 서비스
- */
-export const adminAPI = {
     /**
      * 관리자 로그인
      * @param {object} loginData - 로그인 데이터
@@ -330,6 +281,55 @@ export const adminAPI = {
             },
             body: JSON.stringify(signUpData)
         });
+    },
+};
+
+/**
+ * Management API 서비스
+ */
+export const managementAPI = {
+    /**
+     * 근로자 안전교육 이력 조회
+     * @param {string} workerId - 근로자 ID
+     * @param {number} page - 페이지 번호 (기본값: 0)
+     * @param {number} size - 페이지당 개수 (기본값: 10)
+     * @returns {Promise} 안전교육 이력 데이터
+     */
+    getWorkerEducation: async (workerId, page = 0, size = 10) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString()
+        });
+
+        const url = `${API_CONFIG.gateway}/api/management/worker-education/workers/${workerId}?${queryParams.toString()}`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 안전교육 등록
+     * @param {object} educationData - 등록할 교육 데이터
+     * @param {string} educationData.workerId - 근로자 ID
+     * @param {string} educationData.name - 교육명
+     * @param {string} educationData.eduDate - 교육 일시 (YYYY-MM-DD)
+     * @param {string} educationData.certUrl - 수료증 URL
+     * @returns {Promise} 등록된 교육 정보
+     */
+    createWorkerEducation: async (educationData) => {
+        const url = `${API_CONFIG.gateway}/api/management/worker-education`;
+        return await apiRequest(url, {
+            method: 'POST',
+            body: JSON.stringify(educationData)
+        });
+    },
+
+    /**
+     * 근로자 출입현황 조회
+     * @param {string} workerId - 근로자 ID
+     * @returns {Promise} 출입현황 데이터 { id, workerId, enterDate, outDate }
+     */
+    getWorkerAttendance: async (workerId) => {
+        const url = `${API_CONFIG.gateway}/api/management/entries/${workerId}`;
+        return await apiRequest(url);
     },
 };
 
@@ -395,7 +395,7 @@ export const blueprintAPI = {
      */
     updateBlueprint: async (blueprintId, blueprintData) => {
         const url = `${API_CONFIG.gateway}/api/dashboard/blueprints/${blueprintId}`;
-        
+
         // 파일이 있든 없든 동일한 방식으로 FormData 생성 및 전송
         const formData = createBlueprintFormData(blueprintData);
         return await fetchWithFormData(url, "PUT", formData);

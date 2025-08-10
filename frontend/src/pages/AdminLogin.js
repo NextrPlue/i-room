@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import styles from '../styles/AdminLogin.module.css';
-import {adminAPI} from '../api/api';
+import {userAPI} from '../api/api';
 
 const AdminLogin = ({onLogin}) => {
     const navigate = useNavigate();
@@ -101,7 +101,7 @@ const AdminLogin = ({onLogin}) => {
             setLoading(true);
             setError('');
 
-            const response = await adminAPI.login(formData);
+            const response = await userAPI.login(formData);
             onLogin(response);
 
         } catch (err) {

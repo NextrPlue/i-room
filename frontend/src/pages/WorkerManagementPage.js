@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useCallback} from 'react';
-import {userAPI} from '../api/api';
+import {managementAPI, userAPI} from '../api/api';
 import {useNavigate} from 'react-router-dom';
 import styles from '../styles/WorkerManagement.module.css';
 import WorkerEditModal from '../components/WorkerEditModal';
@@ -105,8 +105,8 @@ const WorkerManagementPage = () => {
             // 각 근로자의 출입현황 조회
             const attendancePromises = workerList.map(async (worker) => {
                 try {
-                    const response = await userAPI.getWorkerAttendance(worker.id);
-                    return response.data || response;
+                    const response = await managementAPI.getWorkerAttendance(worker.id);
+                    return response.data;
                 } catch (error) {
                     console.error(`근로자 ${worker.id} 출입현황 조회 실패:`, error);
                     return null; // 에러 시 null 반환
