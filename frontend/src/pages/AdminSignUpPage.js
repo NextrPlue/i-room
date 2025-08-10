@@ -7,11 +7,11 @@ const AdminSignUpPage = () => {
 
     // 폼 데이터
     const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        password: '',
-        passwordConfirm: '',
-        phone: '',
+        name: '관리자1',
+        email: 'admin@test1.com',
+        password: 'admin1234!',
+        passwordConfirm: 'admin1234!',
+        phone: '010-1234-5678',
     });
 
     // 각 필드 검증 상태
@@ -27,6 +27,7 @@ const AdminSignUpPage = () => {
         setFormData(prev => ({ ...prev, [field]: value }));
         validateField(field, value);
     };
+
 
     const validateField = (field, value) => {
         let isValid = null;
@@ -95,9 +96,39 @@ const AdminSignUpPage = () => {
         setValidation(prev => ({ ...prev, [field]: { isValid, message } }));
     };
 
-    const isFormValid = () =>
-        ['name', 'email', 'password', 'passwordConfirm', 'phone']
-            .every(f => formData[f] && validation[f]?.isValid === true);
+    const isFormValid = () => {
+        // 모든 필드가 채워져 있는지 확인
+        if (!formData.name?.trim() || !formData.email?.trim() || !formData.password?.trim() || 
+            !formData.passwordConfirm?.trim() || !formData.phone?.trim()) {
+            return false;
+        }
+        
+        // 이메일 형식 검증
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+            return false;
+        }
+        
+        // 비밀번호 길이 및 구성 검증
+        const pwd = formData.password;
+        if (pwd.length < 8 || pwd.length > 16 || 
+            !/[a-zA-Z]/.test(pwd) || !/\d/.test(pwd) || 
+            !/[!#$%&*+,.\/:=?@\[\\\]^_`{|}~-]/.test(pwd) || 
+            /[()<>'";}]/.test(pwd)) {
+            return false;
+        }
+        
+        // 비밀번호 확인
+        if (formData.password !== formData.passwordConfirm) {
+            return false;
+        }
+        
+        // 전화번호 형식 검증
+        if (!/^010-\d{4}-\d{4}$/.test(formData.phone.trim())) {
+            return false;
+        }
+        
+        return true;
+    };
 
     const handleCancel = () => {
         if (window.confirm('회원가입을 취소하시겠습니까? 입력한 정보가 모두 삭제됩니다.')) {
@@ -107,6 +138,9 @@ const AdminSignUpPage = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
+        console.log('Form data:', formData);
+        console.log('Validation state:', validation);
+        console.log('Is form valid:', isFormValid());
         if (!isFormValid()) {
             alert('모든 필수 정보를 올바르게 입력해주세요.');
             return;
@@ -155,7 +189,7 @@ const AdminSignUpPage = () => {
 
                         <h2 className={styles.formTitle}>관리자 회원가입</h2>
 
-                        <form className={styles.form} onSubmit={handleSubmit}>
+                        <form className={styles.form} onSubmit={handleSubmit} noValidate>
                             {/* 이름 / 비밀번호 */}
                             <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
@@ -280,7 +314,7 @@ const AdminSignUpPage = () => {
                                 <button type="button" className={styles.cancelButton} onClick={handleCancel}>
                                     취소
                                 </button>
-                                <button type="submit" className={styles.submitButton} disabled={!isFormValid()}>
+                                <button type="submit" className={styles.submitButton}>
                                     다음
                                 </button>
                             </div>
