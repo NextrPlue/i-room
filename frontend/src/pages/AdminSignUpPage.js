@@ -55,11 +55,11 @@ const AdminSignUpPage = () => {
                 if (!v.length) { isValid = null; break; }
                 if (v.length < 8 || v.length > 16) {
                     isValid = false; message = '비밀번호는 8-16자여야 합니다.';
-                } else if (!/[A-Za-z]/.test(v)) {
+                } else if (!/[a-zA-Z]/.test(v)) {
                     isValid = false; message = '영문자를 포함해야 합니다.';
                 } else if (!/\d/.test(v)) {
                     isValid = false; message = '숫자를 포함해야 합니다.';
-                } else if (!/[!#$%&*+,.\/:=?@\[\\\]^_`{|}~-]/.test(v) || /[()<>'";}]/.test(v)) {
+                } else if (!/[#$%&*+,./:=?@[\\\]^_`{|}~!-]/.test(v) || /[()<>'";}]/.test(v)) {
                     isValid = false; message = '허용된 특수문자를 포함해야 합니다.';
                 } else {
                     isValid = true; message = '사용 가능한 비밀번호입니다.';
@@ -97,36 +97,44 @@ const AdminSignUpPage = () => {
     };
 
     const isFormValid = () => {
+        
         // 모든 필드가 채워져 있는지 확인
-        if (!formData.name?.trim() || !formData.email?.trim() || !formData.password?.trim() || 
-            !formData.passwordConfirm?.trim() || !formData.phone?.trim()) {
+        const fieldsCheck = !formData.name?.trim() || !formData.email?.trim() || !formData.password?.trim() || 
+            !formData.passwordConfirm?.trim() || !formData.phone?.trim();
+        if (fieldsCheck) {
             return false;
         }
         
         // 이메일 형식 검증
-        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+        const emailCheck = !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim());
+        if (emailCheck) {
             return false;
         }
         
         // 비밀번호 길이 및 구성 검증
         const pwd = formData.password;
-        if (pwd.length < 8 || pwd.length > 16 || 
-            !/[a-zA-Z]/.test(pwd) || !/\d/.test(pwd) || 
-            !/[!#$%&*+,.\/:=?@\[\\\]^_`{|}~-]/.test(pwd) || 
-            /[()<>'";}]/.test(pwd)) {
+        const lengthCheck = pwd.length < 8 || pwd.length > 16;
+        const letterCheck = !/[A-Za-z]/.test(pwd);
+        const numberCheck = !/\d/.test(pwd);
+        const specialCheck = !/[#$%&*+,./:=?@[\\\]^_`{|}~!-]/.test(pwd);
+        const forbiddenCheck = /[()<>'";}]/.test(pwd);
+        
+        if (lengthCheck || letterCheck || numberCheck || specialCheck || forbiddenCheck) {
             return false;
         }
         
         // 비밀번호 확인
-        if (formData.password !== formData.passwordConfirm) {
+        const passwordMatchCheck = formData.password !== formData.passwordConfirm;
+        if (passwordMatchCheck) {
             return false;
         }
         
         // 전화번호 형식 검증
-        if (!/^010-\d{4}-\d{4}$/.test(formData.phone.trim())) {
+        const phoneCheck = !/^010-\d{4}-\d{4}$/.test(formData.phone.trim());
+        if (phoneCheck) {
             return false;
         }
-        
+
         return true;
     };
 
@@ -138,9 +146,6 @@ const AdminSignUpPage = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log('Form data:', formData);
-        console.log('Validation state:', validation);
-        console.log('Is form valid:', isFormValid());
         if (!isFormValid()) {
             alert('모든 필수 정보를 올바르게 입력해주세요.');
             return;

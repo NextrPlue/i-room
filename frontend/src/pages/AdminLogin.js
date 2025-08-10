@@ -64,7 +64,7 @@ const AdminLogin = ({onLogin}) => {
                 } else if (!/.*\d.*/.test(v)) {
                     isValid = false;
                     message = '숫자를 포함해야 합니다.';
-                } else if (!/[!#$%&*+,.\/:=?@\[\\\]^_`{|}~-]/.test(v)) {
+                } else if (!/[#$%&*+,./:=?@[\\\]^_`{|}~!-]/.test(v)) {
                     isValid = false;
                     message = '특수문자를 포함해야 합니다.';
                 } else if (/[()<>'";}]/.test(v)) {
