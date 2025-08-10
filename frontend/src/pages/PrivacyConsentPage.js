@@ -13,7 +13,7 @@ const PrivacyConsentPage = () => {
     const signUpData = location.state?.signUpData;
 
     const handleCancel = () => {
-        navigate('/admin/login');
+        navigate('/admin/signUp');
     };
 
     const handleAgree = async () => {
