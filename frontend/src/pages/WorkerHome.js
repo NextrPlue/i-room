@@ -143,9 +143,7 @@ const WorkerHome = () => {
                 <div className={styles.profileCircle}>
                     <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
                         <circle cx="12" cy="12" r="10" fill="#d0d0d0" />
-                        <path d="M12 12C13.6569 12 15 10.6569 15 9C15 7.34315 13.6569 6 12 6C10.3431 6 9 7.34315 9 9C9 10.6569 10.3431 12 12 12Z" fill="#888" />
-                        <path d="M12 14C8.68629 14 6 16.6863 6 20H18C18 16.6863 15.3137 14 12 14Z" fill="#888" />
-                    </svg>
+                        </svg>
                 </div>
                 <h1 className={styles.workerName}> 안녕하세요, {workerInfo?.name}님,</h1>
                 <p className={styles.greetingMessage}>오늘도 안전하고 활기찬 하루 보내세요!</p>
