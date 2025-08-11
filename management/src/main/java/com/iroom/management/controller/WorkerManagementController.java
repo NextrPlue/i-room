@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.iroom.management.dto.response.WorkerManagementResponse;
+import com.iroom.management.dto.response.WorkerStatsResponse;
 import com.iroom.management.service.WorkerManagementService;
 import com.iroom.modulecommon.dto.response.ApiResponse;
 import com.iroom.modulecommon.dto.response.PagedResponse;
@@ -53,6 +54,12 @@ public class WorkerManagementController {
 		}
 		
 		PagedResponse<WorkerManagementResponse> response = workerManagementService.getEntries(date, page, size);
+		return ResponseEntity.ok(ApiResponse.success(response));
+	}
+
+	@GetMapping("/statistics")
+	public ResponseEntity<ApiResponse<WorkerStatsResponse>> getWorkerStats() {
+		WorkerStatsResponse response = workerManagementService.getWorkerStatistics();
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 }
