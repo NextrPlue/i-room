@@ -86,7 +86,7 @@ public class WorkerManagementService {
 	}
 
 	// 근로자 본인 출입현황 조회
-	@PreAuthorize("hasAuthority('ROLE_WORKER') and #id == authentication.principal")
+	@PreAuthorize("hasAuthority('ROLE_WORKER') and #workerId == authentication.principal")
 	public WorkerManagementResponse getWorkerEntry(Long workerId) {
 		WorkerManagement workerManagement = workerManagementRepository.findById(workerId)
 			.orElseThrow(() -> new CustomException(ErrorCode.USER_WORKER_NOT_FOUND));
