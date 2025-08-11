@@ -110,4 +110,30 @@ class WorkerManagementControllerTest {
 			.andExpect(jsonPath("$.data.enterDate").value("2025-07-28T09:00:00"))
 			.andExpect(jsonPath("$.data.outDate").doesNotExist());
 	}
+
+	@Test
+	@DisplayName("근로자 본인 출입현황 조회 성공")
+	void getMyInfoTest() throws Exception {
+		// given
+		Long workerId = 5L;
+		WorkerManagementResponse response = new WorkerManagementResponse(
+			4L,
+			workerId,
+			LocalDateTime.of(2025, 7, 28, 8, 30),
+			LocalDateTime.of(2025, 7, 28, 17, 30)
+		);
+
+		Mockito.when(workerManagementService.getWorkerEntry(anyLong()))
+			.thenReturn(response);
+
+		// when & then
+		mockMvc.perform(get("/entries/me")
+				.header("X-User-Id", workerId)
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.id").value(4L))
+			.andExpect(jsonPath("$.data.workerId").value(workerId))
+			.andExpect(jsonPath("$.data.enterDate").value("2025-07-28T08:30:00"))
+			.andExpect(jsonPath("$.data.outDate").value("2025-07-28T17:30:00"));
+	}
 }
