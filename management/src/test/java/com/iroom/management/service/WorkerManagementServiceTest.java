@@ -152,4 +152,17 @@ class WorkerManagementServiceTest {
 		assertThat(response.enterDate()).isNull();
 		assertThat(response.outDate()).isNull();
 	}
+
+	@Test
+	@DisplayName("근로자 본인 출입현황 조회 성공")
+	void getWorkerEntry_success() {
+		// given
+		given(workerManagementRepository.findById(1L)).willReturn(Optional.of(worker));
+
+		// when
+		WorkerManagementResponse response = service.getWorkerEntry(1L);
+
+		// then
+		assertThat(response.workerId()).isEqualTo(1L);
+	}
 }
