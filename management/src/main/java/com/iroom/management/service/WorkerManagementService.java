@@ -92,11 +92,11 @@ public class WorkerManagementService {
 			.orElse(new WorkerManagementResponse(null, workerId, null, null));
 	}
 
-	// 근로자 출입현황 목록 조회
+	// 근로자 출입현황 전체 목록 조회
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
 	public PagedResponse<WorkerManagementResponse> getEntries(String date, int page, int size) {
 		Pageable pageable = PageRequest.of(page, size);
-		
+
 		Page<WorkerManagement> entryPage;
 		if (date == null || date.trim().isEmpty()) {
 			entryPage = workerManagementRepository.findAll(pageable);
@@ -119,33 +119,42 @@ public class WorkerManagementService {
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
 	public WorkerStatsResponse getWorkerStatistics() {
 		// 전체 근로자 수
-		int totalWorkers = (int) workerReadModelRepository.count();
-		
+		int totalWorkers = (int)workerReadModelRepository.count();
+
 		// 오늘 날짜 범위 설정
 		LocalDate today = LocalDate.now();
 		LocalDateTime startOfDay = today.atStartOfDay();
 		LocalDateTime endOfDay = today.atTime(23, 59, 59);
-		
+
 		// 오늘 출입 기록들 조회
 		List<WorkerManagement> todayEntries = workerManagementRepository
 			.findByEnterDateBetween(startOfDay, endOfDay, Pageable.unpaged())
 			.getContent();
-		
+
 		// 근무중: 오늘 출근했고 아직 퇴근 안함
-		int working = (int) todayEntries.stream()
+		int working = (int)todayEntries.stream()
 			.filter(entry -> entry.getOutDate() == null)
 			.count();
-		
+
 		// 퇴근: 오늘 출근해서 퇴근함
-		int offWork = (int) todayEntries.stream()
-			.filter(entry -> entry.getOutDate() != null && 
+		int offWork = (int)todayEntries.stream()
+			.filter(entry -> entry.getOutDate() != null &&
 				entry.getOutDate().toLocalDate().equals(today))
 			.count();
-		
+
 		// 미출근: 전체 근로자 - 오늘 출근한 사람들
 		int todayAttended = todayEntries.size();
 		int absent = totalWorkers - todayAttended;
-		
+
 		return new WorkerStatsResponse(totalWorkers, working, offWork, absent);
+	}
+
+	// 근로자 본인 출입현황 조회
+	@PreAuthorize("hasAuthority('ROLE_WORKER') and #workerId == authentication.principal")
+	public WorkerManagementResponse getWorkerEntry(Long workerId) {
+		WorkerManagement workerManagement = workerManagementRepository.findById(workerId)
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_WORKER_NOT_FOUND));
+
+		return new WorkerManagementResponse(workerManagement);
 	}
 }

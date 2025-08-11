@@ -9,7 +9,7 @@ const WorkerHome = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // 상태 관리
+    // 근로자 상세정보 상태
     const [workerInfo, setWorkerInfo] = useState({
         name: '',
         greeting: '오늘도 안전하고 활기찬 하루 보내세요!',
@@ -25,9 +25,21 @@ const WorkerHome = () => {
         age: ''
     });
 
+    // 근로자 출입내역 상태
+    const [attendanceData, setAttendanceData] = useState({
+        checkIn: null,
+        checkOut: null,
+        isCheckedIn: false
+    })
+
+    // 안전교육 상태
+    const [safetyEducation, setSafetyEducation] = useState([]);
+
     // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
         loadWorkerData();
+        loadAttendanceData();
+        loadEducationData();
     }, []);
 
     // 근로자 데이터 로드
@@ -67,21 +79,61 @@ const WorkerHome = () => {
         }
     };
 
-    const attendanceData = {
-        checkIn: '08:20',
-        checkOut: null,
-        isCheckedIn: true
+    // 출입 내역 로드
+    const loadAttendanceData = async () => {
+        try {
+            const response = await workerAPI.getMyEntry();
+
+            if (response.status === 'success' && response.data) {
+                // enterDate에서 시간 추출 (HH:mm 형식)
+                const enterTime = response.data.enterDate ?
+                    response.data.enterDate.split('T')[1].substring(0, 5) : null;
+
+                const outTime = response.data.outDate ?
+                    response.data.outDate.split('T')[1].substring(0, 5) : null;
+
+                setAttendanceData({
+                    checkIn: enterTime,
+                    checkOut: outTime,
+                    isCheckedIn: enterTime && !outTime
+                });
+            }
+        } catch (error) {
+            console.error('출입 데이터 로드 실패:', error);
+        }
     };
 
-    const safetyEducation = [
-        {
-            id: 1,
-            title: '건설현장 기초 안전 교육',
-            date: '2025.07.01',
-            status: 'completed',
-            buttonText: '이수완료'
+    // 안전교육 로드
+    const loadEducationData = async () => {
+        try {
+            const response = await workerAPI.getMyEducation(0, 100);
+
+            if (response.status === 'success' && response.data) {
+                const educationList = response.data.content.map(edu => ({
+                    id: edu.id,
+                    workerId: edu.workerId,
+                    title: edu.name || '안전교육',
+                    date: edu.eduDate || '날짜 정보 없음',
+                    status: 'completed',
+                    buttonText: '이수완료',
+                    certUrl: edu.certUrl
+                }));
+
+                setSafetyEducation(educationList);
+            }
+        } catch (error) {
+            console.error('안전교육 데이터 로드 실패:', error);
         }
-    ];
+    };
+
+    // 이수증 보기 클릭 핸들러
+    const handleViewCertificate = (certUrl) => {
+        if (certUrl) {
+            window.open(certUrl, '_blank');
+        } else {
+            alert('이수증을 찾을 수 없습니다.');
+        }
+    };
 
     const handleLogout = () => {
         workerAPI.logout();
@@ -118,9 +170,7 @@ const WorkerHome = () => {
                 <div className={styles.profileCircle}>
                     <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
                         <circle cx="12" cy="12" r="10" fill="#d0d0d0" />
-                        <path d="M12 12C13.6569 12 15 10.6569 15 9C15 7.34315 13.6569 6 12 6C10.3431 6 9 7.34315 9 9C9 10.6569 10.3431 12 12 12Z" fill="#888" />
-                        <path d="M12 14C8.68629 14 6 16.6863 6 20H18C18 16.6863 15.3137 14 12 14Z" fill="#888" />
-                    </svg>
+                        </svg>
                 </div>
                 <h1 className={styles.workerName}> 안녕하세요, {workerInfo?.name}님,</h1>
                 <p className={styles.greetingMessage}>오늘도 안전하고 활기찬 하루 보내세요!</p>
@@ -137,12 +187,12 @@ const WorkerHome = () => {
                         <span className={styles.infoValue}>{workerInfo.phone}</span>
                     </div>
                     <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>소속 / 직종 :</span>
-                        <span className={styles.infoValue}>{workerInfo.company} / {workerInfo.position}</span>
+                        <span className={styles.infoLabel}>소속 / 직종 / 직책 :</span>
+                        <span className={styles.infoValue}>{workerInfo.company} / {workerInfo.position} / {workerInfo.jobTitle}</span>
                     </div>
                     <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>혈액형 :</span>
-                        <span className={styles.infoValue}>{workerInfo.bloodType}</span>
+                        <span className={styles.infoLabel}>나이 / 혈액형 :</span>
+                        <span className={styles.infoValue}>{workerInfo.age} / {workerInfo.bloodType}</span>
                     </div>
                     <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>키 / 몸무게 :</span>
@@ -178,7 +228,7 @@ const WorkerHome = () => {
                             <div className={styles.attendanceRow}>
                                 <span className={styles.attendanceLabel}>출근시간 :</span>
                                 <div className={styles.attendanceTime}>
-                                    <span className={styles.timeValue}>{attendanceData.checkIn}</span>
+                                    <span className={styles.timeValue}>{attendanceData.checkIn || '-'}</span>
                                     {attendanceData.isCheckedIn && (
                                         <span className={styles.checkInBadge}>출근완료!</span>
                                     )}
@@ -187,10 +237,13 @@ const WorkerHome = () => {
                             <div className={styles.attendanceRow}>
                                 <span className={styles.attendanceLabel}>퇴근시간 :</span>
                                 <div className={styles.attendanceTime}>
-                                    {!attendanceData.checkOut && (
+                                    {!attendanceData.checkOut && attendanceData.isCheckedIn && (
                                         <button className={styles.checkOutButton} onClick={handleCheckOut}>
                                             퇴근 전
                                         </button>
+                                    )}
+                                    {attendanceData.checkOut && (
+                                        <span className={styles.timeValue}>{attendanceData.checkOut}</span>
                                     )}
                                 </div>
                             </div>
@@ -200,29 +253,46 @@ const WorkerHome = () => {
 
                 {activeTab === 'education' && (
                     <div className={styles.educationSection}>
-                        <h2 className={styles.sectionTitle}>안전교육이력</h2>
-                        {safetyEducation.map(edu => (
-                            <div key={edu.id} className={styles.educationCard}>
-                                {/* 이수증 보기 버튼 우측 상단 */}
-                                {edu.status === 'completed' && (
-                                    <button className={styles.certButton}>
-                                        이수증 보기
-                                    </button>
-                                )}
+                        <h2 className={styles.sectionTitle}>
+                            안전교육이력
+                            {safetyEducation.length > 0 && (
+                                <span className={styles.totalCount}> (총 {safetyEducation.length}건)</span>
+                            )}
+                        </h2>
 
-                                <div className={styles.educationContent}>
-                                    <h3 className={styles.educationTitle}>{edu.title}</h3>
-                                    <p className={styles.educationDate}>교육 일시: {edu.date}</p>
-                                </div>
+                        {safetyEducation.length > 0 ? (
+                            <div className={styles.educationList}>
+                                {safetyEducation.map(edu => (
+                                    <div key={edu.id} className={styles.educationCard}>
+                                        {/* 이수증 보기 버튼 우측 상단 */}
+                                        {edu.certUrl && (
+                                            <button
+                                                className={styles.certButton}
+                                                onClick={() => handleViewCertificate(edu.certUrl)}
+                                            >
+                                                이수증 보기
+                                            </button>
+                                        )}
 
-                                <button
-                                    className={`${styles.educationButton} ${edu.status === 'completed' ? styles.educationButtonCompleted : ''}`}
-                                    disabled={edu.status === 'completed'}
-                                >
-                                    {edu.buttonText}
-                                </button>
+                                        <div className={styles.educationContent}>
+                                            <h3 className={styles.educationTitle}>{edu.title}</h3>
+                                            <p className={styles.educationDate}>교육 일시: {edu.date}</p>
+                                        </div>
+
+                                        <button
+                                            className={`${styles.educationButton} ${styles.educationButtonCompleted}`}
+                                            disabled={true}
+                                        >
+                                            {edu.buttonText}
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        ) : (
+                            <p className={styles.noEducation}>
+                                안전교육 이력이 없습니다.
+                            </p>
+                        )}
                     </div>
                 )}
             </div>

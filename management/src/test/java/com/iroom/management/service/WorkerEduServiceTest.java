@@ -168,4 +168,23 @@ class WorkerEduServiceTest {
 		verify(workerReadModelRepository).findById(999L);
 		verify(workerEduRepository, never()).findAllByWorkerId(anyLong(), any(Pageable.class));
 	}
+
+	@Test
+	@DisplayName("근로자 본인 안전교육 내역 조회 성공")
+	void getWorkerEdu_success() {
+		// given
+		List<WorkerEdu> eduList = List.of(workerEdu);
+		Page<WorkerEdu> page = new PageImpl<>(eduList, pageable, eduList.size());
+		given(workerEduRepository.findAllByWorkerId(1L, pageable)).willReturn(page);
+
+		// when
+		PagedResponse<WorkerEduResponse> response = workerEduService.getWorkerEdu(1L, 0, 10);
+
+		// then
+		assertThat(response.content()).hasSize(1);
+		assertThat(response.totalElements()).isEqualTo(1);
+		assertThat(response.content().get(0).workerId()).isEqualTo(1L);
+		assertThat(response.content().get(0).name()).isEqualTo("근로자1");
+		assertThat(response.content().get(0).certUrl()).isEqualTo("https://example.com/cert1.jpg");
+	}
 }

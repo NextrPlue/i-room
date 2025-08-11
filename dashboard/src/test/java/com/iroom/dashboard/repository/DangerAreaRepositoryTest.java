@@ -14,7 +14,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import com.iroom.dashboard.entity.DangerArea;
+import com.iroom.dashboard.danger.entity.DangerArea;
+import com.iroom.dashboard.danger.repository.DangerAreaRepository;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)

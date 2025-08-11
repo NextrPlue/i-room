@@ -25,9 +25,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iroom.dashboard.dto.request.BlueprintRequest;
-import com.iroom.dashboard.dto.response.BlueprintResponse;
-import com.iroom.dashboard.service.BlueprintService;
+import com.iroom.dashboard.blueprint.controller.BlueprintController;
+import com.iroom.dashboard.blueprint.dto.request.BlueprintRequest;
+import com.iroom.dashboard.blueprint.dto.response.BlueprintResponse;
+import com.iroom.dashboard.blueprint.service.BlueprintService;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 
 @WebMvcTest(value = BlueprintController.class, excludeAutoConfiguration = {
