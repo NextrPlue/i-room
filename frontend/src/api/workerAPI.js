@@ -126,6 +126,26 @@ export const workerAPI = {
     },
 
     /**
+     * 근로자 출입내역 조회
+     * @returns {Promise} 근로자 정보
+     */
+    getMyEntry: async () => {
+        const url = `${API_CONFIG.gateway}/api/management/entries/me`;
+        console.log('[내 출입내역 조회 요청]');
+
+        try {
+            const response = await apiRequest(url, {
+                method: 'GET'
+            });
+
+            return response;
+        } catch (error) {
+            console.error('[내 정보 조회 실패]:', error);
+            throw error;
+        }
+    },
+
+    /**
      * 로그아웃
      */
     logout: () => {
