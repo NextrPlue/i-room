@@ -106,7 +106,6 @@ const WorkerHome = () => {
     // 안전교육 로드
     const loadEducationData = async () => {
         try {
-            // size를 100으로 설정하여 한 번에 모든 데이터 가져오기
             const response = await workerAPI.getMyEducation(0, 100);
 
             if (response.status === 'success' && response.data) {
@@ -124,6 +123,15 @@ const WorkerHome = () => {
             }
         } catch (error) {
             console.error('안전교육 데이터 로드 실패:', error);
+        }
+    };
+
+    // 이수증 보기 클릭 핸들러
+    const handleViewCertificate = (certUrl) => {
+        if (certUrl) {
+            window.open(certUrl, '_blank');
+        } else {
+            alert('이수증을 찾을 수 없습니다.');
         }
     };
 
@@ -245,29 +253,46 @@ const WorkerHome = () => {
 
                 {activeTab === 'education' && (
                     <div className={styles.educationSection}>
-                        <h2 className={styles.sectionTitle}>안전교육이력</h2>
-                        {safetyEducation.map(edu => (
-                            <div key={edu.id} className={styles.educationCard}>
-                                {/* 이수증 보기 버튼 우측 상단 */}
-                                {edu.status === 'completed' && (
-                                    <button className={styles.certButton}>
-                                        이수증 보기
-                                    </button>
-                                )}
+                        <h2 className={styles.sectionTitle}>
+                            안전교육이력
+                            {safetyEducation.length > 0 && (
+                                <span className={styles.totalCount}> (총 {safetyEducation.length}건)</span>
+                            )}
+                        </h2>
 
-                                <div className={styles.educationContent}>
-                                    <h3 className={styles.educationTitle}>{edu.title}</h3>
-                                    <p className={styles.educationDate}>교육 일시: {edu.date}</p>
-                                </div>
+                        {safetyEducation.length > 0 ? (
+                            <div className={styles.educationList}>
+                                {safetyEducation.map(edu => (
+                                    <div key={edu.id} className={styles.educationCard}>
+                                        {/* 이수증 보기 버튼 우측 상단 */}
+                                        {edu.certUrl && (
+                                            <button
+                                                className={styles.certButton}
+                                                onClick={() => handleViewCertificate(edu.certUrl)}
+                                            >
+                                                이수증 보기
+                                            </button>
+                                        )}
 
-                                <button
-                                    className={`${styles.educationButton} ${edu.status === 'completed' ? styles.educationButtonCompleted : ''}`}
-                                    disabled={edu.status === 'completed'}
-                                >
-                                    {edu.buttonText}
-                                </button>
+                                        <div className={styles.educationContent}>
+                                            <h3 className={styles.educationTitle}>{edu.title}</h3>
+                                            <p className={styles.educationDate}>교육 일시: {edu.date}</p>
+                                        </div>
+
+                                        <button
+                                            className={`${styles.educationButton} ${styles.educationButtonCompleted}`}
+                                            disabled={true}
+                                        >
+                                            {edu.buttonText}
+                                        </button>
+                                    </div>
+                                ))}
                             </div>
-                        ))}
+                        ) : (
+                            <p className={styles.noEducation}>
+                                안전교육 이력이 없습니다.
+                            </p>
+                        )}
                     </div>
                 )}
             </div>
