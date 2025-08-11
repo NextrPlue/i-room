@@ -25,9 +25,16 @@ const WorkerHome = () => {
         age: ''
     });
 
+    const [attendanceData, setAttendanceData] = useState({
+        checkIn: null,
+        checkOut: null,
+        isCheckedIn: false
+    })
+
     // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
         loadWorkerData();
+        loadAttendanceData();
     }, []);
 
     // 근로자 데이터 로드
@@ -67,10 +74,34 @@ const WorkerHome = () => {
         }
     };
 
-    const attendanceData = {
-        checkIn: '08:20',
-        checkOut: null,
-        isCheckedIn: true
+    // 출입 내역 로드
+    const loadAttendanceData = async () => {
+        try {
+            const response = await fetch('/api/management/entries', {
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.status === 'success' && data.data) {
+                // enterDate에서 시간 추출 (HH:mm 형식)
+                const enterTime = data.data.enterDate ?
+                    data.data.enterDate.split('T')[1].substring(0, 5) : null;
+
+                const outTime = data.data.outDate ?
+                    data.data.outDate.split('T')[1].substring(0, 5) : null;
+
+                setAttendanceData({
+                    checkIn: enterTime,
+                    checkOut: outTime,
+                    isCheckedIn: enterTime && !outTime
+                });
+            }
+        } catch (error) {
+            console.error('출입 데이터 로드 실패:', error);
+        }
     };
 
     const safetyEducation = [
@@ -178,7 +209,7 @@ const WorkerHome = () => {
                             <div className={styles.attendanceRow}>
                                 <span className={styles.attendanceLabel}>출근시간 :</span>
                                 <div className={styles.attendanceTime}>
-                                    <span className={styles.timeValue}>{attendanceData.checkIn}</span>
+                                    <span className={styles.timeValue}>{attendanceData.checkIn || '-'}</span>
                                     {attendanceData.isCheckedIn && (
                                         <span className={styles.checkInBadge}>출근완료!</span>
                                     )}
@@ -187,10 +218,13 @@ const WorkerHome = () => {
                             <div className={styles.attendanceRow}>
                                 <span className={styles.attendanceLabel}>퇴근시간 :</span>
                                 <div className={styles.attendanceTime}>
-                                    {!attendanceData.checkOut && (
+                                    {!attendanceData.checkOut && attendanceData.isCheckedIn && (
                                         <button className={styles.checkOutButton} onClick={handleCheckOut}>
                                             퇴근 전
                                         </button>
+                                    )}
+                                    {attendanceData.checkOut && (
+                                        <span className={styles.timeValue}>{attendanceData.checkOut}</span>
                                     )}
                                 </div>
                             </div>
