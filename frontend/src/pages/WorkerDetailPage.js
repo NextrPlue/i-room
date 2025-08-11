@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { userAPI } from '../api/api';
+import { userAPI, managementAPI } from '../api/api';
 import EducationAddModal from '../components/EducationAddModal';
 import WorkerEditModal from '../components/WorkerEditModal';
 import styles from '../styles/WorkerDetail.module.css';
@@ -36,13 +36,11 @@ const WorkerDetailPage = () => {
         setAttendanceError(null);
 
         try {
-            const response = await userAPI.getWorkerAttendance(workerId);
+            const response = await managementAPI.getWorkerAttendance(workerId);
 
             // 응답 구조에 따른 안전한 처리
-            if (response && response.data) {
+            if (response.data) {
                 setAttendance(response.data);
-            } else if (response) {
-                setAttendance(response);
             } else {
                 setAttendance(null);
             }
@@ -61,7 +59,7 @@ const WorkerDetailPage = () => {
         setEducationError(null);
 
         try {
-            const response = await userAPI.getWorkerEducation(workerId, page, pageSize);
+            const response = await managementAPI.getWorkerEducation(workerId, page, pageSize);
             setEducations(response.data.content || []);
             setTotalPages(response.data.totalPages || 0);
             setCurrentPage(page);
@@ -120,7 +118,7 @@ const WorkerDetailPage = () => {
     // 교육등록 저장
     const handleEducationAddSave = async (educationData) => {
         try {
-            await userAPI.createWorkerEducation(educationData);
+            await managementAPI.createWorkerEducation(educationData);
             alert('안전교육이 등록되었습니다!');
 
             await fetchWorkerEducation(0);
