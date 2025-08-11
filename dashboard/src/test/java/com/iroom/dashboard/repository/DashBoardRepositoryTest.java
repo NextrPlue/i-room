@@ -1,6 +1,7 @@
 package com.iroom.dashboard.repository;
 
-import com.iroom.dashboard.entity.DashBoard;
+import com.iroom.dashboard.dashboard.entity.DashBoard;
+import com.iroom.dashboard.dashboard.repository.DashBoardRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

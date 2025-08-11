@@ -1,5 +1,6 @@
 package com.iroom.dashboard.service;
 
+import com.iroom.dashboard.pdf.service.PdfService;
 import com.itextpdf.text.DocumentException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
