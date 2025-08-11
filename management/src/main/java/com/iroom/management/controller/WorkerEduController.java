@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,6 +45,12 @@ public class WorkerEduController {
 			size = 0;
 
 		PagedResponse<WorkerEduResponse> response = workerEduService.getEduInfo(workerId, page, size);
+		return ResponseEntity.ok(ApiResponse.success(response));
+	}
+
+	@GetMapping("/me")
+	public ResponseEntity<ApiResponse<WorkerEduResponse>> getMyEducation(@RequestHeader("X-User-Id") Long workerId) {
+		WorkerEduResponse response = workerEduService.getWorkerEdu(workerId);
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
