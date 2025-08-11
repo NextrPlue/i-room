@@ -6,10 +6,11 @@ import static org.mockito.BDDMockito.*;
 import java.util.List;
 import java.util.Optional;
 
-import com.iroom.dashboard.dto.request.DangerAreaRequest;
-import com.iroom.dashboard.dto.response.DangerAreaResponse;
-import com.iroom.dashboard.entity.DangerArea;
-import com.iroom.dashboard.repository.DangerAreaRepository;
+import com.iroom.dashboard.danger.service.DangerAreaService;
+import com.iroom.dashboard.danger.dto.request.DangerAreaRequest;
+import com.iroom.dashboard.danger.dto.response.DangerAreaResponse;
+import com.iroom.dashboard.danger.entity.DangerArea;
+import com.iroom.dashboard.danger.repository.DangerAreaRepository;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 
 import org.junit.jupiter.api.BeforeEach;

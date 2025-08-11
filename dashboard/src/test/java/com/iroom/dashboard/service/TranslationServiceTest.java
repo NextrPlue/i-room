@@ -1,8 +1,9 @@
 package com.iroom.dashboard.service;
 
-import com.iroom.dashboard.dto.request.TranslationRequest;
-import com.iroom.dashboard.dto.response.Translation;
-import com.iroom.dashboard.dto.response.TranslationResponse;
+import com.iroom.dashboard.pdf.dto.request.TranslationRequest;
+import com.iroom.dashboard.pdf.dto.response.Translation;
+import com.iroom.dashboard.pdf.dto.response.TranslationResponse;
+import com.iroom.dashboard.pdf.service.TranslationService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

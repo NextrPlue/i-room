@@ -6,9 +6,10 @@ import static org.mockito.BDDMockito.given;
 import java.time.LocalDate;
 
 
-import com.iroom.dashboard.dto.response.DashBoardResponse;
-import com.iroom.dashboard.entity.DashBoard;
-import com.iroom.dashboard.repository.DashBoardRepository;
+import com.iroom.dashboard.dashboard.dto.response.DashBoardResponse;
+import com.iroom.dashboard.dashboard.entity.DashBoard;
+import com.iroom.dashboard.dashboard.repository.DashBoardRepository;
+import com.iroom.dashboard.dashboard.service.DashBoardService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

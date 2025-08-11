@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import styles from '../styles/Settings.module.css';
-// import { adminAPI } from '../api/api'; // API 연동 시 사용
+import { userAPI } from '../api/api';
 
 const SettingsPage = () => {
     // 내 계정 정보
-    const [myAccount] = useState({
-        id: 1,
-        username: 'admin@company.com',
-        name: '김관리자',
-        phone: '010-1234-5678',
-        role: 'Super Admin'
+    const [myAccount, setMyAccount] = useState(null);
+    
+    // 정보 수정 상태
+    const [isEditing, setIsEditing] = useState(false);
+    const [editForm, setEditForm] = useState({
+        name: '',
+        email: '',
+        phone: ''
     });
 
     // 비밀번호 변경 폼 데이터
@@ -52,8 +54,39 @@ const SettingsPage = () => {
 
     // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
+        fetchMyAccountInfo();
         fetchAdminData();
     }, []);
+
+    // 내 계정 정보 조회
+    const fetchMyAccountInfo = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await userAPI.getMyInfo();
+            if (response.data) {
+                const accountData = {
+                    id: response.data.id,
+                    username: response.data.email,
+                    name: response.data.name,
+                    phone: response.data.phone,
+                    role: response.data.role
+                };
+                setMyAccount(accountData);
+                setEditForm({
+                    name: response.data.name,
+                    email: response.data.email,
+                    phone: response.data.phone
+                });
+            }
+        } catch (err) {
+            console.error('내 계정 정보 조회 실패:', err);
+            setError(err.message || '계정 정보를 불러오는데 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // 관리자 데이터 조회
     const fetchAdminData = async () => {
@@ -61,13 +94,48 @@ const SettingsPage = () => {
             setLoading(true);
             setError(null);
 
-            // API 호출 예시
-            // const response = await adminAPI.getAdmins();
-            // setAdmins(response.data || []);
+            const response = await userAPI.getAdmins({
+                page: 0,
+                size: 5
+            });
 
+            if (response.data && response.data.content) {
+                const adminList = response.data.content.map(admin => {
+                    let displayRole = admin.role;
+                    let roleType = admin.role.toLowerCase();
+                    
+                    switch(admin.role) {
+                        case 'SUPER_ADMIN':
+                            displayRole = 'Super Admin';
+                            roleType = 'superAdmin';
+                            break;
+                        case 'ADMIN':
+                            displayRole = 'Admin';
+                            roleType = 'admin';
+                            break;
+                        case 'READER':
+                            displayRole = 'Reader';
+                            roleType = 'reader';
+                            break;
+                        default:
+                            displayRole = admin.role;
+                            roleType = admin.role.toLowerCase();
+                    }
+                    
+                    return {
+                        id: admin.id,
+                        name: admin.name,
+                        email: admin.email,
+                        phone: admin.phone,
+                        role: displayRole,
+                        roleType: roleType
+                    };
+                });
+                setAdmins(adminList);
+            }
         } catch (err) {
             console.error('관리자 데이터 조회 실패:', err);
-            setError(err.message || '데이터를 불러오는데 실패했습니다.');
+            setError(err.message || '관리자 목록을 불러오는데 실패했습니다.');
         } finally {
             setLoading(false);
         }
@@ -81,14 +149,60 @@ const SettingsPage = () => {
         }));
     };
 
-    // 정보 수정 버튼 클릭
+    // 정보 수정 폼 입력 처리
+    const handleEditFormChange = (field, value) => {
+        setEditForm(prev => ({
+            ...prev,
+            [field]: value
+        }));
+    };
+
+    // 정보 수정 시작
     const handleEditProfile = () => {
-        // 정보 수정 모달 또는 페이지로 이동
-        console.log('정보 수정');
+        setIsEditing(true);
+    };
+
+    // 정보 수정 취소
+    const handleCancelEdit = () => {
+        setIsEditing(false);
+        if (myAccount) {
+            setEditForm({
+                name: myAccount.name,
+                email: myAccount.username,
+                phone: myAccount.phone
+            });
+        }
+    };
+
+    // 정보 수정 저장
+    const handleSaveEdit = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+
+            const response = await userAPI.updateMyInfo(editForm);
+            
+            if (response.data) {
+                const updatedAccount = {
+                    ...myAccount,
+                    name: response.data.name,
+                    username: response.data.email,
+                    phone: response.data.phone
+                };
+                setMyAccount(updatedAccount);
+                setIsEditing(false);
+                alert('정보가 성공적으로 수정되었습니다.');
+            }
+        } catch (err) {
+            console.error('정보 수정 실패:', err);
+            alert(err.message || '정보 수정에 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     // 비밀번호 변경 버튼 클릭
-    const handleChangePassword = () => {
+    const handleChangePassword = async () => {
         if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
             alert('모든 필드를 입력해주세요.');
             return;
@@ -99,16 +213,29 @@ const SettingsPage = () => {
             return;
         }
 
-        // API 호출 로직
-        console.log('비밀번호 변경:', passwordForm);
-        alert('비밀번호가 변경되었습니다.');
+        try {
+            setLoading(true);
+            setError(null);
 
-        // 폼 초기화
-        setPasswordForm({
-            currentPassword: '',
-            newPassword: '',
-            confirmPassword: ''
-        });
+            await userAPI.changePassword({
+                password: passwordForm.currentPassword,
+                newPassword: passwordForm.newPassword
+            });
+
+            alert('비밀번호가 성공적으로 변경되었습니다.');
+
+            // 폼 초기화
+            setPasswordForm({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+            });
+        } catch (err) {
+            console.error('비밀번호 변경 실패:', err);
+            alert(err.message || '비밀번호 변경에 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     // 관리자 추가
@@ -146,31 +273,90 @@ const SettingsPage = () => {
                     <div className={styles.accountInfoSection}>
                         <h3 className={styles.subSectionTitle}>내 계정 정보</h3>
 
-                        <div className={styles.profileInfo}>
-                            <div className={styles.infoGroup}>
-                                <span className={styles.infoLabel}>아이디</span>
-                                <div className={styles.infoValue}>{myAccount.username}</div>
-                            </div>
+                        {myAccount ? (
+                            <div className={styles.profileInfo}>
+                                <div className={styles.infoGroup}>
+                                    <span className={styles.infoLabel}>아이디</span>
+                                    {isEditing ? (
+                                        <input
+                                            type="email"
+                                            className={styles.editInput}
+                                            value={editForm.email}
+                                            onChange={(e) => handleEditFormChange('email', e.target.value)}
+                                        />
+                                    ) : (
+                                        <div className={styles.infoValue}>{myAccount.username}</div>
+                                    )}
+                                </div>
 
-                            <div className={styles.infoGroup}>
-                                <span className={styles.infoLabel}>이름</span>
-                                <div className={styles.infoValue}>{myAccount.name}</div>
-                            </div>
+                                <div className={styles.infoGroup}>
+                                    <span className={styles.infoLabel}>이름</span>
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            className={styles.editInput}
+                                            value={editForm.name}
+                                            onChange={(e) => handleEditFormChange('name', e.target.value)}
+                                        />
+                                    ) : (
+                                        <div className={styles.infoValue}>{myAccount.name}</div>
+                                    )}
+                                </div>
 
-                            <div className={styles.infoGroup}>
-                                <span className={styles.infoLabel}>연락처</span>
-                                <div className={styles.infoValue}>{myAccount.phone}</div>
+                                <div className={styles.infoGroup}>
+                                    <span className={styles.infoLabel}>연락처</span>
+                                    {isEditing ? (
+                                        <input
+                                            type="tel"
+                                            className={styles.editInput}
+                                            value={editForm.phone}
+                                            onChange={(e) => handleEditFormChange('phone', e.target.value)}
+                                        />
+                                    ) : (
+                                        <div className={styles.infoValue}>{myAccount.phone}</div>
+                                    )}
+                                </div>
+
+                                <div className={styles.infoGroup}>
+                                    <span className={styles.infoLabel}>권한</span>
+                                    <div className={styles.infoValue}>{myAccount.role}</div>
+                                </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className={styles.loadingState}>
+                                계정 정보를 불러오는 중...
+                            </div>
+                        )}
 
                         {/* 정보 수정 버튼 */}
-                        <button
-                            className={styles.editButton}
-                            onClick={handleEditProfile}
-                        >
-                            <span className={styles.icon}>👤</span>
-                            정보 수정
-                        </button>
+                        <div className={styles.editButtonGroup}>
+                            {isEditing ? (
+                                <>
+                                    <button
+                                        className={styles.saveButton}
+                                        onClick={handleSaveEdit}
+                                        disabled={loading}
+                                    >
+                                        {loading ? '저장 중...' : '저장'}
+                                    </button>
+                                    <button
+                                        className={styles.cancelButton}
+                                        onClick={handleCancelEdit}
+                                        disabled={loading}
+                                    >
+                                        취소
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    className={styles.editButton}
+                                    onClick={handleEditProfile}
+                                >
+                                    <span className={styles.icon}>👤</span>
+                                    정보 수정
+                                </button>
+                            )}
+                        </div>
                     </div>
 
                     {/* 비밀번호 변경 섹션 */}
@@ -216,9 +402,10 @@ const SettingsPage = () => {
                         <button
                             className={styles.passwordChangeButton}
                             onClick={handleChangePassword}
+                            disabled={loading}
                         >
                             <span className={styles.icon}>🔒</span>
-                            비밀번호 변경
+                            {loading ? '변경 중...' : '비밀번호 변경'}
                         </button>
                     </div>
                 </section>

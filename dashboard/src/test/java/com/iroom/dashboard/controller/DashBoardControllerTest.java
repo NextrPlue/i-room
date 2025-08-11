@@ -1,12 +1,13 @@
 package com.iroom.dashboard.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.iroom.dashboard.dto.request.ReportRequest;
-import com.iroom.dashboard.dto.response.DashBoardResponse;
-import com.iroom.dashboard.service.ChatService;
-import com.iroom.dashboard.service.DashBoardService;
-import com.iroom.dashboard.service.EmbeddingService;
-import com.iroom.dashboard.service.PdfService;
+import com.iroom.dashboard.dashboard.controller.DashBoardController;
+import com.iroom.dashboard.dashboard.dto.request.ReportRequest;
+import com.iroom.dashboard.dashboard.dto.response.DashBoardResponse;
+import com.iroom.dashboard.pdf.service.ChatService;
+import com.iroom.dashboard.dashboard.service.DashBoardService;
+import com.iroom.dashboard.pdf.service.EmbeddingService;
+import com.iroom.dashboard.pdf.service.PdfService;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

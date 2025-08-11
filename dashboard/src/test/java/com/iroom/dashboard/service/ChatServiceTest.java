@@ -1,8 +1,9 @@
 package com.iroom.dashboard.service;
 
-import com.iroom.dashboard.dto.Message;
-import com.iroom.dashboard.dto.request.ChatRequest;
-import com.iroom.dashboard.dto.response.ChatResponse;
+import com.iroom.dashboard.dashboard.dto.Message;
+import com.iroom.dashboard.pdf.dto.request.ChatRequest;
+import com.iroom.dashboard.pdf.dto.response.ChatResponse;
+import com.iroom.dashboard.pdf.service.ChatService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

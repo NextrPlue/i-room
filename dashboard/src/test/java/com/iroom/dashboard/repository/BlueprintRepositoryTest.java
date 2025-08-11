@@ -1,6 +1,7 @@
 package com.iroom.dashboard.repository;
 
-import com.iroom.dashboard.entity.Blueprint;
+import com.iroom.dashboard.blueprint.entity.Blueprint;
+import com.iroom.dashboard.blueprint.repository.BlueprintRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
