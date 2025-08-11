@@ -43,7 +43,7 @@ public class WorkerEduService {
 		return PagedResponse.of(responsePage);
 	}
 
-	@PreAuthorize("hasAuthority('ROLE_READER') and #workerId == authentication.principal")
+	@PreAuthorize("hasAuthority('ROLE_WORKER') and #workerId == authentication.principal")
 	public PagedResponse<WorkerEduResponse> getWorkerEdu(Long workerId, int page, int size) {
 		Pageable pageable = PageRequest.of(page, size);
 		Page<WorkerEdu> eduPage = workerEduRepository.findAllByWorkerId(workerId, pageable);
