@@ -1,7 +1,14 @@
 package com.iroom.management.service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,5 +84,28 @@ public class WorkerManagementService {
 		return workerManagementRepository.findTopByWorkerIdOrderByEnterDateDesc(workerId)
 			.map(WorkerManagementResponse::new)
 			.orElse(new WorkerManagementResponse(null, workerId, null, null));
+	}
+
+	// 근로자 출입현황 목록 조회
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
+	public PagedResponse<WorkerManagementResponse> getEntries(String date, int page, int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		
+		Page<WorkerManagement> entryPage;
+		if (date == null || date.trim().isEmpty()) {
+			entryPage = workerManagementRepository.findAll(pageable);
+		} else {
+			try {
+				LocalDate searchDate = LocalDate.parse(date, DateTimeFormatter.ISO_LOCAL_DATE);
+				LocalDateTime startOfDay = searchDate.atStartOfDay();
+				LocalDateTime endOfDay = searchDate.atTime(23, 59, 59);
+
+				entryPage = workerManagementRepository.findByEnterDateBetween(startOfDay, endOfDay, pageable);
+			} catch (DateTimeParseException e) {
+				entryPage = Page.empty();
+			}
+		}
+
+		return PagedResponse.of(entryPage.map(WorkerManagementResponse::new));
 	}
 }
