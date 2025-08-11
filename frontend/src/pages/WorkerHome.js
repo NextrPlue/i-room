@@ -187,12 +187,12 @@ const WorkerHome = () => {
                         <span className={styles.infoValue}>{workerInfo.phone}</span>
                     </div>
                     <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>소속 / 직종 :</span>
-                        <span className={styles.infoValue}>{workerInfo.company} / {workerInfo.position}</span>
+                        <span className={styles.infoLabel}>소속 / 직종 / 직책 :</span>
+                        <span className={styles.infoValue}>{workerInfo.company} / {workerInfo.position} / {workerInfo.jobTitle}</span>
                     </div>
                     <div className={styles.infoRow}>
-                        <span className={styles.infoLabel}>혈액형 :</span>
-                        <span className={styles.infoValue}>{workerInfo.bloodType}</span>
+                        <span className={styles.infoLabel}>나이 / 혈액형 :</span>
+                        <span className={styles.infoValue}>{workerInfo.age} / {workerInfo.bloodType}</span>
                     </div>
                     <div className={styles.infoRow}>
                         <span className={styles.infoLabel}>키 / 몸무게 :</span>
