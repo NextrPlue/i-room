@@ -126,6 +126,48 @@ export const workerAPI = {
     },
 
     /**
+     * 근로자 출입내역 조회
+     * @returns {Promise} 근로자 정보
+     */
+    getMyEntry: async () => {
+        const url = `${API_CONFIG.gateway}/api/management/entries/me`;
+        console.log('[내 출입내역 조회 요청]');
+
+        try {
+            const response = await apiRequest(url, {
+                method: 'GET'
+            });
+
+            return response;
+        } catch (error) {
+            console.error('[내 정보 조회 실패]:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * 안전교육 이력 조회
+     * @param {number} page - 페이지 번호
+     * @param {number} size - 페이지 크기
+     * @returns {Promise} 안전교육 이력
+     */
+    getMyEducation: async (page = 0, size = 10) => {
+        const url = `${API_CONFIG.gateway}/api/management/worker-education/me?page=${page}&size=${size}`;
+        console.log('[안전교육 이력 조회 요청]');
+
+        try {
+            const response = await apiRequest(url, {
+                method: 'GET'
+            });
+
+            return response;
+        } catch (error) {
+            console.error('[안전교육 이력 조회 실패]:', error);
+            throw error;
+        }
+    },
+
+    /**
      * 로그아웃
      */
     logout: () => {
