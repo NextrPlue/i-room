@@ -77,21 +77,15 @@ const WorkerHome = () => {
     // 출입 내역 로드
     const loadAttendanceData = async () => {
         try {
-            const response = await fetch('/api/management/entries', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-                }
-            });
+            const response = await workerAPI.getMyEntry();
 
-            const data = await response.json();
-
-            if (data.status === 'success' && data.data) {
+            if (response.status === 'success' && response.data) {
                 // enterDate에서 시간 추출 (HH:mm 형식)
-                const enterTime = data.data.enterDate ?
-                    data.data.enterDate.split('T')[1].substring(0, 5) : null;
+                const enterTime = response.data.enterDate ?
+                    response.data.enterDate.split('T')[1].substring(0, 5) : null;
 
-                const outTime = data.data.outDate ?
-                    data.data.outDate.split('T')[1].substring(0, 5) : null;
+                const outTime = response.data.outDate ?
+                    response.data.outDate.split('T')[1].substring(0, 5) : null;
 
                 setAttendanceData({
                     checkIn: enterTime,
