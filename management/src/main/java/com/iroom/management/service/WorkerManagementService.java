@@ -112,4 +112,38 @@ public class WorkerManagementService {
 
 		return PagedResponse.of(entryPage.map(WorkerManagementResponse::new));
 	}
+
+	// 근로자 출입 통계 조회
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
+	public WorkerStatsResponse getWorkerStatistics() {
+		// 전체 근로자 수
+		int totalWorkers = (int) workerReadModelRepository.count();
+		
+		// 오늘 날짜 범위 설정
+		LocalDate today = LocalDate.now();
+		LocalDateTime startOfDay = today.atStartOfDay();
+		LocalDateTime endOfDay = today.atTime(23, 59, 59);
+		
+		// 오늘 출입 기록들 조회
+		List<WorkerManagement> todayEntries = workerManagementRepository
+			.findByEnterDateBetween(startOfDay, endOfDay, Pageable.unpaged())
+			.getContent();
+		
+		// 근무중: 오늘 출근했고 아직 퇴근 안함
+		int working = (int) todayEntries.stream()
+			.filter(entry -> entry.getOutDate() == null)
+			.count();
+		
+		// 퇴근: 오늘 출근해서 퇴근함
+		int offWork = (int) todayEntries.stream()
+			.filter(entry -> entry.getOutDate() != null && 
+				entry.getOutDate().toLocalDate().equals(today))
+			.count();
+		
+		// 미출근: 전체 근로자 - 오늘 출근한 사람들
+		int todayAttended = todayEntries.size();
+		int absent = totalWorkers - todayAttended;
+		
+		return new WorkerStatsResponse(totalWorkers, working, offWork, absent);
+	}
 }
