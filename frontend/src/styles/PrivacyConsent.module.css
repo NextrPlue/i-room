@@ -1,0 +1,256 @@
+/* 기본 페이지 레이아웃 */
+.page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: #fafbff;
+    font-family: 'Pretendard', sans-serif;
+}
+
+/* 상단 바 */
+.topBar {
+    height: 72px;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+    overflow: hidden;
+}
+
+.circle {
+    width: 34px;
+    height: 32px;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 9999px;
+}
+
+.logoText {
+    font-size: 20px;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* 메인 컨텐츠 */
+.mainContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 50px;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+    gap: 32px;
+}
+
+/* 제목 */
+.title {
+    font-size: 32px;
+    font-weight: bold;
+    line-height: 40px;
+    letter-spacing: -0.5px;
+    color: #111827;
+    margin: 0;
+    text-align: center;
+}
+
+/* 구분선 */
+.divider {
+    margin: 16px 0 32px 0;
+    width: 198px;
+    border: none;
+    border-top: 1.5px solid #a1a1aa;
+}
+
+/* 동의서 박스 */
+.agreementBox {
+    background-color: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 40px;
+    width: 100%;
+    max-width: 720px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.agreementTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 12px 0;
+    text-align: center;
+}
+
+.agreementSubtitle {
+    font-size: 14px;
+    color: #6b7280;
+    margin: 0 0 24px 0;
+    text-align: center;
+    line-height: 1.5;
+}
+
+/* 동의서 내용 */
+.agreementContent {
+    padding: 20px;
+    background-color: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    line-height: 1.6;
+}
+
+.agreementSection {
+    margin-bottom: 20px;
+}
+
+.agreementSection:last-child {
+    margin-bottom: 0;
+}
+
+.agreementSection h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 8px 0;
+}
+
+.agreementSection p {
+    font-size: 13px;
+    color: #4b5563;
+    margin: 4px 0;
+    line-height: 1.5;
+}
+
+/* 체크박스 영역 */
+.checkboxContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.checkbox {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #111111;
+}
+
+.checkboxLabel {
+    font-size: 14px;
+    color: #374151;
+    cursor: pointer;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* 버튼 영역 */
+.buttonRow {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+/* 회색 버튼: 취소 */
+.grayBtn {
+    background-color: #9ca3af;
+    color: #ffffff;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    min-width: 80px;
+}
+
+.grayBtn:hover {
+    background-color: #6b7280;
+}
+
+/* 검정 버튼: 동의가입 */
+.blackBtn {
+    background-color: #111111;
+    color: #ffffff;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    min-width: 80px;
+}
+
+.blackBtn:hover:not(:disabled) {
+    background-color: #000000;
+}
+
+.blackBtn:disabled,
+.blackBtn.disabled {
+    background-color: #d1d5db;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+/* 반응형 */
+@media (max-width: 1024px) {
+    .mainContent {
+        padding: 30px 20px;
+        gap: 24px;
+    }
+}
+
+@media (max-width: 768px) {
+    .mainContent {
+        padding: 20px 16px;
+    }
+
+    .agreementBox {
+        padding: 24px;
+    }
+
+    .title {
+        font-size: 28px;
+    }
+
+    .divider {
+        width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .mainContent {
+        padding: 20px 10px;
+    }
+
+    .agreementBox {
+        padding: 20px;
+    }
+
+    .agreementTitle {
+        font-size: 16px;
+    }
+
+    .agreementSubtitle {
+        font-size: 13px;
+    }
+
+    .buttonRow {
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+        max-width: 200px;
+    }
+
+    .grayBtn,
+    .blackBtn {
+        width: 100%;
+        min-width: unset;
+    }
+}

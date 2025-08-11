@@ -27,10 +27,11 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.iroom.dashboard.dto.request.BlueprintRequest;
-import com.iroom.dashboard.dto.response.BlueprintResponse;
-import com.iroom.dashboard.entity.Blueprint;
-import com.iroom.dashboard.repository.BlueprintRepository;
+import com.iroom.dashboard.blueprint.service.BlueprintService;
+import com.iroom.dashboard.blueprint.dto.request.BlueprintRequest;
+import com.iroom.dashboard.blueprint.dto.response.BlueprintResponse;
+import com.iroom.dashboard.blueprint.entity.Blueprint;
+import com.iroom.dashboard.blueprint.repository.BlueprintRepository;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.modulecommon.exception.CustomException;
 import com.iroom.modulecommon.exception.ErrorCode;

@@ -1,6 +1,7 @@
 package com.iroom.dashboard.controller;
 
-import com.iroom.dashboard.service.UploadPdfService;
+import com.iroom.dashboard.pdf.controller.UploadPdfController;
+import com.iroom.dashboard.pdf.service.UploadPdfService;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

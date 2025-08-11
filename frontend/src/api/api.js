@@ -13,7 +13,7 @@ const API_CONFIG = {
 const handleFetchError = async (response) => {
     let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
     const contentType = response.headers.get('content-type');
-    
+
     if (contentType && contentType.includes('application/json')) {
         try {
             const errorData = await response.json();
@@ -31,7 +31,7 @@ const handleFetchError = async (response) => {
             // 텍스트 파싱 실패 시 기본 에러 메시지 사용
         }
     }
-    
+
     return errorMessage;
 };
 
@@ -55,13 +55,13 @@ const createBlueprintFormData = (blueprintData) => {
         })],
         {type: "application/json"}
     );
-    
+
     formData.append("data", dataBlob);
-    
+
     if (blueprintData.file) {
         formData.append("file", blueprintData.file);
     }
-    
+
     return formData;
 };
 
@@ -221,6 +221,137 @@ export const userAPI = {
         return await apiRequest(url);
     },
 
+
+    /**
+     * 근로자 정보 수정
+     * @param {string} workerId - 근로자 ID
+     * @param {object} workerData - 수정할 근로자 데이터
+     * @returns {Promise} 수정된 근로자 정보
+     */
+    updateWorker: async (workerId, workerData) => {
+        const url = `${API_CONFIG.gateway}/api/user/workers/${workerId}`;
+        return await apiRequest(url, {
+            method: 'PUT',
+            body: JSON.stringify(workerData)
+        });
+    },
+
+    /**
+     * 관리자 로그인
+     * @param {object} loginData - 로그인 데이터
+     * @param {string} loginData.email - 이메일
+     * @param {string} loginData.password - 비밀번호
+     * @returns {Promise} 로그인 응답 (토큰 등)
+     */
+    login: async (loginData) => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/login`;
+        const response = await apiRequest(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(loginData)
+        });
+
+        if (response.data && response.data.token) {
+            authUtils.setToken(response.data.token);
+        } else if (response.token) {
+            authUtils.setToken(response.token);
+        } else {
+            console.warn('[경고] 응답에서 토큰을 찾을 수 없습니다.');
+        }
+        return response;
+    },
+
+    /**
+     * 관리자 회원가입
+     * @param {object} signUpData - 회원가입 데이터
+     * @param {string} signUpData.name - 이름
+     * @param {string} signUpData.email - 이메일
+     * @param {string} signUpData.password - 비밀번호
+     * @param {string} signUpData.phone - 전화번호
+     * @returns {Promise} 회원가입 응답
+     */
+    signUp: async (signUpData) => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/signup`;
+        return await apiRequest(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(signUpData)
+        });
+    },
+
+    /**
+     * 현재 로그인한 관리자 정보 조회
+     * @returns {Promise} 내 계정 정보
+     */
+    getMyInfo: async () => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/me`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 비밀번호 변경
+     * @param {object} passwordData - 비밀번호 변경 데이터
+     * @param {string} passwordData.password - 현재 비밀번호
+     * @param {string} passwordData.newPassword - 새 비밀번호
+     * @returns {Promise} 변경 응답
+     */
+    changePassword: async (passwordData) => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/password`;
+        return await apiRequest(url, {
+            method: 'PUT',
+            body: JSON.stringify(passwordData)
+        });
+    },
+
+    /**
+     * 관리자 정보 수정
+     * @param {object} updateData - 수정할 정보
+     * @param {string} updateData.name - 이름
+     * @param {string} updateData.email - 이메일
+     * @param {string} updateData.phone - 전화번호
+     * @returns {Promise} 수정된 관리자 정보
+     */
+    updateMyInfo: async (updateData) => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/me`;
+        return await apiRequest(url, {
+            method: 'PUT',
+            body: JSON.stringify(updateData)
+        });
+    },
+
+    /**
+     * 관리자 목록 조회
+     * @param {object} options
+     * @param {number} options.page - 페이지 번호 (기본값: 0)
+     * @param {number} options.size - 페이지당 개수 (기본값: 10)
+     * @param {string} [options.target] - 검색 대상 (name, email)
+     * @param {string} [options.keyword] - 검색어
+     * @returns {Promise} 관리자 목록 데이터
+     */
+    getAdmins: async ({page = 0, size = 10, target = '', keyword = ''} = {}) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
+
+        if (target && keyword && keyword.trim()) {
+            queryParams.append('target', target);
+            queryParams.append('keyword', keyword.trim());
+        }
+
+        const url = `${API_CONFIG.gateway}/api/user/admins?${queryParams.toString()}`;
+        return await apiRequest(url);
+    },
+};
+
+/**
+ * Management API 서비스
+ */
+export const managementAPI = {
     /**
      * 근로자 안전교육 이력 조회
      * @param {string} workerId - 근로자 ID
@@ -256,20 +387,6 @@ export const userAPI = {
     },
 
     /**
-     * 근로자 정보 수정
-     * @param {string} workerId - 근로자 ID
-     * @param {object} workerData - 수정할 근로자 데이터
-     * @returns {Promise} 수정된 근로자 정보
-     */
-    updateWorker: async (workerId, workerData) => {
-        const url = `${API_CONFIG.gateway}/api/user/workers/${workerId}`;
-        return await apiRequest(url, {
-            method: 'PUT',
-            body: JSON.stringify(workerData)
-        });
-    },
-
-    /**
      * 근로자 출입현황 조회
      * @param {string} workerId - 근로자 ID
      * @returns {Promise} 출입현황 데이터 { id, workerId, enterDate, outDate }
@@ -277,39 +394,6 @@ export const userAPI = {
     getWorkerAttendance: async (workerId) => {
         const url = `${API_CONFIG.gateway}/api/management/entries/${workerId}`;
         return await apiRequest(url);
-    },
-
-};
-
-/**
- * Admin API 서비스
- */
-export const adminAPI = {
-    /**
-     * 관리자 로그인
-     * @param {object} loginData - 로그인 데이터
-     * @param {string} loginData.email - 이메일
-     * @param {string} loginData.password - 비밀번호
-     * @returns {Promise} 로그인 응답 (토큰 등)
-     */
-    login: async (loginData) => {
-        const url = `${API_CONFIG.gateway}/api/user/admins/login`;
-        const response = await apiRequest(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(loginData)
-        });
-
-        if (response && response.data && response.data.token) {
-            authUtils.setToken(response.data.token);
-        } else if (response && response.token) {
-            authUtils.setToken(response.token);
-        } else {
-            console.warn('[경고] 응답에서 토큰을 찾을 수 없습니다.');
-        }
-        return response;
     },
 };
 
@@ -375,7 +459,7 @@ export const blueprintAPI = {
      */
     updateBlueprint: async (blueprintId, blueprintData) => {
         const url = `${API_CONFIG.gateway}/api/dashboard/blueprints/${blueprintId}`;
-        
+
         // 파일이 있든 없든 동일한 방식으로 FormData 생성 및 전송
         const formData = createBlueprintFormData(blueprintData);
         return await fetchWithFormData(url, "PUT", formData);
