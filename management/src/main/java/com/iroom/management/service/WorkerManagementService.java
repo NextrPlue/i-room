@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.iroom.management.dto.response.WorkerManagementResponse;
+import com.iroom.management.dto.response.WorkerStatsResponse;
 import com.iroom.management.entity.WorkerManagement;
 import com.iroom.management.repository.WorkerManagementRepository;
 import com.iroom.management.repository.WorkerReadModelRepository;
@@ -32,7 +34,7 @@ public class WorkerManagementService {
 	private final WorkerReadModelRepository workerReadModelRepository;
 
 	// 근로자 입장
-	// 근로자 리드모델 조회로 존재하는 근로자만 동작하도록 수정 필요
+	// WorkerReadModel에 존재하는 근로자만 입장 가능
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_ENTRANCE_SYSTEM')")
 	public WorkerManagementResponse enterWorker(Long workerId) {
 		if (workerId == null) {
@@ -55,8 +57,8 @@ public class WorkerManagementService {
 		return new WorkerManagementResponse(saved);
 	}
 
-	// 근로자 퇴장
-	// 근로자 리드모델 조회로 존재하는 근로자만 동작하도록 수정 필요
+	// 근로자 퇴장  
+	// WorkerReadModel에 존재하는 근로자만 퇴장 가능
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_ENTRANCE_SYSTEM')")
 	public WorkerManagementResponse exitWorker(Long workerId) {
 		if (workerId == null) {
