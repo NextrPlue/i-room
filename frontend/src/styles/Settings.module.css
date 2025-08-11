@@ -59,6 +59,9 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .infoLabel {
@@ -98,6 +101,103 @@
 
 .editButton .icon {
     font-size: 16px;
+}
+
+/* 정보 수정 관련 스타일 */
+.editInput {
+    width: 100%;
+    max-width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    font-size: 14px;
+    background: #fff;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+.editInput:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.editButtonGroup {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.saveButton {
+    background: #10B981;
+    color: #fff;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.saveButton:hover:not(:disabled) {
+    background: #059669;
+}
+
+.saveButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.cancelButton {
+    background: #6B7280;
+    color: #fff;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cancelButton:hover:not(:disabled) {
+    background: #4B5563;
+}
+
+.cancelButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Role Badge 스타일 */
+.roleBadge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.roleBadge.superAdmin {
+    background: #FEE2E2;
+    color: #DC2626;
+}
+
+.roleBadge.admin {
+    background: #DBEAFE;
+    color: #2563EB;
+}
+
+.roleBadge.reader {
+    background: #D1FAE5;
+    color: #059669;
 }
 
 /* 내 계정 관리 하위 섹션들 */
