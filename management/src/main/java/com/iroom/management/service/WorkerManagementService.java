@@ -17,6 +17,7 @@ import com.iroom.management.dto.response.WorkerManagementResponse;
 import com.iroom.management.entity.WorkerManagement;
 import com.iroom.management.repository.WorkerManagementRepository;
 import com.iroom.management.repository.WorkerReadModelRepository;
+import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.modulecommon.exception.CustomException;
 import com.iroom.modulecommon.exception.ErrorCode;
 
@@ -80,6 +81,9 @@ public class WorkerManagementService {
 		if (workerId == null) {
 			throw new CustomException(ErrorCode.MANAGEMENT_INVALID_WORKER_ID);
 		}
+
+		workerReadModelRepository.findById(workerId)
+			.orElseThrow(() -> new CustomException(ErrorCode.MANAGEMENT_WORKER_NOT_FOUND));
 
 		return workerManagementRepository.findTopByWorkerIdOrderByEnterDateDesc(workerId)
 			.map(WorkerManagementResponse::new)
