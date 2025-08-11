@@ -9,7 +9,7 @@ const WorkerHome = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // 상태 관리
+    // 근로자 상세정보 상태
     const [workerInfo, setWorkerInfo] = useState({
         name: '',
         greeting: '오늘도 안전하고 활기찬 하루 보내세요!',
@@ -25,16 +25,21 @@ const WorkerHome = () => {
         age: ''
     });
 
+    // 근로자 출입내역 상태
     const [attendanceData, setAttendanceData] = useState({
         checkIn: null,
         checkOut: null,
         isCheckedIn: false
     })
 
+    // 안전교육 상태
+    const [safetyEducation, setSafetyEducation] = useState([]);
+
     // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
         loadWorkerData();
         loadAttendanceData();
+        loadEducationData();
     }, []);
 
     // 근로자 데이터 로드
@@ -98,15 +103,29 @@ const WorkerHome = () => {
         }
     };
 
-    const safetyEducation = [
-        {
-            id: 1,
-            title: '건설현장 기초 안전 교육',
-            date: '2025.07.01',
-            status: 'completed',
-            buttonText: '이수완료'
+    // 안전교육 로드
+    const loadEducationData = async () => {
+        try {
+            // size를 100으로 설정하여 한 번에 모든 데이터 가져오기
+            const response = await workerAPI.getMyEducation(0, 100);
+
+            if (response.status === 'success' && response.data) {
+                const educationList = response.data.content.map(edu => ({
+                    id: edu.id,
+                    workerId: edu.workerId,
+                    title: edu.name || '안전교육',
+                    date: edu.eduDate || '날짜 정보 없음',
+                    status: 'completed',
+                    buttonText: '이수완료',
+                    certUrl: edu.certUrl
+                }));
+
+                setSafetyEducation(educationList);
+            }
+        } catch (error) {
+            console.error('안전교육 데이터 로드 실패:', error);
         }
-    ];
+    };
 
     const handleLogout = () => {
         workerAPI.logout();
