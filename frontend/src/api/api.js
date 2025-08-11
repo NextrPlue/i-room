@@ -282,6 +282,70 @@ export const userAPI = {
             body: JSON.stringify(signUpData)
         });
     },
+
+    /**
+     * 현재 로그인한 관리자 정보 조회
+     * @returns {Promise} 내 계정 정보
+     */
+    getMyInfo: async () => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/me`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 비밀번호 변경
+     * @param {object} passwordData - 비밀번호 변경 데이터
+     * @param {string} passwordData.password - 현재 비밀번호
+     * @param {string} passwordData.newPassword - 새 비밀번호
+     * @returns {Promise} 변경 응답
+     */
+    changePassword: async (passwordData) => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/password`;
+        return await apiRequest(url, {
+            method: 'PUT',
+            body: JSON.stringify(passwordData)
+        });
+    },
+
+    /**
+     * 관리자 정보 수정
+     * @param {object} updateData - 수정할 정보
+     * @param {string} updateData.name - 이름
+     * @param {string} updateData.email - 이메일
+     * @param {string} updateData.phone - 전화번호
+     * @returns {Promise} 수정된 관리자 정보
+     */
+    updateMyInfo: async (updateData) => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/me`;
+        return await apiRequest(url, {
+            method: 'PUT',
+            body: JSON.stringify(updateData)
+        });
+    },
+
+    /**
+     * 관리자 목록 조회
+     * @param {object} options
+     * @param {number} options.page - 페이지 번호 (기본값: 0)
+     * @param {number} options.size - 페이지당 개수 (기본값: 10)
+     * @param {string} [options.target] - 검색 대상 (name, email)
+     * @param {string} [options.keyword] - 검색어
+     * @returns {Promise} 관리자 목록 데이터
+     */
+    getAdmins: async ({page = 0, size = 10, target = '', keyword = ''} = {}) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
+
+        if (target && keyword && keyword.trim()) {
+            queryParams.append('target', target);
+            queryParams.append('keyword', keyword.trim());
+        }
+
+        const url = `${API_CONFIG.gateway}/api/user/admins?${queryParams.toString()}`;
+        return await apiRequest(url);
+    },
 };
 
 /**
