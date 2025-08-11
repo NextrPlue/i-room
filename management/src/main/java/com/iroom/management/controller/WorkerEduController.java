@@ -49,8 +49,11 @@ public class WorkerEduController {
 	}
 
 	@GetMapping("/me")
-	public ResponseEntity<ApiResponse<WorkerEduResponse>> getMyEducation(@RequestHeader("X-User-Id") Long workerId) {
-		WorkerEduResponse response = workerEduService.getWorkerEdu(workerId);
+	public ResponseEntity<ApiResponse<PagedResponse<WorkerEduResponse>>> getMyEducation(
+		@RequestHeader("X-User-Id") Long workerId,
+		@RequestParam(defaultValue = "0") int page,
+		@RequestParam(defaultValue = "10") int size) {
+		PagedResponse<WorkerEduResponse> response = workerEduService.getWorkerEdu(workerId, page, size);
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
