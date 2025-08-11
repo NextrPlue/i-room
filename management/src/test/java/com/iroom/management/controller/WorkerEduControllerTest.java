@@ -100,4 +100,27 @@ class WorkerEduControllerTest {
 			.andExpect(jsonPath("$.data.content.length()").value(2))
 			.andExpect(jsonPath("$.data.content[0].name").value("근로자1"));
 	}
+
+	@Test
+	@DisplayName("근로자 본인 교육이력 조회 성공")
+	void getMyEducationTest() throws Exception {
+		// given
+		WorkerEduResponse res1 = new WorkerEduResponse(1L, 1L, "근로자1", "url1", LocalDate.of(2025, 7, 1));
+		WorkerEduResponse res2 = new WorkerEduResponse(2L, 1L, "근로자1", "url2", LocalDate.of(2025, 7, 2));
+		List<WorkerEduResponse> content = List.of(res1, res2);
+
+		Page<WorkerEduResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), content.size());
+		PagedResponse<WorkerEduResponse> pagedResponse = PagedResponse.of(page);
+
+		when(workerEduService.getWorkerEdu(1L, 0, 10)).thenReturn(pagedResponse);
+
+		// when & then
+		mockMvc.perform(get("/worker-education/me")
+				.header("X-User-Id", "1")
+				.param("page", "0")
+				.param("size", "10"))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.content.length()").value(2))
+			.andExpect(jsonPath("$.data.content[0].name").value("근로자1"));
+	}
 }
