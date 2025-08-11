@@ -12,6 +12,8 @@ import com.iroom.management.repository.WorkerEduRepository;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.management.dto.request.WorkerEduRequest;
 import com.iroom.management.dto.response.WorkerEduResponse;
+import com.iroom.modulecommon.exception.CustomException;
+import com.iroom.modulecommon.exception.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
@@ -41,5 +43,13 @@ public class WorkerEduService {
 		Page<WorkerEduResponse> responsePage = eduPage.map(WorkerEduResponse::new);
 
 		return PagedResponse.of(responsePage);
+	}
+
+	@PreAuthorize("hasAuthority('ROLE_READER') and #id == authentication.principal")
+	public WorkerEduResponse getWorkerEdu(Long workerId) {
+		WorkerEdu workerEdu = workerEduRepository.findById(workerId)
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_WORKER_NOT_FOUND));
+
+		return new WorkerEduResponse(workerEdu);
 	}
 }
