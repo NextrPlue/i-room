@@ -1,6 +1,10 @@
 pipeline {
     agent any
     
+    parameters {
+        booleanParam(name: 'FORCE_BUILD_ALL', defaultValue: true, description: 'Force build all services regardless of changes')
+    }
+    
     environment {
         // Azure Container Registry 정보
         ACR_REGISTRY = 'iroomregistry.azurecr.io'
@@ -28,78 +32,128 @@ pipeline {
             }
         }
         
-        stage('Build Java Services') {
-            parallel {
-                stage('Build Gateway') {
-                    steps {
-                        echo 'Building Gateway service...'
-                        dir('gateway') {
-                            sh '''
-                                chmod +x ../gradlew
-                                ../gradlew clean build -x test
-                            '''
-                        }
-                    }
+        stage('Build Gateway Service') {
+            when {
+                anyOf {
+                    changeset "gateway/**"
+                    changeset "gradlew*"
+                    changeset "build.gradle*"
+                    changeset "settings.gradle*"
+                    expression { return params.FORCE_BUILD_ALL == true }
                 }
-                
-                stage('Build User Service') {
-                    steps {
-                        echo 'Building User service...'
-                        dir('user') {
-                            sh '''
-                                chmod +x ../gradlew
-                                ../gradlew clean build -x test
-                            '''
-                        }
-                    }
+            }
+            steps {
+                echo 'Building Gateway service...'
+                dir('gateway') {
+                    sh '''
+                        chmod +x ../gradlew
+                        ../gradlew clean build -x test
+                    '''
                 }
-                
-                stage('Build Management Service') {
-                    steps {
-                        echo 'Building Management service...'
-                        dir('management') {
-                            sh '''
-                                chmod +x ../gradlew
-                                ../gradlew clean build -x test
-                            '''
-                        }
-                    }
+            }
+        }
+        
+        stage('Build User Service') {
+            when {
+                anyOf {
+                    changeset "user/**"
+                    changeset "gradlew*"
+                    changeset "build.gradle*"
+                    changeset "settings.gradle*"
+                    expression { return params.FORCE_BUILD_ALL == true }
                 }
-                
-                stage('Build Alarm Service') {
-                    steps {
-                        echo 'Building Alarm service...'
-                        dir('alarm') {
-                            sh '''
-                                chmod +x ../gradlew
-                                ../gradlew clean build -x test
-                            '''
-                        }
-                    }
+            }
+            steps {
+                echo 'Building User service...'
+                dir('user') {
+                    sh '''
+                        chmod +x ../gradlew
+                        ../gradlew clean build -x test
+                    '''
                 }
-                
-                stage('Build Sensor Service') {
-                    steps {
-                        echo 'Building Sensor service...'
-                        dir('sensor') {
-                            sh '''
-                                chmod +x ../gradlew
-                                ../gradlew clean build -x test
-                            '''
-                        }
-                    }
+            }
+        }
+        
+        stage('Build Management Service') {
+            when {
+                anyOf {
+                    changeset "management/**"
+                    changeset "gradlew*"
+                    changeset "build.gradle*"
+                    changeset "settings.gradle*"
+                    expression { return params.FORCE_BUILD_ALL == true }
                 }
-                
-                stage('Build Dashboard Service') {
-                    steps {
-                        echo 'Building Dashboard service...'
-                        dir('dashboard') {
-                            sh '''
-                                chmod +x ../gradlew
-                                ../gradlew clean build -x test
-                            '''
-                        }
-                    }
+            }
+            steps {
+                echo 'Building Management service...'
+                dir('management') {
+                    sh '''
+                        chmod +x ../gradlew
+                        ../gradlew clean build -x test
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Alarm Service') {
+            when {
+                anyOf {
+                    changeset "alarm/**"
+                    changeset "gradlew*"
+                    changeset "build.gradle*"
+                    changeset "settings.gradle*"
+                    expression { return params.FORCE_BUILD_ALL == true }
+                }
+            }
+            steps {
+                echo 'Building Alarm service...'
+                dir('alarm') {
+                    sh '''
+                        chmod +x ../gradlew
+                        ../gradlew clean build -x test
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Sensor Service') {
+            when {
+                anyOf {
+                    changeset "sensor/**"
+                    changeset "gradlew*"
+                    changeset "build.gradle*"
+                    changeset "settings.gradle*"
+                    expression { return params.FORCE_BUILD_ALL == true }
+                }
+            }
+            steps {
+                echo 'Building Sensor service...'
+                dir('sensor') {
+                    sh '''
+                        chmod +x ../gradlew
+                        ../gradlew clean build -x test
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Dashboard Service') {
+            when {
+                anyOf {
+                    changeset "dashboard/**"
+                    changeset "gradlew*"
+                    changeset "build.gradle*"
+                    changeset "settings.gradle*"
+                    expression { return params.FORCE_BUILD_ALL == true }
+                }
+            }
+            steps {
+                echo 'Building Dashboard service...'
+                dir('dashboard') {
+                    sh '''
+                        chmod +x ../gradlew
+                        ../gradlew clean build -x test
+                    '''
                 }
             }
         }
@@ -113,94 +167,155 @@ pipeline {
             }
         }
         
-        stage('Docker Build') {
-            parallel {
-                stage('Build Gateway Docker Image') {
-                    steps {
-                        echo 'Building Gateway Docker image...'
-                        dir('gateway') {
-                            sh '''
-                                docker build -t ${GATEWAY_IMAGE} .
-                                echo "Built Gateway image: ${GATEWAY_IMAGE}"
-                            '''
-                        }
-                    }
+        stage('Build Gateway Docker Image') {
+            when {
+                anyOf {
+                    changeset "gateway/**"
+                    changeset "gradlew*"
+                    changeset "build.gradle*"
+                    changeset "settings.gradle*"
+                    expression { return params.FORCE_BUILD_ALL == true }
                 }
-                
-                stage('Build User Docker Image') {
-                    steps {
-                        echo 'Building User Docker image...'
-                        dir('user') {
-                            sh '''
-                                docker build -t ${USER_IMAGE} .
-                                echo "Built User image: ${USER_IMAGE}"
-                            '''
-                        }
-                    }
+            }
+            steps {
+                echo 'Building Gateway Docker image...'
+                dir('gateway') {
+                    sh '''
+                        docker build -t ${GATEWAY_IMAGE} .
+                        echo "Built Gateway image: ${GATEWAY_IMAGE}"
+                    '''
                 }
-                
-                stage('Build Management Docker Image') {
-                    steps {
-                        echo 'Building Management Docker image...'
-                        dir('management') {
-                            sh '''
-                                docker build -t ${MANAGEMENT_IMAGE} .
-                                echo "Built Management image: ${MANAGEMENT_IMAGE}"
-                            '''
-                        }
-                    }
+            }
+        }
+        
+        stage('Build User Docker Image') {
+            when {
+                anyOf {
+                    changeset "user/**"
+                    changeset "gradlew*"
+                    changeset "build.gradle*"
+                    changeset "settings.gradle*"
+                    expression { return params.FORCE_BUILD_ALL == true }
                 }
-                
-                stage('Build Alarm Docker Image') {
-                    steps {
-                        echo 'Building Alarm Docker image...'
-                        dir('alarm') {
-                            sh '''
-                                docker build -t ${ALARM_IMAGE} .
-                                echo "Built Alarm image: ${ALARM_IMAGE}"
-                            '''
-                        }
-                    }
+            }
+            steps {
+                echo 'Building User Docker image...'
+                dir('user') {
+                    sh '''
+                        docker build -t ${USER_IMAGE} .
+                        echo "Built User image: ${USER_IMAGE}"
+                    '''
                 }
-                
-                stage('Build Sensor Docker Image') {
-                    steps {
-                        echo 'Building Sensor Docker image...'
-                        dir('sensor') {
-                            sh '''
-                                docker build -t ${SENSOR_IMAGE} .
-                                echo "Built Sensor image: ${SENSOR_IMAGE}"
-                            '''
-                        }
-                    }
+            }
+        }
+        
+        stage('Build Management Docker Image') {
+            when {
+                anyOf {
+                    changeset "management/**"
+                    changeset "gradlew*"
+                    changeset "build.gradle*"
+                    changeset "settings.gradle*"
+                    expression { return params.FORCE_BUILD_ALL == true }
                 }
-                
-                stage('Build Dashboard Docker Image') {
-                    steps {
-                        echo 'Building Dashboard Docker image...'
-                        dir('dashboard') {
-                            sh '''
-                                docker build -t ${DASHBOARD_IMAGE} .
-                                echo "Built Dashboard image: ${DASHBOARD_IMAGE}"
-                            '''
-                        }
-                    }
+            }
+            steps {
+                echo 'Building Management Docker image...'
+                dir('management') {
+                    sh '''
+                        docker build -t ${MANAGEMENT_IMAGE} .
+                        echo "Built Management image: ${MANAGEMENT_IMAGE}"
+                    '''
                 }
-
+            }
+        }
+        
+        stage('Build Alarm Docker Image') {
+            when {
+                anyOf {
+                    changeset "alarm/**"
+                    changeset "gradlew*"
+                    changeset "build.gradle*"
+                    changeset "settings.gradle*"
+                    expression { return params.FORCE_BUILD_ALL == true }
+                }
+            }
+            steps {
+                echo 'Building Alarm Docker image...'
+                dir('alarm') {
+                    sh '''
+                        docker build -t ${ALARM_IMAGE} .
+                        echo "Built Alarm image: ${ALARM_IMAGE}"
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Sensor Docker Image') {
+            when {
+                anyOf {
+                    changeset "sensor/**"
+                    changeset "gradlew*"
+                    changeset "build.gradle*"
+                    changeset "settings.gradle*"
+                    expression { return params.FORCE_BUILD_ALL == true }
+                }
+            }
+            steps {
+                echo 'Building Sensor Docker image...'
+                dir('sensor') {
+                    sh '''
+                        docker build -t ${SENSOR_IMAGE} .
+                        echo "Built Sensor image: ${SENSOR_IMAGE}"
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Dashboard Docker Image') {
+            when {
+                anyOf {
+                    changeset "dashboard/**"
+                    changeset "gradlew*"
+                    changeset "build.gradle*"
+                    changeset "settings.gradle*"
+                    expression { return params.FORCE_BUILD_ALL == true }
+                }
+            }
+            steps {
+                echo 'Building Dashboard Docker image...'
+                dir('dashboard') {
+                    sh '''
+                        docker build -t ${DASHBOARD_IMAGE} .
+                        echo "Built Dashboard image: ${DASHBOARD_IMAGE}"
+                    '''
+                }
             }
         }
         
         stage('Push to ACR') {
             steps {
                 echo 'Pushing images to Azure Container Registry...'
-                sh '''
-                    docker push ${GATEWAY_IMAGE}
-                    docker push ${USER_IMAGE}
-                    docker push ${MANAGEMENT_IMAGE}
-                    docker push ${ALARM_IMAGE}
-                    docker push ${SENSOR_IMAGE}
-                    docker push ${DASHBOARD_IMAGE}
-                '''
+                script {
+                    if (env.CHANGE_SET?.contains('gateway/') || params.FORCE_BUILD_ALL) {
+                        sh 'docker push ${GATEWAY_IMAGE}'
+                    }
+                    if (env.CHANGE_SET?.contains('user/') || params.FORCE_BUILD_ALL) {
+                        sh 'docker push ${USER_IMAGE}'
+                    }
+                    if (env.CHANGE_SET?.contains('management/') || params.FORCE_BUILD_ALL) {
+                        sh 'docker push ${MANAGEMENT_IMAGE}'
+                    }
+                    if (env.CHANGE_SET?.contains('alarm/') || params.FORCE_BUILD_ALL) {
+                        sh 'docker push ${ALARM_IMAGE}'
+                    }
+                    if (env.CHANGE_SET?.contains('sensor/') || params.FORCE_BUILD_ALL) {
+                        sh 'docker push ${SENSOR_IMAGE}'
+                    }
+                    if (env.CHANGE_SET?.contains('dashboard/') || params.FORCE_BUILD_ALL) {
+                        sh 'docker push ${DASHBOARD_IMAGE}'
+                    }
+                }
             }
         }
     }
