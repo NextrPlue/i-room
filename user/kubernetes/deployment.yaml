@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: user
-          image: iroomregistry.azurecr.io/user:2025080801
+          image: iroomregistry.azurecr.io/user:2025081101
           ports:
             - containerPort: 8081
           env:
