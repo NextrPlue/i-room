@@ -1,3 +1,4 @@
+// stompService.js - STOMP over WebSocket 서비스
 import SockJS from 'sockjs-client';
 import { Stomp } from '@stomp/stompjs';
 
@@ -80,6 +81,9 @@ class StompService {
             // 근로자: 개인 알람만 수신
             const destination = `/queue/alarms-${this.sessionId}`;
             this.subscribe(destination, (message) => {
+                console.log('🔍 원본 메시지 전체:', message);
+                console.log('🔍 메시지 body:', message.body);
+                console.log('🔍 메시지 body 타입:', typeof message.body);
                 this.handleAlarmMessage(message);
             });
             console.log('🟢 근로자 모드로 구독:', destination);
@@ -89,8 +93,56 @@ class StompService {
     // 알람 메시지 처리
     handleAlarmMessage(message) {
         try {
-            const data = JSON.parse(message.body);
-            console.log('📨 알람 수신:', data);
+            let data;
+
+            // 백엔드가 보내는 형식: "[PPE_VIOLATION] 보호구 미착용"
+            const messageBody = message.body;
+            console.log('📨 원본 메시지:', messageBody);
+
+            // 정규식으로 [타입] 설명 형식 파싱
+            const regex = /\[([^\]]+)\]\s*(.+)/;
+            const match = messageBody.match(regex);
+
+            if (match) {
+                const incidentType = match[1]; // PPE_VIOLATION 등
+                const description = match[2];  // 보호구 미착용 등
+
+                // 관리자 메시지인 경우 작업자 ID 추출
+                const workerIdMatch = description.match(/작업자 ID: (\d+)/);
+                const workerId = workerIdMatch ? workerIdMatch[1] : null;
+
+                // 이미지 URL 추출 (있는 경우)
+                const imageUrlMatch = messageBody.match(/\((https?:\/\/[^\)]+)\)/);
+                const imageUrl = imageUrlMatch ? imageUrlMatch[1] : null;
+
+                data = {
+                    incidentType: incidentType,
+                    incidentDescription: description.replace(/\s*\(작업자 ID: \d+\)/, '').replace(/\s*\(https?:\/\/[^\)]+\)/, '').trim(),
+                    workerId: workerId,
+                    workerImageUrl: imageUrl,
+                    occurredAt: new Date().toISOString()
+                };
+            } else {
+                // 형식이 맞지 않는 경우 전체 메시지를 설명으로 사용
+                console.warn('메시지 형식이 예상과 다름:', messageBody);
+
+                // 메시지에서 타입 추측
+                let type = 'PPE_VIOLATION'; // 기본값
+                if (messageBody.includes('위험구역') || messageBody.includes('DANGER_ZONE')) {
+                    type = 'DANGER_ZONE';
+                } else if (messageBody.includes('건강') || messageBody.includes('HEALTH_RISK')) {
+                    type = 'HEALTH_RISK';
+                }
+
+                data = {
+                    incidentType: type,
+                    incidentDescription: messageBody,
+                    workerId: null,
+                    occurredAt: new Date().toISOString()
+                };
+            }
+
+            console.log('📨 파싱된 알람 데이터:', data);
 
             // 알람 타입별 이벤트 발생
             switch(data.incidentType) {
@@ -104,6 +156,7 @@ class StompService {
                     this.emit('health-risk-alert', data);
                     break;
                 default:
+                    console.warn('알 수 없는 알람 타입:', data.incidentType);
                     this.emit('unknown-alert', data);
             }
 
@@ -111,7 +164,17 @@ class StompService {
             this.emit('alarm', data);
 
         } catch (error) {
-            console.error('메시지 파싱 에러:', error);
+            console.error('메시지 처리 에러:', error);
+            console.error('원본 메시지:', message.body);
+
+            // 에러가 나도 기본 알람은 표시
+            const fallbackData = {
+                incidentType: 'PPE_VIOLATION',
+                incidentDescription: '알람이 발생했습니다',
+                workerId: null,
+                occurredAt: new Date().toISOString()
+            };
+            this.emit('safety-gear-alert', fallbackData);
         }
     }
 
