@@ -391,7 +391,7 @@ spec:
             steps {
                 echo 'Deploying to Kubernetes cluster...'
                 container('kubectl') {
-                    withCredentials([kubeconfigFile(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    withKubeConfig([credentialsId: 'kubeconfig']) {
                         script {
                             // Gateway 배포
                             if (env.CHANGE_SET?.contains('gateway/') || params.FORCE_BUILD_ALL) {
