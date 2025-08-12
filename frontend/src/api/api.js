@@ -361,6 +361,17 @@ export const userAPI = {
         });
     },
 
+    /**
+     * 관리자 삭제
+     * @param {string} adminId - 삭제할 관리자 ID
+     * @returns {Promise} 삭제 응답
+     */
+    deleteAdmin: async (adminId) => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/${adminId}`;
+        return await apiRequest(url, {
+            method: 'DELETE'
+        });
+    },
 };
 
 /**
