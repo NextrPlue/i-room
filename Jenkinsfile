@@ -388,23 +388,25 @@ spec:
                 echo 'Pushing images to Azure Container Registry...'
                 container('docker-client') {
                     script {
-                        if (params.DEPLOY_GATEWAY && (env.CHANGE_SET?.contains('gateway/') || params.FORCE_BUILD_ALL)) {
-                            sh 'docker push ${GATEWAY_IMAGE}'
+                        def changes = env.GIT_DIFF ?: ""
+                        
+                        if (params.DEPLOY_GATEWAY && (changes.contains('gateway/') || params.FORCE_BUILD_ALL)) {
+                            sh "docker push ${GATEWAY_IMAGE}"
                         }
-                        if (params.DEPLOY_USER && (env.CHANGE_SET?.contains('user/') || params.FORCE_BUILD_ALL)) {
-                            sh 'docker push ${USER_IMAGE}'
+                        if (params.DEPLOY_USER && (changes.contains('user/') || params.FORCE_BUILD_ALL)) {
+                            sh "docker push ${USER_IMAGE}"
                         }
-                        if (params.DEPLOY_MANAGEMENT && (env.CHANGE_SET?.contains('management/') || params.FORCE_BUILD_ALL)) {
-                            sh 'docker push ${MANAGEMENT_IMAGE}'
+                        if (params.DEPLOY_MANAGEMENT && (changes.contains('management/') || params.FORCE_BUILD_ALL)) {
+                            sh "docker push ${MANAGEMENT_IMAGE}"
                         }
-                        if (params.DEPLOY_ALARM && (env.CHANGE_SET?.contains('alarm/') || params.FORCE_BUILD_ALL)) {
-                            sh 'docker push ${ALARM_IMAGE}'
+                        if (params.DEPLOY_ALARM && (changes.contains('alarm/') || params.FORCE_BUILD_ALL)) {
+                            sh "docker push ${ALARM_IMAGE}"
                         }
-                        if (params.DEPLOY_SENSOR && (env.CHANGE_SET?.contains('sensor/') || params.FORCE_BUILD_ALL)) {
-                            sh 'docker push ${SENSOR_IMAGE}'
+                        if (params.DEPLOY_SENSOR && (changes.contains('sensor/') || params.FORCE_BUILD_ALL)) {
+                            sh "docker push ${SENSOR_IMAGE}"
                         }
-                        if (params.DEPLOY_DASHBOARD && (env.CHANGE_SET?.contains('dashboard/') || params.FORCE_BUILD_ALL)) {
-                            sh 'docker push ${DASHBOARD_IMAGE}'
+                        if (params.DEPLOY_DASHBOARD && (changes.contains('dashboard/') || params.FORCE_BUILD_ALL)) {
+                            sh "docker push ${DASHBOARD_IMAGE}"
                         }
                     }
                 }
@@ -417,52 +419,54 @@ spec:
                 container('kubectl') {
                     withKubeConfig([credentialsId: 'kubeconfig']) {
                         script {
+                            def changes = env.GIT_DIFF ?: ""
+                            
                             // Gateway 배포
-                            if (params.DEPLOY_GATEWAY && (env.CHANGE_SET?.contains('gateway/') || params.FORCE_BUILD_ALL)) {
-                                sh '''
+                            if (params.DEPLOY_GATEWAY && (changes.contains('gateway/') || params.FORCE_BUILD_ALL)) {
+                                sh """
                                     kubectl set image deployment/gateway-deployment gateway=${GATEWAY_IMAGE} --namespace=default
                                     kubectl rollout status deployment/gateway-deployment --namespace=default --timeout=100s
-                                '''
+                                """
                             }
                             
                             // User 서비스 배포
-                            if (params.DEPLOY_USER && (env.CHANGE_SET?.contains('user/') || params.FORCE_BUILD_ALL)) {
-                                sh '''
+                            if (params.DEPLOY_USER && (changes.contains('user/') || params.FORCE_BUILD_ALL)) {
+                                sh """
                                     kubectl set image deployment/user-deployment user=${USER_IMAGE} --namespace=default
                                     kubectl rollout status deployment/user-deployment --namespace=default --timeout=100s
-                                '''
+                                """
                             }
                             
                             // Management 서비스 배포
-                            if (params.DEPLOY_MANAGEMENT && (env.CHANGE_SET?.contains('management/') || params.FORCE_BUILD_ALL)) {
-                                sh '''
+                            if (params.DEPLOY_MANAGEMENT && (changes.contains('management/') || params.FORCE_BUILD_ALL)) {
+                                sh """
                                     kubectl set image deployment/management-deployment management=${MANAGEMENT_IMAGE} --namespace=default
                                     kubectl rollout status deployment/management-deployment --namespace=default --timeout=100s
-                                '''
+                                """
                             }
                             
                             // Alarm 서비스 배포
-                            if (params.DEPLOY_ALARM && (env.CHANGE_SET?.contains('alarm/') || params.FORCE_BUILD_ALL)) {
-                                sh '''
+                            if (params.DEPLOY_ALARM && (changes.contains('alarm/') || params.FORCE_BUILD_ALL)) {
+                                sh """
                                     kubectl set image deployment/alarm-deployment alarm=${ALARM_IMAGE} --namespace=default
                                     kubectl rollout status deployment/alarm-deployment --namespace=default --timeout=100s
-                                '''
+                                """
                             }
                             
                             // Sensor 서비스 배포
-                            if (params.DEPLOY_SENSOR && (env.CHANGE_SET?.contains('sensor/') || params.FORCE_BUILD_ALL)) {
-                                sh '''
+                            if (params.DEPLOY_SENSOR && (changes.contains('sensor/') || params.FORCE_BUILD_ALL)) {
+                                sh """
                                     kubectl set image deployment/sensor-deployment sensor=${SENSOR_IMAGE} --namespace=default
                                     kubectl rollout status deployment/sensor-deployment --namespace=default --timeout=100s
-                                '''
+                                """
                             }
                             
                             // Dashboard 서비스 배포
-                            if (params.DEPLOY_DASHBOARD && (env.CHANGE_SET?.contains('dashboard/') || params.FORCE_BUILD_ALL)) {
-                                sh '''
+                            if (params.DEPLOY_DASHBOARD && (changes.contains('dashboard/') || params.FORCE_BUILD_ALL)) {
+                                sh """
                                     kubectl set image deployment/dashboard-deployment dashboard=${DASHBOARD_IMAGE} --namespace=default
                                     kubectl rollout status deployment/dashboard-deployment --namespace=default --timeout=100s
-                                '''
+                                """
                             }
                         }
                     }
