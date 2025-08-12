@@ -3,8 +3,8 @@ import { BrowserRouter as Router, Navigate, Route, Routes, useNavigate } from 'r
 import WorkerLogin from './pages/WorkerLogin';
 import WorkerHome from "./pages/WorkerHome";
 import stompService from './services/stompService';
-import { SafetyGearAlert, DangerZoneAlert, HealthRiskAlert } from './components/AlertComponents';
-import { authUtils } from './utils/authUtils';
+import { SafetyGearAlert, DangerZoneAlert, HealthRiskAlert } from './pages/WorkerAlertPage';
+import {authUtils as workerAuth, authUtils} from './utils/workerAuth';
 import './WorkerApp.css';
 
 // 근로자 레이아웃 컴포넌트
@@ -30,7 +30,7 @@ const WorkerApp = () => {
 
     // 앱 시작 시 토큰 확인 및 WebSocket 연결
     useEffect(() => {
-        const token = authUtils.getToken();
+        const token = workerAuth.getToken();
         if (token) {
             setIsLoggedIn(true);
             connectWebSocket(token);
@@ -111,7 +111,7 @@ const WorkerApp = () => {
 
                 // 로그인 API 호출은 이미 WorkerLogin 컴포넌트에서 처리됨
                 // 토큰이 저장되면 WebSocket 연결
-                const token = authUtils.getToken();
+                const token = workerAuth.getToken();
                 if (token) {
                     setIsLoggedIn(true);
                     await connectWebSocket(token);
