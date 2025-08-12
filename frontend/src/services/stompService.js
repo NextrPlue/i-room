@@ -1,151 +1,182 @@
-// stompService.js - STOMP over WebSocket 서비스
+// stompService.js — @stomp/stompjs Client 버전 (세션ID 기반 + 헤더 포함)
 import SockJS from 'sockjs-client';
-import { Stomp } from '@stomp/stompjs';
+import { Client } from '@stomp/stompjs';
 
 class StompService {
     constructor() {
-        this.stompClient = null;
+        this.client = null;           // @stomp/stompjs Client
+        this.sock = null;             // SockJS 인스턴스 (세션ID 추출용)
         this.connected = false;
+
         this.subscriptions = {};
         this.listeners = {};
+
         this.token = null;
         this.userType = null;
         this.sessionId = null;
     }
 
+    // SockJS 세션ID 추출 (최대 4초 폴링)
+    async resolveSockJsSessionId() {
+        const start = Date.now();
+
+        const pick = () => {
+            const s = this.sock;
+            const urls = [
+                s?._transport?.url,
+                s?._transport?.transport?.url, // 일부 전송모드에서 이 경로에 있음
+            ].filter(Boolean);
+
+            for (const url of urls) {
+                try {
+                    const parts = url.split('/');
+                    const sid = parts[parts.length - 2]; // 끝-1이 세션ID
+                    const tail = parts[parts.length - 1];
+                    if (sid && tail) return { sid, url };
+                } catch (_) {}
+            }
+            return null;
+        };
+
+        while (Date.now() - start < 4000) {
+            const got = pick();
+            if (got) {
+                console.log('[WS] SockJS sessionId:', got.sid, 'from', got.url);
+                this.sessionId = got.sid;
+                return got.sid;
+            }
+            await new Promise((r) => setTimeout(r, 100));
+        }
+        throw new Error('SockJS sessionId not found (timeout)');
+    }
+
     // 연결
     connect(token, userType = 'worker') {
         return new Promise((resolve, reject) => {
-            if (this.connected) {
-                console.log('Already connected');
-                return resolve();
-            }
+            if (this.client?.active || this.connected) return resolve();
 
             this.token = token;
             this.userType = userType;
 
-            // SockJS 연결
-            const socket = new SockJS(process.env.REACT_APP_WS_URL || 'http://localhost:8084/ws');
-            this.stompClient = Stomp.over(socket);
+            const wsUrl = process.env.REACT_APP_WS_URL || 'http://localhost:8084/ws';
+            console.log('[WS] connecting to', wsUrl);
+            if (!token) console.warn('[WS] token is empty!');
 
-            // 디버그 모드 (개발시에만)
-            if (process.env.NODE_ENV === 'development') {
-                this.stompClient.debug = (str) => {
-                    console.log('STOMP: ' + str);
-                };
-            }
+            // SockJS 인스턴스를 직접 만들어서 보관(세션ID 추출용)
+            const socket = new SockJS(wsUrl);
+            this.sock = socket;
 
-            const headers = {
-                'Authorization': `Bearer ${token}`
-            };
+            // Client 생성
+            this.client = new Client({
+                webSocketFactory: () => socket,
+                connectHeaders: {
+                    Authorization: `Bearer ${token}`,
+                    authorization: `Bearer ${token}`,
+                    'auth-token': token,
+                    token: token,
+                },
+                debug: (s) => console.log('[STOMP]', s),
+                reconnectDelay: 0, // 필요 시 자동재연결 사용
+            });
 
-            this.stompClient.connect(
-                headers,
-                (frame) => {
-                    console.log('✅ STOMP Connected:', frame);
+            // 연결 성공
+            this.client.onConnect = async (frame) => {
+                console.log('✅ STOMP Connected:', frame);
+                try {
+                    await this.resolveSockJsSessionId();
                     this.connected = true;
-
-                    // 세션 ID 추출
-                    try {
-                        this.sessionId = this.stompClient.ws._transport.url.split('/')[5];
-                        console.log('Session ID:', this.sessionId);
-                    } catch (e) {
-                        console.warn('Could not extract session ID:', e);
-                    }
-
-                    // 구독 설정
-                    this.setupSubscriptions();
-
+                    await this.setupSubscriptions();
                     this.emit('connected');
                     resolve();
-                },
-                (error) => {
-                    console.error('❌ STOMP Connection error:', error);
-                    this.connected = false;
-                    this.emit('error', error);
-                    reject(error);
+                } catch (e) {
+                    console.error('onConnect/setup error:', e);
+                    this.emit('error', e);
+                    reject(e);
                 }
-            );
+            };
+
+            // 브로커에서 보낸 STOMP ERROR 프레임
+            this.client.onStompError = (frame) => {
+                const msg = frame?.headers?.message;
+                const body = frame?.body;
+                console.error('[STOMP][ERROR] message:', msg);
+                console.error('[STOMP][ERROR] body:', body);
+                this.connected = false;
+                this.emit('error', frame);
+                reject(frame);
+            };
+
+            // 소켓이 닫힘
+            this.client.onWebSocketClose = (evt) => {
+                console.warn('🔌 WebSocket closed:', evt?.reason || evt);
+                this.connected = false;
+                this.emit('disconnected');
+            };
+
+            this.client.activate();
         });
     }
 
     // 구독 설정
-    setupSubscriptions() {
+    async setupSubscriptions() {
         if (this.userType === 'admin') {
-            // 관리자: 모든 알람 수신
-            this.subscribe('/topic/alarms/admin', (message) => {
-                this.handleAlarmMessage(message);
-            });
-            console.log('🔴 관리자 모드로 구독');
+            this.subscribe('/topic/alarms/admin', (message) => this.handleAlarmMessage(message));
+            console.log('🔴 관리자 모드 구독: /topic/alarms/admin');
         } else {
-            // 근로자: 개인 알람만 수신
+            if (!this.sessionId) throw new Error('No sessionId; cannot subscribe worker queue.');
             const destination = `/queue/alarms-${this.sessionId}`;
             this.subscribe(destination, (message) => {
-                console.log('🔍 원본 메시지 전체:', message);
-                console.log('🔍 메시지 body:', message.body);
-                console.log('🔍 메시지 body 타입:', typeof message.body);
+                console.log('🟢 [worker queue]', destination, 'msg:', message?.body);
                 this.handleAlarmMessage(message);
             });
-            console.log('🟢 근로자 모드로 구독:', destination);
+            console.log('🟢 근로자 모드 구독:', destination);
         }
     }
 
-    // 알람 메시지 처리
+    // 메시지 파싱
     handleAlarmMessage(message) {
         try {
-            let data;
+            const body = typeof message?.body === 'string' ? message.body : '';
+            console.log('📨 원본 메시지:', body);
 
-            // 백엔드가 보내는 형식: "[PPE_VIOLATION] 보호구 미착용"
-            const messageBody = message.body;
-            console.log('📨 원본 메시지:', messageBody);
-
-            // 정규식으로 [타입] 설명 형식 파싱
             const regex = /\[([^\]]+)\]\s*(.+)/;
-            const match = messageBody.match(regex);
+            const match = body.match(regex);
 
+            let data;
             if (match) {
-                const incidentType = match[1]; // PPE_VIOLATION 등
-                const description = match[2];  // 보호구 미착용 등
-
-                // 관리자 메시지인 경우 작업자 ID 추출
+                const incidentType = match[1];
+                const description = match[2];
                 const workerIdMatch = description.match(/작업자 ID: (\d+)/);
                 const workerId = workerIdMatch ? workerIdMatch[1] : null;
-
-                // 이미지 URL 추출 (있는 경우)
-                const imageUrlMatch = messageBody.match(/\((https?:\/\/[^\)]+)\)/);
+                const imageUrlMatch = body.match(/\((https?:\/\/[^\)]+)\)/);
                 const imageUrl = imageUrlMatch ? imageUrlMatch[1] : null;
 
                 data = {
-                    incidentType: incidentType,
-                    incidentDescription: description.replace(/\s*\(작업자 ID: \d+\)/, '').replace(/\s*\(https?:\/\/[^\)]+\)/, '').trim(),
-                    workerId: workerId,
+                    incidentType,
+                    incidentDescription: description
+                        .replace(/\s*\(작업자 ID: \d+\)/, '')
+                        .replace(/\s*\(https?:\/\/[^\)]+\)/, '')
+                        .trim(),
+                    workerId,
                     workerImageUrl: imageUrl,
-                    occurredAt: new Date().toISOString()
+                    occurredAt: new Date().toISOString(),
                 };
             } else {
-                // 형식이 맞지 않는 경우 전체 메시지를 설명으로 사용
-                console.warn('메시지 형식이 예상과 다름:', messageBody);
-
-                // 메시지에서 타입 추측
-                let type = 'PPE_VIOLATION'; // 기본값
-                if (messageBody.includes('위험구역') || messageBody.includes('DANGER_ZONE')) {
-                    type = 'DANGER_ZONE';
-                } else if (messageBody.includes('건강') || messageBody.includes('HEALTH_RISK')) {
-                    type = 'HEALTH_RISK';
-                }
+                let type = 'PPE_VIOLATION';
+                if (body.includes('위험구역') || body.includes('DANGER_ZONE')) type = 'DANGER_ZONE';
+                else if (body.includes('건강') || body.includes('HEALTH_RISK')) type = 'HEALTH_RISK';
 
                 data = {
                     incidentType: type,
-                    incidentDescription: messageBody,
+                    incidentDescription: body || '메시지 본문 없음',
                     workerId: null,
-                    occurredAt: new Date().toISOString()
+                    occurredAt: new Date().toISOString(),
                 };
             }
 
-            console.log('📨 파싱된 알람 데이터:', data);
+            console.log('📨 파싱 데이터:', data);
 
-            // 알람 타입별 이벤트 발생
-            switch(data.incidentType) {
+            switch (data.incidentType) {
                 case 'PPE_VIOLATION':
                     this.emit('safety-gear-alert', data);
                     break;
@@ -156,102 +187,79 @@ class StompService {
                     this.emit('health-risk-alert', data);
                     break;
                 default:
-                    console.warn('알 수 없는 알람 타입:', data.incidentType);
                     this.emit('unknown-alert', data);
             }
-
-            // 전체 알람 이벤트도 발생
             this.emit('alarm', data);
-
-        } catch (error) {
-            console.error('메시지 처리 에러:', error);
-            console.error('원본 메시지:', message.body);
-
-            // 에러가 나도 기본 알람은 표시
-            const fallbackData = {
+        } catch (e) {
+            console.error('메시지 처리 에러:', e, '원본:', message?.body);
+            this.emit('safety-gear-alert', {
                 incidentType: 'PPE_VIOLATION',
                 incidentDescription: '알람이 발생했습니다',
                 workerId: null,
-                occurredAt: new Date().toISOString()
-            };
-            this.emit('safety-gear-alert', fallbackData);
-        }
-    }
-
-    // 구독
-    subscribe(destination, callback) {
-        if (!this.stompClient || !this.connected) {
-            console.error('Not connected');
-            return;
-        }
-
-        const subscription = this.stompClient.subscribe(destination, callback);
-        this.subscriptions[destination] = subscription;
-        return subscription;
-    }
-
-    // 구독 해제
-    unsubscribe(destination) {
-        if (this.subscriptions[destination]) {
-            this.subscriptions[destination].unsubscribe();
-            delete this.subscriptions[destination];
-        }
-    }
-
-    // 메시지 전송 (필요시)
-    send(destination, body) {
-        if (!this.stompClient || !this.connected) {
-            console.error('Not connected');
-            return;
-        }
-
-        this.stompClient.send(destination, {}, JSON.stringify(body));
-    }
-
-    // 연결 해제
-    disconnect() {
-        if (this.stompClient) {
-            // 모든 구독 해제
-            Object.values(this.subscriptions).forEach(sub => sub.unsubscribe());
-            this.subscriptions = {};
-
-            this.stompClient.disconnect(() => {
-                console.log('Disconnected');
-                this.connected = false;
-                this.emit('disconnected');
+                occurredAt: new Date().toISOString(),
             });
         }
     }
 
-    // 이벤트 리스너 등록
-    on(event, callback) {
-        if (!this.listeners[event]) {
-            this.listeners[event] = [];
+    // 구독 (SUBSCRIBE 프레임에도 토큰 헤더 포함)
+    subscribe(destination, callback) {
+        if (!this.client || !this.connected) {
+            throw new Error('There is no underlying STOMP connection');
         }
-        this.listeners[event].push(callback);
+        const headers = {
+            Authorization: `Bearer ${this.token}`,
+            authorization: `Bearer ${this.token}`,
+            'auth-token': this.token,
+            token: this.token,
+        };
+        const sub = this.client.subscribe(destination, callback, headers);
+        this.subscriptions[destination] = sub;
+        return sub;
     }
 
-    // 이벤트 리스너 제거
-    off(event, callback) {
+    // SEND에도 토큰 헤더 포함
+    send(destination, body) {
+        if (!this.client || !this.connected) {
+            console.error('Not connected');
+            return;
+        }
+        const headers = {
+            Authorization: `Bearer ${this.token}`,
+            authorization: `Bearer ${this.token}`,
+            'auth-token': this.token,
+            token: this.token,
+        };
+        this.client.publish({ destination, headers, body: JSON.stringify(body || {}) });
+    }
+
+    // 연결 해제
+    disconnect() {
+        if (this.client) {
+            Object.values(this.subscriptions).forEach((s) => s.unsubscribe());
+            this.subscriptions = {};
+            this.client.deactivate();
+            this.connected = false;
+            this.emit('disconnected');
+        }
+    }
+
+    // 이벤트 버스
+    on(event, cb) {
+        (this.listeners[event] ||= []).push(cb);
+    }
+    off(event, cb) {
         if (this.listeners[event]) {
-            this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+            this.listeners[event] = this.listeners[event].filter((f) => f !== cb);
         }
     }
-
-    // 이벤트 발생
     emit(event, data) {
-        if (this.listeners[event]) {
-            this.listeners[event].forEach(callback => callback(data));
-        }
+        (this.listeners[event] || []).forEach((cb) => cb(data));
     }
 
-    // 연결 상태 확인
     isConnected() {
         return this.connected;
     }
 }
 
-// 싱글톤 인스턴스
 const stompService = new StompService();
-
 export default stompService;
