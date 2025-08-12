@@ -28,7 +28,7 @@ public class WorkerEventHandler {
 		}
 	}
 	private void createWorkerInfoReadModel(JsonNode dataNode) {
-		WorkerInfoReadModel workerInfoReadModel = WorkerInfoReadModel.builder().id(dataNode.get("workerId").asLong()).build();
+		WorkerInfoReadModel workerInfoReadModel = WorkerInfoReadModel.builder().id(dataNode.get("id").asLong()).build();
 		workerInfoReadModelRepository.save(workerInfoReadModel);
 	}
 }
