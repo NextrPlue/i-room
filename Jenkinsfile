@@ -16,19 +16,34 @@ spec:
         memory: "2Gi"
         cpu: "1000m"
   - name: docker
+    image: docker:dind
+    securityContext:
+      privileged: true
+      runAsUser: 0
+    env:
+    - name: DOCKER_TLS_CERTDIR
+      value: ""
+    - name: DOCKER_HOST
+      value: "tcp://localhost:2375"
+    ports:
+    - containerPort: 2375
+    resources:
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+  - name: docker-client
     image: docker:latest
     command:
     - cat
     tty: true
+    env:
+    - name: DOCKER_HOST
+      value: "tcp://localhost:2375"
     securityContext:
       runAsUser: 0
-    volumeMounts:
-    - name: docker-sock
-      mountPath: /var/run/docker.sock
-  volumes:
-  - name: docker-sock
-    hostPath:
-      path: /var/run/docker.sock
 """
         }
     }
@@ -193,7 +208,7 @@ spec:
         stage('Docker Login') {
             steps {
                 echo 'Logging into Azure Container Registry with Service Principal...'
-                container('docker') {
+                container('docker-client') {
                     sh '''
                         echo $AZURE_SP_PSW | docker login $ACR_REGISTRY --username $AZURE_SP_USR --password-stdin
                     '''
@@ -214,7 +229,7 @@ spec:
             steps {
                 echo 'Building Gateway Docker image...'
                 dir('gateway') {
-                    container('docker') {
+                    container('docker-client') {
                         sh '''
                             docker build -t ${GATEWAY_IMAGE} .
                             echo "Built Gateway image: ${GATEWAY_IMAGE}"
@@ -237,7 +252,7 @@ spec:
             steps {
                 echo 'Building User Docker image...'
                 dir('user') {
-                    container('docker') {
+                    container('docker-client') {
                         sh '''
                             docker build -t ${USER_IMAGE} .
                             echo "Built User image: ${USER_IMAGE}"
@@ -260,7 +275,7 @@ spec:
             steps {
                 echo 'Building Management Docker image...'
                 dir('management') {
-                    container('docker') {
+                    container('docker-client') {
                         sh '''
                             docker build -t ${MANAGEMENT_IMAGE} .
                             echo "Built Management image: ${MANAGEMENT_IMAGE}"
@@ -283,7 +298,7 @@ spec:
             steps {
                 echo 'Building Alarm Docker image...'
                 dir('alarm') {
-                    container('docker') {
+                    container('docker-client') {
                         sh '''
                             docker build -t ${ALARM_IMAGE} .
                             echo "Built Alarm image: ${ALARM_IMAGE}"
@@ -306,7 +321,7 @@ spec:
             steps {
                 echo 'Building Sensor Docker image...'
                 dir('sensor') {
-                    container('docker') {
+                    container('docker-client') {
                         sh '''
                             docker build -t ${SENSOR_IMAGE} .
                             echo "Built Sensor image: ${SENSOR_IMAGE}"
@@ -329,7 +344,7 @@ spec:
             steps {
                 echo 'Building Dashboard Docker image...'
                 dir('dashboard') {
-                    container('docker') {
+                    container('docker-client') {
                         sh '''
                             docker build -t ${DASHBOARD_IMAGE} .
                             echo "Built Dashboard image: ${DASHBOARD_IMAGE}"
@@ -342,7 +357,7 @@ spec:
         stage('Push to ACR') {
             steps {
                 echo 'Pushing images to Azure Container Registry...'
-                container('docker') {
+                container('docker-client') {
                     script {
                         if (env.CHANGE_SET?.contains('gateway/') || params.FORCE_BUILD_ALL) {
                             sh 'docker push ${GATEWAY_IMAGE}'
