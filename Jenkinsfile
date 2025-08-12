@@ -44,6 +44,11 @@ spec:
       value: "tcp://localhost:2375"
     securityContext:
       runAsUser: 0
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command:
+    - cat
+    tty: true
 """
         }
     }
@@ -376,6 +381,69 @@ spec:
                         }
                         if (env.CHANGE_SET?.contains('dashboard/') || params.FORCE_BUILD_ALL) {
                             sh 'docker push ${DASHBOARD_IMAGE}'
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                echo 'Deploying to Kubernetes cluster...'
+                container('kubectl') {
+                    script {
+                        // Gateway 배포
+                        if (env.CHANGE_SET?.contains('gateway/') || params.FORCE_BUILD_ALL) {
+                            sh '''
+                                cd gateway/kubernetes
+                                kubectl set image deployment/gateway-deployment gateway=${GATEWAY_IMAGE}
+                                kubectl rollout status deployment/gateway-deployment --timeout=300s
+                            '''
+                        }
+                        
+                        // User 서비스 배포
+                        if (env.CHANGE_SET?.contains('user/') || params.FORCE_BUILD_ALL) {
+                            sh '''
+                                cd user/kubernetes
+                                kubectl set image deployment/user-deployment user=${USER_IMAGE}
+                                kubectl rollout status deployment/user-deployment --timeout=300s
+                            '''
+                        }
+                        
+                        // Management 서비스 배포
+                        if (env.CHANGE_SET?.contains('management/') || params.FORCE_BUILD_ALL) {
+                            sh '''
+                                cd management/kubernetes
+                                kubectl set image deployment/management-deployment management=${MANAGEMENT_IMAGE}
+                                kubectl rollout status deployment/management-deployment --timeout=300s
+                            '''
+                        }
+                        
+                        // Alarm 서비스 배포
+                        if (env.CHANGE_SET?.contains('alarm/') || params.FORCE_BUILD_ALL) {
+                            sh '''
+                                cd alarm/kubernetes
+                                kubectl set image deployment/alarm-deployment alarm=${ALARM_IMAGE}
+                                kubectl rollout status deployment/alarm-deployment --timeout=300s
+                            '''
+                        }
+                        
+                        // Sensor 서비스 배포
+                        if (env.CHANGE_SET?.contains('sensor/') || params.FORCE_BUILD_ALL) {
+                            sh '''
+                                cd sensor/kubernetes
+                                kubectl set image deployment/sensor-deployment sensor=${SENSOR_IMAGE}
+                                kubectl rollout status deployment/sensor-deployment --timeout=300s
+                            '''
+                        }
+                        
+                        // Dashboard 서비스 배포
+                        if (env.CHANGE_SET?.contains('dashboard/') || params.FORCE_BUILD_ALL) {
+                            sh '''
+                                cd dashboard/kubernetes
+                                kubectl set image deployment/dashboard-deployment dashboard=${DASHBOARD_IMAGE}
+                                kubectl rollout status deployment/dashboard-deployment --timeout=300s
+                            '''
                         }
                     }
                 }
