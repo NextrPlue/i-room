@@ -395,6 +395,15 @@ export const managementAPI = {
         const url = `${API_CONFIG.gateway}/api/management/entries/${workerId}`;
         return await apiRequest(url);
     },
+
+    /**
+     * 근로자 출입 통계 조회
+     * @returns {Promise} 통계 데이터 (총근무자, 근무중, 퇴근, 미출근)
+     */
+    getWorkerStats: async () => {
+        const url = `${API_CONFIG.gateway}/api/management/entries/statistics`;
+        return await apiRequest(url);
+    },
 };
 
 /**
