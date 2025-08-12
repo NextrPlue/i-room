@@ -3,10 +3,8 @@ import styles from '../styles/Settings.module.css';
 import { userAPI } from '../api/api';
 
 const SettingsPage = () => {
-    // 내 계정 정보
     const [myAccount, setMyAccount] = useState(null);
-    
-    // 정보 수정 상태
+
     const [isEditing, setIsEditing] = useState(false);
     const [editForm, setEditForm] = useState({
         name: '',
@@ -14,7 +12,6 @@ const SettingsPage = () => {
         phone: ''
     });
 
-    // 비밀번호 변경 폼 데이터
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '',
         newPassword: '',
@@ -22,43 +19,23 @@ const SettingsPage = () => {
     });
 
     // 관리자 목록
-    const [admins, setAdmins] = useState([
-        {
-            id: 1,
-            name: '관리자1',
-            email: 'admin@company.com',
-            phone: '010-1234-5678',
-            role: 'Super Admin',
-            roleType: 'superAdmin'
-        },
-        {
-            id: 2,
-            name: '관리자2',
-            email: 'admin2@company.com',
-            phone: '010-8765-4321',
-            role: 'Admin',
-            roleType: 'admin'
-        },
-        {
-            id: 3,
-            name: '관리자3',
-            email: 'admin3@company.com',
-            phone: '010-5678-1234',
-            role: 'Manager',
-            roleType: 'manager'
-        }
-    ]);
+    const [admins, setAdmins] = useState([]);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    // 컴포넌트 마운트 시 데이터 로드
+    const isSuperAdmin = () => {
+        return myAccount && (myAccount.role === 'SUPER_ADMIN' || myAccount.role === 'Super Admin');
+    };
+
     useEffect(() => {
-        fetchMyAccountInfo();
-        fetchAdminData();
+        const loadData = async () => {
+            await fetchMyAccountInfo();
+            await fetchAdminData();
+        };
+        loadData().catch(console.error);
     }, []);
 
-    // 내 계정 정보 조회
     const fetchMyAccountInfo = async () => {
         try {
             setLoading(true);
@@ -88,7 +65,6 @@ const SettingsPage = () => {
         }
     };
 
-    // 관리자 데이터 조회
     const fetchAdminData = async () => {
         try {
             setLoading(true);
@@ -101,17 +77,13 @@ const SettingsPage = () => {
 
             if (response.data && response.data.content) {
                 const adminList = response.data.content.map(admin => {
-                    let displayRole = admin.role;
-                    let roleType = admin.role.toLowerCase();
+                    let displayRole;
+                    let roleType;
                     
                     switch(admin.role) {
                         case 'SUPER_ADMIN':
                             displayRole = 'Super Admin';
                             roleType = 'superAdmin';
-                            break;
-                        case 'ADMIN':
-                            displayRole = 'Admin';
-                            roleType = 'admin';
                             break;
                         case 'READER':
                             displayRole = 'Reader';
@@ -141,7 +113,6 @@ const SettingsPage = () => {
         }
     };
 
-    // 비밀번호 폼 입력 처리
     const handlePasswordInputChange = (field, value) => {
         setPasswordForm(prev => ({
             ...prev,
@@ -149,7 +120,6 @@ const SettingsPage = () => {
         }));
     };
 
-    // 정보 수정 폼 입력 처리
     const handleEditFormChange = (field, value) => {
         setEditForm(prev => ({
             ...prev,
@@ -157,12 +127,10 @@ const SettingsPage = () => {
         }));
     };
 
-    // 정보 수정 시작
     const handleEditProfile = () => {
         setIsEditing(true);
     };
 
-    // 정보 수정 취소
     const handleCancelEdit = () => {
         setIsEditing(false);
         if (myAccount) {
@@ -174,7 +142,6 @@ const SettingsPage = () => {
         }
     };
 
-    // 정보 수정 저장
     const handleSaveEdit = async () => {
         try {
             setLoading(true);
@@ -201,7 +168,6 @@ const SettingsPage = () => {
         }
     };
 
-    // 비밀번호 변경 버튼 클릭
     const handleChangePassword = async () => {
         if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
             alert('모든 필드를 입력해주세요.');
@@ -238,21 +204,77 @@ const SettingsPage = () => {
         }
     };
 
-    // 관리자 추가
-    const handleAddAdmin = () => {
-        // 관리자 추가 모달 또는 페이지로 이동
-        console.log('관리자 추가');
-    };
-
     // 관리자 수정
-    const handleEditAdmin = (adminId) => {
-        console.log('관리자 수정:', adminId);
+    const handleEditAdmin = async (adminId) => {
+        if (!isSuperAdmin()) {
+            alert('관리자 권한 변경은 Super Admin만 가능합니다.');
+            return;
+        }
+
+        const admin = admins.find(a => a.id === adminId);
+        if (!admin) return;
+
+        const currentRole = admin.roleType === 'superAdmin' ? 'SUPER_ADMIN' : 'READER';
+
+        const newRole = prompt(
+            `${admin.name}의 현재 권한: ${admin.role}\n\n새로운 권한을 입력하세요:\n- SUPER_ADMIN\n- READER`,
+            currentRole
+        );
+
+        if (!newRole || newRole === currentRole) return;
+
+        if (!['SUPER_ADMIN', 'READER'].includes(newRole)) {
+            alert('올바른 권한을 입력해주세요 (SUPER_ADMIN, READER)');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const response = await userAPI.changeAdminRole(adminId, newRole);
+            
+            if (response.data) {
+                const displayRole = newRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Reader';
+                const roleType = newRole === 'SUPER_ADMIN' ? 'superAdmin' : 'reader';
+
+                setAdmins(prev => prev.map(a => 
+                    a.id === adminId
+                        ? { ...a, role: displayRole, roleType: roleType }
+                        : a
+                ));
+                
+                alert(`${admin.name}의 권한이 ${displayRole}으로 변경되었습니다.`);
+            }
+        } catch (err) {
+            console.error('권한 변경 실패:', err);
+            alert(err.message || '권한 변경에 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
     };
 
     // 관리자 삭제
-    const handleDeleteAdmin = (adminId) => {
-        if (window.confirm('정말로 이 관리자를 삭제하시겠습니까?')) {
-            setAdmins(prev => prev.filter(admin => admin.id !== adminId));
+    const handleDeleteAdmin = async (adminId) => {
+        if (!isSuperAdmin()) {
+            alert('관리자 삭제는 Super Admin만 가능합니다.');
+            return;
+        }
+
+        const admin = admins.find(a => a.id === adminId);
+        if (!admin) return;
+
+        if (window.confirm(`정말로 ${admin.name} 관리자를 삭제하시겠습니까?`)) {
+            try {
+                setLoading(true);
+                await userAPI.deleteAdmin(adminId);
+
+                setAdmins(prev => prev.filter(a => a.id !== adminId));
+                alert(`${admin.name} 관리자가 삭제되었습니다.`);
+            } catch (err) {
+                console.error('관리자 삭제 실패:', err);
+                alert(err.message || '관리자 삭제에 실패했습니다.');
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -417,12 +439,6 @@ const SettingsPage = () => {
                             <h2 className={styles.sectionTitle}>관리자 계정 관리</h2>
                             <p className={styles.adminCount}>등록된 관리자: {admins.length}명</p>
                         </div>
-                        <button
-                            className={styles.addAdminButton}
-                            onClick={handleAddAdmin}
-                        >
-                            + 관리자 추가
-                        </button>
                     </div>
 
                     {/* 관리자 테이블 */}
@@ -467,18 +483,41 @@ const SettingsPage = () => {
                                             </td>
                                             <td data-label="작업">
                                                 <div className={styles.actionButtons}>
-                                                    <button
-                                                        className={`${styles.actionButton} ${styles.editActionButton}`}
-                                                        onClick={() => handleEditAdmin(admin.id)}
-                                                    >
-                                                        수정
-                                                    </button>
-                                                    <button
-                                                        className={`${styles.actionButton} ${styles.deleteActionButton}`}
-                                                        onClick={() => handleDeleteAdmin(admin.id)}
-                                                    >
-                                                        삭제
-                                                    </button>
+                                                    {isSuperAdmin() ? (
+                                                        <>
+                                                            <button
+                                                                className={`${styles.actionButton} ${styles.editActionButton}`}
+                                                                onClick={() => handleEditAdmin(admin.id)}
+                                                                disabled={loading}
+                                                            >
+                                                                권한변경
+                                                            </button>
+                                                            <button
+                                                                className={`${styles.actionButton} ${styles.deleteActionButton}`}
+                                                                onClick={() => handleDeleteAdmin(admin.id)}
+                                                                disabled={loading}
+                                                            >
+                                                                삭제
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <button
+                                                                className={`${styles.actionButton} ${styles.editActionButton}`}
+                                                                disabled={true}
+                                                                style={{ opacity: 0.4, cursor: 'not-allowed' }}
+                                                            >
+                                                                권한변경
+                                                            </button>
+                                                            <button
+                                                                className={`${styles.actionButton} ${styles.deleteActionButton}`}
+                                                                disabled={true}
+                                                                style={{ opacity: 0.4, cursor: 'not-allowed' }}
+                                                            >
+                                                                삭제
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
