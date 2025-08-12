@@ -165,10 +165,25 @@ public class BlueprintService {
 	}
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
-	public PagedResponse<BlueprintResponse> getAllBlueprints(int page, int size) {
+	public PagedResponse<BlueprintResponse> getAllBlueprints(String target, String keyword, Integer page, Integer size) {
 		Pageable pageable = PageRequest.of(page, size);
-		Page<Blueprint> blueprints = blueprintRepository.findAll(pageable);
-		Page<BlueprintResponse> responsePage = blueprints.map(BlueprintResponse::new);
+
+		Page<Blueprint> blueprintPage;
+		if (target == null || keyword == null || keyword.trim().isEmpty()) {
+			blueprintPage = blueprintRepository.findAll(pageable);
+		} else if ("floor".equals(target)) {
+			try {
+				Integer floor = Integer.parseInt(keyword);
+				blueprintPage = blueprintRepository.findByFloor(floor, pageable);
+			} catch (NumberFormatException e) {
+				blueprintPage = blueprintRepository.findAll(pageable);
+			}
+		} else {
+			blueprintPage = blueprintRepository.findAll(pageable);
+		}
+
+		Page<BlueprintResponse> responsePage = blueprintPage.map(BlueprintResponse::new);
+
 		return PagedResponse.of(responsePage);
 	}
 
