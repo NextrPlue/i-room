@@ -421,7 +421,7 @@ spec:
                             if (params.DEPLOY_GATEWAY && (env.CHANGE_SET?.contains('gateway/') || params.FORCE_BUILD_ALL)) {
                                 sh '''
                                     kubectl set image deployment/gateway-deployment gateway=${GATEWAY_IMAGE} --namespace=default
-                                    kubectl rollout status deployment/gateway-deployment --namespace=default --timeout=300s
+                                    kubectl rollout status deployment/gateway-deployment --namespace=default --timeout=100s
                                 '''
                             }
                             
@@ -429,7 +429,7 @@ spec:
                             if (params.DEPLOY_USER && (env.CHANGE_SET?.contains('user/') || params.FORCE_BUILD_ALL)) {
                                 sh '''
                                     kubectl set image deployment/user-deployment user=${USER_IMAGE} --namespace=default
-                                    kubectl rollout status deployment/user-deployment --namespace=default --timeout=300s
+                                    kubectl rollout status deployment/user-deployment --namespace=default --timeout=100s
                                 '''
                             }
                             
@@ -437,7 +437,7 @@ spec:
                             if (params.DEPLOY_MANAGEMENT && (env.CHANGE_SET?.contains('management/') || params.FORCE_BUILD_ALL)) {
                                 sh '''
                                     kubectl set image deployment/management-deployment management=${MANAGEMENT_IMAGE} --namespace=default
-                                    kubectl rollout status deployment/management-deployment --namespace=default --timeout=300s
+                                    kubectl rollout status deployment/management-deployment --namespace=default --timeout=100s
                                 '''
                             }
                             
@@ -445,7 +445,7 @@ spec:
                             if (params.DEPLOY_ALARM && (env.CHANGE_SET?.contains('alarm/') || params.FORCE_BUILD_ALL)) {
                                 sh '''
                                     kubectl set image deployment/alarm-deployment alarm=${ALARM_IMAGE} --namespace=default
-                                    kubectl rollout status deployment/alarm-deployment --namespace=default --timeout=300s
+                                    kubectl rollout status deployment/alarm-deployment --namespace=default --timeout=100s
                                 '''
                             }
                             
@@ -453,7 +453,7 @@ spec:
                             if (params.DEPLOY_SENSOR && (env.CHANGE_SET?.contains('sensor/') || params.FORCE_BUILD_ALL)) {
                                 sh '''
                                     kubectl set image deployment/sensor-deployment sensor=${SENSOR_IMAGE} --namespace=default
-                                    kubectl rollout status deployment/sensor-deployment --namespace=default --timeout=300s
+                                    kubectl rollout status deployment/sensor-deployment --namespace=default --timeout=100s
                                 '''
                             }
                             
@@ -461,7 +461,7 @@ spec:
                             if (params.DEPLOY_DASHBOARD && (env.CHANGE_SET?.contains('dashboard/') || params.FORCE_BUILD_ALL)) {
                                 sh '''
                                     kubectl set image deployment/dashboard-deployment dashboard=${DASHBOARD_IMAGE} --namespace=default
-                                    kubectl rollout status deployment/dashboard-deployment --namespace=default --timeout=300s
+                                    kubectl rollout status deployment/dashboard-deployment --namespace=default --timeout=100s
                                 '''
                             }
                         }
