@@ -92,12 +92,15 @@ spec:
 
         stage('Build Gateway Service') {
             when {
-                anyOf {
-                    changeset "gateway/**"
-                    changeset "gradlew*"
-                    changeset "build.gradle*"
-                    changeset "settings.gradle*"
-                    expression { return params.FORCE_BUILD_ALL == true }
+                allOf {
+                    expression { return params.DEPLOY_GATEWAY == true }
+                    anyOf {
+                        changeset "gateway/**"
+                        changeset "gradlew*"
+                        changeset "build.gradle*"
+                        changeset "settings.gradle*"
+                        expression { return params.FORCE_BUILD_ALL == true }
+                    }
                 }
             }
             steps {
@@ -113,12 +116,15 @@ spec:
 
         stage('Build User Service') {
             when {
-                anyOf {
-                    changeset "user/**"
-                    changeset "gradlew*"
-                    changeset "build.gradle*"
-                    changeset "settings.gradle*"
-                    expression { return params.FORCE_BUILD_ALL == true }
+                allOf {
+                    expression { return params.DEPLOY_USER == true }
+                    anyOf {
+                        changeset "user/**"
+                        changeset "gradlew*"
+                        changeset "build.gradle*"
+                        changeset "settings.gradle*"
+                        expression { return params.FORCE_BUILD_ALL == true }
+                    }
                 }
             }
             steps {
@@ -134,12 +140,15 @@ spec:
 
         stage('Build Management Service') {
             when {
-                anyOf {
-                    changeset "management/**"
-                    changeset "gradlew*"
-                    changeset "build.gradle*"
-                    changeset "settings.gradle*"
-                    expression { return params.FORCE_BUILD_ALL == true }
+                allOf {
+                    expression { return params.DEPLOY_MANAGEMENT == true }
+                    anyOf {
+                        changeset "management/**"
+                        changeset "gradlew*"
+                        changeset "build.gradle*"
+                        changeset "settings.gradle*"
+                        expression { return params.FORCE_BUILD_ALL == true }
+                    }
                 }
             }
             steps {
@@ -155,12 +164,15 @@ spec:
 
         stage('Build Alarm Service') {
             when {
-                anyOf {
-                    changeset "alarm/**"
-                    changeset "gradlew*"
-                    changeset "build.gradle*"
-                    changeset "settings.gradle*"
-                    expression { return params.FORCE_BUILD_ALL == true }
+                allOf {
+                    expression { return params.DEPLOY_ALARM == true }
+                    anyOf {
+                        changeset "alarm/**"
+                        changeset "gradlew*"
+                        changeset "build.gradle*"
+                        changeset "settings.gradle*"
+                        expression { return params.FORCE_BUILD_ALL == true }
+                    }
                 }
             }
             steps {
@@ -176,12 +188,15 @@ spec:
 
         stage('Build Sensor Service') {
             when {
-                anyOf {
-                    changeset "sensor/**"
-                    changeset "gradlew*"
-                    changeset "build.gradle*"
-                    changeset "settings.gradle*"
-                    expression { return params.FORCE_BUILD_ALL == true }
+                allOf {
+                    expression { return params.DEPLOY_SENSOR == true }
+                    anyOf {
+                        changeset "sensor/**"
+                        changeset "gradlew*"
+                        changeset "build.gradle*"
+                        changeset "settings.gradle*"
+                        expression { return params.FORCE_BUILD_ALL == true }
+                    }
                 }
             }
             steps {
@@ -197,12 +212,15 @@ spec:
 
         stage('Build Dashboard Service') {
             when {
-                anyOf {
-                    changeset "dashboard/**"
-                    changeset "gradlew*"
-                    changeset "build.gradle*"
-                    changeset "settings.gradle*"
-                    expression { return params.FORCE_BUILD_ALL == true }
+                allOf {
+                    expression { return params.DEPLOY_DASHBOARD == true }
+                    anyOf {
+                        changeset "dashboard/**"
+                        changeset "gradlew*"
+                        changeset "build.gradle*"
+                        changeset "settings.gradle*"
+                        expression { return params.FORCE_BUILD_ALL == true }
+                    }
                 }
             }
             steps {
