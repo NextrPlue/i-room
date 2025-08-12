@@ -18,6 +18,13 @@ const SettingsPage = () => {
         confirmPassword: ''
     });
 
+    // 비밀번호 폼 검증 상태
+    const [passwordValidation, setPasswordValidation] = useState({
+        currentPassword: { isValid: null, message: '' },
+        newPassword: { isValid: null, message: '' },
+        confirmPassword: { isValid: null, message: '' }
+    });
+
     // 관리자 목록
     const [admins, setAdmins] = useState([]);
 
@@ -113,11 +120,89 @@ const SettingsPage = () => {
         }
     };
 
+    // 비밀번호 필드별 검증
+    const validatePasswordField = (field, value) => {
+        let isValid = null;
+        let message = '';
+
+        switch (field) {
+            case 'currentPassword': {
+                const v = String(value);
+                if (v.length === 0) {
+                    isValid = null;
+                } else if (v.length > 0) {
+                    isValid = true;
+                    message = '';
+                }
+                break;
+            }
+
+            case 'newPassword': {
+                const v = String(value);
+                if (v.length === 0) {
+                    isValid = null;
+                } else if (v.length < 8 || v.length > 16) {
+                    isValid = false;
+                    message = '비밀번호는 8-16자여야 합니다.';
+                } else if (!/.*[a-zA-Z].*/.test(v)) {
+                    isValid = false;
+                    message = '영문자를 포함해야 합니다.';
+                } else if (!/.*\d.*/.test(v)) {
+                    isValid = false;
+                    message = '숫자를 포함해야 합니다.';
+                } else if (!/[#$%&*+,./:=?@[\\\]^_`{|}~!-]/.test(v)) {
+                    isValid = false;
+                    message = '특수문자를 포함해야 합니다.';
+                } else if (/[()<>'";}]/.test(v)) {
+                    isValid = false;
+                    message = '특수문자 ()<>"\';는 사용할 수 없습니다.';
+                } else {
+                    isValid = true;
+                    message = '사용 가능한 비밀번호입니다.';
+                }
+                break;
+            }
+
+            case 'confirmPassword': {
+                const v = String(value);
+                const newPassword = passwordForm.newPassword;
+                if (v.length === 0) {
+                    isValid = null;
+                } else if (v !== newPassword) {
+                    isValid = false;
+                    message = '새 비밀번호와 일치하지 않습니다.';
+                } else {
+                    isValid = true;
+                    message = '비밀번호가 일치합니다.';
+                }
+                break;
+            }
+
+            default:
+                break;
+        }
+
+        setPasswordValidation(prev => ({
+            ...prev,
+            [field]: { isValid, message }
+        }));
+    };
+
     const handlePasswordInputChange = (field, value) => {
         setPasswordForm(prev => ({
             ...prev,
             [field]: value
         }));
+        
+        // 실시간 검증
+        validatePasswordField(field, value);
+        
+        // 비밀번호 확인 필드가 있을 때 새 비밀번호 변경 시 비밀번호 확인도 다시 검증
+        if (field === 'newPassword' && passwordForm.confirmPassword) {
+            setTimeout(() => {
+                validatePasswordField('confirmPassword', passwordForm.confirmPassword);
+            }, 0);
+        }
     };
 
     const handleEditFormChange = (field, value) => {
@@ -174,6 +259,12 @@ const SettingsPage = () => {
             return;
         }
 
+        // 새 비밀번호 유효성 검증
+        if (passwordValidation.newPassword.isValid === false) {
+            alert(passwordValidation.newPassword.message);
+            return;
+        }
+
         if (passwordForm.newPassword !== passwordForm.confirmPassword) {
             alert('새 비밀번호가 일치하지 않습니다.');
             return;
@@ -190,11 +281,16 @@ const SettingsPage = () => {
 
             alert('비밀번호가 성공적으로 변경되었습니다.');
 
-            // 폼 초기화
+            // 폼 및 검증 상태 초기화
             setPasswordForm({
                 currentPassword: '',
                 newPassword: '',
                 confirmPassword: ''
+            });
+            setPasswordValidation({
+                currentPassword: { isValid: null, message: '' },
+                newPassword: { isValid: null, message: '' },
+                confirmPassword: { isValid: null, message: '' }
             });
         } catch (err) {
             console.error('비밀번호 변경 실패:', err);
@@ -390,33 +486,48 @@ const SettingsPage = () => {
                                 <span className={styles.infoLabel}>현재 비밀번호</span>
                                 <input
                                     type="password"
-                                    className={styles.passwordInput}
+                                    className={`${styles.passwordInput} ${passwordValidation.currentPassword.isValid === false ? styles.error : passwordValidation.currentPassword.isValid === true ? styles.success : ''}`}
                                     value={passwordForm.currentPassword}
                                     onChange={(e) => handlePasswordInputChange('currentPassword', e.target.value)}
                                     placeholder="현재 비밀번호를 입력하세요"
                                 />
+                                {passwordValidation.currentPassword.message && (
+                                    <span className={passwordValidation.currentPassword.isValid ? styles.successMessage : styles.errorMessage}>
+                                        {passwordValidation.currentPassword.message}
+                                    </span>
+                                )}
                             </div>
 
                             <div className={styles.infoGroup}>
                                 <span className={styles.infoLabel}>새 비밀번호</span>
                                 <input
                                     type="password"
-                                    className={styles.passwordInput}
+                                    className={`${styles.passwordInput} ${passwordValidation.newPassword.isValid === false ? styles.error : passwordValidation.newPassword.isValid === true ? styles.success : ''}`}
                                     value={passwordForm.newPassword}
                                     onChange={(e) => handlePasswordInputChange('newPassword', e.target.value)}
-                                    placeholder="새 비밀번호를 입력하세요"
+                                    placeholder="새 비밀번호를 입력하세요 (8-16자, 영문+숫자+특수문자)"
                                 />
+                                {passwordValidation.newPassword.message && (
+                                    <span className={passwordValidation.newPassword.isValid ? styles.successMessage : styles.errorMessage}>
+                                        {passwordValidation.newPassword.message}
+                                    </span>
+                                )}
                             </div>
 
                             <div className={styles.infoGroup}>
                                 <span className={styles.infoLabel}>비밀번호 확인</span>
                                 <input
                                     type="password"
-                                    className={styles.passwordInput}
+                                    className={`${styles.passwordInput} ${passwordValidation.confirmPassword.isValid === false ? styles.error : passwordValidation.confirmPassword.isValid === true ? styles.success : ''}`}
                                     value={passwordForm.confirmPassword}
                                     onChange={(e) => handlePasswordInputChange('confirmPassword', e.target.value)}
                                     placeholder="새 비밀번호를 다시 입력하세요"
                                 />
+                                {passwordValidation.confirmPassword.message && (
+                                    <span className={passwordValidation.confirmPassword.isValid ? styles.successMessage : styles.errorMessage}>
+                                        {passwordValidation.confirmPassword.message}
+                                    </span>
+                                )}
                             </div>
                         </div>
 
