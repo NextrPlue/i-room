@@ -68,8 +68,8 @@ const WorkerManagementPage = () => {
             setWorkers(workerList);
             setTotalPages(response.data.totalPages);
 
-            // 근로자 목록이 업데이트되면 통계 계산
-            await calculateWorkerStats(workerList);
+            // 근로자 목록이 업데이트되면 통계 조회
+            await fetchWorkerStats();
         } catch (error) {
             console.error('근로자 데이터 조회 실패:', error);
             setWorkers([]);
@@ -81,97 +81,18 @@ const WorkerManagementPage = () => {
         }, [refreshWorkersList]);
 
 
-    // 출입 통계 계산 함수
-    /** @typedef {{ enterDate: string|null, outDate: string|null }} Attendance */
-    const calculateWorkerStats = async (workerList) => {
+    // 출입 통계 조회 함수
+    const fetchWorkerStats = async () => {
         try {
-            setWorkerStats(/** @type {(prev: WorkerStats) => WorkerStats} */(
-                prev => ({...prev, loading: true})
-            ));
-
-            const totalWorkers = workerList.length;
-
-            if (totalWorkers === 0) {
-                setWorkerStats({
-                    total: 0,
-                    working: 0,
-                    offWork: 0,
-                    absent: 0,
-                    loading: false
-                });
-                return;
-            }
-
-            // 각 근로자의 출입현황 조회
-            const attendancePromises = workerList.map(async (worker) => {
-                try {
-                    const response = await managementAPI.getWorkerAttendance(worker.id);
-                    return response.data;
-                } catch (error) {
-                    console.error(`근로자 ${worker.id} 출입현황 조회 실패:`, error);
-                    return null; // 에러 시 null 반환
-                }
-            });
-
-            const attendanceResults = await Promise.all(attendancePromises);
-
-            // null이 아닌 결과만 필터링하고 근무중/퇴근 계산
-            const validAttendances = attendanceResults.filter(att => att !== null);
-
-            // 오늘 날짜 기준으로 필터링
-            const today = new Date();
-            const todayDateString = today.toISOString().split('T')[0]; // YYYY-MM-DD 형태
-
-            const working = validAttendances.filter(attendance => {
-                // enterDate가 있고 당일 출근 기록인지 확인
-                if (!attendance.enterDate) return false;
-
-                const enterDate = new Date(attendance.enterDate);
-                const enterDateString = enterDate.toISOString().split('T')[0];
-
-                // 당일 출근이고 outDate가 없으면 근무중
-                return enterDateString === todayDateString && !attendance.outDate;
-            }).length;
-
-            // 당일 퇴근한 사람들 계산
-            const todayOffWork = validAttendances.filter(attendance => {
-                if (!attendance.enterDate || !attendance.outDate) return false;
-
-                const enterDate = new Date(attendance.enterDate);
-                const outDate = new Date(attendance.outDate);
-                const enterDateString = enterDate.toISOString().split('T')[0];
-                const outDateString = outDate.toISOString().split('T')[0];
-
-                // 당일 출근해서 당일 퇴근한 사람들
-                return enterDateString === todayDateString && outDateString === todayDateString;
-            }).length;
-
-            // 미출근자 계산 (오늘 출근 기록이 없는 사람들)
-            const todayAttended = validAttendances.filter(attendance => {
-                if (!attendance.enterDate) return false;
-
-                const enterDate = new Date(attendance.enterDate);
-                const enterDateString = enterDate.toISOString().split('T')[0];
-
-                // 오늘 출근 기록이 있는 사람들
-                return enterDateString === todayDateString;
-            }).length;
-
-            const absent = totalWorkers - todayAttended;
-
+            setWorkerStats(prev => ({...prev, loading: true}));
+            const response = await managementAPI.getWorkerStats();
             setWorkerStats({
-                total: totalWorkers,
-                working: working,
-                offWork: todayOffWork,
-                absent: absent,
+                ...response.data,
                 loading: false
             });
-
         } catch (error) {
-            console.error('출입 통계 계산 실패:', error);
-            setWorkerStats(/** @type {(prev: WorkerStats) => WorkerStats} */(
-                prev => ({...prev, loading: false})
-            ));
+            console.error('출입 통계 조회 실패:', error);
+            setWorkerStats(prev => ({...prev, loading: false}));
         }
     };
 
