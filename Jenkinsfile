@@ -20,6 +20,8 @@ spec:
     command:
     - cat
     tty: true
+    securityContext:
+      runAsUser: 0
     volumeMounts:
     - name: docker-sock
       mountPath: /var/run/docker.sock
@@ -372,9 +374,9 @@ spec:
             // Docker logout and cleanup
             container('docker') {
                 sh '''
-                    docker logout ${ACR_REGISTRY}
-                    docker image prune -f
-                    docker system prune -f --volumes
+                    docker logout ${ACR_REGISTRY} || true
+                    docker image prune -f || true
+                    docker system prune -f --volumes || true
                 '''
             }
         }
