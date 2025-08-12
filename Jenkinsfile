@@ -10,11 +10,11 @@ spec:
     image: jenkins/inbound-agent:3327.v868139a_d00e0-2
     resources:
       requests:
+        memory: "512Mi"
+        cpu: "200m"
+      limits:
         memory: "1Gi"
         cpu: "500m"
-      limits:
-        memory: "2Gi"
-        cpu: "1000m"
   - name: docker
     image: docker:dind
     securityContext:
@@ -29,11 +29,11 @@ spec:
     - containerPort: 2375
     resources:
       requests:
+        memory: "512Mi"
+        cpu: "200m"
+      limits:
         memory: "1Gi"
         cpu: "500m"
-      limits:
-        memory: "2Gi"
-        cpu: "1000m"
   - name: docker-client
     image: docker:latest
     command:
