@@ -346,6 +346,21 @@ export const userAPI = {
         const url = `${API_CONFIG.gateway}/api/user/admins?${queryParams.toString()}`;
         return await apiRequest(url);
     },
+
+    /**
+     * 관리자 권한 변경
+     * @param {string} adminId - 관리자 ID
+     * @param {string} role - 새로운 권한 (SUPER_ADMIN, READER)
+     * @returns {Promise} 변경된 관리자 정보
+     */
+    changeAdminRole: async (adminId, role) => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/${adminId}/role`;
+        return await apiRequest(url, {
+            method: 'PUT',
+            body: JSON.stringify({ role })
+        });
+    },
+
 };
 
 /**
