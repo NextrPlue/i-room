@@ -5,9 +5,13 @@ from ultralytics import YOLO
 from ppe.services.ppe_check import check_violation
 from ppe.services.violation_handler import handle_violation
 from ppe.services.webrtc_service import frame_queue
+from dotenv import load_dotenv
+
+load_dotenv()
 
 MODEL_PATH = os.getenv("MODEL_PATH", "ppe/model/best_8m_v4.pt")
-VIDEO_SRC  = os.getenv("RTSP_URL", "ppe/test2.mp4")
+# VIDEO_SRC  = os.getenv("RTSP_URL", "ppe/test2.mp4")
+VIDEO_SRC = os.getenv("RTSP_URL")
 device     = "cuda" if torch.cuda.is_available() else "cpu"
 model      = YOLO(MODEL_PATH).to(device)
 

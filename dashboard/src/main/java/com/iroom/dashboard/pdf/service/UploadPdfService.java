@@ -17,12 +17,15 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.*;
 
+import org.springframework.beans.factory.annotation.Value;
+
 @Service
 @RequiredArgsConstructor
 public class UploadPdfService {
 
+	@Value("${qdrant.url}")
+	private String qdrantUrl;
 	private final RestTemplate restTemplate;
-	private final String QDRANT_URL = "http://localhost:6333/collections/safety_db/points?wait=true";
 	private final TranslationService translationService;
 	private final ChatService chatService;
 
@@ -76,7 +79,7 @@ public class UploadPdfService {
 			HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
 
 			ResponseEntity<String> response = restTemplate.exchange(
-				QDRANT_URL,
+				qdrantUrl + "/collections/safety_db/points?wait=true",
 				HttpMethod.PUT,
 				request,
 				String.class
