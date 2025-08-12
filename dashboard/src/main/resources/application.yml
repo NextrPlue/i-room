@@ -1,6 +1,9 @@
 server:
   port: 8085
 
+qdrant:
+  url: http://localhost:6333
+
 spring:
   application:
     name: dashboard
@@ -98,3 +101,6 @@ spring:
 
   kafka:
     bootstrap-servers: i-room-kafka:9092
+
+qdrant:
+  url: http://i-room-qdrant:6333
