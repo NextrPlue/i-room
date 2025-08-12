@@ -2,14 +2,20 @@ package com.iroom.management.service;
 
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.iroom.management.dto.response.WorkerEduResponse;
 import com.iroom.management.dto.response.WorkerManagementResponse;
+import com.iroom.management.entity.WorkerEdu;
 import com.iroom.management.entity.WorkerManagement;
 import com.iroom.management.repository.WorkerManagementRepository;
 import com.iroom.management.repository.WorkerReadModelRepository;
+import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.modulecommon.exception.CustomException;
 import com.iroom.modulecommon.exception.ErrorCode;
 
@@ -77,5 +83,14 @@ public class WorkerManagementService {
 		return workerManagementRepository.findTopByWorkerIdOrderByEnterDateDesc(workerId)
 			.map(WorkerManagementResponse::new)
 			.orElse(new WorkerManagementResponse(null, workerId, null, null));
+	}
+
+	// 근로자 본인 출입현황 조회
+	@PreAuthorize("hasAuthority('ROLE_WORKER') and #workerId == authentication.principal")
+	public WorkerManagementResponse getWorkerEntry(Long workerId) {
+		WorkerManagement workerManagement = workerManagementRepository.findById(workerId)
+			.orElseThrow(() -> new CustomException(ErrorCode.USER_WORKER_NOT_FOUND));
+
+		return new WorkerManagementResponse(workerManagement);
 	}
 }

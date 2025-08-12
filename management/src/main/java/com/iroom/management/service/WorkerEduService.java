@@ -42,4 +42,15 @@ public class WorkerEduService {
 
 		return PagedResponse.of(responsePage);
 	}
+
+	// 근로자 본인 안전교육 내역 조회
+	@PreAuthorize("hasAuthority('ROLE_WORKER') and #workerId == authentication.principal")
+	public PagedResponse<WorkerEduResponse> getWorkerEdu(Long workerId, int page, int size) {
+		Pageable pageable = PageRequest.of(page, size);
+		Page<WorkerEdu> eduPage = workerEduRepository.findAllByWorkerId(workerId, pageable);
+
+		Page<WorkerEduResponse> responsePage = eduPage.map(WorkerEduResponse::new);
+
+		return PagedResponse.of(responsePage);
+	}
 }
