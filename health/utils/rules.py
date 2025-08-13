@@ -46,30 +46,37 @@ def _hrmax(age: float) -> float:
     """
     return max(220.0 - float(age), 1.0)
 
-def _intensity_score(spm: float | None, speed_mps: float | None, pace_min_per_km: float | None) -> float:
+def _intensity_score(spm: float | None, speed_kmh: float | None, pace_min_per_km: float | None) -> float:
     """
     활동 강도 점수(0~100)를 간단 계산.
-        - 가능한 입력: steps_per_minute(spm), 속도(m/s), 페이스(min/km)
+        - 입력: 
+            spm: steps_per_minute (분당 걸음 수)
+            speed_kmh: 속도 km/h (갤럭시 워치 기준에 맞춤)
+            pace_min_per_km: 페이스 (분/킬로미터)
+        - 정규화:
+            * SPM 180 -> 100점
+            * 속도 12.6 km/h(=3.5 m/s) -> 100점
+            * 페이스는 속도로 변환 후 동일 기준 적용
         - 세 입력 중 "가장 높은 강도"를 대표값으로 사용
-        - 정규화 기준은 보수적으로 설정(ex: 3.5m/s는 12.6km/h -> 100점)
     """
     # steps per minute 기반 점수: 180 spm -> 100점으로 정규화 (러닝 캐던스 상한을 보수적으로)
     s1 = (spm / 180.0 * 100.0) if spm is not None else 0.0
 
-    # speed 기반 점수: 3.5m/s를 100점으로 매핑 (빠른 러닝 수준)
-    s2 = (speed_mps / 3.5 * 100.0) if speed_mps is not None else 0.0
+    # speed 기반 점수: 12.6 km/h를 100점으로 매핑 (빠른 러닝 수준)
+    s2 = (speed_kmh / 12.6 * 100.0) if (speed_kmh is not None) else 0.0
 
-    # pace(min/km) -> speed(m/s) 변환 후 점수화
+    # pace(min/km) -> speed(m/s) -> km/h 변환 후 점수화
     s3 = 0.0
     if pace_min_per_km is not None and pace_min_per_km > 0:
         # pace(min/km) -> 속도(m/s) = 1000(m) / (min*60)
-        speed = 1000.0 / (pace_min_per_km * 60.0)
-        s3 = (speed / 3.5 * 100.0)
+        speed_mps = 1000.0 / (pace_min_per_km * 60.0)   # m/s
+        speed_kmh_from_pace = speed_mps * 3.6
+        s3 = (speed_kmh_from_pace / 12.6 * 100.0)
 
     # 세 값 중 최대를 대표 강도로 사용. 0~100으로 클리핑
     return max(0.0, min(100.0, max(s1, s2, s3)))
 
-def apply_rules(age, hr, steps_per_minute=None, speed_mps=None, pace_min_per_km=None,
+def apply_rules(age, hr, steps_per_minute=None, speed_kmh=None, pace_min_per_km=None,
                 model_pred=0, model_proba=0.0, threshold=0.5, cfg: RuleConfig = CFG):
     """
     모델 결과(model_pred/proba/threshold)와 맥락(나이, HR, 활동량)을 종합해
@@ -79,7 +86,7 @@ def apply_rules(age, hr, steps_per_minute=None, speed_mps=None, pace_min_per_km=
         - age: 나이 -> HRmax 계산에 사용
         - hr : 현재 심박수(BPM)
         - steps_per_minute: 분당 걸음 수(없으면 None)
-        - speed_mps: 현재 속도(m/s, 없으면 None)
+        - speed_kmh: 현재 속도(km/h, 없으면 None)
         - model_pred: 모델의 이진 예측(0/1)
         - model_proba: 모델의 위험(1) 확률(0~1)
         - threshold: 분류 임계값(검증에서 선택한 값)
@@ -94,7 +101,7 @@ def apply_rules(age, hr, steps_per_minute=None, speed_mps=None, pace_min_per_km=
     # 파생값 계산
     hrmax = _hrmax(age) # 나이 기반 최대 심박
     hr_ratio = float(hr) / hrmax if hr is not None else 0.0 # HR/HRmax -> 개인화된 상대강도
-    intensity = _intensity_score(steps_per_minute, speed_mps, pace_min_per_km)  # 활동 강도 점수(0~100)
+    intensity = _intensity_score(steps_per_minute, speed_kmh, pace_min_per_km)  # 활동 강도 점수(0~100)
 
     # Sanity 체크(갤럭시워치 값 이상/결측 확인)
     # HR가 비정상 범위면 모델/룰 적용 대신 "무시/정상" 처리를 선택
