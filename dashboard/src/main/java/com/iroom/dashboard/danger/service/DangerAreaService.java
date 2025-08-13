@@ -30,6 +30,7 @@ public class DangerAreaService {
 			.longitude(request.longitude())
 			.width(request.width())
 			.height(request.height())
+			.name(request.name())
 			.build();
 		return new DangerAreaResponse(dangerAreaRepository.save(dangerArea));
 	}
@@ -38,7 +39,7 @@ public class DangerAreaService {
 	public DangerAreaResponse updateDangerArea(Long id, DangerAreaRequest request) {
 		DangerArea dangerArea = dangerAreaRepository.findById(id)
 			.orElseThrow(() -> new IllegalArgumentException("해당 위험구역이 존재하지 않습니다."));
-		dangerArea.update(request.latitude(), request.longitude(), request.width(), request.height());
+		dangerArea.update(request.latitude(), request.longitude(), request.width(), request.height(), request.name());
 		return new DangerAreaResponse(dangerArea);
 	}
 

@@ -1,12 +1,14 @@
 /* 전체 페이지 - 기존 스타일과 통일 */
 .page {
-    padding: 50px;
+    padding: 24px;
     background-color: #FAFBFF;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     gap: 32px;
     width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 /* 페이지 헤더 - 기존과 동일 */
@@ -24,9 +26,16 @@
 /* 상단 섹션 - 종합 안전 점수 + 변동 추이 */
 .topSection {
     display: grid;
-    grid-template-columns: 400px 1fr;
-    gap: 32px;
+    grid-template-columns: minmax(300px, 400px) 1fr;
+    gap: 24px;
     margin-bottom: 32px;
+}
+
+@media (max-width: 768px) {
+    .topSection {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
 }
 
 /* 종합 안전 점수 카드 */

@@ -5,6 +5,7 @@ public record DangerAreaRequest(
 	Double latitude,
 	Double longitude,
 	Double width,
-	Double height
+	Double height,
+	String name
 ) {
 }

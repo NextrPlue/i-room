@@ -1,0 +1,23 @@
+{
+  "feature_cols": [
+    "Age",
+    "HR",
+    "HRmax",
+    "hr_ratio"
+  ],
+  "threshold": 0.3765348792076111,
+  "target_recall": 0.85,
+  "best_iteration": 77,
+  "preprocessing": {
+    "age_to_numeric": true,
+    "hr_to_numeric": true,
+    "age_fillna_median": 57.0,
+    "dropna_hr": true,
+    "engineer": [
+      "HRmax = 220 - Age",
+      "hr_ratio = HR/HRmax"
+    ]
+  },
+  "xgboost_version": "3.0.3",
+  "seed": 42
+}

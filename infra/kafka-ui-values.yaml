@@ -3,6 +3,4 @@ envs:
     KAFKA_CLUSTERS_0_NAME: "i-room-kafka-cluster"
     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "i-room-kafka:9092"
     DYNAMIC_CONFIG_ENABLED: "true"
-
-service:
-  type: LoadBalancer
+    SERVER_SERVLET_CONTEXT_PATH: "/kafka-ui"

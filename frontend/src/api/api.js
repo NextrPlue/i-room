@@ -2,7 +2,7 @@ import {authUtils} from '../utils/auth';
 
 // API 기본 설정
 const API_CONFIG = {
-    gateway: "http://localhost:8080"
+    gateway: "http://135.149.162.178"
 };
 
 /**
@@ -28,7 +28,6 @@ const handleFetchError = async (response) => {
                 errorMessage = errorText;
             }
         } catch {
-            // 텍스트 파싱 실패 시 기본 에러 메시지 사용
         }
     }
 
@@ -346,6 +345,32 @@ export const userAPI = {
         const url = `${API_CONFIG.gateway}/api/user/admins?${queryParams.toString()}`;
         return await apiRequest(url);
     },
+
+    /**
+     * 관리자 권한 변경
+     * @param {string} adminId - 관리자 ID
+     * @param {string} role - 새로운 권한 (SUPER_ADMIN, READER)
+     * @returns {Promise} 변경된 관리자 정보
+     */
+    changeAdminRole: async (adminId, role) => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/${adminId}/role`;
+        return await apiRequest(url, {
+            method: 'PUT',
+            body: JSON.stringify({ role })
+        });
+    },
+
+    /**
+     * 관리자 삭제
+     * @param {string} adminId - 삭제할 관리자 ID
+     * @returns {Promise} 삭제 응답
+     */
+    deleteAdmin: async (adminId) => {
+        const url = `${API_CONFIG.gateway}/api/user/admins/${adminId}`;
+        return await apiRequest(url, {
+            method: 'DELETE'
+        });
+    },
 };
 
 /**
@@ -415,15 +440,32 @@ export const blueprintAPI = {
      * @param {object} options
      * @param {number} options.page - 페이지 번호 (기본값: 0)
      * @param {number} options.size - 페이지당 개수 (기본값: 10)
+     * @param {string} [options.target] - 검색 대상 (예: "floor")
+     * @param {string} [options.keyword] - 검색 키워드 (예: "1")
      * @returns {Promise} 도면 목록 데이터
      */
-    getBlueprints: async ({page = 0, size = 10} = {}) => {
+    getBlueprints: async ({page = 0, size = 10, target = null, keyword = null} = {}) => {
         const queryParams = new URLSearchParams({
             page: page.toString(),
             size: size.toString(),
         });
 
+        if (target && keyword) {
+            queryParams.append('target', target);
+            queryParams.append('keyword', keyword);
+        }
+
         const url = `${API_CONFIG.gateway}/api/dashboard/blueprints?${queryParams.toString()}`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 단일 도면 조회
+     * @param {number} blueprintId - 도면 ID
+     * @returns {Promise} 도면 데이터
+     */
+    getBlueprint: async (blueprintId) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/blueprints/${blueprintId}`;
         return await apiRequest(url);
     },
 
@@ -457,6 +499,28 @@ export const blueprintAPI = {
     },
 
     /**
+     * 도면 이미지 Blob 데이터 조회 (인증 헤더 포함)
+     * @param {number} blueprintId - 도면 ID
+     * @returns {Promise<string>} Blob URL
+     */
+    getBlueprintImageBlob: async (blueprintId) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/blueprints/${blueprintId}/image`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': authUtils.getAuthHeader()
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`이미지 로드 실패: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
+    },
+
+    /**
      * 도면 수정
      * @param {number} blueprintId - 수정할 도면 ID
      * @param {object} blueprintData - 수정할 도면 데이터
@@ -481,6 +545,79 @@ export const blueprintAPI = {
      */
     deleteBlueprint: async (blueprintId) => {
         const url = `${API_CONFIG.gateway}/api/dashboard/blueprints/${blueprintId}`;
+        return await apiRequest(url, {
+            method: 'DELETE'
+        });
+    }
+};
+
+/**
+ * Risk Zone (Danger Area) API 서비스
+ */
+export const riskZoneAPI = {
+    /**
+     * 위험구역 목록 조회
+     * @param {object} options
+     * @param {number} options.page - 페이지 번호 (기본값: 0)
+     * @param {number} options.size - 페이지당 개수 (기본값: 10)
+     * @returns {Promise} 위험구역 목록 데이터
+     */
+    getRiskZones: async ({page = 0, size = 10} = {}) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
+
+        const url = `${API_CONFIG.gateway}/api/dashboard/danger-areas?${queryParams.toString()}`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 위험구역 등록
+     * @param {object} dangerAreaData - 등록할 위험구역 데이터
+     * @param {number} dangerAreaData.blueprintId - 도면 ID
+     * @param {number} dangerAreaData.latitude - 위도
+     * @param {number} dangerAreaData.longitude - 경도
+     * @param {number} dangerAreaData.width - 너비
+     * @param {number} dangerAreaData.height - 높이
+     * @param {string} dangerAreaData.name - 위험구역 이름
+     * @returns {Promise} 등록된 위험구역 정보
+     */
+    createRiskZone: async (dangerAreaData) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/danger-areas`;
+        return await apiRequest(url, {
+            method: 'POST',
+            body: JSON.stringify(dangerAreaData)
+        });
+    },
+
+    /**
+     * 위험구역 수정
+     * @param {number} dangerAreaId - 수정할 위험구역 ID
+     * @param {object} dangerAreaData - 수정할 위험구역 데이터
+     * @param {number} dangerAreaData.blueprintId - 도면 ID
+     * @param {number} dangerAreaData.latitude - 위도
+     * @param {number} dangerAreaData.longitude - 경도
+     * @param {number} dangerAreaData.width - 너비
+     * @param {number} dangerAreaData.height - 높이
+     * @param {string} dangerAreaData.name - 위험구역 이름
+     * @returns {Promise} 수정된 위험구역 정보
+     */
+    updateRiskZone: async (dangerAreaId, dangerAreaData) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/danger-areas/${dangerAreaId}`;
+        return await apiRequest(url, {
+            method: 'PUT',
+            body: JSON.stringify(dangerAreaData)
+        });
+    },
+
+    /**
+     * 위험구역 삭제
+     * @param {number} dangerAreaId - 삭제할 위험구역 ID
+     * @returns {Promise} 삭제 응답 데이터
+     */
+    deleteRiskZone: async (dangerAreaId) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/danger-areas/${dangerAreaId}`;
         return await apiRequest(url, {
             method: 'DELETE'
         });
