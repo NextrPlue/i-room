@@ -168,6 +168,24 @@ export const workerAPI = {
     },
 
     /**
+     * 비밀번호 변경
+     * @param {{ currentPassword: string, newPassword: string }} payload
+     */
+    updatePassword: async ({ currentPassword, newPassword }) => {
+        const url = `${API_CONFIG.gateway}/api/user/workers/password`;
+
+        const body = JSON.stringify({
+            password: currentPassword,
+            newPassword: newPassword,
+        });
+
+        return apiRequest(url, {
+            method: 'PUT',
+            body
+        });
+    },
+
+    /**
      * 로그아웃
      */
     logout: () => {
