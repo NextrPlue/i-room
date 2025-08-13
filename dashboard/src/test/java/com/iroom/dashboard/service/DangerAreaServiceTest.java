@@ -48,6 +48,7 @@ class DangerAreaServiceTest {
 			.longitude(20.0)
 			.width(100.0)
 			.height(200.0)
+			.name("테스트 위험구역")
 			.build();
 
 		DangerArea dangerArea2 = DangerArea.builder()
@@ -56,6 +57,7 @@ class DangerAreaServiceTest {
 			.longitude(60.0)
 			.width(150.0)
 			.height(250.0)
+			.name("테스트 위험구역2")
 			.build();
 
 		pageable = PageRequest.of(0, 10);
@@ -66,7 +68,7 @@ class DangerAreaServiceTest {
 	@DisplayName("위험구역 등록 성공")
 	void createDangerAreaTest() {
 		// given
-		DangerAreaRequest request = new DangerAreaRequest(1L, 10.0, 20.0, 100.0, 200.0);
+		DangerAreaRequest request = new DangerAreaRequest(1L, 10.0, 20.0, 100.0, 200.0, "테스트 위험구역");
 		given(dangerAreaRepository.save(any(DangerArea.class))).willReturn(dangerArea);
 
 		// when
@@ -76,6 +78,7 @@ class DangerAreaServiceTest {
 		assertThat(response.blueprintId()).isEqualTo(1L);
 		assertThat(response.latitude()).isEqualTo(10.0);
 		assertThat(response.longitude()).isEqualTo(20.0);
+		assertThat(response.name()).isEqualTo("테스트 위험구역");
 	}
 
 	@Test
@@ -83,7 +86,7 @@ class DangerAreaServiceTest {
 	void updateDangerAreaTest() {
 		// given
 		Long id = 1L;
-		DangerAreaRequest request = new DangerAreaRequest(1L, 99.0, 88.0, 300.0, 400.0);
+		DangerAreaRequest request = new DangerAreaRequest(1L, 99.0, 88.0, 300.0, 400.0, "수정된 위험구역");
 		given(dangerAreaRepository.findById(id)).willReturn(Optional.of(dangerArea));
 
 		// when
@@ -94,6 +97,7 @@ class DangerAreaServiceTest {
 		assertThat(response.longitude()).isEqualTo(88.0);
 		assertThat(response.width()).isEqualTo(300.0);
 		assertThat(response.height()).isEqualTo(400.0);
+		assertThat(response.name()).isEqualTo("수정된 위험구역");
 	}
 
 	@Test
@@ -101,7 +105,7 @@ class DangerAreaServiceTest {
 	void updateDangerAreaFail_NotFound() {
 		// given
 		Long id = 999L;
-		DangerAreaRequest request = new DangerAreaRequest(1L, 10.0, 10.0, 100.0, 100.0);
+		DangerAreaRequest request = new DangerAreaRequest(1L, 10.0, 10.0, 100.0, 100.0, "테스트");
 		given(dangerAreaRepository.findById(id)).willReturn(Optional.empty());
 
 		// when & then
