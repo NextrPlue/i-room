@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: gateway
-          image: iroomregistry.azurecr.io/gateway:20250808
+          image: iroomregistry.azurecr.io/gateway:2025081101
           ports:
             - containerPort: 8080
           env:
