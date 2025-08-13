@@ -406,6 +406,12 @@ const WorkerDetailPage = () => {
                         </div>
                     ) : (() => {
                         const { enterDate, outDate } = attendance;
+                        
+                        // 오늘 날짜 확인
+                        const today = new Date().toDateString();
+                        const isEnterToday = enterDate && new Date(enterDate).toDateString() === today;
+                        const isOutToday = outDate && new Date(outDate).toDateString() === today;
+                        
                         return (
                             <>
                                 <div className={styles.statusItem}>
@@ -431,8 +437,8 @@ const WorkerDetailPage = () => {
                                                 <span className={styles.statusTime}>-</span>
                                             )}
                                         </div>
-                                        <span className={enterDate ? styles.attendanceBadge : styles.workingBadge}>
-                                            {enterDate ? '출근 완료' : '미출근'}
+                                        <span className={isEnterToday ? styles.attendanceBadge : styles.workingBadge}>
+                                            {isEnterToday ? '출근 완료' : '미출근'}
                                         </span>
                                     </div>
                                 </div>
@@ -460,8 +466,8 @@ const WorkerDetailPage = () => {
                                                 <span className={styles.statusTime}>-</span>
                                             )}
                                         </div>
-                                        <span className={outDate ? styles.attendanceBadge : styles.workingBadge}>
-                                            {outDate ? '퇴근 완료' : '근무중'}
+                                        <span className={isOutToday ? styles.attendanceBadge : (isEnterToday ? styles.workingBadge : styles.workingBadge)}>
+                                            {isOutToday ? '퇴근 완료' : (isEnterToday ? '근무중' : '미출근')}
                                         </span>
                                     </div>
                                 </div>

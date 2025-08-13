@@ -8,7 +8,8 @@ public record DangerAreaResponse(
 	Double latitude,
 	Double longitude,
 	Double width,
-	Double height
+	Double height,
+	String name
 ) {
 	public DangerAreaResponse(DangerArea entity) {
 		this(
@@ -17,7 +18,8 @@ public record DangerAreaResponse(
 			entity.getLatitude(),
 			entity.getLongitude(),
 			entity.getWidth(),
-			entity.getHeight()
+			entity.getHeight(),
+			entity.getName()
 		);
 	}
 }

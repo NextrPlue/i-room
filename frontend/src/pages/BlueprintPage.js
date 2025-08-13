@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styles from '../styles/Blueprint.module.css';
 import { blueprintAPI } from '../api/api';
 import { authUtils } from '../utils/auth';
@@ -42,7 +42,7 @@ const BlueprintPage = () => {
     const pageSize = 7;
 
     // 도면 목록 조회 함수
-    const fetchBlueprints = async (page = 0) => {
+    const fetchBlueprints = useCallback(async (page = 0) => {
         try {
             setLoading(true);
             setError(null);
@@ -69,11 +69,13 @@ const BlueprintPage = () => {
         } finally {
             setLoading(false);
         }
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pageSize]);
 
     // 컴포넌트 마운트 시 도면 목록 조회
     useEffect(() => {
         fetchBlueprints(0).catch(console.error);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // 컴포넌트 언마운트 시 blob URL 정리
@@ -632,13 +634,17 @@ const BlueprintPage = () => {
                                     <div className={styles.detailItem}>
                                         <span className={styles.detailLabel}>도면 URL:</span>
                                         <span className={styles.detailValue}>
-                                            <a
-                                                href={typeof imageBlob === 'string' ? imageBlob : '#'}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                            >
-                                                도면 보기
-                                            </a>
+                                            {typeof imageBlob === 'string' ? (
+                                                <a
+                                                    href={imageBlob}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    이미지 새창에서 보기
+                                                </a>
+                                            ) : (
+                                                <span>이미지 로딩 중...</span>
+                                            )}
                                         </span>
                                     </div>
                                 )}

@@ -3,6 +3,7 @@ package com.iroom.dashboard.danger.controller;
 import com.iroom.dashboard.danger.dto.request.DangerAreaRequest;
 import com.iroom.dashboard.danger.dto.response.DangerAreaResponse;
 import com.iroom.dashboard.danger.service.DangerAreaService;
+import com.iroom.modulecommon.dto.response.ApiResponse;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -19,24 +20,27 @@ public class DangerAreaController {
 	private final DangerAreaService dangerAreaService;
 
 	@PostMapping
-	public ResponseEntity<DangerAreaResponse> createDangerArea(@RequestBody DangerAreaRequest request) {
-		return ResponseEntity.ok(dangerAreaService.createDangerArea(request));
+	public ResponseEntity<ApiResponse<DangerAreaResponse>> createDangerArea(@RequestBody DangerAreaRequest request) {
+		DangerAreaResponse response = dangerAreaService.createDangerArea(request);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
 	@PutMapping("/{id}")
-	public ResponseEntity<DangerAreaResponse> updateDangerArea(@PathVariable Long id,
+	public ResponseEntity<ApiResponse<DangerAreaResponse>> updateDangerArea(@PathVariable Long id,
 		@RequestBody DangerAreaRequest request) {
-		return ResponseEntity.ok(dangerAreaService.updateDangerArea(id, request));
+		DangerAreaResponse response = dangerAreaService.updateDangerArea(id, request);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 
 	@DeleteMapping("/{id}")
-	public ResponseEntity<Map<String, Object>> deleteDangerArea(@PathVariable Long id) {
+	public ResponseEntity<ApiResponse<Map<String, Object>>> deleteDangerArea(@PathVariable Long id) {
 		dangerAreaService.deleteDangerArea(id);
-		return ResponseEntity.ok(Map.of("message", "위험구역 삭제 완료", "deletedId", id));
+		Map<String, Object> result = Map.of("message", "위험구역 삭제 완료", "deletedId", id);
+		return ResponseEntity.ok(ApiResponse.success(result));
 	}
 
 	@GetMapping
-	public ResponseEntity<PagedResponse<DangerAreaResponse>> getAllDangerAreas(
+	public ResponseEntity<ApiResponse<PagedResponse<DangerAreaResponse>>> getAllDangerAreas(
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(defaultValue = "10") int size
 	) {
@@ -46,6 +50,6 @@ public class DangerAreaController {
 			size = 0;
 
 		PagedResponse<DangerAreaResponse> response = dangerAreaService.getAllDangerAreas(page, size);
-		return ResponseEntity.ok(response);
+		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 }

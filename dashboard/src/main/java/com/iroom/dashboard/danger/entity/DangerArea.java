@@ -27,19 +27,24 @@ public class DangerArea {
 	@Column(nullable = false)
 	private Double height;
 
+	@Column(length = 100)
+	private String name;
+
 	@Builder
-	public DangerArea(Long blueprintId, Double latitude, Double longitude, Double width, Double height) {
+	public DangerArea(Long blueprintId, Double latitude, Double longitude, Double width, Double height, String name) {
 		this.blueprintId = blueprintId;
 		this.latitude = latitude;
 		this.longitude = longitude;
 		this.width = width;
 		this.height = height;
+		this.name = name;
 	}
 
-	public void update(Double latitude, Double longitude, Double width, Double height) {
+	public void update(Double latitude, Double longitude, Double width, Double height, String name) {
 		this.latitude = latitude;
 		this.longitude = longitude;
 		this.width = width;
 		this.height = height;
+		this.name = name;
 	}
 }

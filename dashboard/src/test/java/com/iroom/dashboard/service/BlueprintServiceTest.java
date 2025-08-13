@@ -304,7 +304,7 @@ class BlueprintServiceTest {
 		given(blueprintRepository.findAll(pageable)).willReturn(blueprintPage);
 
 		// when
-		PagedResponse<BlueprintResponse> response = blueprintService.getAllBlueprints(0, 10);
+		PagedResponse<BlueprintResponse> response = blueprintService.getAllBlueprints(null, null, 0, 10);
 
 		// then
 		assertThat(response.content()).hasSize(2);

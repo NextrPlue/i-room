@@ -1,6 +1,6 @@
 /* 전체 페이지 */
 .page {
-    padding: 50px;
+    padding: 24px;
     background-color: #FAFBFF;
     min-height: calc(100vh - 60px);
     display: flex;
@@ -8,6 +8,7 @@
     gap: 32px;
     width: 100%;
     box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 /* 로딩 및 에러 상태 */
