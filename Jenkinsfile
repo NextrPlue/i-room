@@ -53,10 +53,6 @@ spec:
         }
     }
 
-    when {
-        branch 'main'
-    }
-
     parameters {
         booleanParam(name: 'FORCE_BUILD_ALL', defaultValue: false, description: 'Force build all services regardless of changes')
         booleanParam(name: 'DEPLOY_GATEWAY', defaultValue: true, description: 'Deploy Gateway service')
@@ -88,6 +84,9 @@ spec:
 
     stages {
         stage('Checkout') {
+            when {
+                branch 'main'
+            }
             steps {
                 echo 'Checking out source code...'
                 checkout scm
@@ -97,6 +96,7 @@ spec:
         stage('Build Gateway Service') {
             when {
                 allOf {
+                    branch 'main'
                     expression { return params.DEPLOY_GATEWAY == true }
                     anyOf {
                         changeset "gateway/**"
@@ -121,6 +121,7 @@ spec:
         stage('Build User Service') {
             when {
                 allOf {
+                    branch 'main'
                     expression { return params.DEPLOY_USER == true }
                     anyOf {
                         changeset "user/**"
@@ -145,6 +146,7 @@ spec:
         stage('Build Management Service') {
             when {
                 allOf {
+                    branch 'main'
                     expression { return params.DEPLOY_MANAGEMENT == true }
                     anyOf {
                         changeset "management/**"
@@ -169,6 +171,7 @@ spec:
         stage('Build Alarm Service') {
             when {
                 allOf {
+                    branch 'main'
                     expression { return params.DEPLOY_ALARM == true }
                     anyOf {
                         changeset "alarm/**"
@@ -193,6 +196,7 @@ spec:
         stage('Build Sensor Service') {
             when {
                 allOf {
+                    branch 'main'
                     expression { return params.DEPLOY_SENSOR == true }
                     anyOf {
                         changeset "sensor/**"
@@ -217,6 +221,7 @@ spec:
         stage('Build Dashboard Service') {
             when {
                 allOf {
+                    branch 'main'
                     expression { return params.DEPLOY_DASHBOARD == true }
                     anyOf {
                         changeset "dashboard/**"
@@ -239,6 +244,9 @@ spec:
         }
 
         stage('Docker Login') {
+            when {
+                branch 'main'
+            }
             steps {
                 echo 'Logging into Azure Container Registry with Service Principal...'
                 container('docker-client') {
@@ -252,6 +260,7 @@ spec:
         stage('Build Gateway Docker Image') {
             when {
                 allOf {
+                    branch 'main'
                     expression { return params.DEPLOY_GATEWAY == true }
                     anyOf {
                         changeset "gateway/**"
@@ -278,6 +287,7 @@ spec:
         stage('Build User Docker Image') {
             when {
                 allOf {
+                    branch 'main'
                     expression { return params.DEPLOY_USER == true }
                     anyOf {
                         changeset "user/**"
@@ -304,6 +314,7 @@ spec:
         stage('Build Management Docker Image') {
             when {
                 allOf {
+                    branch 'main'
                     expression { return params.DEPLOY_MANAGEMENT == true }
                     anyOf {
                         changeset "management/**"
@@ -330,6 +341,7 @@ spec:
         stage('Build Alarm Docker Image') {
             when {
                 allOf {
+                    branch 'main'
                     expression { return params.DEPLOY_ALARM == true }
                     anyOf {
                         changeset "alarm/**"
@@ -356,6 +368,7 @@ spec:
         stage('Build Sensor Docker Image') {
             when {
                 allOf {
+                    branch 'main'
                     expression { return params.DEPLOY_SENSOR == true }
                     anyOf {
                         changeset "sensor/**"
@@ -382,6 +395,7 @@ spec:
         stage('Build Dashboard Docker Image') {
             when {
                 allOf {
+                    branch 'main'
                     expression { return params.DEPLOY_DASHBOARD == true }
                     anyOf {
                         changeset "dashboard/**"
@@ -406,6 +420,9 @@ spec:
         }
 
         stage('Push to ACR') {
+            when {
+                branch 'main'
+            }
             steps {
                 echo 'Pushing images to Azure Container Registry...'
                 container('docker-client') {
@@ -436,6 +453,9 @@ spec:
         }
 
         stage('Deploy to Kubernetes') {
+            when {
+                branch 'main'
+            }
             steps {
                 echo 'Deploying to Kubernetes cluster...'
                 container('kubectl') {
