@@ -2,7 +2,6 @@ import React, {useState} from 'react';
 import {BrowserRouter as Router, Navigate, Route, Routes, useNavigate} from 'react-router-dom';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
-import Footer from './components/Footer';
 import AdminLogin from './pages/AdminLogin';
 import AdminSignUpPage from './pages/AdminSignUpPage';
 import PrivacyConsentPage from './pages/PrivacyConsentPage';
@@ -48,7 +47,6 @@ const CommonLayout = ({ children, currentPage }) => {
                 <Sidebar activeItem={activeItem} setActiveItem={handleSidebarClick}/>
                 <div className="main-content">
                     {children}
-                    <Footer/>
                 </div>
             </div>
         </div>
