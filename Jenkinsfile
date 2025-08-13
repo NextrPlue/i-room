@@ -80,27 +80,40 @@ spec:
         ALARM_IMAGE = "${ACR_REGISTRY}/alarm:${BUILD_VERSION}"
         SENSOR_IMAGE = "${ACR_REGISTRY}/sensor:${BUILD_VERSION}"
         DASHBOARD_IMAGE = "${ACR_REGISTRY}/dashboard:${BUILD_VERSION}"
+
+        // 변경된 파일 목록을 저장할 변수
+        GIT_DIFF = ""
     }
 
     stages {
-        stage('Checkout') {
+        stage('Checkout & Detect Changes') {
             steps {
-                echo 'Checking out source code...'
+                echo 'Checking out source code and detecting changes...'
                 checkout scm
+                script {
+                    def diff_command
+                    // 이전 성공적인 빌드가 없을 경우(예: 첫 빌드) 현재 커밋과 부모 커밋을 비교
+                    if (env.GIT_PREVIOUS_SUCCESSFUL_COMMIT) {
+                        diff_command = "git diff --name-only ${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT} ${env.GIT_COMMIT}"
+                    } else {
+                        // 첫 빌드이거나 이전 커밋을 찾을 수 없는 경우에 대한 폴백
+                        // 리포지토리에 커밋이 하나만 있는 경우 오류를 방지하기 위해 `|| true` 사용
+                        diff_command = 'git diff --name-only HEAD~1 HEAD || true'
+                    }
+                    env.GIT_DIFF = sh(returnStdout: true, script: diff_command).trim()
+                    echo "Changed files:
+${env.GIT_DIFF}"
+                }
             }
         }
 
         stage('Build Gateway Service') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_GATEWAY == true }
-                    anyOf {
-                        changeset "gateway/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
+                expression {
+                    def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                    def serviceChanges = changes.any { it.startsWith('gateway/') }
+                    def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
+                    return params.DEPLOY_GATEWAY && (params.FORCE_BUILD_ALL || serviceChanges || globalChanges)
                 }
             }
             steps {
@@ -116,15 +129,11 @@ spec:
 
         stage('Build User Service') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_USER == true }
-                    anyOf {
-                        changeset "user/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
+                expression {
+                    def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                    def serviceChanges = changes.any { it.startsWith('user/') }
+                    def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
+                    return params.DEPLOY_USER && (params.FORCE_BUILD_ALL || serviceChanges || globalChanges)
                 }
             }
             steps {
@@ -140,15 +149,11 @@ spec:
 
         stage('Build Management Service') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_MANAGEMENT == true }
-                    anyOf {
-                        changeset "management/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
+                expression {
+                    def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                    def serviceChanges = changes.any { it.startsWith('management/') }
+                    def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
+                    return params.DEPLOY_MANAGEMENT && (params.FORCE_BUILD_ALL || serviceChanges || globalChanges)
                 }
             }
             steps {
@@ -164,15 +169,11 @@ spec:
 
         stage('Build Alarm Service') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_ALARM == true }
-                    anyOf {
-                        changeset "alarm/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
+                expression {
+                    def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                    def serviceChanges = changes.any { it.startsWith('alarm/') }
+                    def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
+                    return params.DEPLOY_ALARM && (params.FORCE_BUILD_ALL || serviceChanges || globalChanges)
                 }
             }
             steps {
@@ -188,15 +189,11 @@ spec:
 
         stage('Build Sensor Service') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_SENSOR == true }
-                    anyOf {
-                        changeset "sensor/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
+                expression {
+                    def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                    def serviceChanges = changes.any { it.startsWith('sensor/') }
+                    def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
+                    return params.DEPLOY_SENSOR && (params.FORCE_BUILD_ALL || serviceChanges || globalChanges)
                 }
             }
             steps {
@@ -212,15 +209,11 @@ spec:
 
         stage('Build Dashboard Service') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_DASHBOARD == true }
-                    anyOf {
-                        changeset "dashboard/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
+                expression {
+                    def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                    def serviceChanges = changes.any { it.startsWith('dashboard/') }
+                    def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
+                    return params.DEPLOY_DASHBOARD && (params.FORCE_BUILD_ALL || serviceChanges || globalChanges)
                 }
             }
             steps {
@@ -247,15 +240,11 @@ spec:
 
         stage('Build Gateway Docker Image') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_GATEWAY == true }
-                    anyOf {
-                        changeset "gateway/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
+                expression {
+                    def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                    def serviceChanges = changes.any { it.startsWith('gateway/') }
+                    def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
+                    return params.DEPLOY_GATEWAY && (params.FORCE_BUILD_ALL || serviceChanges || globalChanges)
                 }
             }
             steps {
@@ -273,15 +262,11 @@ spec:
 
         stage('Build User Docker Image') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_USER == true }
-                    anyOf {
-                        changeset "user/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
+                expression {
+                    def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                    def serviceChanges = changes.any { it.startsWith('user/') }
+                    def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
+                    return params.DEPLOY_USER && (params.FORCE_BUILD_ALL || serviceChanges || globalChanges)
                 }
             }
             steps {
@@ -299,15 +284,11 @@ spec:
 
         stage('Build Management Docker Image') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_MANAGEMENT == true }
-                    anyOf {
-                        changeset "management/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
+                expression {
+                    def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                    def serviceChanges = changes.any { it.startsWith('management/') }
+                    def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
+                    return params.DEPLOY_MANAGEMENT && (params.FORCE_BUILD_ALL || serviceChanges || globalChanges)
                 }
             }
             steps {
@@ -325,15 +306,11 @@ spec:
 
         stage('Build Alarm Docker Image') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_ALARM == true }
-                    anyOf {
-                        changeset "alarm/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
+                expression {
+                    def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                    def serviceChanges = changes.any { it.startsWith('alarm/') }
+                    def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
+                    return params.DEPLOY_ALARM && (params.FORCE_BUILD_ALL || serviceChanges || globalChanges)
                 }
             }
             steps {
@@ -351,15 +328,11 @@ spec:
 
         stage('Build Sensor Docker Image') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_SENSOR == true }
-                    anyOf {
-                        changeset "sensor/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
+                expression {
+                    def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                    def serviceChanges = changes.any { it.startsWith('sensor/') }
+                    def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
+                    return params.DEPLOY_SENSOR && (params.FORCE_BUILD_ALL || serviceChanges || globalChanges)
                 }
             }
             steps {
@@ -377,15 +350,11 @@ spec:
 
         stage('Build Dashboard Docker Image') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_DASHBOARD == true }
-                    anyOf {
-                        changeset "dashboard/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
+                expression {
+                    def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                    def serviceChanges = changes.any { it.startsWith('dashboard/') }
+                    def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
+                    return params.DEPLOY_DASHBOARD && (params.FORCE_BUILD_ALL || serviceChanges || globalChanges)
                 }
             }
             steps {
@@ -406,24 +375,25 @@ spec:
                 echo 'Pushing images to Azure Container Registry...'
                 container('docker-client') {
                     script {
-                        def changes = env.GIT_DIFF ?: ""
+                        def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                        def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
 
-                        if (params.DEPLOY_GATEWAY && (changes.contains('gateway/') || params.FORCE_BUILD_ALL)) {
+                        if (params.DEPLOY_GATEWAY && (params.FORCE_BUILD_ALL || globalChanges || changes.any { it.startsWith('gateway/') })) {
                             sh "docker push ${GATEWAY_IMAGE}"
                         }
-                        if (params.DEPLOY_USER && (changes.contains('user/') || params.FORCE_BUILD_ALL)) {
+                        if (params.DEPLOY_USER && (params.FORCE_BUILD_ALL || globalChanges || changes.any { it.startsWith('user/') })) {
                             sh "docker push ${USER_IMAGE}"
                         }
-                        if (params.DEPLOY_MANAGEMENT && (changes.contains('management/') || params.FORCE_BUILD_ALL)) {
+                        if (params.DEPLOY_MANAGEMENT && (params.FORCE_BUILD_ALL || globalChanges || changes.any { it.startsWith('management/') })) {
                             sh "docker push ${MANAGEMENT_IMAGE}"
                         }
-                        if (params.DEPLOY_ALARM && (changes.contains('alarm/') || params.FORCE_BUILD_ALL)) {
+                        if (params.DEPLOY_ALARM && (params.FORCE_BUILD_ALL || globalChanges || changes.any { it.startsWith('alarm/') })) {
                             sh "docker push ${ALARM_IMAGE}"
                         }
-                        if (params.DEPLOY_SENSOR && (changes.contains('sensor/') || params.FORCE_BUILD_ALL)) {
+                        if (params.DEPLOY_SENSOR && (params.FORCE_BUILD_ALL || globalChanges || changes.any { it.startsWith('sensor/') })) {
                             sh "docker push ${SENSOR_IMAGE}"
                         }
-                        if (params.DEPLOY_DASHBOARD && (changes.contains('dashboard/') || params.FORCE_BUILD_ALL)) {
+                        if (params.DEPLOY_DASHBOARD && (params.FORCE_BUILD_ALL || globalChanges || changes.any { it.startsWith('dashboard/') })) {
                             sh "docker push ${DASHBOARD_IMAGE}"
                         }
                     }
@@ -437,10 +407,11 @@ spec:
                 container('kubectl') {
                     withKubeConfig([credentialsId: 'kubeconfig']) {
                         script {
-                            def changes = env.GIT_DIFF ?: ""
+                            def changes = (env.GIT_DIFF ?: "").tokenize('\n')
+                            def globalChanges = changes.any { it.matches(/gradlew.*|build\.gradle.*|settings\.gradle.*/) }
 
                             // Gateway 배포
-                            if (params.DEPLOY_GATEWAY && (changes.contains('gateway/') || params.FORCE_BUILD_ALL)) {
+                            if (params.DEPLOY_GATEWAY && (params.FORCE_BUILD_ALL || globalChanges || changes.any { it.startsWith('gateway/') })) {
                                 sh """
                                     kubectl set image deployment/gateway-deployment gateway=${GATEWAY_IMAGE} --namespace=default
                                     kubectl rollout status deployment/gateway-deployment --namespace=default --timeout=300s
@@ -448,7 +419,7 @@ spec:
                             }
 
                             // User 서비스 배포
-                            if (params.DEPLOY_USER && (changes.contains('user/') || params.FORCE_BUILD_ALL)) {
+                            if (params.DEPLOY_USER && (params.FORCE_BUILD_ALL || globalChanges || changes.any { it.startsWith('user/') })) {
                                 sh """
                                     kubectl set image deployment/user-deployment user=${USER_IMAGE} --namespace=default
                                     kubectl rollout status deployment/user-deployment --namespace=default --timeout=300s
@@ -456,7 +427,7 @@ spec:
                             }
 
                             // Management 서비스 배포
-                            if (params.DEPLOY_MANAGEMENT && (changes.contains('management/') || params.FORCE_BUILD_ALL)) {
+                            if (params.DEPLOY_MANAGEMENT && (params.FORCE_BUILD_ALL || globalChanges || changes.any { it.startsWith('management/') })) {
                                 sh """
                                     kubectl set image deployment/management-deployment management=${MANAGEMENT_IMAGE} --namespace=default
                                     kubectl rollout status deployment/management-deployment --namespace=default --timeout=300s
@@ -464,7 +435,7 @@ spec:
                             }
 
                             // Alarm 서비스 배포
-                            if (params.DEPLOY_ALARM && (changes.contains('alarm/') || params.FORCE_BUILD_ALL)) {
+                            if (params.DEPLOY_ALARM && (params.FORCE_BUILD_ALL || globalChanges || changes.any { it.startsWith('alarm/') })) {
                                 sh """
                                     kubectl set image deployment/alarm-deployment alarm=${ALARM_IMAGE} --namespace=default
                                     kubectl rollout status deployment/alarm-deployment --namespace=default --timeout=300s
@@ -472,7 +443,7 @@ spec:
                             }
 
                             // Sensor 서비스 배포
-                            if (params.DEPLOY_SENSOR && (changes.contains('sensor/') || params.FORCE_BUILD_ALL)) {
+                            if (params.DEPLOY_SENSOR && (params.FORCE_BUILD_ALL || globalChanges || changes.any { it.startsWith('sensor/') })) {
                                 sh """
                                     kubectl set image deployment/sensor-deployment sensor=${SENSOR_IMAGE} --namespace=default
                                     kubectl rollout status deployment/sensor-deployment --namespace=default --timeout=300s
@@ -480,7 +451,7 @@ spec:
                             }
 
                             // Dashboard 서비스 배포
-                            if (params.DEPLOY_DASHBOARD && (changes.contains('dashboard/') || params.FORCE_BUILD_ALL)) {
+                            if (params.DEPLOY_DASHBOARD && (params.FORCE_BUILD_ALL || globalChanges || changes.any { it.startsWith('dashboard/') })) {
                                 sh """
                                     kubectl set image deployment/dashboard-deployment dashboard=${DASHBOARD_IMAGE} --namespace=default
                                     kubectl rollout status deployment/dashboard-deployment --namespace=default --timeout=300s
