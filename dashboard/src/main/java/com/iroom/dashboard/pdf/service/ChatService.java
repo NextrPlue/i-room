@@ -117,4 +117,32 @@ public class ChatService {
 		System.out.println("gpt 응답: " + chatAnswer);
 		return chatAnswer;
 	}
+
+
+
+	public String generateImprovement(String prompt) {
+		ChatRequest request = ChatRequest.of(chatModel, prompt);
+		request.messages().add(new Message(
+			"system",
+			"You are an expert in producing industrial environment improvement reports. "
+				+ "Using an English-language hazard self-inspection checklist and data showing the daily number of occurrences by incident (hazard) type, "
+				+ "write a detailed industrial environment improvement report. When writing the report, analyze using logical, evidence-based reasoning grounded in the self-inspection checklist. "
+				+ "In addition, at the beginning of each paragraph, "
+				+ "specify which part of the self-inspection checklist is being referenced and explain the results."
+				+ "Remove any markdown (such as ‘**’), and write in English."));
+		try {
+			ChatResponse response = template.postForObject(chatApiURL, request, ChatResponse.class);
+			return response.choices().get(0).message().getContent();
+		} catch (Exception e) {
+			System.out.println("gpt에러: " + e);
+		}
+		return "error";
+	}
+
+
+	public String questionImprovement(String prompt) {
+		String chatAnswer = generateImprovement(prompt);
+		System.out.println("gpt 응답: " + chatAnswer);
+		return chatAnswer;
+	}
 }
