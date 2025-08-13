@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import styles from '../styles/AdminLogin.module.css';
 import {userAPI} from '../api/api';
+import Footer from '../components/Footer';
 
 const AdminLogin = ({onLogin}) => {
     const navigate = useNavigate();
@@ -189,6 +190,7 @@ const AdminLogin = ({onLogin}) => {
                     </div>
                 </form>
             </div>
+            <Footer />
         </div>
     );
 };
