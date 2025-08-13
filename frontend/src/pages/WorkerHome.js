@@ -35,6 +35,9 @@ const WorkerHome = () => {
     // 안전교육 상태
     const [safetyEducation, setSafetyEducation] = useState([]);
 
+    // 설정 상태
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
     // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
         loadWorkerData();
@@ -145,6 +148,13 @@ const WorkerHome = () => {
         alert('퇴근 처리되었습니다.');
     };
 
+    // 설정(비밀번호 변경) 핸들러
+    const handleOpenSettings = () => {
+        console.log("설정 버튼 클릭")
+        setIsSettingsOpen(true)
+    }
+    const handleCloseSettings = () => setIsSettingsOpen(false)
+
     // 로딩 중일 때 표시
     if (loading) {
         return (
@@ -167,6 +177,27 @@ const WorkerHome = () => {
     return (
         <div className={styles.workerDetailContainer}>
             <div className={styles.profileHeader}>
+                <button
+                    type="button"
+                    className={styles.settingsBtn}
+                    aria-label="설정"
+                    onClick={handleOpenSettings}
+                >
+                    <svg
+                        className={styles.settingsIcon}
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.8"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden="true"
+                    >
+                        <circle cx="12" cy="12" r="3" />
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09c.7 0 1.29-.4 1.51-1a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09c0 .7.4 1.29 1 1.51a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .7.4 1.29 1 1.51H21a2 2 0 0 1 0 4h-.09c-.7 0-1.29.4-1.51 1Z" />
+                    </svg>
+                </button>
+
                 <div className={styles.profileCircle}>
                     <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
                         <circle cx="12" cy="12" r="10" fill="#d0d0d0" />
@@ -300,8 +331,136 @@ const WorkerHome = () => {
             <button className={styles.logoutButton} onClick={handleLogout}>
                 로그아웃
             </button>
+
+            <SettingsModal open={isSettingsOpen} onClose={handleCloseSettings} />
         </div>
     );
 };
+
+function SettingsModal({ open, onClose }) {
+    const [form, setForm] = React.useState({ current: '', next: '', confirm: '' });
+    const [touched, setTouched] = React.useState({ current: false, next: false, confirm: false });
+    const [submitting, setSubmitting] = React.useState(false);
+    const [serverErr, setServerErr] = React.useState('');
+
+    React.useEffect(() => {
+        if (!open) return;
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = prev; };
+    }, [open]);
+
+    if (!open) return null;
+
+    const onChange = (e) => {
+        const { name, value } = e.target;
+        setForm(prev => ({ ...prev, [name]: value }));
+        if (serverErr) setServerErr('');
+    };
+    const onBlur = (e) => setTouched(prev => ({ ...prev, [e.target.name]: true }));
+
+    const strongPw = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(form.next);
+    const matchPw = form.next.length > 0 && form.next === form.confirm;
+    const canSubmit = form.current.length > 0 && strongPw && matchPw && !submitting;
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!canSubmit) {
+            setTouched({ current: true, next: true, confirm: true });
+            return;
+        }
+        try {
+            setSubmitting(true);
+            setServerErr('');
+
+            const res = await workerAPI.updatePassword({
+                currentPassword: form.current,
+                newPassword: form.next,
+            });
+
+            // 응답 예: { status: "success", data: { message: "비밀번호가..." } }
+            alert(res?.data?.message || '비밀번호가 변경되었습니다.');
+            onClose();
+        } catch (err) {
+            setServerErr(err?.message || '비밀번호 변경에 실패했습니다.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    return (
+        <div
+            className={styles.modalOverlay}
+            role="dialog" aria-modal="true"
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
+            <div className={styles.modalContainer}>
+                <div className={styles.modalHeader}>
+                    <h3 className={styles.modalTitle}>비밀번호 변경</h3>
+                    <button type="button" className={styles.modalCloseBtn} onClick={onClose} aria-label="닫기">×</button>
+                </div>
+
+                <form className={styles.modalForm} onSubmit={handleSubmit}>
+                    <label className={styles.formLabel}>현재 비밀번호</label>
+                    <input
+                        className={styles.input}
+                        type="password"
+                        name="current"
+                        value={form.current}
+                        onChange={onChange}
+                        onBlur={onBlur}
+                        placeholder="현재 비밀번호"
+                        autoComplete="current-password"
+                        aria-invalid={touched.current && form.current.length === 0}
+                        style={{ fontSize: 16 }}
+                    />
+
+                    <label className={styles.formLabel}>새 비밀번호</label>
+                    <input
+                        className={styles.input}
+                        type="password"
+                        name="next"
+                        value={form.next}
+                        onChange={onChange}
+                        onBlur={onBlur}
+                        placeholder="영문/숫자/특수문자 포함 8자 이상"
+                        autoComplete="new-password"
+                        aria-invalid={touched.next && !strongPw}
+                        style={{ fontSize: 16 }}
+                    />
+                    <ul className={styles.hintList}>
+                        <li className={strongPw ? styles.hintOk : styles.hintBad}>
+                            8자 이상 + 영문 + 숫자 + 특수문자 포함
+                        </li>
+                    </ul>
+
+                    <label className={styles.formLabel}>새 비밀번호 확인</label>
+                    <input
+                        className={styles.input}
+                        type="password"
+                        name="confirm"
+                        value={form.confirm}
+                        onChange={onChange}
+                        onBlur={onBlur}
+                        placeholder="새 비밀번호 재입력"
+                        autoComplete="new-password"
+                        aria-invalid={touched.confirm && !matchPw}
+                        style={{ fontSize: 16 }}
+                    />
+
+                    {/* 서버 에러 메시지 */}
+                    {serverErr && <p className={styles.fieldError}>{serverErr}</p>}
+
+                    <div className={styles.modalActions}>
+                        <button type="button" className={styles.secondaryButton} onClick={onClose} disabled={submitting}>취소</button>
+                        <button type="submit" className={styles.primaryButton} disabled={!canSubmit}>
+                            {submitting ? '변경 중...' : '확인'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
 
 export default WorkerHome;

@@ -2,6 +2,7 @@ import React, {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
 import styles from '../styles/AdminLogin.module.css';
 import {userAPI} from '../api/api';
+import Footer from '../components/Footer';
 
 const AdminLogin = ({onLogin}) => {
     const navigate = useNavigate();
@@ -114,7 +115,7 @@ const AdminLogin = ({onLogin}) => {
 
     // 회원가입 페이지로 이동
     const handleSignUp = () => {
-        navigate('/admin/signup');
+        navigate('/signup');
     };
 
     return (
@@ -189,6 +190,7 @@ const AdminLogin = ({onLogin}) => {
                     </div>
                 </form>
             </div>
+            <Footer />
         </div>
     );
 };

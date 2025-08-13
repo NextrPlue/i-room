@@ -5,10 +5,45 @@
 }
 
 .profileHeader {
+    position: relative;
     background: white;
     padding: 15px 15px;
     text-align: center;
     border-bottom: 1px solid #e9ecef;
+}
+
+.settingsBtn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+    cursor: pointer;
+    z-index: 2;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.settingsBtn:focus-visible {
+    outline: 2px solid #6aa3ff;
+    outline-offset: 2px;
+}
+
+.settingsBtn:hover {
+    background: #fff;
+}
+
+.settingsIcon {
+    width: 22px;
+    height: 22px;
+    pointer-events: none;
 }
 
 .profileCircle {
@@ -346,3 +381,114 @@
         padding: 15px;
     }
 }
+
+/* 설정 모달  스타일 */
+.modalOverlay {
+    position: fixed; inset: 0;
+    padding: 16px;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+
+}
+@media (min-width: 768px) { .modalOverlay { align-items: center; } }
+
+.modalContainer {
+    box-sizing: border-box;
+    width: clamp(280px, 92vw, 520px);
+    max-width: 520px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    margin: 0 auto;
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.2);
+    overflow: hidden;
+}
+
+@media (min-width: 768px) {
+    .modalContainer {
+        border-radius: 14px;
+        padding: 20px 18px;
+        margin: 0 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    }
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.modalTitle {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+.modalCloseBtn {
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    line-height: 1;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: #333;
+}
+
+.modalForm {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+.formLabel {
+    font-size: 13px;
+    color: #555;
+}
+.input {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    min-width: 0;
+}
+
+.modalActions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 6px;
+}
+.primaryButton {
+    padding: 10px 14px;
+    border: 0;
+    border-radius: 10px;
+    background: #2563eb; color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+.secondaryButton {
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+}
+
+.hintList {
+    margin: 2px 0 0;
+    padding-left: 18px;
+    font-size: 12px;
+}
+.hintOk { color: #2d8a34; }
+.hintBad { color: #d33; }
+.fieldError {
+    color: #d33;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.primaryButton:disabled { opacity: .6; cursor: not-allowed; }

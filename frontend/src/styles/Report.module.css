@@ -1,11 +1,13 @@
 .page {
-    padding: 50px;
+    padding: 24px;
     background-color: #FAFBFF;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     gap: 32px;
     width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 .pageHeader {

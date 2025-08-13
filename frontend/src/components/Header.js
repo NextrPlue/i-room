@@ -1,7 +1,81 @@
-import {Bell, User} from "lucide-react";
-import React from "react";
+import { User } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { NotificationBell, NotificationDropdown, createNotificationFromWebSocket } from './notifications';
+import stompService from '../services/stompService';
+import { authUtils } from '../utils/auth';
 
 const Header = () => {
+    // 알림 상태 관리
+    const [notifications, setNotifications] = useState([]);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
+
+    // 웹소켓 연결 및 이벤트 처리
+    useEffect(() => {
+        const token = authUtils.getToken();
+        if (!token) return;
+
+        // 웹소켓 연결
+        const connectWebSocket = async () => {
+            try {
+                await stompService.connect(token, 'admin');
+                setIsWebSocketConnected(true);
+                console.log('✅ Header: 웹소켓 연결 성공');
+            } catch (error) {
+                console.error('❌ Header: 웹소켓 연결 실패:', error);
+                setIsWebSocketConnected(false);
+            }
+        };
+
+        // 알림 이벤트 리스너 등록
+        const handleNewAlarm = (data) => {
+            console.log('🔔 Header: 새로운 알림 수신:', data);
+            const newNotification = createNotificationFromWebSocket(data);
+            
+            setNotifications(prev => [newNotification, ...prev.slice(0, 49)]); // 최대 50개 유지
+            
+            // 토스트 알림 표시 (App.js에서 처리할 예정)
+            window.dispatchEvent(new CustomEvent('showNotificationToast', { 
+                detail: newNotification 
+            }));
+        };
+
+        // 이벤트 리스너 등록
+        stompService.on('alarm', handleNewAlarm);
+        stompService.on('connected', () => setIsWebSocketConnected(true));
+        stompService.on('disconnected', () => setIsWebSocketConnected(false));
+
+        // 웹소켓 연결
+        if (!stompService.isConnected()) {
+            connectWebSocket();
+        } else {
+            setIsWebSocketConnected(true);
+        }
+
+        // 클린업
+        return () => {
+            stompService.off('alarm', handleNewAlarm);
+        };
+    }, []);
+
+    // 알림 관련 핸들러들
+    const handleBellClick = () => {
+        setIsDropdownOpen(!isDropdownOpen);
+    };
+
+    const handleDropdownClose = () => {
+        setIsDropdownOpen(false);
+    };
+
+    const handleMarkAllAsRead = () => {
+        setNotifications(prev => 
+            prev.map(notification => ({ ...notification, isRead: true }))
+        );
+    };
+
+    // 미읽음 알림 개수 계산
+    const unreadCount = notifications.filter(n => !n.isRead).length;
+
     const headerStyle = {
         backgroundColor: '#ffffff',
         borderBottom: '1px solid #e5e7eb',
@@ -22,17 +96,8 @@ const Header = () => {
     const rightSectionStyle = {
         display: 'flex',
         alignItems: 'center',
-        gap: '16px'
-    };
-
-    const bellButtonStyle = {
-        padding: '8px',
-        color: '#6b7280',
-        backgroundColor: 'transparent',
-        border: 'none',
-        borderRadius: '8px',
-        cursor: 'pointer',
-        transition: 'all 0.2s'
+        gap: '16px',
+        position: 'relative' // 드롭다운 위치 기준점
     };
 
     const userSectionStyle = {
@@ -56,15 +121,29 @@ const Header = () => {
         color: '#374151'
     };
 
+
     return (
         <header style={headerStyle}>
             <div>
                 <h1 style={titleStyle}>이룸</h1>
             </div>
             <div style={rightSectionStyle}>
-                <button style={bellButtonStyle}>
-                    <Bell size={20} />
-                </button>
+                {/* 알림 벨 */}
+                <NotificationBell
+                    unreadCount={unreadCount}
+                    onClick={handleBellClick}
+                    isActive={isDropdownOpen}
+                />
+                
+                {/* 알림 드롭다운 */}
+                <NotificationDropdown
+                    isOpen={isDropdownOpen}
+                    onClose={handleDropdownClose}
+                    notifications={notifications}
+                    onMarkAllAsRead={handleMarkAllAsRead}
+                />
+
+                {/* 사용자 정보 */}
                 <div style={userSectionStyle}>
                     <div style={avatarStyle}>
                         <User size={16} color="white" />

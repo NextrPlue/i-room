@@ -140,7 +140,7 @@ const AdminSignUpPage = () => {
 
     const handleCancel = () => {
         if (window.confirm('회원가입을 취소하시겠습니까? 입력한 정보가 모두 삭제됩니다.')) {
-            navigate('/admin/login');
+            navigate('/login');
         }
     };
 
@@ -156,7 +156,7 @@ const AdminSignUpPage = () => {
             password: formData.password,
             phone: formData.phone.trim(),
         };
-        navigate('/admin/privacy-consent', { state: { signUpData } });
+        navigate('/privacy-consent', { state: { signUpData } });
     };
 
     return (
@@ -174,7 +174,7 @@ const AdminSignUpPage = () => {
                     <section className={styles.illustrationSection}>
                         <div className={styles.illustrationContainer}>
                             <img
-                                src="/i-room.png"
+                                src={process.env.PUBLIC_URL + "/i-room.png"}
                                 alt="이룸(i-Room) 일러스트"
                                 className={styles.illustrationImage}
                             />

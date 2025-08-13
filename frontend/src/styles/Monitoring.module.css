@@ -1,12 +1,15 @@
 /* 전체 페이지 - 기존 스타일과 통일 */
 .page {
-    padding: 50px;
+    padding: 24px;
+    padding-bottom: 80px;
     background-color: #FAFBFF;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     gap: 32px;
     width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 /* 페이지 헤더 - 기존과 동일 */

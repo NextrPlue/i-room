@@ -77,8 +77,8 @@ const WorkerManagementPage = () => {
     }, [currentPage, pageSize, searchTerm, searchTarget]);
 
     useEffect(() => {
-            refreshWorkersList().catch(console.error);
-        }, [refreshWorkersList]);
+        refreshWorkersList().catch(console.error);
+    }, [refreshWorkersList]);
 
 
     // 출입 통계 조회 함수
@@ -97,7 +97,7 @@ const WorkerManagementPage = () => {
     };
 
     const handleDetailClick = (worker) => {
-        navigate(`/admin/worker/${worker.id}`);
+        navigate(`/worker/${worker.id}`);
     };
 
     // 수정 모달 열기

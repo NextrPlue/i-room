@@ -1,6 +1,7 @@
 package com.iroom.user.worker.dto.response;
 
 import com.iroom.user.worker.entity.Worker;
+import com.iroom.user.worker.util.MaskingUtil;
 import com.iroom.modulecommon.enums.BloodType;
 import com.iroom.modulecommon.enums.Gender;
 import com.iroom.modulecommon.enums.WorkerRole;
@@ -51,4 +52,25 @@ public record WorkerInfoResponse(
                 .map(WorkerInfoResponse::new)
                 .toList();
     }
+
+	public static WorkerInfoResponse maskedFrom(Worker w) {
+		return new WorkerInfoResponse(
+			w.getId(),
+			MaskingUtil.maskNameMiddleOne(w.getName()),
+			MaskingUtil.maskEmailFirst3(w.getEmail()),
+			MaskingUtil.maskPhoneMiddle4(w.getPhone()),
+			w.getRole(),
+			w.getBloodType(),
+			w.getGender(),
+			w.getAge(),
+			w.getWeight(),
+			w.getHeight(),
+			w.getJobTitle(),
+			w.getOccupation(),
+			w.getDepartment(),
+			w.getFaceImageUrl(),
+			w.getCreatedAt(),
+			w.getUpdatedAt()
+		);
+	}
 }

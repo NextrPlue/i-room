@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 
-const WorkerAddModal = ({ isOpen, onClose, onSave }) => {
+const WorkerAddModal = ({isOpen, onClose, onSave}) => {
     // 테스트용 초기값 정의
     const initialFormData = {
         name: '김철수',
@@ -14,14 +14,14 @@ const WorkerAddModal = ({ isOpen, onClose, onSave }) => {
         height: '175.0',
         email: 'test@example.com',
         gender: 'MALE',
-        password: 'password123'
+        password: 'password123!'
     };
 
     const [addForm, setAddForm] = useState(initialFormData);
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setAddForm(prev => ({ ...prev, [name]: value }));
+        const {name, value} = e.target;
+        setAddForm(prev => ({...prev, [name]: value}));
     };
 
     const handleSave = () => {
@@ -194,9 +194,9 @@ const WorkerAddModal = ({ isOpen, onClose, onSave }) => {
                 </div>
 
                 {/* 폼 내용 */}
-                <div style={{ padding: '24px' }}>
+                <div style={{padding: '24px'}}>
                     {/* 기본 정보 */}
-                    <div style={{ marginBottom: '32px' }}>
+                    <div style={{marginBottom: '32px'}}>
                         <h3 style={{
                             fontSize: '16px',
                             fontWeight: '600',
@@ -207,7 +207,7 @@ const WorkerAddModal = ({ isOpen, onClose, onSave }) => {
                         }}>
                             기본 정보
                         </h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px'}}>
                             <div>
                                 <label style={labelStyle}>이름 *</label>
                                 <input
@@ -271,7 +271,7 @@ const WorkerAddModal = ({ isOpen, onClose, onSave }) => {
                                 />
                             </div>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px' }}>
+                        <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '20px'}}>
                             <div>
                                 <label style={labelStyle}>성별</label>
                                 <select
@@ -288,7 +288,7 @@ const WorkerAddModal = ({ isOpen, onClose, onSave }) => {
                     </div>
 
                     {/* 연락 정보 */}
-                    <div style={{ marginBottom: '32px' }}>
+                    <div style={{marginBottom: '32px'}}>
                         <h3 style={{
                             fontSize: '16px',
                             fontWeight: '600',
@@ -299,7 +299,7 @@ const WorkerAddModal = ({ isOpen, onClose, onSave }) => {
                         }}>
                             연락 정보
                         </h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px'}}>
                             <div>
                                 <label style={labelStyle}>연락처 *</label>
                                 <input
@@ -330,7 +330,7 @@ const WorkerAddModal = ({ isOpen, onClose, onSave }) => {
                     </div>
 
                     {/* 신체 정보 */}
-                    <div style={{ marginBottom: '32px' }}>
+                    <div style={{marginBottom: '32px'}}>
                         <h3 style={{
                             fontSize: '16px',
                             fontWeight: '600',
@@ -341,7 +341,7 @@ const WorkerAddModal = ({ isOpen, onClose, onSave }) => {
                         }}>
                             신체 정보
                         </h3>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px' }}>
+                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '20px'}}>
                             <div>
                                 <label style={labelStyle}>나이</label>
                                 <input
