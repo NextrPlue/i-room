@@ -441,15 +441,32 @@ export const blueprintAPI = {
      * @param {object} options
      * @param {number} options.page - 페이지 번호 (기본값: 0)
      * @param {number} options.size - 페이지당 개수 (기본값: 10)
+     * @param {string} [options.target] - 검색 대상 (예: "floor")
+     * @param {string} [options.keyword] - 검색 키워드 (예: "1")
      * @returns {Promise} 도면 목록 데이터
      */
-    getBlueprints: async ({page = 0, size = 10} = {}) => {
+    getBlueprints: async ({page = 0, size = 10, target = null, keyword = null} = {}) => {
         const queryParams = new URLSearchParams({
             page: page.toString(),
             size: size.toString(),
         });
 
+        if (target && keyword) {
+            queryParams.append('target', target);
+            queryParams.append('keyword', keyword);
+        }
+
         const url = `${API_CONFIG.gateway}/api/dashboard/blueprints?${queryParams.toString()}`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 단일 도면 조회
+     * @param {number} blueprintId - 도면 ID
+     * @returns {Promise} 도면 데이터
+     */
+    getBlueprint: async (blueprintId) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/blueprints/${blueprintId}`;
         return await apiRequest(url);
     },
 
@@ -480,6 +497,28 @@ export const blueprintAPI = {
      */
     getBlueprintImage(blueprintId) {
         return `${API_CONFIG.gateway}/api/dashboard/blueprints/${blueprintId}/image`;
+    },
+
+    /**
+     * 도면 이미지 Blob 데이터 조회 (인증 헤더 포함)
+     * @param {number} blueprintId - 도면 ID
+     * @returns {Promise<string>} Blob URL
+     */
+    getBlueprintImageBlob: async (blueprintId) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/blueprints/${blueprintId}/image`;
+        
+        const response = await fetch(url, {
+            headers: {
+                'Authorization': authUtils.getAuthHeader()
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`이미지 로드 실패: ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        return URL.createObjectURL(blob);
     },
 
     /**
