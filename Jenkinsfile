@@ -54,7 +54,7 @@ spec:
     }
 
     parameters {
-        booleanParam(name: 'FORCE_BUILD_ALL', defaultValue: true, description: 'Force build all services regardless of changes')
+        booleanParam(name: 'FORCE_BUILD_ALL', defaultValue: false, description: 'Force build all services regardless of changes')
         booleanParam(name: 'DEPLOY_GATEWAY', defaultValue: true, description: 'Deploy Gateway service')
         booleanParam(name: 'DEPLOY_USER', defaultValue: true, description: 'Deploy User service')
         booleanParam(name: 'DEPLOY_MANAGEMENT', defaultValue: true, description: 'Deploy Management service')
