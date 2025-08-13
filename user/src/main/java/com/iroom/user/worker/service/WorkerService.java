@@ -138,7 +138,7 @@ public class WorkerService {
 		Worker worker = workerRepository.findById(id)
 			.orElseThrow(() -> new CustomException(ErrorCode.USER_WORKER_NOT_FOUND));
 
-		return new WorkerInfoResponse(worker);
+		return WorkerInfoResponse.maskedFrom(worker);
 	}
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
