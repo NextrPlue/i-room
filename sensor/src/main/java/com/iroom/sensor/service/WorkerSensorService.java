@@ -10,6 +10,7 @@ import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateResponse;
 import com.iroom.sensor.entity.WorkerSensor;
 import com.iroom.sensor.repository.WorkerSensorRepository;
 import com.iroom.sensor.repository.WorkerReadModelRepository;
+import com.iroom.sensor.util.GpsFilter;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,7 @@ public class WorkerSensorService {
 	private final KafkaProducerService kafkaProducerService;
 	private final WorkerSensorRepository workerSensorRepository;
 	private final WorkerReadModelRepository workerReadModelRepository;
-
+	private final GpsFilter gpsFilter = new GpsFilter();
 	// 근로자 센서 업데이트
 	@PreAuthorize("hasAuthority('ROLE_WORKER')")
 	public WorkerSensorUpdateResponse updateSensor(Long workerId, byte[] binaryData) {
@@ -47,8 +48,10 @@ public class WorkerSensorService {
 			});
 
 		WorkerSensorUpdateRequest request = parseBinaryData(binaryData);
-
-		workerSensor.updateSensor(request.latitude(), request.longitude(), request.heartRate(),
+		double[] filtered = gpsFilter.filter(request.latitude(), request.longitude(), request.speed());
+		System.out.println("원본 위도 경도: "+request.latitude()+", "+request.longitude());
+		System.out.println("수정 위도 경도: "+filtered[0]+", "+filtered[1]);
+		workerSensor.updateSensor(filtered[0], filtered[1], request.heartRate(),
 			request.steps(), request.speed(), request.pace(), request.stepPerMinute());
 
 		WorkerSensorEvent workerSensorEvent = new WorkerSensorEvent(
