@@ -338,7 +338,52 @@ const WorkerHome = () => {
 };
 
 function SettingsModal({ open, onClose }) {
+    const [form, setForm] = React.useState({
+        current: '',
+        next: '',
+        confirm: ''
+    });
+    const [touched, setTouched] = React.useState({
+        current: false,
+        next: false,
+        confirm: false
+    });
+
+    React.useEffect(() => {
+        if (!open) return;
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = prev; };
+    }, [open]);
+
     if (!open) return null;
+
+    const onChange = (e) => {
+        const { name, value } = e.target;
+        setForm(prev => ({ ...prev, [name]: value }));
+    };
+    const onBlur = (e) => {
+        const { name } = e.target;
+        setTouched(prev => ({ ...prev, [name]: true }));
+    };
+
+    // 규칙: 8자 이상 + 영문 + 숫자 + 특수문자 각 1개 이상
+    const strongPw = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(form.next);
+    const matchPw = form.next.length > 0 && form.next === form.confirm;
+
+    const canSubmit = form.current.length > 0 && strongPw && matchPw;
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        // 지금은 검증만 — API는 다음 단계에서
+        if (!canSubmit) {
+            // 전부 터치 처리해서 힌트/에러 보이게
+            setTouched({ current: true, next: true, confirm: true });
+            return;
+        }
+        console.log('✅ 비밀번호 규칙 통과. 다음 스텝: API 연동');
+        onClose(); // 지금은 닫기만
+    };
 
     return (
         <div
@@ -350,31 +395,71 @@ function SettingsModal({ open, onClose }) {
             <div className={styles.modalContainer}>
                 <div className={styles.modalHeader}>
                     <h3 className={styles.modalTitle}>비밀번호 변경</h3>
-                    <button
-                        type="button"
-                        className={styles.modalCloseBtn}
-                        aria-label="닫기"
-                        onClick={onClose}
-                    >
-                        ×
-                    </button>
+                    <button type="button" className={styles.modalCloseBtn} onClick={onClose} aria-label="닫기">×</button>
                 </div>
 
-                <div className={styles.modalForm}>
+                <form className={styles.modalForm} onSubmit={handleSubmit}>
                     <label className={styles.formLabel}>현재 비밀번호</label>
-                    <input className={styles.input} type="password" placeholder="현재 비밀번호" autoComplete="current-password" />
+                    <input
+                        className={styles.input}
+                        type="password"
+                        name="current"
+                        value={form.current}
+                        onChange={onChange}
+                        onBlur={onBlur}
+                        placeholder="현재 비밀번호"
+                        autoComplete="current-password"
+                        aria-invalid={touched.current && form.current.length === 0}
+                        style={{ fontSize: 16 }}
+                    />
+                    {touched.current && form.current.length === 0 && (
+                        <p className={styles.fieldError}>현재 비밀번호를 입력하세요.</p>
+                    )}
 
                     <label className={styles.formLabel}>새 비밀번호</label>
-                    <input className={styles.input} type="password" placeholder="새 비밀번호" autoComplete="new-password" />
+                    <input
+                        className={styles.input}
+                        type="password"
+                        name="next"
+                        value={form.next}
+                        onChange={onChange}
+                        onBlur={onBlur}
+                        placeholder="영문/숫자/특수문자 포함 8자 이상"
+                        autoComplete="new-password"
+                        aria-invalid={touched.next && !strongPw}
+                        style={{ fontSize: 16 }}
+                    />
+                    {/* 규칙 힌트 */}
+                    <ul className={styles.hintList}>
+                        <li className={strongPw ? styles.hintOk : styles.hintBad}>
+                            8자 이상 + 영문 + 숫자 + 특수문자 포함
+                        </li>
+                    </ul>
 
                     <label className={styles.formLabel}>새 비밀번호 확인</label>
-                    <input className={styles.input} type="password" placeholder="새 비밀번호 확인" autoComplete="new-password" />
+                    <input
+                        className={styles.input}
+                        type="password"
+                        name="confirm"
+                        value={form.confirm}
+                        onChange={onChange}
+                        onBlur={onBlur}
+                        placeholder="새 비밀번호 재입력"
+                        autoComplete="new-password"
+                        aria-invalid={touched.confirm && !matchPw}
+                        style={{ fontSize: 16 }}
+                    />
+                    {touched.confirm && !matchPw && (
+                        <p className={styles.fieldError}>새 비밀번호가 일치하지 않습니다.</p>
+                    )}
 
                     <div className={styles.modalActions}>
                         <button type="button" className={styles.secondaryButton} onClick={onClose}>취소</button>
-                        <button type="button" className={styles.primaryButton} onClick={onClose}>확인</button>
+                        <button type="submit" className={styles.primaryButton} disabled={!canSubmit}>
+                            확인
+                        </button>
                     </div>
-                </div>
+                </form>
             </div>
         </div>
     );
