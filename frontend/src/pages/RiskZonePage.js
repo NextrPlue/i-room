@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styles from '../styles/RiskZone.module.css';
 import { riskZoneAPI, blueprintAPI } from '../api/api';
 
@@ -55,28 +55,8 @@ const RiskZonePage = () => {
     });
     const [availableBlueprints, setAvailableBlueprints] = useState([]);
 
-    // 컴포넌트 마운트 시 위험구역 목록과 도면 목록 조회
-    useEffect(() => {
-        fetchRiskZones();
-        fetchAvailableBlueprints();
-    }, [currentPage]);
-
-    // 초기 로드 + 층 변경 시 도면 조회
-    useEffect(() => {
-        fetchBlueprint();
-    }, [selectedFloor]);
-
-    // 컴포넌트 언마운트 시 blob URL 정리
-    useEffect(() => {
-        return () => {
-            if (blueprintImage && blueprintImage.startsWith('blob:')) {
-                URL.revokeObjectURL(blueprintImage);
-            }
-        };
-    }, [blueprintImage]);
-
     // 위험구역 데이터 조회
-    const fetchRiskZones = async () => {
+    const fetchRiskZones = useCallback(async () => {
         try {
             const response = await riskZoneAPI.getRiskZones({
                 page: currentPage,
@@ -134,10 +114,10 @@ const RiskZonePage = () => {
             setRiskZones([]);
             setTotalPages(1);
         }
-    };
+    }, [currentPage, pageSize]);
 
     // 사용 가능한 도면 목록 조회 (수정 모달용)
-    const fetchAvailableBlueprints = async () => {
+    const fetchAvailableBlueprints = useCallback(async () => {
         try {
             const response = await blueprintAPI.getBlueprints({
                 page: 0,
@@ -150,10 +130,10 @@ const RiskZonePage = () => {
             console.error('도면 목록 조회 실패:', error);
             setAvailableBlueprints([]);
         }
-    };
+    }, []);
 
     // 도면 데이터 조회
-    const fetchBlueprint = async () => {
+    const fetchBlueprint = useCallback(async () => {
         try {
             const floorNumber = parseInt(selectedFloor.replace('F', '')); // "1F" -> 1
             const response = await blueprintAPI.getBlueprints({
@@ -189,7 +169,7 @@ const RiskZonePage = () => {
             setCurrentBlueprint(null);
             setBlueprintImage(null);
         }
-    };
+    }, [selectedFloor]);
 
     // 캔버스 마우스 이벤트 핸들러
     const handleMouseDown = (e) => {
@@ -435,6 +415,26 @@ const RiskZonePage = () => {
             height: `${Math.abs(dragEnd.y - dragStart.y)}%`
         };
     };
+
+    // 컴포넌트 마운트 시 위험구역 목록과 도면 목록 조회
+    useEffect(() => {
+        fetchRiskZones();
+        fetchAvailableBlueprints();
+    }, [currentPage, fetchRiskZones, fetchAvailableBlueprints]);
+
+    // 초기 로드 + 층 변경 시 도면 조회
+    useEffect(() => {
+        fetchBlueprint();
+    }, [selectedFloor, fetchBlueprint]);
+
+    // 컴포넌트 언마운트 시 blob URL 정리
+    useEffect(() => {
+        return () => {
+            if (blueprintImage && blueprintImage.startsWith('blob:')) {
+                URL.revokeObjectURL(blueprintImage);
+            }
+        };
+    }, [blueprintImage]);
 
     // 현재 페이지 데이터 (API에서 이미 페이지네이션 적용됨)
     const currentZones = riskZones;
