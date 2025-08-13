@@ -407,7 +407,7 @@ spec:
                 container('docker-client') {
                     script {
                         def changes = env.GIT_DIFF ?: ""
-                        
+
                         if (params.DEPLOY_GATEWAY && (changes.contains('gateway/') || params.FORCE_BUILD_ALL)) {
                             sh "docker push ${GATEWAY_IMAGE}"
                         }
