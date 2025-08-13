@@ -174,14 +174,14 @@ export const workerAPI = {
     updatePassword: async ({ currentPassword, newPassword }) => {
         const url = `${API_CONFIG.gateway}/api/user/workers/password`;
 
-        const body = JSON.stringify({
+        const bodyObj = {
             password: currentPassword,
             newPassword: newPassword,
-        });
+        };
 
         return apiRequest(url, {
             method: 'PUT',
-            body
+            body: JSON.stringify(bodyObj)
         });
     },
 
