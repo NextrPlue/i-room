@@ -8,3 +8,4 @@
 *.pyc
 /infra/api-secrets.yaml
 /infra/mysql-values.yaml
+/infra/jenkins-values.yaml
