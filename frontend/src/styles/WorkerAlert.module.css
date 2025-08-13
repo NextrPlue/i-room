@@ -1,0 +1,292 @@
+/* AlertComponents.module.css - 3가지 알람 스타일 */
+
+/* 공통 오버레이 */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* 공통 알림 컨테이너 */
+.alertContainer {
+    width: 100%;
+    max-width: 360px;
+    border-radius: 24px;
+    padding: 30px 24px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: slideUp 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100vh) scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* 1. 보호구 미착용 경고 스타일 (노란색 테마) */
+.safetyAlert {
+    background: linear-gradient(135deg, #FFB800, #FF8C00);
+    box-shadow:
+            0 20px 60px rgba(255, 184, 0, 0.4),
+            0 0 80px rgba(255, 140, 0, 0.2);
+}
+
+.safetyAlert::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+    animation: shimmer 2s infinite;
+}
+
+/* 2. 위험구역 접근 경고 스타일 (빨간색 테마) */
+.dangerAlert {
+    background: linear-gradient(135deg, #FF4444, #CC0000);
+    box-shadow:
+            0 20px 60px rgba(255, 68, 68, 0.4),
+            0 0 80px rgba(204, 0, 0, 0.2);
+}
+
+.dangerAlert::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.2) 100%);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+}
+
+/* 3. 건강 위험 경고 스타일 (파란색 테마) */
+.healthAlert {
+    background: linear-gradient(135deg, #4A90E2, #357ABD);
+    box-shadow:
+            0 20px 60px rgba(74, 144, 226, 0.4),
+            0 0 80px rgba(53, 122, 189, 0.2);
+}
+
+.healthAlert::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    transform: translate(-50%, -50%);
+    animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: translate(-50%, -50%) rotate(0deg); }
+    to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+@keyframes shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* 아이콘 스타일 */
+.iconWrapper {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+}
+
+.safetyIcon, .dangerIcon, .healthIcon {
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    backdrop-filter: blur(10px);
+    box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            inset 0 2px 4px rgba(255, 255, 255, 0.3);
+    animation: iconPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* 텍스트 스타일 */
+.title {
+    font-size: 24px;
+    font-weight: 800;
+    color: white;
+    margin: 0 0 12px 0;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: -0.5px;
+    position: relative;
+    z-index: 1;
+}
+
+.message {
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.95);
+    margin: 0 0 24px 0;
+    line-height: 1.5;
+    font-weight: 500;
+    position: relative;
+    z-index: 1;
+}
+
+/* 위치 정보 (위험구역용) */
+.location {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 0 0 20px 0;
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    position: relative;
+    z-index: 1;
+}
+
+/* 건강 정보 (건강위험용) */
+.healthInfo {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 15px;
+    margin: 0 0 20px 0;
+    position: relative;
+    z-index: 1;
+}
+
+.healthInfo p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* 위반 이미지 (보호구용) */
+.violationImage {
+    width: 100%;
+    max-width: 200px;
+    height: auto;
+    border-radius: 8px;
+    margin: 0 auto 20px;
+    display: block;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 1;
+}
+
+/* 확인 버튼 */
+.confirmButton {
+    width: 100%;
+    padding: 14px 20px;
+    background: rgba(255, 255, 255, 0.95);
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    margin-bottom: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.confirmButton:active {
+    transform: scale(0.98);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.safetyAlert .confirmButton {
+    color: #FF8C00;
+}
+
+.dangerAlert .confirmButton {
+    color: #CC0000;
+}
+
+.healthAlert .confirmButton {
+    color: #357ABD;
+}
+
+/* 타이머 텍스트 */
+.timerText {
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.7);
+    margin: 0;
+    font-weight: 400;
+    position: relative;
+    z-index: 1;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 480px) {
+    .overlay {
+        padding: 0;
+    }
+
+    .alertContainer {
+        max-width: 100%;
+        min-height: 100vh;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .title {
+        font-size: 22px;
+    }
+
+    .message {
+        font-size: 15px;
+    }
+
+    .safetyIcon, .dangerIcon, .healthIcon {
+        width: 70px;
+        height: 70px;
+        font-size: 40px;
+    }
+}
