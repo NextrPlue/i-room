@@ -477,3 +477,18 @@
     color: #333;
     cursor: pointer;
 }
+
+.hintList {
+    margin: 2px 0 0;
+    padding-left: 18px;
+    font-size: 12px;
+}
+.hintOk { color: #2d8a34; }
+.hintBad { color: #d33; }
+.fieldError {
+    color: #d33;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.primaryButton:disabled { opacity: .6; cursor: not-allowed; }
