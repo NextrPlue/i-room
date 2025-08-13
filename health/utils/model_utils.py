@@ -110,20 +110,42 @@ def _predict_proba_lgb(X: pd.DataFrame, model, meta: dict | None) -> np.ndarray:
 
     return np.asarray(p, dtype=float)
 
+# 위험 예측 함수
 def predict_worker_risk(age, heart_rate):
-    try:
-        # 입력값 구성: 학습 시 사용한 컬럼명과 일치해야 함
-        hrmax = 220 - age if age is not None else 180
-        hrmax = max(hrmax, 1)
-        hr_ratio = heart_rate / hrmax
+    """
+    반환: dict
+        - pred: 0/1 (임계값 비교 결과)
+        - proba: 위험(1) 확률
+        - threshold: 사용한 임계값
+        - model_type: 'xgboost' 또는 'lightgbm'
+    """
+    _load_artifacts()
 
-        input_df = pd.DataFrame([[
-            int(age), float(heart_rate), float(hrmax), float(hr_ratio)
-        ]], columns=["Age", "HR", "HRmax", "hr_ratio"])
+    # 입력값 전처리
+    X = _preprocess_to_features(age, heart_rate, _meta)
 
-        # 예측 수행
-        pred = model.predict(input_df)[0]
-        return int(pred)    # 0(정상), 1(위험)
-    except Exception as e:
-        print("예측 오류: ", e)
-        return None
+    # 예측
+    if _booster is not None:
+        proba = _predict_proba_xgb(X, _booster, _meta)
+        model_type = "xgboost"
+    elif _lgb_model is not None:
+        proba = _predict_proba_lgb(X, _lgb_model, _meta)
+        model_type = "lightgbm"
+    else:
+        raise RuntimeError("모델 파일을 찾을 수 없습니다. 경로를 확인하세요.")
+    
+    # 임계값 결정
+    # meta에 저장된 tuned_th가 있으면 사용, 없으면 0.5
+    threshold = 0.5
+    
+    if _meta and "threshold" in _meta:
+        threshold = float(_meta["threshold"])
+
+    pred = int(proba[0] >= threshold)
+
+    return {
+        "pred": pred,
+        "proba": float(proba[0]),
+        "threshold": float(threshold),
+        "model_type": model_type
+    }
