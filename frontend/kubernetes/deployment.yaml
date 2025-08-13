@@ -1,10 +1,7 @@
----
-
-
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: frontend
+  name: frontend-deployment
   labels:
     app: frontend
 spec:
@@ -19,6 +16,28 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: "username/frontend:latest"
+          image: "iroomregistry.azurecr.io/frontend:latest"
           ports:
-            - containerPort: 8080
+            - containerPort: 80
+          env:
+            - name: REACT_APP_API_URL
+              value: "http://135.149.162.178/api"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          livenessProbe:
+            httpGet:
+              path: /admin
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /admin
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
