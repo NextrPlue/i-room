@@ -1,0 +1,307 @@
+/* 모달 오버레이 */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+/* 모달 컨텐츠 */
+.modalContent {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* 모달 헤더 */
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 20px 16px 20px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.headerLeft {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.modalTitle {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0;
+}
+
+/* 시간 선택 드롭다운 */
+.hoursSelect {
+    padding: 6px 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    background: white;
+    color: #374151;
+    font-size: 14px;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.hoursSelect:hover {
+    border-color: #9CA3AF;
+}
+
+.hoursSelect:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.closeButton {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: #F3F4F6;
+    border-radius: 6px;
+    font-size: 24px;
+    color: #6B7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.closeButton:hover {
+    background: #E5E7EB;
+    color: #374151;
+}
+
+/* 모달 바디 */
+.modalBody {
+    padding: 20px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+/* 알림 목록 */
+.alarmList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0 16px 20px 16px;
+}
+
+.alarmItem {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 12px 24px 12px 12px;
+    border-radius: 8px;
+    background: #FEF3C7;
+    border-left: 4px solid #F59E0B;
+    transition: all 0.2s ease;
+}
+
+.alarmItem:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.alarmItem.danger {
+    background: #FEE2E2;
+    border-left-color: #EF4444;
+}
+
+.alarmItem.health {
+    background: #EFF6FF;
+    border-left-color: #3B82F6;
+}
+
+.alarmIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    color: white;
+    flex-shrink: 0;
+}
+
+.alarmIcon.warning {
+    background: #F59E0B;
+}
+
+.alarmIcon.danger {
+    background: #EF4444;
+}
+
+.alarmIcon.health {
+    background: #3B82F6;
+}
+
+.alarmContent {
+    flex: 1;
+    min-width: 0;
+}
+
+.alarmTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0 0 4px 0;
+}
+
+.alarmDesc {
+    font-size: 14px;
+    color: #6B7280;
+    margin: 0 0 4px 0;
+    line-height: 1.4;
+}
+
+.alarmMeta {
+    font-size: 12px;
+    color: #9CA3AF;
+    margin: 0;
+}
+
+.alarmTime {
+    font-size: 12px;
+    color: #9CA3AF;
+    flex-shrink: 0;
+    align-self: flex-start;
+}
+
+/* 페이지네이션 */
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-top: 1px solid #E5E7EB;
+}
+
+.pageButton {
+    padding: 8px 16px;
+    border: 1px solid #D1D5DB;
+    background: white;
+    color: #374151;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.pageButton:hover:not(:disabled) {
+    background: #F3F4F6;
+    border-color: #9CA3AF;
+}
+
+.pageButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pageInfo {
+    font-size: 14px;
+    color: #6B7280;
+    text-align: center;
+}
+
+/* 상태 표시 */
+.loadingState,
+.emptyState {
+    text-align: center;
+    padding: 60px 20px;
+    color: #9CA3AF;
+    font-size: 16px;
+}
+
+.loadingState {
+    color: #6B7280;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .modalOverlay {
+        padding: 10px;
+    }
+
+    .modalContent {
+        max-height: 90vh;
+    }
+
+    .modalHeader {
+        padding: 20px 20px 16px 20px;
+    }
+
+    .modalBody {
+        padding: 20px;
+    }
+
+    .modalTitle {
+        font-size: 18px;
+    }
+
+    .alarmItem {
+        padding: 12px;
+        gap: 12px;
+    }
+
+    .alarmIcon {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+
+    .alarmTitle {
+        font-size: 15px;
+    }
+
+    .alarmDesc {
+        font-size: 13px;
+    }
+
+    .pagination {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .pageInfo {
+        order: -1;
+    }
+}
+
+@media (max-width: 480px) {
+    .modalContent {
+        margin: 0;
+        border-radius: 0;
+        max-height: 100vh;
+    }
+
+    .alarmItem {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .alarmTime {
+        align-self: flex-end;
+        margin-top: 8px;
+    }
+}
