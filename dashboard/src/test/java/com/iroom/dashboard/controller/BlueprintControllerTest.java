@@ -155,7 +155,7 @@ class BlueprintControllerTest {
 		Page<BlueprintResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), content.size());
 		PagedResponse<BlueprintResponse> pagedResponse = PagedResponse.of(page);
 
-		Mockito.when(blueprintService.getAllBlueprints(0, 10)).thenReturn(pagedResponse);
+		Mockito.when(blueprintService.getAllBlueprints(null, null, 0, 10)).thenReturn(pagedResponse);
 
 		// when & then
 		mockMvc.perform(get("/blueprints?page=0&size=10"))

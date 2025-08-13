@@ -52,8 +52,8 @@ class DangerAreaControllerTest {
 	@DisplayName("위험구역 등록 성공")
 	void createDangerAreaTest() throws Exception {
 		// given
-		DangerAreaRequest request = new DangerAreaRequest(1L, 10.0, 20.0, 100.0, 200.0);
-		DangerAreaResponse response = new DangerAreaResponse(1L, 1L, 10.0, 20.0, 100.0, 200.0);
+		DangerAreaRequest request = new DangerAreaRequest(1L, 10.0, 20.0, 100.0, 200.0, "테스트 위험구역");
+		DangerAreaResponse response = new DangerAreaResponse(1L, 1L, 10.0, 20.0, 100.0, 200.0, "테스트 위험구역");
 
 		Mockito.when(dangerAreaService.createDangerArea(any())).thenReturn(response);
 
@@ -62,17 +62,18 @@ class DangerAreaControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.latitude").value(10.0))
-			.andExpect(jsonPath("$.longitude").value(20.0))
-			.andExpect(jsonPath("$.blueprintId").value(1));
+			.andExpect(jsonPath("$.data.latitude").value(10.0))
+			.andExpect(jsonPath("$.data.longitude").value(20.0))
+			.andExpect(jsonPath("$.data.blueprintId").value(1))
+			.andExpect(jsonPath("$.data.name").value("테스트 위험구역"));
 	}
 
 	@Test
 	@DisplayName("위험구역 수정 성공")
 	void updateDangerAreaTest() throws Exception {
 		// given
-		DangerAreaRequest request = new DangerAreaRequest(1L, 99.0, 88.0, 120.0, 220.0);
-		DangerAreaResponse response = new DangerAreaResponse(1L, 1L, 99.0, 88.0, 120.0, 220.0);
+		DangerAreaRequest request = new DangerAreaRequest(1L, 99.0, 88.0, 120.0, 220.0, "수정된 위험구역");
+		DangerAreaResponse response = new DangerAreaResponse(1L, 1L, 99.0, 88.0, 120.0, 220.0, "수정된 위험구역");
 
 		Mockito.when(dangerAreaService.updateDangerArea(eq(1L), any())).thenReturn(response);
 
@@ -81,9 +82,10 @@ class DangerAreaControllerTest {
 				.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.latitude").value(99.0))
-			.andExpect(jsonPath("$.longitude").value(88.0))
-			.andExpect(jsonPath("$.width").value(120.0));
+			.andExpect(jsonPath("$.data.latitude").value(99.0))
+			.andExpect(jsonPath("$.data.longitude").value(88.0))
+			.andExpect(jsonPath("$.data.width").value(120.0))
+			.andExpect(jsonPath("$.data.name").value("수정된 위험구역"));
 	}
 
 	@Test
@@ -95,16 +97,16 @@ class DangerAreaControllerTest {
 		// when & then
 		mockMvc.perform(delete("/danger-areas/1"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.message").value("위험구역 삭제 완료"))
-			.andExpect(jsonPath("$.deletedId").value(1));
+			.andExpect(jsonPath("$.data.message").value("위험구역 삭제 완료"))
+			.andExpect(jsonPath("$.data.deletedId").value(1));
 	}
 
 	@Test
 	@DisplayName("위험구역 전체 조회 성공")
 	void getAllDangerAreasTest() throws Exception {
 		// given
-		DangerAreaResponse r1 = new DangerAreaResponse(1L, 1L, 10.0, 20.0, 100.0, 200.0);
-		DangerAreaResponse r2 = new DangerAreaResponse(2L, 1L, 30.0, 40.0, 150.0, 250.0);
+		DangerAreaResponse r1 = new DangerAreaResponse(1L, 1L, 10.0, 20.0, 100.0, 200.0, "위험구역1");
+		DangerAreaResponse r2 = new DangerAreaResponse(2L, 1L, 30.0, 40.0, 150.0, 250.0, "위험구역2");
 
 		List<DangerAreaResponse> content = List.of(r1, r2);
 		Page<DangerAreaResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), content.size());
@@ -115,9 +117,10 @@ class DangerAreaControllerTest {
 		// when & then
 		mockMvc.perform(get("/danger-areas?page=0&size=10"))
 			.andExpect(status().isOk())
-			.andExpect(jsonPath("$.content").isArray())
-			.andExpect(jsonPath("$.content.length()").value(2))
-			.andExpect(jsonPath("$.content[0].latitude").value(10.0))
-			.andExpect(jsonPath("$.content[0].longitude").value(20.0));
+			.andExpect(jsonPath("$.data.content").isArray())
+			.andExpect(jsonPath("$.data.content.length()").value(2))
+			.andExpect(jsonPath("$.data.content[0].latitude").value(10.0))
+			.andExpect(jsonPath("$.data.content[0].longitude").value(20.0))
+			.andExpect(jsonPath("$.data.content[0].name").value("위험구역1"));
 	}
 }

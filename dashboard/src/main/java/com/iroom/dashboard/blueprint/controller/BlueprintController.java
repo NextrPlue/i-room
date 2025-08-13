@@ -51,18 +51,30 @@ public class BlueprintController {
 		return ResponseEntity.ok(ApiResponse.success(result));
 	}
 
+	// 도면 단일 조회
+	@GetMapping("/{id}")
+	public ResponseEntity<ApiResponse<BlueprintResponse>> getBlueprint(@PathVariable Long id) {
+		BlueprintResponse response = blueprintService.getBlueprint(id);
+		return ResponseEntity.ok(ApiResponse.success(response));
+	}
+
 	// 도면 전체 조회
 	@GetMapping
 	public ResponseEntity<ApiResponse<PagedResponse<BlueprintResponse>>> getAllBlueprints(
-		@RequestParam(defaultValue = "0") int page,
-		@RequestParam(defaultValue = "10") int size
+		@RequestParam(required = false) String target,
+		@RequestParam(required = false) String keyword,
+		@RequestParam(defaultValue = "0") Integer page,
+		@RequestParam(defaultValue = "10") Integer size
 	) {
-		if (size > 50)
+		if (size > 50) {
 			size = 50;
-		if (size < 0)
-			size = 0;
+		}
 
-		PagedResponse<BlueprintResponse> responses = blueprintService.getAllBlueprints(page, size);
+		if (size < 0) {
+			size = 0;
+		}
+
+		PagedResponse<BlueprintResponse> responses = blueprintService.getAllBlueprints(target, keyword, page, size);
 		return ResponseEntity.ok(ApiResponse.success(responses));
 	}
 
