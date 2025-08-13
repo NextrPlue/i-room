@@ -13,9 +13,40 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone, timedelta
 import threading
 
-from health.utils.rules import apply_rules
+from health.utils.rules import apply_rules, CFG, _hrmax, _intensity_score
 
 KST = timezone(timedelta(hours=9))  # 대한민국 시간 설정
+
+def _reason_text(age, hr, spm, speed_kmh, pace_minpkm, reason: str, cfg=CFG) -> str:
+    """룰 사유 코드를 사람이 읽기 좋게 변환 (필요 최소 컨텍스트만 계산)"""
+    try:
+        hrmax = _hrmax(age)
+        hr_ratio = (float(hr) / hrmax) if hr is not None else 0.0
+        intensity = _intensity_score(spm, speed_kmh, pace_minpkm)
+    except Exception:
+        hr_ratio, intensity = 0.0, 0.0
+
+    msgs = {
+        "model_normal": "모델이 정상으로 판단했습니다.",
+        "rule_suppress_low_hr": (
+            f"심박이 낮아(HR<{cfg.hr_normal_cap}, HR/HRmax<{cfg.hr_ratio_veto:.2f}) "
+            "운동/휴식으로 판단되어 정상으로 판단했습니다."
+        ),
+        "rule_suppress_active": (
+            f"활동 강도 {intensity:.0f}점, 상대심박 {hr_ratio:.2f}로 "
+            "활동 대비 과도하지 않아 정상으로 판단했습니다."
+        ),
+        "rule_suppress_active_strong": (
+            f"강한 모델 신호였지만, 활동 강도 {intensity:.0f}점, 상대심박 {hr_ratio:.2f}로 "
+            "활동 대비 과도하지 않아 정상으로 판단했습니다."
+        ),
+        "rule_confirm_high_hr_low_activity": (
+            f"저활동(≤{cfg.low_steps_threshold} spm)인데 상대심박 {hr_ratio:.2f}↑ 으로 "
+            "이상으로 판단했습니다."
+        ),
+        "model_confirm": "모델 신호가 강해 이상으로 판단했습니다.",
+    }
+    return msgs.get(reason, f"규칙 사유: {reason}")
 
 # Kafka 메시지를 받아 건강 이상 여부를 판단하고 DB에 기록 및 결과 발행 함수
 def process_message(data: dict, db: Session):
@@ -63,8 +94,11 @@ def process_message(data: dict, db: Session):
     )
     is_risk = bool(final_pred)
 
+    # 예측 설명 문장 생성
+    reason_text = _reason_text(age, heart_rate, spm, speed, pace, reason, cfg=CFG)
+
     print(f"[INFO] 예측 완료: {'위험' if is_risk else '정상'} | "
-          f"proba={proba:.3f} (th={threshold:.3f}, model={model_type}, reason={reason})")
+          f"proba={proba:.3f} (th={threshold:.3f}, model={model_type}, reason={reason}) | {reason_text}")
 
     # 예측 완료 시간 정의
     occurred_at = datetime.now(KST)
@@ -74,7 +108,10 @@ def process_message(data: dict, db: Session):
     description = (
         "건강 이상 상태가 감지되었습니다." if is_risk else "건강 상태는 정상입니다."
     )
-    description += f" (proba={proba:.3f}, th={threshold:.3f}, model={model_type}, reason={reason})"
+    description += (
+        f" (proba={proba:.3f}, th={threshold:.3f}, model={model_type}, reason={reason})"
+        f" | {reason_text}"
+    )
 
     # DB 저장 (스키마에 따라 선택적으로 확장)
     incident_kwargs = dict(
