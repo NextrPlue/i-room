@@ -3,7 +3,7 @@ import { authUtils } from '../utils/workerAuth';
 
 // API 기본 설정
 const API_CONFIG = {
-    gateway: "http://localhost:8080"
+    gateway: "http://135.149.162.178"
 };
 
 /**
@@ -165,6 +165,24 @@ export const workerAPI = {
             console.error('[안전교육 이력 조회 실패]:', error);
             throw error;
         }
+    },
+
+    /**
+     * 비밀번호 변경
+     * @param {{ currentPassword: string, newPassword: string }} payload
+     */
+    updatePassword: async ({ currentPassword, newPassword }) => {
+        const url = `${API_CONFIG.gateway}/api/user/workers/password`;
+
+        const bodyObj = {
+            password: currentPassword,
+            newPassword: newPassword,
+        };
+
+        return apiRequest(url, {
+            method: 'PUT',
+            body: JSON.stringify(bodyObj)
+        });
     },
 
     /**
