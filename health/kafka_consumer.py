@@ -10,8 +10,10 @@ from health.db.orm_models import Incident
 from health.kafka_producer import send_alert_event
 
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import threading
+
+KST = timezone(timedelta(hours=9))  # 대한민국 시간 설정
 
 # Kafka 메시지를 받아 건강 이상 여부를 판단하고 DB에 기록 및 결과 발행 함수
 def process_message(data: dict, db: Session):
@@ -39,20 +41,27 @@ def process_message(data: dict, db: Session):
     except Exception as e:
         print("[ERROR] 예측 실패:", e)
         return
+    
+    # 예측 결과 파싱
+    is_risk = int(res.get("pred", 0)) == 1
+    proba = float(res.get("proba", 0.0))
+    threshold = float(res.get("threshold", 0.5))
+    model_type = res.get("model_type", "unknown")
+
+    print(f"[INFO] 예측 완료: {'위험' if is_risk else '정상'} | "
+          f"proba={proba:.3f} (th={threshold:.3f}, model={model_type})")
 
     # 예측 완료 시간 정의
-    occurred_at = datetime.now()
+    occurred_at = datetime.now(KST)
 
     # incidentType, description 정의
-    if result == 1:
-        incident_type = "이상"
-        description = "건강 이상 상태가 감지되었습니다."
-    else:
-        incident_type = "정상"
-        description = "건강 상태는 정상입니다."
+    incident_type = "이상" if is_risk else "정상"
+    description = (
+        "건강 이상 상태가 감지되었습니다." if is_risk else "건강 상태는 정상입니다."
+    )
 
-    # DB 저장
-    new_incident = Incident(
+    # DB 저장 (스키마에 따라 선택적으로 확장)
+    incident_kwargs = dict(
         workerId=worker_id,
         workerLatitude=latitude,
         workerLongitude=longitude,
@@ -60,12 +69,17 @@ def process_message(data: dict, db: Session):
         incidentDescription=description,
         occurredAt=occurred_at
     )
+
+    new_incident = Incident(**incident_kwargs)
     db.add(new_incident)
     db.commit()
     db.refresh(new_incident)    # 자동 생성된 incidentId를 다시 불러옴
 
     # 결과 Kafka 전송
-    send_alert_event(new_incident)
+    try:
+        send_alert_event(new_incident)
+    except Exception as e:
+        print("[WARN] 경보 이벤트 송신 실패:", e)
 
 def consume_worker_data():
     def run():
