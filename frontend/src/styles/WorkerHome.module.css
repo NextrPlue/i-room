@@ -31,6 +31,21 @@
     -webkit-tap-highlight-color: transparent;
 }
 
+.settingsBtn:focus-visible {
+    outline: 2px solid #6aa3ff;
+    outline-offset: 2px;
+}
+
+.settingsBtn:hover {
+    background: #fff;
+}
+
+.settingsIcon {
+    width: 22px;
+    height: 22px;
+    pointer-events: none;
+}
+
 .profileCircle {
     width: 80px;
     height: 80px;
