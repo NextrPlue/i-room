@@ -13,6 +13,8 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 public interface DashBoardRepository extends JpaRepository<DashBoard, Long> {
     DashBoard findTopByMetricTypeOrderByIdDesc(String metricType);
 
+    List<DashBoard> findAllByRecordedAt(LocalDate recordedAt);
+
 
     Optional<DashBoard> findByMetricTypeAndRecordedAt(String metricType, LocalDate recordedAt);
 

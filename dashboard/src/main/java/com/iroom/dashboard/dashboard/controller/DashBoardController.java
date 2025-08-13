@@ -3,6 +3,7 @@ package com.iroom.dashboard.dashboard.controller;
 import com.iroom.dashboard.dashboard.dto.request.ReportRequest;
 import com.iroom.dashboard.dashboard.dto.response.DashBoardResponse;
 import com.iroom.dashboard.dashboard.dto.response.MetricResponse;
+import com.iroom.dashboard.dashboard.entity.DashBoard;
 import com.iroom.dashboard.pdf.service.ChatService;
 import com.iroom.dashboard.dashboard.service.DashBoardService;
 import com.iroom.dashboard.pdf.service.PdfService;
@@ -36,16 +37,26 @@ public class DashBoardController {
 
 	//리포트 생성
 	@PostMapping(
-		value = "/report"
+		value = "/report/{date}" //yyyy-mm-dd
 	)
-	public ResponseEntity<byte[]> exportReport(@RequestBody ReportRequest reportRequest) throws Exception {
-
+	public ResponseEntity<byte[]> exportReport(@PathVariable String date) throws Exception {
+		List<DashBoard> dashBoards = dashBoardService.getDailyScore(date);
+		String missingPpeCnt = "";
+		String dangerZoneAccessCnt = "";
+		String healthAlertCnt = "";
+		for (DashBoard dashBoard : dashBoards){
+			switch (dashBoard.getMetricType()){
+				case "PPE_VIOLATION" ->missingPpeCnt=String.valueOf(dashBoard.getMetricValue());
+				case "DANGER_AREA_ACCESS"->dangerZoneAccessCnt=String.valueOf(dashBoard.getMetricValue());
+				case "HEALTH_ANOMALY"->healthAlertCnt=String.valueOf(dashBoard.getMetricValue());
+			}
+		}
 		// 1. 질의 프롬프트 생성
 		String userPrompt = String.format(
-			"오늘 보호구 미착용 " + reportRequest.missingPpeCnt() + "건, 위험지역 접근 " + reportRequest.dangerZoneAccessCnt()
-				+ "건, 건강 이상 알림 " + reportRequest.healthAlertCnt() + "건이 있었습니다. 이에 따른 안전 보고서를 작성해주세요."
+			"오늘 보호구 미착용 " + missingPpeCnt + "건, 위험지역 접근 " + dangerZoneAccessCnt
+				+ "건, 건강 이상 알림 " + healthAlertCnt + "건이 있었습니다. 이에 따른 안전 보고서를 작성해주세요."
 		);
-
+		System.out.println("userPrompt: "+userPrompt);
 
 		String context = dashBoardService.getContext(userPrompt);
 		String finalPrompt = context + "\n" + userPrompt;

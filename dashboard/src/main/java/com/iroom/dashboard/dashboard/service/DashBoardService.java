@@ -1,6 +1,7 @@
 package com.iroom.dashboard.dashboard.service;
 
 import java.sql.Date;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,6 +104,10 @@ public class DashBoardService {
 
 		}
 		return contextBuilder.toString();
+	}
+	public List<DashBoard> getDailyScore(String date){ //해당 날짜의 각 사고 유형 발생 횟수를 조회
+		LocalDate day = LocalDate.parse(date);
+		return dashBoardRepository.findAllByRecordedAt(day);
 	}
 	public  String createImprovement(String interval){
 		String userPrompt = interval+ "별 종합 안전점수 기록\n";
