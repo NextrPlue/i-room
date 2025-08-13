@@ -34,7 +34,7 @@ export const SafetyGearAlert = ({ isOpen, onClose, data }) => {
 
                 <h1 className={styles.title}>보호구 미착용 경고!</h1>
                 <p className={styles.message}>
-                    {data?.incidentDescription || "즉시 보호구를 착용하세요"}
+                    {"즉시 보호구를 착용하세요"}
                 </p>
 
                 {data?.workerImageUrl && (
@@ -90,14 +90,8 @@ export const DangerZoneAlert = ({ isOpen, onClose, data }) => {
 
                 <h1 className={styles.title}>위험구역 접근 경고!</h1>
                 <p className={styles.message}>
-                    {data?.incidentDescription || "즉시 안전구역으로 대피하세요"}
+                    {"즉시 안전구역으로 대피하세요"}
                 </p>
-
-                {data?.workerLatitude && data?.workerLongitude && (
-                    <p className={styles.location}>
-                        📍 위치: {data.workerLatitude}, {data.workerLongitude}
-                    </p>
-                )}
 
                 <button className={styles.confirmButton} onClick={onClose}>
                     <span>✓ 확인</span>
@@ -143,12 +137,9 @@ export const HealthRiskAlert = ({ isOpen, onClose, data }) => {
                 </div>
 
                 <h1 className={styles.title}>건강 위험 경고!</h1>
-                <p className={styles.message}>
-                    {data?.incidentDescription || "즉시 휴식을 취하세요"}
-                </p>
 
                 <div className={styles.healthInfo}>
-                    <p>심박수, 체온 등의 이상이 감지되었습니다</p>
+                    <p>건강 이상이 감지되었습니다</p>
                     <p>안전한 곳으로 이동하여 휴식을 취해주세요</p>
                 </div>
 

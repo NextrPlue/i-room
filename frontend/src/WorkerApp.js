@@ -136,27 +136,6 @@ const WorkerApp = () => {
 
     return (
         <Router>
-            {/* 개발 환경에서 연결 상태 표시 */}
-            {process.env.NODE_ENV === 'development' && isLoggedIn && (
-                <div style={{
-                    position: 'fixed',
-                    top: 10,
-                    right: 10,
-                    padding: '8px 12px',
-                    background: connectionStatus === 'connected' ? '#4CAF50' :
-                        connectionStatus === 'error' ? '#f44336' : '#9E9E9E',
-                    color: 'white',
-                    borderRadius: '6px',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    zIndex: 9998,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-                }}>
-                    WS: {connectionStatus === 'connected' ? '연결됨' :
-                    connectionStatus === 'error' ? '에러' : '연결 안됨'}
-                </div>
-            )}
-
             <Routes>
                 {/* 근로자 로그인 페이지 */}
                 <Route path="/" element={<Navigate to="/login" />} />
