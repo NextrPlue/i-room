@@ -27,6 +27,13 @@ class RuleConfig:
     intensity_on: int = 60              # 활동 점수(0~100)가 이 이상이면 "활동 중"으로 판단
     hr_ratio_active_max: float = 0.85   # 활동 중인 경우, HR/HRmax가 이 값 이하라면 "활동 대비 과도하지 않다"고 보고 억제
 
+    suppress_active_when_strong: bool = True   # 강확신에서도 억제 허용할지
+    intensity_on_strong: int = 80              # 강확신이면 활동 기준을 더 높임
+    hr_ratio_active_max_strong: float = 0.80   # 강확신이면 상대심박 기준을 더 빡빡하게
+
+    proba_very_strong: float = 0.90            # 이 이상 확률이면 절대 억제하지 않음
+    hr_ratio_very_high: float = 0.93           # 이 이상 상대심박이면 절대 억제하지 않음
+
     # R3: 저활동 고심박 Confirm 관련 파라미터
     low_steps_threshold: int = 20   # 분당 걸음(steps per minute)이 이 이하이면 "저활동"
     hr_ratio_high: float = 0.90     # HR/HRmax가 이 이상이면 "고심박"
@@ -129,12 +136,21 @@ def apply_rules(age, hr, steps_per_minute=None, speed_kmh=None, pace_min_per_km=
         if (hr_ratio < cfg.hr_ratio_veto) and (hr < cfg.hr_normal_cap):
             return 0, "rule_suppress_low_hr"
 
-    # R2: 활동 중 정상화
-    #   - "충분히 활동 중"이고 "활동 대비 심박이 과도하지 않으면" 억제.
-    #   - intensity >= 60(활동 중) AND hr_ratio <= 0.85(활동 대비 과도X)
-    #   - 단, string(강확신) 구간에서는 룰 간섭을 줄인다.
-    if intensity >= cfg.intensity_on and hr_ratio <= cfg.hr_ratio_active_max and not strong:
-        return 0, "rule_suppress_active"
+    # R2: 활동 중 정상화 (strong, very_strong까지 포괄 적용)
+    # 모델의 위험 예측 확률이 0.90이상 또는 hr_ratio가 0.93이상 -> 매우 강한 확신
+    very_strong = (model_proba >= cfg.proba_very_strong) or (hr_ratio >= cfg.hr_ratio_very_high)
+
+    # strong 여부에 따라 기준 가변
+    # strong(강확신)이고, 강확신에서 룰 적용이 허용되어 있으면,
+    # -> 활동 점수 기준 80
+    # -> 상대 심박 기준 0.80
+    eff_intensity_on = cfg.intensity_on_strong if (strong and cfg.suppress_active_when_strong) else cfg.intensity_on
+    eff_hr_cut = cfg.hr_ratio_active_max_strong if (strong and cfg.suppress_active_when_strong) else cfg.hr_ratio_active_max
+
+    # very_strong(매우 강한 확신): 활동 점수 기준 = 80, 상대심박 = 0.93
+    # 너무 강한 신호는 절대 억제하지 않음
+    if (not very_strong) and (intensity >= eff_intensity_on) and (hr_ratio <= eff_hr_cut):
+        return 0, "rule_suppress_active" + ("_strong" if strong else "")
 
     # R3: 저활동 고심박 Confirm
     #   - "거의 움직이지 않는데" 심박만 높은 경우는 실제 위험 가능성이 있음.
