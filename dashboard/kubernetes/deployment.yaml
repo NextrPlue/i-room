@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: dashboard
-          image: iroomregistry.azurecr.io/dashboard:2025080801
+          image: iroomregistry.azurecr.io/dashboard:2025081103
           ports:
             - containerPort: 8085
           env:
