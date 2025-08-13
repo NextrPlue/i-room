@@ -25,6 +25,11 @@ def process_message(data: dict, db: Session):
     age = data.get("age")
     heart_rate = data.get("heartRate")
 
+    # 값이 누락된 경우 종료
+    if worker_id is None or age is None or heart_rate is None:
+        print(f"[WARN] 필수 값 누락(workerId/age/heartRate): {data}")
+        return
+
     # 건강 이상 예측
     print(f"{worker_id} 근로자 건강 이상 예측 시작!")
     result = predict_worker_risk(age, heart_rate)
