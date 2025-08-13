@@ -552,6 +552,33 @@ export const blueprintAPI = {
 };
 
 /**
+ * Alarm API 서비스
+ */
+export const alarmAPI = {
+    /**
+     * 관리자용 알람 목록 조회
+     * @param {object} options
+     * @param {number} options.page - 페이지 번호 (기본값: 0)
+     * @param {number} options.size - 페이지당 개수 (기본값: 10)
+     * @param {number} [options.hours] - 최근 N시간 내 알람 (선택사항)
+     * @returns {Promise} 알람 목록 데이터
+     */
+    getAlarmsForAdmin: async ({page = 0, size = 10, hours} = {}) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
+
+        if (hours !== undefined) {
+            queryParams.append('hours', hours.toString());
+        }
+
+        const url = `${API_CONFIG.gateway}/api/alarm/alarms/admins?${queryParams.toString()}`;
+        return await apiRequest(url);
+    }
+};
+
+/**
  * Risk Zone (Danger Area) API 서비스
  */
 export const riskZoneAPI = {
