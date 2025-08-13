@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-worker-deployment
+  labels:
+    app: frontend-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-worker
+  template:
+    metadata:
+      labels:
+        app: frontend-worker
+    spec:
+      containers:
+        - name: frontend-worker
+          image: "iroomregistry.azurecr.io/frontend-worker:latest"
+          ports:
+            - containerPort: 80
+          env:
+            - name: REACT_APP_API_URL
+              value: "http://135.149.162.178/api"
+            - name: REACT_APP_MODE
+              value: "worker"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          livenessProbe:
+            httpGet:
+              path: /worker
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /worker
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
