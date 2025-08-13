@@ -171,7 +171,7 @@
 /* 하단 위젯 그리드 */
 .widgetsSection {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: 1.5fr 1fr 1fr 1fr; /* 실시간 알림은 1.5배, 나머지는 1배 */
     gap: 24px;
 }
 
@@ -191,6 +191,41 @@
     font-weight: 600;
     color: #1F2937;
     margin: 0 0 20px 0;
+}
+
+/* 위젯 헤더 (제목 + 버튼) */
+.widgetHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.widgetHeader .widgetTitle {
+    margin: 0;
+}
+
+/* 더보기 버튼 */
+.moreButton {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: 2px solid #E5E7EB;
+    background: #F9FAFB;
+    color: #6B7280;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.moreButton:hover {
+    border-color: #3B82F6;
+    background: #EFF6FF;
+    color: #3B82F6;
 }
 
 /* 실시간 위험 알림 위젯 */
@@ -220,6 +255,11 @@
     border-left-color: #EF4444;
 }
 
+.alertItem.health {
+    background: #EFF6FF;
+    border-left-color: #3B82F6;
+}
+
 .alertIcon {
     width: 24px;
     height: 24px;
@@ -239,6 +279,10 @@
 
 .alertIcon.danger {
     background: #EF4444;
+}
+
+.alertIcon.health {
+    background: #3B82F6;
 }
 
 .alertContent {
