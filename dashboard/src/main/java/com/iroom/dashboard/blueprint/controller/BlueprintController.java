@@ -51,6 +51,13 @@ public class BlueprintController {
 		return ResponseEntity.ok(ApiResponse.success(result));
 	}
 
+	// 도면 단일 조회
+	@GetMapping("/{id}")
+	public ResponseEntity<ApiResponse<BlueprintResponse>> getBlueprint(@PathVariable Long id) {
+		BlueprintResponse response = blueprintService.getBlueprint(id);
+		return ResponseEntity.ok(ApiResponse.success(response));
+	}
+
 	// 도면 전체 조회
 	@GetMapping
 	public ResponseEntity<ApiResponse<PagedResponse<BlueprintResponse>>> getAllBlueprints(

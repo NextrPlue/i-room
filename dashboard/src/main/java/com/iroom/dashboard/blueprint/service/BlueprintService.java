@@ -165,6 +165,13 @@ public class BlueprintService {
 	}
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
+	public BlueprintResponse getBlueprint(Long id) {
+		Blueprint blueprint = blueprintRepository.findById(id)
+			.orElseThrow(() -> new CustomException(ErrorCode.DASHBOARD_BLUEPRINT_NOT_FOUND));
+		return new BlueprintResponse(blueprint);
+	}
+
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
 	public PagedResponse<BlueprintResponse> getAllBlueprints(String target, String keyword, Integer page, Integer size) {
 		Pageable pageable = PageRequest.of(page, size);
 
