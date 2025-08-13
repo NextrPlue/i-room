@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {BrowserRouter as Router, Navigate, Route, Routes, useNavigate} from 'react-router-dom';
 import Header from './components/Header';
 import Sidebar from './components/Sidebar';
@@ -14,7 +14,6 @@ import SettingsPage from './pages/SettingsPage';
 import './App.css';
 import RiskZonePage from "./pages/RiskZonePage";
 import ReportPage from "./pages/ReportPage";
-import { NotificationToastContainer } from './components/notifications';
 
 // 공통 레이아웃 컴포넌트
 const CommonLayout = ({ children, currentPage }) => {
@@ -66,36 +65,8 @@ const AdminLoginPage = () => {
 };
 
 const App = () => {
-    // 토스트 알림 상태 관리
-    const [toasts, setToasts] = useState([]);
-
-    // 커스텀 이벤트 리스너 등록 (Header에서 발생시키는 토스트 이벤트)
-    useEffect(() => {
-        const handleShowToast = (event) => {
-            const notification = event.detail;
-            setToasts(prev => [...prev, notification]);
-        };
-
-        window.addEventListener('showNotificationToast', handleShowToast);
-        
-        return () => {
-            window.removeEventListener('showNotificationToast', handleShowToast);
-        };
-    }, []);
-
-    // 토스트 제거 핸들러
-    const handleRemoveToast = (toastId) => {
-        setToasts(prev => prev.filter(toast => toast.id !== toastId));
-    };
-
     return (
         <Router>
-            {/* 토스트 컨테이너 */}
-            <NotificationToastContainer 
-                toasts={toasts} 
-                onRemoveToast={handleRemoveToast} 
-            />
-            
             <Routes>
                 {/* 관리자 화면 */}
                 <Route path="/" element={<Navigate to="/admin/login"/>}/>
