@@ -53,6 +53,10 @@ spec:
         }
     }
 
+    when {
+        branch 'main'
+    }
+
     parameters {
         booleanParam(name: 'FORCE_BUILD_ALL', defaultValue: false, description: 'Force build all services regardless of changes')
         booleanParam(name: 'DEPLOY_GATEWAY', defaultValue: true, description: 'Deploy Gateway service')
