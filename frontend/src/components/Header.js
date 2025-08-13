@@ -8,7 +8,6 @@ const Header = () => {
     // 알림 상태 관리
     const [notifications, setNotifications] = useState([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
 
     // 웹소켓 연결 및 이벤트 처리
     useEffect(() => {
@@ -19,11 +18,9 @@ const Header = () => {
         const connectWebSocket = async () => {
             try {
                 await stompService.connect(token, 'admin');
-                setIsWebSocketConnected(true);
                 console.log('✅ Header: 웹소켓 연결 성공');
             } catch (error) {
                 console.error('❌ Header: 웹소켓 연결 실패:', error);
-                setIsWebSocketConnected(false);
             }
         };
 
@@ -42,14 +39,10 @@ const Header = () => {
 
         // 이벤트 리스너 등록
         stompService.on('alarm', handleNewAlarm);
-        stompService.on('connected', () => setIsWebSocketConnected(true));
-        stompService.on('disconnected', () => setIsWebSocketConnected(false));
 
         // 웹소켓 연결
         if (!stompService.isConnected()) {
             connectWebSocket();
-        } else {
-            setIsWebSocketConnected(true);
         }
 
         // 클린업
