@@ -84,6 +84,20 @@ def _preprocess_to_features(age, heart_rate, meta: dict | None) -> pd.DataFrame:
 
     return X
 
+# XGBoost 예측 함수
+def _predict_proba_xgb(X: pd.DataFrame, booster, meta: dict | None) -> np.ndarray:
+    import xgboost as xgb
+    dmat = xgb.DMatrix(X)
+    it_end = None
+    if meta and "best_iteration" in meta and meta["best_iteration"] is not None:
+        it_end = int(meta["best_iteration"])
+    if it_end and it_end > 0:
+        p = booster.predict(dmat, iteration_range=(0, it_end))
+    else:
+        p = booster.predict(dmat)
+
+    return np.asarray(p, dtype=float)
+
 def predict_worker_risk(age, heart_rate):
     try:
         # 입력값 구성: 학습 시 사용한 컬럼명과 일치해야 함
