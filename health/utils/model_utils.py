@@ -98,6 +98,18 @@ def _predict_proba_xgb(X: pd.DataFrame, booster, meta: dict | None) -> np.ndarra
 
     return np.asarray(p, dtype=float)
 
+# LightGBM 예측 함수 (기존 모델 사용)
+def _predict_proba_lgb(X: pd.DataFrame, model, meta: dict | None) -> np.ndarray:
+    # scikit API -> predict_proba, Booster -> predict
+    if hasattr(model, "predict_proba"):
+        p = model.predict_proba(X)
+        p = p[:, 1] if p.ndim == 2 else p
+    else:
+        p = model.predict(X)
+        p = p[:, 1] if isinstance(p, np.ndarray) and p.ndim == 2 else p
+
+    return np.asarray(p, dtype=float)
+
 def predict_worker_risk(age, heart_rate):
     try:
         # 입력값 구성: 학습 시 사용한 컬럼명과 일치해야 함
