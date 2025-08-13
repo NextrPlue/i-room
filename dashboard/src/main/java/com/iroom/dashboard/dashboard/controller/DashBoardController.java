@@ -47,7 +47,7 @@ public class DashBoardController {
 		);
 
 
-		String context = dashBoardService.getContext(reportRequest,userPrompt);
+		String context = dashBoardService.getContext(userPrompt);
 		String finalPrompt = context + "\n" + userPrompt;
 
 		// 4. GPT에 최종 질의
@@ -65,13 +65,13 @@ public class DashBoardController {
 
 	//개선안 생성
 	@PostMapping(
-		value = "/improvement-report"
+		value = "/improvement-report/{interval}"
 	)
-	public ResponseEntity<byte[]> createImprovement(
-	) throws Exception {
+	public ResponseEntity<byte[]> createImprovement(@PathVariable String interval) throws Exception {
+
+		String content = dashBoardService.createImprovement(interval);
 		LocalDate currentDate = LocalDate.now();
-		String content = "";
-		byte[] pdfBytes = pdfService.generateDashboardPdf("improvement_report_" + currentDate, content);
+		byte[] pdfBytes = pdfService.generateDashboardPdf(interval+"ly_"+"improvement_report_" + currentDate, content);
 		HttpHeaders headers = new HttpHeaders();
 
 		headers.setContentType(MediaType.APPLICATION_PDF);
