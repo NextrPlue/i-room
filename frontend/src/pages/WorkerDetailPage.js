@@ -95,7 +95,7 @@ const WorkerDetailPage = () => {
     }, [workerId]);
 
     const handleBackClick = () => {
-        navigate('/admin/worker');
+        navigate('/worker');
     };
 
     // 교육이력 페이지 변경 핸들러

@@ -67,14 +67,14 @@ const PrivacyConsentPage = () => {
         []
     );
 
-    const handleCancel = () => navigate('/admin/signup');
+    const handleCancel = () => navigate('/signup');
 
     const handleAgree = async () => {
         if (!requiredOk) return;
 
         if (!signUpData) {
             alert('회원가입 정보가 없습니다. 다시 회원가입을 진행해주세요.');
-            navigate('/admin/signup');
+            navigate('/signup');
             return;
         }
 
@@ -82,7 +82,7 @@ const PrivacyConsentPage = () => {
             setIsLoading(true);
             await userAPI.signUp(signUpData);
             alert('회원가입이 완료되었습니다! 로그인 페이지로 이동합니다.');
-            navigate('/admin/login');
+            navigate('/login');
         } catch (error) {
             console.error('회원가입 실패:', error);
             alert(error?.message || '회원가입에 실패했습니다. 다시 시도해주세요.');

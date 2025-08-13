@@ -134,8 +134,11 @@ const WorkerApp = () => {
         };
     }, []);
 
+    // Worker app은 항상 /worker basename 사용
+    const basename = '/worker';
+
     return (
-        <Router>
+        <Router basename={basename}>
             <Routes>
                 {/* 근로자 로그인 페이지 */}
                 <Route path="/" element={<Navigate to="/login" />} />
