@@ -46,7 +46,7 @@ public class LocationEventHandler {
 					updateWorkerInfoReadModel(workerSensorEvent);
 					Map<String, String> info = new HashMap<>();
 					System.out.println("Worker_Location 발행");
-					double radius = 10.0;
+					double radius = 2.0;
 					Long workerId = dataNode.get("workerId").asLong();
 					LocalDateTime occurredAt = LocalDateTime.now();
 					String incidentType = "위험 구역 접근";
@@ -60,6 +60,7 @@ public class LocationEventHandler {
 							Double.parseDouble(workerLongitude),
 							area.getLatitude(),
 							area.getLongitude());
+						System.out.println("위험구역 접근 거리: "+ distance+"사용자 ID: "+workerId);
 						if (distance < radius) {
 							String incidentDescription = "Worker entered restricted hazard zone near latitude: " +
 								area.getLatitude() + " longitude: " + area.getLongitude();
