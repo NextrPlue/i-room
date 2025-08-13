@@ -2,7 +2,7 @@ import {authUtils} from '../utils/auth';
 
 // API 기본 설정
 const API_CONFIG = {
-    gateway: "http://localhost:8080"
+    gateway: "http://135.149.162.178"
 };
 
 /**
@@ -28,7 +28,6 @@ const handleFetchError = async (response) => {
                 errorMessage = errorText;
             }
         } catch {
-            // 텍스트 파싱 실패 시 기본 에러 메시지 사용
         }
     }
 
