@@ -151,6 +151,7 @@ const WorkerHome = () => {
     // 설정(비밀번호 변경) 핸들러
     const handleOpenSettings = () => {
         console.log("설정 버튼 클릭")
+        setIsSettingsOpen(true)
     }
     const handleCloseSettings = () => setIsSettingsOpen(false)
 

@@ -385,18 +385,28 @@
 /* 설정 모달  스타일 */
 .modalOverlay {
     position: fixed; inset: 0;
+    padding: 16px;
     background: rgba(0,0,0,0.45);
-    display: flex; align-items: flex-end; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     z-index: 1000;
+
 }
 @media (min-width: 768px) { .modalOverlay { align-items: center; } }
 
 .modalContainer {
-    width: 100%; max-width: 520px;
+    box-sizing: border-box;
+    width: clamp(280px, 92vw, 520px);
+    max-width: 520px;
     background: #fff;
-    border-top-left-radius: 16px; border-top-right-radius: 16px;
-    padding: 16px; box-shadow: 0 -8px 24px rgba(0,0,0,0.2);
+    border-radius: 14px;
+    padding: 16px;
+    margin: 0 auto;
+    box-shadow: 0 -8px 24px rgba(0,0,0,0.2);
+    overflow: hidden;
 }
+
 @media (min-width: 768px) {
     .modalContainer {
         border-radius: 14px;
@@ -437,10 +447,12 @@
     color: #555;
 }
 .input {
+    box-sizing: border-box;
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #ddd;
     border-radius: 10px;
+    min-width: 0;
 }
 
 .modalActions {
