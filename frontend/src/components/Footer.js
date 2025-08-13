@@ -1,5 +1,4 @@
 import React from 'react';
-import { Mail, Phone, MapPin, FileText, HelpCircle, Shield } from 'lucide-react';
 
 const Footer = () => {
     const footerStyle = {
@@ -19,69 +18,6 @@ const Footer = () => {
         boxSizing: 'border-box'
     };
 
-    const sectionStyle = {
-        flex: '1',
-        minWidth: '200px'
-    };
-
-    const titleStyle = {
-        fontSize: '16px',
-        fontWeight: '600',
-        color: '#1f2937',
-        marginBottom: '16px'
-    };
-
-    const companyTitleStyle = {
-        fontSize: '20px',
-        fontWeight: '700',
-        color: '#3b82f6',
-        marginBottom: '8px'
-    };
-
-    const descriptionStyle = {
-        fontSize: '14px',
-        color: '#6b7280',
-        lineHeight: '1.6',
-        marginBottom: '16px'
-    };
-
-    const contactItemStyle = {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '8px',
-        marginBottom: '8px',
-        fontSize: '14px',
-        color: '#4b5563'
-    };
-
-    const linkStyle = {
-        display: 'block',
-        fontSize: '14px',
-        color: '#6b7280',
-        textDecoration: 'none',
-        marginBottom: '8px',
-        padding: '4px 0',
-        transition: 'color 0.2s',
-        cursor: 'pointer'
-    };
-
-    const bottomBarStyle = {
-        borderTop: '1px solid #e5e7eb',
-        marginTop: '32px',
-        paddingTop: '20px',
-        textAlign: 'center',
-        fontSize: '12px',
-        color: '#9ca3af'
-    };
-
-    const handleLinkHover = (e) => {
-        e.target.style.color = '#3b82f6';
-    };
-
-    const handleLinkLeave = (e) => {
-        e.target.style.color = '#6b7280';
-    };
-
     return (
         <footer style={footerStyle}>
             <div style={containerStyle}>
@@ -94,30 +30,51 @@ const Footer = () => {
 
                     {/* 가운데: 링크들 */}
                     <div style={{display: 'flex', alignItems: 'center', gap: '20px', fontSize: '14px'}}>
-                        <a 
-                            href="#" 
-                            style={{color: '#6b7280', textDecoration: 'none'}}
+                        <button 
+                            type="button"
+                            style={{
+                                color: '#6b7280', 
+                                textDecoration: 'none',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '14px'
+                            }}
                             onMouseEnter={(e) => e.target.style.color = '#374151'}
                             onMouseLeave={(e) => e.target.style.color = '#6b7280'}
                         >
                             가이드
-                        </a>
-                        <a 
-                            href="#" 
-                            style={{color: '#6b7280', textDecoration: 'none'}}
+                        </button>
+                        <button 
+                            type="button"
+                            style={{
+                                color: '#6b7280', 
+                                textDecoration: 'none',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '14px'
+                            }}
                             onMouseEnter={(e) => e.target.style.color = '#374151'}
                             onMouseLeave={(e) => e.target.style.color = '#6b7280'}
                         >
                             개인정보
-                        </a>
-                        <a 
-                            href="#" 
-                            style={{color: '#6b7280', textDecoration: 'none'}}
+                        </button>
+                        <button 
+                            type="button"
+                            style={{
+                                color: '#6b7280', 
+                                textDecoration: 'none',
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                fontSize: '14px'
+                            }}
                             onMouseEnter={(e) => e.target.style.color = '#374151'}
                             onMouseLeave={(e) => e.target.style.color = '#6b7280'}
                         >
                             문의
-                        </a>
+                        </button>
                     </div>
 
                     {/* 오른쪽: 저작권 */}
