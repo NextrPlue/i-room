@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react';
-import { X, AlertTriangle, Shield, Activity, Info, Clock, Bell } from 'lucide-react';
+import React, {useEffect, useRef} from 'react';
+import {Activity, AlertTriangle, Bell, Clock, Info, Shield, X} from 'lucide-react';
 
 const NotificationDropdown = ({ 
     isOpen, 

@@ -18,20 +18,17 @@ const Header = () => {
         const connectWebSocket = async () => {
             try {
                 await stompService.connect(token, 'admin');
-                console.log('✅ Header: 웹소켓 연결 성공');
             } catch (error) {
-                console.error('❌ Header: 웹소켓 연결 실패:', error);
             }
         };
 
         // 알림 이벤트 리스너 등록
         const handleNewAlarm = (data) => {
-            console.log('🔔 Header: 새로운 알림 수신:', data);
             const newNotification = createNotificationFromWebSocket(data);
             
             setNotifications(prev => [newNotification, ...prev.slice(0, 49)]); // 최대 50개 유지
             
-            // 토스트 알림 표시 (App.js에서 처리할 예정)
+            // 토스트 알림 표시
             window.dispatchEvent(new CustomEvent('showNotificationToast', { 
                 detail: newNotification 
             }));
@@ -42,10 +39,9 @@ const Header = () => {
 
         // 웹소켓 연결
         if (!stompService.isConnected()) {
-            connectWebSocket();
+            connectWebSocket().catch(console.error);
         }
 
-        // 클린업
         return () => {
             stompService.off('alarm', handleNewAlarm);
         };

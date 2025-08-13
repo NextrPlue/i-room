@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, AlertTriangle, Shield, Activity, Info, CheckCircle } from 'lucide-react';
+import React, {useEffect, useState} from 'react';
+import {X} from 'lucide-react';
 
 const NotificationToast = ({ 
     notification, 

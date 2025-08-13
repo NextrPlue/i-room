@@ -41,7 +41,6 @@ class StompService {
         while (Date.now() - start < 4000) {
             const got = pick();
             if (got) {
-                console.log('[WS] SockJS sessionId:', got.sid, 'from', got.url);
                 this.sessionId = got.sid;
                 return got.sid;
             }
@@ -59,7 +58,6 @@ class StompService {
             this.userType = userType;
 
             const wsUrl = process.env.REACT_APP_WS_URL || 'http://localhost:8084/ws';
-            console.log('[WS] connecting to', wsUrl);
             if (!token) console.warn('[WS] token is empty!');
 
             // SockJS 인스턴스를 직접 만들어서 보관(세션ID 추출용)
@@ -75,13 +73,11 @@ class StompService {
                     'auth-token': token,
                     token: token,
                 },
-                debug: (s) => console.log('[STOMP]', s),
                 reconnectDelay: 0, // 필요 시 자동재연결 사용
             });
 
             // 연결 성공
             this.client.onConnect = async (frame) => {
-                console.log('✅ STOMP Connected:', frame);
                 try {
                     await this.resolveSockJsSessionId();
                     this.connected = true;
@@ -121,15 +117,12 @@ class StompService {
     async setupSubscriptions() {
         if (this.userType === 'admin') {
             this.subscribe('/topic/alarms/admin', (message) => this.handleAlarmMessage(message));
-            console.log('🔴 관리자 모드 구독: /topic/alarms/admin');
         } else {
             if (!this.sessionId) throw new Error('No sessionId; cannot subscribe worker queue.');
             const destination = `/queue/alarms-${this.sessionId}`;
             this.subscribe(destination, (message) => {
-                console.log('🟢 [worker queue]', destination, 'msg:', message?.body);
                 this.handleAlarmMessage(message);
             });
-            console.log('🟢 근로자 모드 구독:', destination);
         }
     }
 
@@ -137,7 +130,6 @@ class StompService {
     handleAlarmMessage(message) {
         try {
             const body = typeof message?.body === 'string' ? message.body : '';
-            console.log('📨 원본 메시지:', body);
 
             const regex = /\[([^\]]+)\]\s*(.+)/;
             const match = body.match(regex);
@@ -149,7 +141,7 @@ class StompService {
                 const description = match[2];
                 const workerIdMatch = description.match(/작업자 ID: (\d+)/);
                 const workerId = workerIdMatch ? workerIdMatch[1] : null;
-                const imageUrlMatch = body.match(/\((https?:\/\/[^\)]+)\)/);
+                const imageUrlMatch = body.match(/\((https?:\/\/[^)]+)\)/);
                 const imageUrl = imageUrlMatch ? imageUrlMatch[1] : null;
 
                 switch (normalizedType) {
@@ -170,7 +162,7 @@ class StompService {
                     incidentType,
                     incidentDescription: description
                         .replace(/\s*\(작업자 ID: \d+\)/, '')
-                        .replace(/\s*\(https?:\/\/[^\)]+\)/, '')
+                        .replace(/\s*\(https?:\/\/[^)]+\)/, '')
                         .trim(),
                     workerId,
                     workerImageUrl: imageUrl,
@@ -188,8 +180,6 @@ class StompService {
                     occurredAt: new Date().toISOString(),
                 };
             }
-
-            console.log('📨 파싱 데이터:', data);
 
             switch (data.incidentType) {
                 case 'PPE_VIOLATION':
