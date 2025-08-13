@@ -35,6 +35,9 @@ const WorkerHome = () => {
     // 안전교육 상태
     const [safetyEducation, setSafetyEducation] = useState([]);
 
+    // 설정 상태
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
     // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
         loadWorkerData();
@@ -149,6 +152,7 @@ const WorkerHome = () => {
     const handleOpenSettings = () => {
         console.log("설정 버튼 클릭")
     }
+    const handleCloseSettings = () => setIsSettingsOpen(false)
 
     // 로딩 중일 때 표시
     if (loading) {
