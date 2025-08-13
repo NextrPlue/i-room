@@ -41,6 +41,7 @@ class RuleConfig:
     # 모델 확신도(회색대/강확신) 경계
     gray_delta: float = 0.10    # threshold ~ threshold+0.10: 회색대(불확실)
     hard_delta: float = 0.20    # threshold+0.20 이상: 강한 확신(룰 간섭 최소화)
+    strong_abs_min: float = 0.80    # proba가 이 수치보다 낮으면 강한 확신 아님
 
 # 기본 설정값 인스턴스
 CFG = RuleConfig()
@@ -121,7 +122,9 @@ def apply_rules(age, hr, steps_per_minute=None, speed_kmh=None, pace_min_per_km=
     #   - 강확신(strong): threshold + hard_delta 이상
     #       -> 확신이 높음. 억제 룰 간섭을 최소화(모델 판단을 더 존중).
     gray = (threshold <= model_proba < threshold + cfg.gray_delta)
-    strong = (model_proba >= threshold + cfg.hard_delta)
+    cut = threshold + cfg.hard_delta             # 상대 기준 (t + 0.20)
+    strong_cut = max(cut, cfg.strong_abs_min)    # 절대 하한(0.80)
+    strong = (model_proba >= strong_cut)
 
     # 모델이 정상이라고 이미 말했으면 그대로 정상
     if model_pred == 0:
