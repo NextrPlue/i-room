@@ -68,6 +68,20 @@ spring:
     gateway:
       server:
         webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - "http://localhost:3000"
+                  - "http://localhost:3001"
+                allowedMethods:
+                  - GET
+                  - POST
+                  - PUT
+                  - DELETE
+                  - OPTIONS
+                allowedHeaders: "*"
+                allowCredentials: true
           routes:
             - id: user-service-route
               uri: http://user-service:8081
@@ -118,7 +132,6 @@ spring:
           globalcors:
             cors-configurations:
               '[/**]':
-                # Frontend 서비스의 외부 주소를 여기에 추가하거나, 개발 초기에는 "*" 허용
                 allowedOrigins:
                   - "http://localhost:3000"
                   - "http://localhost:3001"
@@ -131,8 +144,6 @@ spring:
                 allowedHeaders: "*"
                 allowCredentials: true
           routes:
-            # 모든 uri에서 포트 번호를 제거하고 Kubernetes 서비스 이름만 사용합니다.
-            # 각 마이크로서비스의 Kubernetes Service 이름과 일치해야 합니다.
             - id: user-service-route
               uri: http://user-service # user-service의 Kubernetes Service 이름
               predicates:
