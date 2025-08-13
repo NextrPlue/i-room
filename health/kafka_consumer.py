@@ -31,9 +31,14 @@ def process_message(data: dict, db: Session):
         return
 
     # 건강 이상 예측
-    print(f"{worker_id} 근로자 건강 이상 예측 시작!")
-    result = predict_worker_risk(age, heart_rate)
-    print(f"예측 완료: {'위험' if result else '정상'}")
+    print(f"[INFO] {worker_id} 근로자 건강 이상 예측 시작... age={age}, HR={heart_rate}")
+    try:
+        res = predict_worker_risk(age, heart_rate)
+        if not isinstance(res, dict):
+            raise ValueError(f"predict_worker_risk returned non-dict: {res}")
+    except Exception as e:
+        print("[ERROR] 예측 실패:", e)
+        return
 
     # 예측 완료 시간 정의
     occurred_at = datetime.now()
