@@ -381,3 +381,87 @@
         padding: 15px;
     }
 }
+
+/* 설정 모달  스타일 */
+.modalOverlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex; align-items: flex-end; justify-content: center;
+    z-index: 1000;
+}
+@media (min-width: 768px) { .modalOverlay { align-items: center; } }
+
+.modalContainer {
+    width: 100%; max-width: 520px;
+    background: #fff;
+    border-top-left-radius: 16px; border-top-right-radius: 16px;
+    padding: 16px; box-shadow: 0 -8px 24px rgba(0,0,0,0.2);
+}
+@media (min-width: 768px) {
+    .modalContainer {
+        border-radius: 14px;
+        padding: 20px 18px;
+        margin: 0 16px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+    }
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+.modalTitle {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+.modalCloseBtn {
+    border: none;
+    background: transparent;
+    font-size: 24px;
+    line-height: 1;
+    padding: 4px 8px;
+    cursor: pointer;
+    color: #333;
+}
+
+.modalForm {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+.formLabel {
+    font-size: 13px;
+    color: #555;
+}
+.input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+}
+
+.modalActions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 6px;
+}
+.primaryButton {
+    padding: 10px 14px;
+    border: 0;
+    border-radius: 10px;
+    background: #2563eb; color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+}
+.secondaryButton {
+    padding: 10px 14px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    background: #fff;
+    color: #333;
+    cursor: pointer;
+}
