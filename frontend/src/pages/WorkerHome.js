@@ -338,16 +338,10 @@ const WorkerHome = () => {
 };
 
 function SettingsModal({ open, onClose }) {
-    const [form, setForm] = React.useState({
-        current: '',
-        next: '',
-        confirm: ''
-    });
-    const [touched, setTouched] = React.useState({
-        current: false,
-        next: false,
-        confirm: false
-    });
+    const [form, setForm] = React.useState({ current: '', next: '', confirm: '' });
+    const [touched, setTouched] = React.useState({ current: false, next: false, confirm: false });
+    const [submitting, setSubmitting] = React.useState(false);
+    const [serverErr, setServerErr] = React.useState('');
 
     React.useEffect(() => {
         if (!open) return;
@@ -361,35 +355,43 @@ function SettingsModal({ open, onClose }) {
     const onChange = (e) => {
         const { name, value } = e.target;
         setForm(prev => ({ ...prev, [name]: value }));
+        if (serverErr) setServerErr('');
     };
-    const onBlur = (e) => {
-        const { name } = e.target;
-        setTouched(prev => ({ ...prev, [name]: true }));
-    };
+    const onBlur = (e) => setTouched(prev => ({ ...prev, [e.target.name]: true }));
 
-    // 규칙: 8자 이상 + 영문 + 숫자 + 특수문자 각 1개 이상
     const strongPw = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(form.next);
     const matchPw = form.next.length > 0 && form.next === form.confirm;
+    const canSubmit = form.current.length > 0 && strongPw && matchPw && !submitting;
 
-    const canSubmit = form.current.length > 0 && strongPw && matchPw;
-
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // 지금은 검증만 — API는 다음 단계에서
         if (!canSubmit) {
-            // 전부 터치 처리해서 힌트/에러 보이게
             setTouched({ current: true, next: true, confirm: true });
             return;
         }
-        console.log('✅ 비밀번호 규칙 통과. 다음 스텝: API 연동');
-        onClose(); // 지금은 닫기만
+        try {
+            setSubmitting(true);
+            setServerErr('');
+
+            const res = await workerAPI.updatePassword({
+                currentPassword: form.current,
+                newPassword: form.next,
+            });
+
+            // 응답 예: { status: "success", data: { message: "비밀번호가..." } }
+            alert(res?.data?.message || '비밀번호가 변경되었습니다.');
+            onClose();
+        } catch (err) {
+            setServerErr(err?.message || '비밀번호 변경에 실패했습니다.');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
     return (
         <div
             className={styles.modalOverlay}
-            role="dialog"
-            aria-modal="true"
+            role="dialog" aria-modal="true"
             onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
             <div className={styles.modalContainer}>
@@ -412,9 +414,6 @@ function SettingsModal({ open, onClose }) {
                         aria-invalid={touched.current && form.current.length === 0}
                         style={{ fontSize: 16 }}
                     />
-                    {touched.current && form.current.length === 0 && (
-                        <p className={styles.fieldError}>현재 비밀번호를 입력하세요.</p>
-                    )}
 
                     <label className={styles.formLabel}>새 비밀번호</label>
                     <input
@@ -429,7 +428,6 @@ function SettingsModal({ open, onClose }) {
                         aria-invalid={touched.next && !strongPw}
                         style={{ fontSize: 16 }}
                     />
-                    {/* 규칙 힌트 */}
                     <ul className={styles.hintList}>
                         <li className={strongPw ? styles.hintOk : styles.hintBad}>
                             8자 이상 + 영문 + 숫자 + 특수문자 포함
@@ -449,14 +447,14 @@ function SettingsModal({ open, onClose }) {
                         aria-invalid={touched.confirm && !matchPw}
                         style={{ fontSize: 16 }}
                     />
-                    {touched.confirm && !matchPw && (
-                        <p className={styles.fieldError}>새 비밀번호가 일치하지 않습니다.</p>
-                    )}
+
+                    {/* 서버 에러 메시지 */}
+                    {serverErr && <p className={styles.fieldError}>{serverErr}</p>}
 
                     <div className={styles.modalActions}>
-                        <button type="button" className={styles.secondaryButton} onClick={onClose}>취소</button>
+                        <button type="button" className={styles.secondaryButton} onClick={onClose} disabled={submitting}>취소</button>
                         <button type="submit" className={styles.primaryButton} disabled={!canSubmit}>
-                            확인
+                            {submitting ? '변경 중...' : '확인'}
                         </button>
                     </div>
                 </form>
