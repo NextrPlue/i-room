@@ -145,6 +145,11 @@ const WorkerHome = () => {
         alert('퇴근 처리되었습니다.');
     };
 
+    // 설정(비밀번호 변경) 핸들러
+    const handleOpenSettings = () => {
+        console.log("설정 버튼 클릭")
+    }
+
     // 로딩 중일 때 표시
     if (loading) {
         return (
