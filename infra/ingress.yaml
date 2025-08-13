@@ -8,6 +8,20 @@ spec:
   rules:
     - http:
         paths:
+          - path: /admin # Admin frontend path
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 80
+          - path: /worker # Worker frontend path
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-worker-service
+                port:
+                  number: 80
           - path: /kafka-ui # Path for kafka-ui
             pathType: Prefix
             backend:
