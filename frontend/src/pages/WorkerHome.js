@@ -330,8 +330,53 @@ const WorkerHome = () => {
             <button className={styles.logoutButton} onClick={handleLogout}>
                 로그아웃
             </button>
+
+            <SettingsModal open={isSettingsOpen} onClose={handleCloseSettings} />
         </div>
     );
 };
+
+function SettingsModal({ open, onClose }) {
+    if (!open) return null;
+
+    return (
+        <div
+            className={styles.modalOverlay}
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+        >
+            <div className={styles.modalContainer}>
+                <div className={styles.modalHeader}>
+                    <h3 className={styles.modalTitle}>비밀번호 변경</h3>
+                    <button
+                        type="button"
+                        className={styles.modalCloseBtn}
+                        aria-label="닫기"
+                        onClick={onClose}
+                    >
+                        ×
+                    </button>
+                </div>
+
+                <div className={styles.modalForm}>
+                    <label className={styles.formLabel}>현재 비밀번호</label>
+                    <input className={styles.input} type="password" placeholder="현재 비밀번호" autoComplete="current-password" />
+
+                    <label className={styles.formLabel}>새 비밀번호</label>
+                    <input className={styles.input} type="password" placeholder="새 비밀번호" autoComplete="new-password" />
+
+                    <label className={styles.formLabel}>새 비밀번호 확인</label>
+                    <input className={styles.input} type="password" placeholder="새 비밀번호 확인" autoComplete="new-password" />
+
+                    <div className={styles.modalActions}>
+                        <button type="button" className={styles.secondaryButton} onClick={onClose}>취소</button>
+                        <button type="button" className={styles.primaryButton} onClick={onClose}>확인</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default WorkerHome;
