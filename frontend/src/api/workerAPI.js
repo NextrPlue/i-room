@@ -3,7 +3,7 @@ import { authUtils } from '../utils/workerAuth';
 
 // API 기본 설정
 const API_CONFIG = {
-    gateway: "http://localhost:8080"
+    gateway: "http://135.149.162.178"
 };
 
 /**
