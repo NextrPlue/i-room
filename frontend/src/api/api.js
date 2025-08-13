@@ -551,3 +551,76 @@ export const blueprintAPI = {
         });
     }
 };
+
+/**
+ * Risk Zone (Danger Area) API 서비스
+ */
+export const riskZoneAPI = {
+    /**
+     * 위험구역 목록 조회
+     * @param {object} options
+     * @param {number} options.page - 페이지 번호 (기본값: 0)
+     * @param {number} options.size - 페이지당 개수 (기본값: 10)
+     * @returns {Promise} 위험구역 목록 데이터
+     */
+    getRiskZones: async ({page = 0, size = 10} = {}) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
+
+        const url = `${API_CONFIG.gateway}/api/dashboard/danger-areas?${queryParams.toString()}`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 위험구역 등록
+     * @param {object} dangerAreaData - 등록할 위험구역 데이터
+     * @param {number} dangerAreaData.blueprintId - 도면 ID
+     * @param {number} dangerAreaData.latitude - 위도
+     * @param {number} dangerAreaData.longitude - 경도
+     * @param {number} dangerAreaData.width - 너비
+     * @param {number} dangerAreaData.height - 높이
+     * @param {string} dangerAreaData.name - 위험구역 이름
+     * @returns {Promise} 등록된 위험구역 정보
+     */
+    createRiskZone: async (dangerAreaData) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/danger-areas`;
+        return await apiRequest(url, {
+            method: 'POST',
+            body: JSON.stringify(dangerAreaData)
+        });
+    },
+
+    /**
+     * 위험구역 수정
+     * @param {number} dangerAreaId - 수정할 위험구역 ID
+     * @param {object} dangerAreaData - 수정할 위험구역 데이터
+     * @param {number} dangerAreaData.blueprintId - 도면 ID
+     * @param {number} dangerAreaData.latitude - 위도
+     * @param {number} dangerAreaData.longitude - 경도
+     * @param {number} dangerAreaData.width - 너비
+     * @param {number} dangerAreaData.height - 높이
+     * @param {string} dangerAreaData.name - 위험구역 이름
+     * @returns {Promise} 수정된 위험구역 정보
+     */
+    updateRiskZone: async (dangerAreaId, dangerAreaData) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/danger-areas/${dangerAreaId}`;
+        return await apiRequest(url, {
+            method: 'PUT',
+            body: JSON.stringify(dangerAreaData)
+        });
+    },
+
+    /**
+     * 위험구역 삭제
+     * @param {number} dangerAreaId - 삭제할 위험구역 ID
+     * @returns {Promise} 삭제 응답 데이터
+     */
+    deleteRiskZone: async (dangerAreaId) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/danger-areas/${dangerAreaId}`;
+        return await apiRequest(url, {
+            method: 'DELETE'
+        });
+    }
+};
