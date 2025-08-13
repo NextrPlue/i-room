@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: sensor
-          image: iroomregistry.azurecr.io/sensor:2025080801
+          image: iroomregistry.azurecr.io/sensor:2025081101
           ports:
             - containerPort: 8083
           env:

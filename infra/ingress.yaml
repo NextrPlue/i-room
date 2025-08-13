@@ -1,0 +1,31 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: i-room-ingress
+
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /kafka-ui # Path for kafka-ui
+            pathType: Prefix
+            backend:
+              service:
+                name: i-room-kafka-ui
+                port:
+                  number: 80
+          - path: /api # Path for gateway
+            pathType: Prefix
+            backend:
+              service:
+                name: gateway-service
+                port:
+                  number: 80
+          - path: /jenkins # Path for jenkins
+            pathType: Prefix
+            backend:
+              service:
+                name: jenkins
+                port:
+                  number: 8080
