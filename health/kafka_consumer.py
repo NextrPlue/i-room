@@ -58,7 +58,7 @@ def process_message(data: dict, db: Session):
     # Rule 레이어 적용 -> 최종 판단, 사유 도출
     final_pred, reason = apply_rules(
         age=age, hr=heart_rate,
-        steps_per_minute=spm, speed_mps=speed, pace_min_per_km=pace,
+        steps_per_minute=spm, speed_kmh=speed, pace_min_per_km=pace,
         model_pred=model_pred, model_proba=proba, threshold=threshold
     )
     is_risk = bool(final_pred)
