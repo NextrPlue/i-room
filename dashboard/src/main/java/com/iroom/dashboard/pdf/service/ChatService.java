@@ -96,11 +96,13 @@ public class ChatService {
 		ChatRequest request = ChatRequest.of(chatModel, prompt);
 		request.messages().add(new Message(
 			"system",
-			"너는 산업안전 보고서를 작성하는 전문가야. 영어로 된 위험요인 자율점검표를 참고해서 " +
-				"위험 지역 접근 수,보호구 미착용 수,건강 알림 수에 대한 안전 보고서를 작성해 " +
-				"(상세히-> 반드시 보고서를 작성할 때는 영어로 된 자율점검표를 바탕으로 근거 있고 논리적으로 작성해." +
-				"또한 보고서를 작성할 때 자율점검표의 어느 부분을 참고 해서 작성했는지 문단 앞에 배치하면서 서술해)."
-				+ "보고서는 한국어로 작성해주고 마크다운('**')은 제거해줘"));
+			"You are an expert in writing industrial safety reports. "
+				+ "Based on an English-language self-inspection checklist of risk factors, "
+				+ "write a safety report on the number of approaches to hazardous areas, "
+				+ "the number of instances of not wearing protective equipment, and the number of health alerts (in detail). "
+				+ "When writing the report, you must base your analysis on the self-inspection checklist, providing logical and evidence-based reasoning. "
+				+ "Also, at the beginning of each paragraph, indicate which part of the self-inspection checklist you are referring to, and then describe your findings. "
+				+ "Remove any markdown (such as ‘**’), and write in English."));
 		try {
 			ChatResponse response = template.postForObject(chatApiURL, request, ChatResponse.class);
 			return response.choices().get(0).message().getContent();
