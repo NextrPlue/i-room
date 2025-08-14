@@ -38,19 +38,29 @@ const handleFetchError = async (response) => {
  * 도면 데이터로 FormData를 생성하는 함수
  * @param {object} blueprintData - 도면 데이터
  * @param {File} [blueprintData.file] - 이미지 파일 (선택사항)
+ * @param {string} blueprintData.name - 도면 이름
  * @param {number} blueprintData.floor - 층수
  * @param {number} blueprintData.width - 가로 크기
  * @param {number} blueprintData.height - 세로 크기
+ * @param {object} blueprintData.topLeft - 좌상단 GPS 좌표
+ * @param {object} blueprintData.topRight - 우상단 GPS 좌표
+ * @param {object} blueprintData.bottomRight - 우하단 GPS 좌표
+ * @param {object} blueprintData.bottomLeft - 좌하단 GPS 좌표
  * @returns {FormData} 생성된 FormData
  */
 const createBlueprintFormData = (blueprintData) => {
     const formData = new FormData();
     const dataBlob = new Blob(
         [JSON.stringify({
+            name: blueprintData.name,
             blueprintUrl: "",
             floor: blueprintData.floor,
             width: blueprintData.width,
-            height: blueprintData.height
+            height: blueprintData.height,
+            topLeft: blueprintData.topLeft,
+            topRight: blueprintData.topRight,
+            bottomRight: blueprintData.bottomRight,
+            bottomLeft: blueprintData.bottomLeft
         })],
         {type: "application/json"}
     );
