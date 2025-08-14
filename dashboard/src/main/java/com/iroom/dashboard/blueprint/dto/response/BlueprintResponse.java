@@ -1,22 +1,32 @@
 package com.iroom.dashboard.blueprint.dto.response;
 
+import com.iroom.dashboard.blueprint.dto.request.BlueprintRequest;
 import com.iroom.dashboard.blueprint.entity.Blueprint;
 
 public record BlueprintResponse(
 	Long id,
+	String name,
 	String blueprintUrl,
 	Integer floor,
 	Double width,
-	Double height
+	Double height,
+	BlueprintRequest.GeoPointDto topLeft,
+	BlueprintRequest.GeoPointDto topRight,
+	BlueprintRequest.GeoPointDto bottomRight,
+	BlueprintRequest.GeoPointDto bottomLeft
 ) {
-	// 엔티티 -> DTO로 변환하는 생성자
-	public BlueprintResponse(Blueprint blueprint) {
+	public BlueprintResponse(Blueprint b) {
 		this(
-			blueprint.getId(),
-			blueprint.getBlueprintUrl(),
-			blueprint.getFloor(),
-			blueprint.getWidth(),
-			blueprint.getHeight()
+			b.getId(),
+			b.getName(),
+			b.getBlueprintUrl(),
+			b.getFloor(),
+			b.getWidth(),
+			b.getHeight(),
+			new BlueprintRequest.GeoPointDto(b.getTopLeft().getLat(), b.getTopLeft().getLon()),
+			new BlueprintRequest.GeoPointDto(b.getTopRight().getLat(), b.getTopRight().getLon()),
+			new BlueprintRequest.GeoPointDto(b.getBottomRight().getLat(), b.getBottomRight().getLon()),
+			new BlueprintRequest.GeoPointDto(b.getBottomLeft().getLat(), b.getBottomLeft().getLon())
 		);
 	}
 }

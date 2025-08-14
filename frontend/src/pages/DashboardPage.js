@@ -1,8 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import styles from '../styles/Dashboard.module.css';
-// import { dashboardAPI } from '../api/api'; // API 연동 시 사용
+import stompService from '../services/stompService';
+import {authUtils} from '../utils/auth';
+import {alarmAPI} from '../api/api';
+import AlarmModal from '../components/AlarmModal';
+import {useAlarmData} from '../hooks/useAlarmData';
 
 const DashboardPage = () => {
+    const { getAlertIcon, getAlertTypeFromData, convertToDashboardType, getAlertTitle, getTimeAgo, transformAlarmData } = useAlarmData();
+    
     // 상태 표시 컴포넌트 (중복 코드 제거용)
     const StatusDisplay = ({ icon, label, value, details, classPrefix }) => (
         <>
@@ -19,35 +25,18 @@ const DashboardPage = () => {
         </>
     );
 
-    // 알림 아이콘 가져오기 함수
-    const getAlertIcon = (type) => type === 'danger' ? '🚨' : '⚠️';
     // 종합 안전 점수
     const [safetyScore] = useState(85);
 
-    // 실시간 위험 알림 데이터
-    const [alerts] = useState([
-        {
-            id: 1,
-            type: 'danger',
-            title: '위험구역 접근 경고',
-            description: '3층 공사 현장',
-            time: '5분 전'
-        },
-        {
-            id: 2,
-            type: 'warning',
-            title: '보호구 미착용',
-            description: '2층 작업 현장',
-            time: '10분 전'
-        },
-        {
-            id: 3,
-            type: 'warning',
-            title: '피로도 위험',
-            description: '건설 작업 영역',
-            time: '12분 전'
-        }
-    ]);
+    // 실시간 위험 알림 데이터 (API + 웹소켓)
+    const [alerts, setAlerts] = useState([]);
+    const [alertsLoading, setAlertsLoading] = useState(true);
+    const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
+    const alertsPagination = {
+        page: 0,
+        size: 4, // 대시보드에는 최근 4개만 표시
+        hours: 168 // 최근 7일 (168시간)로 범위 확대
+    };
 
     // 주요 안전 지표 데이터
     const [indicators] = useState([
@@ -82,11 +71,6 @@ const DashboardPage = () => {
         normalWorkers: 2
     });
 
-    // 유휴 인력 현황
-    const [idleStatus] = useState({
-        count: 3,
-        duration: '15분'
-    });
 
     // 긴급 이상 탐지
     const [emergencyStatus] = useState({
@@ -99,10 +83,92 @@ const DashboardPage = () => {
     const strokeDasharray = circumference;
     const strokeDashoffset = circumference - (safetyScore / 100) * circumference;
 
+
+    // API로부터 알람 목록 로드
+    const loadAlarms = async () => {
+        setAlertsLoading(true);
+        try {
+            const response = await alarmAPI.getAlarmsForAdmin({
+                page: alertsPagination.page,
+                size: alertsPagination.size,
+                hours: alertsPagination.hours
+            });
+
+            const apiAlerts = response.data?.content?.map(transformAlarmData) || [];
+
+            setAlerts(apiAlerts);
+        } catch (error) {
+            console.error('알람 목록 로드 실패:', error);
+        } finally {
+            setAlertsLoading(false);
+        }
+    };
+
+    // 웹소켓 연결 및 실시간 데이터 처리
+    useEffect(() => {
+        const token = authUtils.getToken();
+        if (!token) return;
+
+        // 웹소켓 연결
+        const connectWebSocket = async () => {
+            try {
+                await stompService.connect(token, 'admin');
+            } catch (error) {
+                console.error('Dashboard: 웹소켓 연결 실패:', error);
+            }
+        };
+
+        // 새로운 알림 처리
+        const handleNewAlarm = (data) => {
+            const alertType = getAlertTypeFromData(data.incidentType, data.incidentDescription);
+            const dashboardType = convertToDashboardType(alertType);
+            
+            const newAlert = {
+                id: data.id || Date.now(), // 웹소켓에서 ID가 오면 사용, 없으면 임시 ID
+                type: dashboardType,
+                title: getAlertTitle(alertType, data.incidentDescription),
+                description: data.incidentDescription || '알림 내용',
+                time: '방금 전',
+                timestamp: new Date().toISOString(),
+                workerId: data.workerId,
+                originalData: data
+            };
+
+            // 기존 알림 목록에 추가 (최신 알림을 맨 위에, 최대 3개 유지)
+            setAlerts(prevAlerts => [newAlert, ...prevAlerts.slice(0, 3)]);
+        };
+
+        // 이벤트 리스너 등록
+        stompService.on('alarm', handleNewAlarm);
+
+        // 웹소켓 연결
+        if (!stompService.isConnected()) {
+            connectWebSocket().catch(console.error);
+        }
+
+        // 클린업
+        return () => {
+            stompService.off('alarm', handleNewAlarm);
+        };
+    }, []);
+
+    // 시간 업데이트 (1분마다 상대시간 갱신)
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setAlerts(prevAlerts => 
+                prevAlerts.map(alert => ({
+                    ...alert,
+                    time: getTimeAgo(alert.timestamp)
+                }))
+            );
+        }, 60000); // 1분마다 업데이트
+
+        return () => clearInterval(timer);
+    }, []);
+
     // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
-        // API 호출 로직
-        // fetchDashboardData();
+        loadAlarms().catch(console.error);
     }, []);
 
     return (
@@ -182,21 +248,49 @@ const DashboardPage = () => {
             <section className={styles.widgetsSection}>
                 {/* 실시간 위험 알림 */}
                 <div className={`${styles.widgetCard} ${styles.alertWidget}`}>
-                    <h3 className={styles.widgetTitle}>실시간 위험 알림</h3>
+                    <div className={styles.widgetHeader}>
+                        <h3 className={styles.widgetTitle}>실시간 위험 알림</h3>
+                        <button 
+                            className={styles.moreButton}
+                            onClick={() => setIsAlarmModalOpen(true)}
+                        >
+                            +
+                        </button>
+                    </div>
 
                     <div className={styles.alertList}>
-                        {alerts.map(alert => (
-                            <div key={alert.id} className={`${styles.alertItem} ${styles[alert.type]}`}>
-                                <div className={`${styles.alertIcon} ${styles[alert.type]}`}>
-                                    {getAlertIcon(alert.type)}
-                                </div>
-                                <div className={styles.alertContent}>
-                                    <p className={styles.alertTitle}>{alert.title}</p>
-                                    <p className={styles.alertDesc}>{alert.description}</p>
-                                </div>
-                                <span className={styles.alertTime}>{alert.time}</span>
+                        {alertsLoading ? (
+                            <div style={{ 
+                                textAlign: 'center', 
+                                padding: '40px 20px', 
+                                color: '#9CA3AF',
+                                fontSize: '14px'
+                            }}>
+                                📡 알림 목록을 불러오는 중...
                             </div>
-                        ))}
+                        ) : alerts.length > 0 ? (
+                            alerts.map(alert => (
+                                <div key={alert.id} className={`${styles.alertItem} ${styles[alert.type]}`}>
+                                    <div className={`${styles.alertIcon} ${styles[alert.type]}`}>
+                                        {getAlertIcon(alert.type)}
+                                    </div>
+                                    <div className={styles.alertContent}>
+                                        <p className={styles.alertTitle}>{alert.title}</p>
+                                        <p className={styles.alertDesc}>{alert.description}</p>
+                                    </div>
+                                    <span className={styles.alertTime}>{alert.time}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <div style={{ 
+                                textAlign: 'center', 
+                                padding: '40px 20px', 
+                                color: '#9CA3AF',
+                                fontSize: '14px'
+                            }}>
+                                📋 최근 {alertsPagination.hours}시간 내 알림이 없습니다.
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -240,18 +334,6 @@ const DashboardPage = () => {
                     </button>
                 </div>
 
-                {/* 유휴 인력 현황 */}
-                <div className={`${styles.widgetCard} ${styles.idleWidget}`}>
-                    <h3 className={styles.widgetTitle}>유휴 인력 현황</h3>
-
-                    <StatusDisplay
-                        icon="😴"
-                        label="유휴 상태"
-                        value={`${idleStatus.count}명`}
-                        details={`평균 유휴 시간: ${idleStatus.duration}`}
-                        classPrefix="idle"
-                    />
-                </div>
 
                 {/* 긴급 이상 탐지 */}
                 <div className={`${styles.widgetCard} ${styles.emergencyWidget}`}>
@@ -266,6 +348,12 @@ const DashboardPage = () => {
                     />
                 </div>
             </section>
+
+            {/* 알림 모달 */}
+            <AlarmModal 
+                isOpen={isAlarmModalOpen} 
+                onClose={() => setIsAlarmModalOpen(false)} 
+            />
         </div>
     );
 };

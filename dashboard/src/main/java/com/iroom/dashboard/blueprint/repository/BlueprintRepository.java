@@ -12,4 +12,6 @@ public interface BlueprintRepository extends JpaRepository<Blueprint, Long> {
 
     Page<Blueprint> findByFloor(Integer floor, Pageable pageable);
     
+    Page<Blueprint> findByName(String name, Pageable pageable);
+    
 }
