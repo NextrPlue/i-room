@@ -62,6 +62,16 @@ const BlueprintEditModal = ({
 
                     {/* 도면 정보 입력 */}
                     <div className={styles.formGrid}>
+                        <div className={styles.formGroup} style={{gridColumn: '1 / -1'}}>
+                            <label>도면 이름</label>
+                            <input
+                                type="text"
+                                value={editForm.name || ''}
+                                onChange={(e) => onFormChange('name', e.target.value)}
+                                placeholder="도면 이름을 입력하세요"
+                                required
+                            />
+                        </div>
                         <div className={styles.formGroup}>
                             <label>층수</label>
                             <input
@@ -96,6 +106,89 @@ const BlueprintEditModal = ({
                         </div>
                     </div>
 
+                    {/* GPS 좌표 입력 */}
+                    <div className={styles.coordinateSection}>
+                        <h3>도면 GPS 좌표</h3>
+                        <div className={styles.coordinateRows}>
+                            <div className={styles.coordinateRow}>
+                                <label>왼쪽 위</label>
+                                <input
+                                    type="number"
+                                    step="0.000001"
+                                    value={editForm.topLeft?.lat || 37.5675}
+                                    onChange={(e) => onFormChange('topLeft.lat', e.target.value)}
+                                    placeholder="위도"
+                                    required
+                                />
+                                <input
+                                    type="number"
+                                    step="0.000001"
+                                    value={editForm.topLeft?.lon || 126.9770}
+                                    onChange={(e) => onFormChange('topLeft.lon', e.target.value)}
+                                    placeholder="경도"
+                                    required
+                                />
+                            </div>
+                            <div className={styles.coordinateRow}>
+                                <label>오른쪽 위</label>
+                                <input
+                                    type="number"
+                                    step="0.000001"
+                                    value={editForm.topRight?.lat || 37.5675}
+                                    onChange={(e) => onFormChange('topRight.lat', e.target.value)}
+                                    placeholder="위도"
+                                    required
+                                />
+                                <input
+                                    type="number"
+                                    step="0.000001"
+                                    value={editForm.topRight?.lon || 126.9780}
+                                    onChange={(e) => onFormChange('topRight.lon', e.target.value)}
+                                    placeholder="경도"
+                                    required
+                                />
+                            </div>
+                            <div className={styles.coordinateRow}>
+                                <label>오른쪽 아래</label>
+                                <input
+                                    type="number"
+                                    step="0.000001"
+                                    value={editForm.bottomRight?.lat || 37.5665}
+                                    onChange={(e) => onFormChange('bottomRight.lat', e.target.value)}
+                                    placeholder="위도"
+                                    required
+                                />
+                                <input
+                                    type="number"
+                                    step="0.000001"
+                                    value={editForm.bottomRight?.lon || 126.9780}
+                                    onChange={(e) => onFormChange('bottomRight.lon', e.target.value)}
+                                    placeholder="경도"
+                                    required
+                                />
+                            </div>
+                            <div className={styles.coordinateRow}>
+                                <label>왼쪽 아래</label>
+                                <input
+                                    type="number"
+                                    step="0.000001"
+                                    value={editForm.bottomLeft?.lat || 37.5665}
+                                    onChange={(e) => onFormChange('bottomLeft.lat', e.target.value)}
+                                    placeholder="위도"
+                                    required
+                                />
+                                <input
+                                    type="number"
+                                    step="0.000001"
+                                    value={editForm.bottomLeft?.lon || 126.9770}
+                                    onChange={(e) => onFormChange('bottomLeft.lon', e.target.value)}
+                                    placeholder="경도"
+                                    required
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     {/* 에러 메시지 */}
                     {error && (
                         <div className={styles.errorMessage}>
@@ -116,7 +209,7 @@ const BlueprintEditModal = ({
                         <button
                             type="submit"
                             className={styles.submitButton}
-                            disabled={editing}
+                            disabled={editing || !editForm.name?.trim()}
                         >
                             {editing ? '수정 중...' : '수정 완료'}
                         </button>
