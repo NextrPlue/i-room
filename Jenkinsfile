@@ -49,11 +49,6 @@ spec:
     command:
     - sleep
     - infinity
-  - name: node
-    image: node:18-alpine
-    command:
-    - cat
-    tty: true
 """
         }
     }
@@ -246,50 +241,6 @@ spec:
             }
         }
 
-        stage('Build Frontend Admin') {
-            when {
-                allOf {
-                    expression { return params.DEPLOY_FRONTEND == true }
-                    anyOf {
-                        changeset "frontend/**"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
-                }
-            }
-            steps {
-                echo 'Building Frontend Admin...'
-                dir('frontend') {
-                    container('node') {
-                        sh '''
-                            npm ci --only=production
-                            npm run build
-                        '''
-                    }
-                }
-            }
-        }
-
-        stage('Build Frontend Worker') {
-            when {
-                allOf {
-                    expression { return params.DEPLOY_FRONTEND == true }
-                    anyOf {
-                        changeset "frontend/**"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
-                }
-            }
-            steps {
-                echo 'Building Frontend Worker...'
-                dir('frontend') {
-                    container('node') {
-                        sh '''
-                            npm run build:worker
-                        '''
-                    }
-                }
-            }
-        }
 
         stage('Docker Login') {
             steps {
