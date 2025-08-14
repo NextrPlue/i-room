@@ -57,7 +57,7 @@ class StompService {
             this.token = token;
             this.userType = userType;
 
-            const wsUrl = process.env.REACT_APP_WS_URL || 'http://localhost:8084/ws';
+            const wsUrl = process.env.REACT_APP_WS_URL || 'http://localhost:8084/alarm/ws';
             if (!token) console.warn('[WS] token is empty!');
 
             // SockJS 인스턴스를 직접 만들어서 보관(세션ID 추출용)
@@ -116,10 +116,10 @@ class StompService {
     // 구독 설정
     async setupSubscriptions() {
         if (this.userType === 'admin') {
-            this.subscribe('/topic/alarms/admin', (message) => this.handleAlarmMessage(message));
+            this.subscribe('/alarm/topic/alarms/admin', (message) => this.handleAlarmMessage(message));
         } else {
             if (!this.sessionId) throw new Error('No sessionId; cannot subscribe worker queue.');
-            const destination = `/queue/alarms-${this.sessionId}`;
+            const destination = `/alarm/queue/alarms-${this.sessionId}`;
             this.subscribe(destination, (message) => {
                 this.handleAlarmMessage(message);
             });
