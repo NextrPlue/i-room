@@ -36,7 +36,7 @@ public class SecurityConfig {
 			.csrf(AbstractHttpConfigurer::disable)
 			.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
-				.requestMatchers("/actuator/health", "/ws/**").permitAll()
+				.requestMatchers("/actuator/health", "/alarm/ws/**").permitAll()
 				.anyRequest().authenticated()
 			)
 			.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin));
