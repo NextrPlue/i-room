@@ -6,8 +6,8 @@ import styles from '../styles/WorkerLogin.module.css';
 const WorkerLogin = ({ onLogin }) => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        email: '',
-        password: ''
+        email: 'test@example.com',
+        password: 'password123!'
     });
 
     const [loading, setLoading] = useState(false);
