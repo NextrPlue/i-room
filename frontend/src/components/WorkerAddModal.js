@@ -18,13 +18,16 @@ const WorkerAddModal = ({isOpen, onClose, onSave}) => {
     };
 
     const [addForm, setAddForm] = useState(initialFormData);
+    const [loading, setLoading] = useState(false);
 
     const handleInputChange = (e) => {
         const {name, value} = e.target;
         setAddForm(prev => ({...prev, [name]: value}));
     };
 
-    const handleSave = () => {
+    const handleSave = async () => {
+        if (loading) return;
+        
         // 필수 필드 검증
         if (!addForm.name || !addForm.name.trim()) {
             alert('이름을 입력해주세요.');
@@ -68,14 +71,29 @@ const WorkerAddModal = ({isOpen, onClose, onSave}) => {
             return;
         }
 
-        if (addForm.password.length < 8) {
-            alert('비밀번호는 8자 이상이어야 합니다.');
+        const pwd = addForm.password;
+        if (pwd.length < 8 || pwd.length > 16) {
+            alert('비밀번호는 8-16자여야 합니다.');
             return;
         }
 
-        const passwordRegex = /^(?=.*[a-zA-Z])(?=.*\d)[A-Za-z\d]{8,}$/;
-        if (!passwordRegex.test(addForm.password)) {
-            alert('비밀번호는 영문과 숫자를 포함하여 8자 이상이어야 합니다.');
+        if (!/.*[a-zA-Z].*/.test(pwd)) {
+            alert('영문자를 포함해야 합니다.');
+            return;
+        }
+
+        if (!/.*\d.*/.test(pwd)) {
+            alert('숫자를 포함해야 합니다.');
+            return;
+        }
+
+        if (!/[#$%&*+,./:=?@[\\\]^_`{|}~!-]/.test(pwd)) {
+            alert('특수문자를 포함해야 합니다.');
+            return;
+        }
+
+        if (/[()<>'";}]/.test(pwd)) {
+            alert('특수문자 ()<>"\';는 사용할 수 없습니다.');
             return;
         }
 
@@ -97,9 +115,16 @@ const WorkerAddModal = ({isOpen, onClose, onSave}) => {
             return;
         }
 
-        onSave(addForm);
-        // 폼을 예시값으로 초기화
-        setAddForm(initialFormData);
+        try {
+            setLoading(true);
+            await onSave(addForm);
+            // 폼을 예시값으로 초기화
+            setAddForm(initialFormData);
+        } catch (error) {
+            console.error('근로자 등록 실패:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleClose = () => {
@@ -117,8 +142,9 @@ const WorkerAddModal = ({isOpen, onClose, onSave}) => {
         borderRadius: '8px',
         fontSize: '14px',
         outline: 'none',
-        backgroundColor: '#fafafa',
-        boxSizing: 'border-box'
+        backgroundColor: loading ? '#f3f4f6' : '#fafafa',
+        boxSizing: 'border-box',
+        opacity: loading ? 0.6 : 1
     };
 
     const labelStyle = {
@@ -215,6 +241,7 @@ const WorkerAddModal = ({isOpen, onClose, onSave}) => {
                                     name="name"
                                     value={addForm.name}
                                     onChange={handleInputChange}
+                                    disabled={loading}
                                     style={inputStyle}
                                 />
                             </div>
@@ -225,6 +252,7 @@ const WorkerAddModal = ({isOpen, onClose, onSave}) => {
                                     name="department"
                                     value={addForm.department}
                                     onChange={handleInputChange}
+                                    disabled={loading}
                                     style={inputStyle}
                                 />
                             </div>
@@ -235,6 +263,7 @@ const WorkerAddModal = ({isOpen, onClose, onSave}) => {
                                     name="occupation"
                                     value={addForm.occupation}
                                     onChange={handleInputChange}
+                                    disabled={loading}
                                     style={inputStyle}
                                 />
                             </div>
@@ -245,6 +274,7 @@ const WorkerAddModal = ({isOpen, onClose, onSave}) => {
                                     name="jobTitle"
                                     value={addForm.jobTitle}
                                     onChange={handleInputChange}
+                                    disabled={loading}
                                     style={inputStyle}
                                 />
                             </div>
@@ -278,7 +308,8 @@ const WorkerAddModal = ({isOpen, onClose, onSave}) => {
                                     name="gender"
                                     value={addForm.gender}
                                     onChange={handleInputChange}
-                                    style={{...inputStyle, cursor: 'pointer'}}
+                                    disabled={loading}
+                                    style={{...inputStyle, cursor: loading ? 'not-allowed' : 'pointer'}}
                                 >
                                     <option value="MALE">남성</option>
                                     <option value="FEMALE">여성</option>
@@ -317,7 +348,8 @@ const WorkerAddModal = ({isOpen, onClose, onSave}) => {
                                     name="bloodType"
                                     value={addForm.bloodType}
                                     onChange={handleInputChange}
-                                    style={{...inputStyle, cursor: 'pointer'}}
+                                    disabled={loading}
+                                    style={{...inputStyle, cursor: loading ? 'not-allowed' : 'pointer'}}
                                 >
                                     <option value="">혈액형 선택</option>
                                     <option value="A">A형</option>
@@ -349,6 +381,7 @@ const WorkerAddModal = ({isOpen, onClose, onSave}) => {
                                     name="age"
                                     value={addForm.age}
                                     onChange={handleInputChange}
+                                    disabled={loading}
                                     style={inputStyle}
                                 />
                             </div>
@@ -401,17 +434,18 @@ const WorkerAddModal = ({isOpen, onClose, onSave}) => {
                         </button>
                         <button
                             onClick={handleSave}
+                            disabled={loading}
                             style={{
                                 padding: '10px 20px',
                                 border: 'none',
                                 borderRadius: '6px',
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                background: loading ? '#9ca3af' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                                 color: 'white',
-                                cursor: 'pointer',
+                                cursor: loading ? 'not-allowed' : 'pointer',
                                 fontSize: '14px'
                             }}
                         >
-                            등록하기
+                            {loading ? '등록 중...' : '등록하기'}
                         </button>
                     </div>
                 </div>
