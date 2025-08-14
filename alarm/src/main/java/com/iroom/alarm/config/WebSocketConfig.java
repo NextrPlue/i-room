@@ -24,15 +24,15 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
-		registry.addEndpoint("/ws") // 브라우저가 연결할 엔드포인트
+		registry.addEndpoint("/alarm/ws") // 브라우저가 연결할 엔드포인트
 			.setAllowedOriginPatterns("*")
 			.withSockJS(); // SockJS fallback 허용
 	}
 
 	@Override
 	public void configureMessageBroker(MessageBrokerRegistry registry) {
-		registry.enableSimpleBroker("/topic", "/queue");
-		registry.setApplicationDestinationPrefixes("/app");
-		registry.setUserDestinationPrefix("/user");
+		registry.enableSimpleBroker("/alarm/topic", "/alarm/queue");
+		registry.setApplicationDestinationPrefixes("/alarm/app");
+		registry.setUserDestinationPrefix("/alarm/user");
 	}
 }
