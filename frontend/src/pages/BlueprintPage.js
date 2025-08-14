@@ -14,9 +14,14 @@ const BlueprintPage = () => {
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [uploadForm, setUploadForm] = useState({
         file: null,
+        name: '',
         floor: 1,
         width: 10.0,
-        height: 10.0
+        height: 10.0,
+        topLeft: { lat: 37.5675, lon: 126.9770 },
+        topRight: { lat: 37.5675, lon: 126.9780 },
+        bottomRight: { lat: 37.5665, lon: 126.9780 },
+        bottomLeft: { lat: 37.5665, lon: 126.9770 }
     });
     const [uploadPreview, setUploadPreview] = useState(null);
     const [uploading, setUploading] = useState(false);
@@ -32,9 +37,14 @@ const BlueprintPage = () => {
     const [editForm, setEditForm] = useState({
         id: null,
         file: null,
+        name: '',
         floor: 1,
         width: 10.0,
-        height: 10.0
+        height: 10.0,
+        topLeft: { lat: 37.5675, lon: 126.9770 },
+        topRight: { lat: 37.5675, lon: 126.9780 },
+        bottomRight: { lat: 37.5665, lon: 126.9780 },
+        bottomLeft: { lat: 37.5665, lon: 126.9770 }
     });
 
     const [editPreview, setEditPreview] = useState(null);
@@ -63,9 +73,6 @@ const BlueprintPage = () => {
             // 새로운 API 응답 구조: { status, message, data: {...}, timestamp }
             if (response.status === 'success' && response.data) {
                 const data = response.data;
-                
-                // 디버깅용 로그
-                console.log('API 응답 데이터:', data);
                 
                 setBlueprints(data.content || []);
                 setCurrentPage(data.page || 0);
@@ -220,16 +227,34 @@ const BlueprintPage = () => {
 
     // 업로드 폼 입력 핸들러
     const handleUploadFormChange = (field, value) => {
-        setUploadForm(prev => ({
-            ...prev,
-            [field]: field === 'floor' ? parseInt(value, 10) : parseFloat(value)
-        }));
+        if (field.includes('.')) {
+            // GPS 좌표 필드 처리 (예: topLeft.lat)
+            const [corner, coord] = field.split('.');
+            setUploadForm(prev => ({
+                ...prev,
+                [corner]: {
+                    ...prev[corner],
+                    [coord]: parseFloat(value)
+                }
+            }));
+        } else {
+            setUploadForm(prev => ({
+                ...prev,
+                [field]: field === 'floor' ? parseInt(value, 10) : 
+                        field === 'name' ? value : parseFloat(value)
+            }));
+        }
     };
 
     // 도면 업로드 핸들러
     const handleUploadSubmit = async () => {
         if (!uploadForm.file) {
             setError('도면 파일을 선택해주세요.');
+            return;
+        }
+        
+        if (!uploadForm.name || !uploadForm.name.trim()) {
+            setError('도면 이름을 입력해주세요.');
             return;
         }
 
@@ -245,9 +270,14 @@ const BlueprintPage = () => {
             // 폼 초기화
             setUploadForm({
                 file: null,
+                name: '',
                 floor: 1,
                 width: 10.0,
-                height: 10.0
+                height: 10.0,
+                topLeft: { lat: 37.5675, lon: 126.9770 },
+                topRight: { lat: 37.5675, lon: 126.9780 },
+                bottomRight: { lat: 37.5665, lon: 126.9780 },
+                bottomLeft: { lat: 37.5665, lon: 126.9770 }
             });
             setUploadPreview(null);
             setShowUploadForm(false);
@@ -264,9 +294,14 @@ const BlueprintPage = () => {
     const handleUploadCancel = () => {
         setUploadForm({
             file: null,
+            name: '',
             floor: 1,
             width: 10.0,
-            height: 10.0
+            height: 10.0,
+            topLeft: { lat: 37.5675, lon: 126.9770 },
+            topRight: { lat: 37.5675, lon: 126.9780 },
+            bottomRight: { lat: 37.5665, lon: 126.9780 },
+            bottomLeft: { lat: 37.5665, lon: 126.9770 }
         });
         setUploadPreview(null);
         setShowUploadForm(false);
@@ -326,9 +361,14 @@ const BlueprintPage = () => {
         setEditForm({
             id: selectedBlueprint.id,
             file: null,
+            name: selectedBlueprint.name || '',
             floor: selectedBlueprint.floor,
             width: selectedBlueprint.width,
-            height: selectedBlueprint.height
+            height: selectedBlueprint.height,
+            topLeft: selectedBlueprint.topLeft || { lat: 37.5675, lon: 126.9770 },
+            topRight: selectedBlueprint.topRight || { lat: 37.5675, lon: 126.9780 },
+            bottomRight: selectedBlueprint.bottomRight || { lat: 37.5665, lon: 126.9780 },
+            bottomLeft: selectedBlueprint.bottomLeft || { lat: 37.5665, lon: 126.9770 }
         });
 
         // 기존 이미지를 미리보기로 설정
@@ -371,10 +411,23 @@ const BlueprintPage = () => {
 
     // 수정 폼 입력 핸들러
     const handleEditFormChange = (field, value) => {
-        setEditForm(prev => ({
-            ...prev,
-            [field]: field === 'floor' ? parseInt(value, 10) : parseFloat(value)
-        }));
+        if (field.includes('.')) {
+            // GPS 좌표 필드 처리 (예: topLeft.lat)
+            const [corner, coord] = field.split('.');
+            setEditForm(prev => ({
+                ...prev,
+                [corner]: {
+                    ...prev[corner],
+                    [coord]: parseFloat(value)
+                }
+            }));
+        } else {
+            setEditForm(prev => ({
+                ...prev,
+                [field]: field === 'floor' ? parseInt(value, 10) : 
+                        field === 'name' ? value : parseFloat(value)
+            }));
+        }
     };
 
     // 수정 제출 핸들러
@@ -383,28 +436,34 @@ const BlueprintPage = () => {
             setError('수정할 도면이 선택되지 않았습니다.');
             return;
         }
+        
+        if (!editForm.name || !editForm.name.trim()) {
+            setError('도면 이름을 입력해주세요.');
+            return;
+        }
 
         try {
             setEditing(true);
             setError(null);
 
             // API 호출로 도면 정보 업데이트 (파일 포함 또는 정보만)
+            const updateData = {
+                name: editForm.name,
+                floor: editForm.floor,
+                width: editForm.width,
+                height: editForm.height,
+                topLeft: editForm.topLeft,
+                topRight: editForm.topRight,
+                bottomRight: editForm.bottomRight,
+                bottomLeft: editForm.bottomLeft
+            };
+            
             if (editForm.file) {
                 // 파일이 있으면 새 파일과 함께 수정
-                await blueprintAPI.updateBlueprint(editForm.id, {
-                    file: editForm.file,
-                    floor: editForm.floor,
-                    width: editForm.width,
-                    height: editForm.height
-                });
-            } else {
-                // 파일이 없으면 정보만 수정
-                await blueprintAPI.updateBlueprint(editForm.id, {
-                    floor: editForm.floor,
-                    width: editForm.width,
-                    height: editForm.height
-                });
+                updateData.file = editForm.file;
             }
+            
+            await blueprintAPI.updateBlueprint(editForm.id, updateData);
 
             // 목록 새로고침
             await fetchBlueprints(currentPage);
@@ -416,9 +475,14 @@ const BlueprintPage = () => {
             setEditForm({
                 id: null,
                 file: null,
+                name: '',
                 floor: 1,
                 width: 10.0,
-                height: 10.0
+                height: 10.0,
+                topLeft: { lat: 37.5675, lon: 126.9770 },
+                topRight: { lat: 37.5675, lon: 126.9780 },
+                bottomRight: { lat: 37.5665, lon: 126.9780 },
+                bottomLeft: { lat: 37.5665, lon: 126.9770 }
             });
             setEditPreview(null);
             setShowEditForm(false);
@@ -436,9 +500,14 @@ const BlueprintPage = () => {
         setEditForm({
             id: null,
             file: null,
+            name: '',
             floor: 1,
             width: 10.0,
-            height: 10.0
+            height: 10.0,
+            topLeft: { lat: 37.5675, lon: 126.9770 },
+            topRight: { lat: 37.5675, lon: 126.9780 },
+            bottomRight: { lat: 37.5665, lon: 126.9780 },
+            bottomLeft: { lat: 37.5665, lon: 126.9770 }
         });
         setEditPreview(null);
         setShowEditForm(false);

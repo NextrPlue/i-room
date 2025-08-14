@@ -660,6 +660,65 @@
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
+/* GPS 좌표 섹션 */
+.coordinateSection {
+    margin-top: 16px;
+}
+
+.coordinateSection h3 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.coordinateSection h3::before {
+    content: "🌍";
+    font-size: 16px;
+}
+
+.coordinateRows {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.coordinateRow {
+    display: grid;
+    grid-template-columns: 80px 1fr 1fr;
+    gap: 12px;
+    align-items: end;
+}
+
+.coordinateRow label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+    display: block;
+}
+
+.coordinateRow input {
+    padding: 12px 16px;
+    border: 1px solid #D1D5DB;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.2s;
+}
+
+.coordinateRow input:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.coordinateRow input::placeholder {
+    color: #9CA3AF;
+}
+
 /* 에러 메시지 */
 .errorMessage {
     background: #FEF2F2;
@@ -746,5 +805,15 @@
 
     .formButtons button {
         width: 100%;
+    }
+
+    /* GPS 좌표 모바일 대응 */
+    .coordinateRow {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .coordinateRows {
+        gap: 16px;
     }
 }
