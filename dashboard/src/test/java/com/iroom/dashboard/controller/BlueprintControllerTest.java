@@ -27,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iroom.dashboard.blueprint.controller.BlueprintController;
 import com.iroom.dashboard.blueprint.dto.request.BlueprintRequest;
+import com.iroom.dashboard.blueprint.dto.request.BlueprintRequest.GeoPointDto;
 import com.iroom.dashboard.blueprint.dto.response.BlueprintResponse;
 import com.iroom.dashboard.blueprint.service.BlueprintService;
 import com.iroom.modulecommon.dto.response.PagedResponse;
@@ -55,8 +56,19 @@ class BlueprintControllerTest {
 	@DisplayName("도면 등록 성공")
 	void createBlueprintTest() throws Exception {
 		// given
-		BlueprintRequest request = new BlueprintRequest(null, 1, 100.0, 200.0);
-		BlueprintResponse response = new BlueprintResponse(1L, "/uploads/blueprints/test-uuid.png", 1, 100.0, 200.0);
+		GeoPointDto topLeft = new GeoPointDto(37.5665, 126.9780);
+		GeoPointDto topRight = new GeoPointDto(37.5665, 126.9790);
+		GeoPointDto bottomRight = new GeoPointDto(37.5655, 126.9790);
+		GeoPointDto bottomLeft = new GeoPointDto(37.5655, 126.9780);
+		
+		BlueprintRequest request = new BlueprintRequest(
+			"Test Blueprint", null, 1, 100.0, 200.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
+		BlueprintResponse response = new BlueprintResponse(
+			1L, "Test Blueprint", "/uploads/blueprints/test-uuid.png", 1, 100.0, 200.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
 
 		MockMultipartFile file = new MockMultipartFile("file", "test.png", "image/png", "test content".getBytes());
 		MockMultipartFile data = new MockMultipartFile("data", "", "application/json", 
@@ -71,18 +83,32 @@ class BlueprintControllerTest {
 				.file(data)
 				.contentType(MediaType.MULTIPART_FORM_DATA))
 			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.name").value("Test Blueprint"))
 			.andExpect(jsonPath("$.data.blueprintUrl").value("/uploads/blueprints/test-uuid.png"))
 			.andExpect(jsonPath("$.data.floor").value(1))
 			.andExpect(jsonPath("$.data.width").value(100.0))
-			.andExpect(jsonPath("$.data.height").value(200.0));
+			.andExpect(jsonPath("$.data.height").value(200.0))
+			.andExpect(jsonPath("$.data.topLeft.lat").value(37.5665))
+			.andExpect(jsonPath("$.data.topLeft.lon").value(126.9780));
 	}
 
 	@Test
 	@DisplayName("도면 수정 성공 - 파일 없이")
 	void updateBlueprintWithoutFileTest() throws Exception {
 		// given
-		BlueprintRequest request = new BlueprintRequest(null, 2, 150.0, 250.0);
-		BlueprintResponse response = new BlueprintResponse(1L, "/uploads/blueprints/original.png", 2, 150.0, 250.0);
+		GeoPointDto topLeft = new GeoPointDto(37.5665, 126.9780);
+		GeoPointDto topRight = new GeoPointDto(37.5665, 126.9790);
+		GeoPointDto bottomRight = new GeoPointDto(37.5655, 126.9790);
+		GeoPointDto bottomLeft = new GeoPointDto(37.5655, 126.9780);
+		
+		BlueprintRequest request = new BlueprintRequest(
+			"Updated Blueprint", null, 2, 150.0, 250.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
+		BlueprintResponse response = new BlueprintResponse(
+			1L, "Updated Blueprint", "/uploads/blueprints/original.png", 2, 150.0, 250.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
 
 		MockMultipartFile data = new MockMultipartFile("data", "", "application/json", 
 			objectMapper.writeValueAsString(request).getBytes());
@@ -99,6 +125,7 @@ class BlueprintControllerTest {
 				})
 				.contentType(MediaType.MULTIPART_FORM_DATA))
 			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.name").value("Updated Blueprint"))
 			.andExpect(jsonPath("$.data.blueprintUrl").value("/uploads/blueprints/original.png"))
 			.andExpect(jsonPath("$.data.floor").value(2));
 	}
@@ -107,8 +134,19 @@ class BlueprintControllerTest {
 	@DisplayName("도면 수정 성공 - 파일과 함께")
 	void updateBlueprintWithFileTest() throws Exception {
 		// given
-		BlueprintRequest request = new BlueprintRequest(null, 2, 150.0, 250.0);
-		BlueprintResponse response = new BlueprintResponse(1L, "/uploads/blueprints/new-uuid.png", 2, 150.0, 250.0);
+		GeoPointDto topLeft = new GeoPointDto(37.5665, 126.9780);
+		GeoPointDto topRight = new GeoPointDto(37.5665, 126.9790);
+		GeoPointDto bottomRight = new GeoPointDto(37.5655, 126.9790);
+		GeoPointDto bottomLeft = new GeoPointDto(37.5655, 126.9780);
+		
+		BlueprintRequest request = new BlueprintRequest(
+			"Updated Blueprint with File", null, 2, 150.0, 250.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
+		BlueprintResponse response = new BlueprintResponse(
+			1L, "Updated Blueprint with File", "/uploads/blueprints/new-uuid.png", 2, 150.0, 250.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
 
 		MockMultipartFile file = new MockMultipartFile("file", "new-test.png", "image/png", "new test content".getBytes());
 		MockMultipartFile data = new MockMultipartFile("data", "", "application/json", 
@@ -127,6 +165,7 @@ class BlueprintControllerTest {
 				})
 				.contentType(MediaType.MULTIPART_FORM_DATA))
 			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.data.name").value("Updated Blueprint with File"))
 			.andExpect(jsonPath("$.data.blueprintUrl").value("/uploads/blueprints/new-uuid.png"))
 			.andExpect(jsonPath("$.data.floor").value(2));
 	}
@@ -148,8 +187,19 @@ class BlueprintControllerTest {
 	@DisplayName("도면 전체 조회 성공")
 	void getAllBlueprintsTest() throws Exception {
 		// given
-		BlueprintResponse r1 = new BlueprintResponse(1L, "url1.png", 1, 100.0, 100.0);
-		BlueprintResponse r2 = new BlueprintResponse(2L, "url2.png", 2, 200.0, 200.0);
+		GeoPointDto topLeft = new GeoPointDto(37.5665, 126.9780);
+		GeoPointDto topRight = new GeoPointDto(37.5665, 126.9790);
+		GeoPointDto bottomRight = new GeoPointDto(37.5655, 126.9790);
+		GeoPointDto bottomLeft = new GeoPointDto(37.5655, 126.9780);
+		
+		BlueprintResponse r1 = new BlueprintResponse(
+			1L, "Blueprint 1", "url1.png", 1, 100.0, 100.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
+		BlueprintResponse r2 = new BlueprintResponse(
+			2L, "Blueprint 2", "url2.png", 2, 200.0, 200.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
 
 		List<BlueprintResponse> content = List.of(r1, r2);
 		Page<BlueprintResponse> page = new PageImpl<>(content, PageRequest.of(0, 10), content.size());
