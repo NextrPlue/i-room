@@ -97,9 +97,9 @@ class AlarmServiceTest {
 		verify(workerReadModelRepository, times(1)).findById(1L);
 		verify(alarmRepository, times(1)).save(any(Alarm.class));
 		verify(messagingTemplate, times(1))
-			.convertAndSend(eq("/topic/alarms/admin"), contains("작업자 침입 감지"));
+			.convertAndSend(eq("/alarm/topic/alarms/admin"), contains("작업자 침입 감지"));
 		verify(messagingTemplate, times(1))
-			.convertAndSend(eq("/queue/alarms-session123"), contains("작업자 침입 감지"));
+			.convertAndSend(eq("/alarm/queue/alarms-session123"), contains("작업자 침입 감지"));
 	}
 
 	@Test
@@ -205,8 +205,8 @@ class AlarmServiceTest {
 		verify(alarmRepository, times(1)).save(any(Alarm.class));
 		verify(kafkaProducerService, times(1)).publishMessage("PPE_VIOLATION", alarmEvent);
 		verify(messagingTemplate, times(1))
-			.convertAndSend(eq("/topic/alarms/admin"), contains("안전모 미착용"));
+			.convertAndSend(eq("/alarm/topic/alarms/admin"), contains("안전모 미착용"));
 		verify(messagingTemplate, times(1))
-			.convertAndSend(eq("/queue/alarms-session123"), contains("안전모 미착용"));
+			.convertAndSend(eq("/alarm/queue/alarms-session123"), contains("안전모 미착용"));
 	}
 }

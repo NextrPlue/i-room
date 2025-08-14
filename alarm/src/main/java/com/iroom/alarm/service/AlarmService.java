@@ -75,12 +75,12 @@ public class AlarmService {
 		String workerMessage = String.format("[%s] %s", alarmEvent.incidentType(), alarmEvent.incidentDescription());
 
 		// 관리자에게 모든 알람 전송
-		messagingTemplate.convertAndSend("/topic/alarms/admin", adminMessage);
+		messagingTemplate.convertAndSend("/alarm/topic/alarms/admin", adminMessage);
 
 		// 해당 근로자에게만 개별 알람 전송
 		String sessionId = stompHandler.getSessionIdByUserId(alarmEvent.workerId().toString());
 		if (sessionId != null) {
-			String workerDestination = "/queue/alarms-" + sessionId;
+			String workerDestination = "/alarm/queue/alarms-" + sessionId;
 			messagingTemplate.convertAndSend(workerDestination, workerMessage);
 		}
 	}
