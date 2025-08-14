@@ -61,6 +61,7 @@ spec:
         booleanParam(name: 'DEPLOY_ALARM', defaultValue: true, description: 'Deploy Alarm service')
         booleanParam(name: 'DEPLOY_SENSOR', defaultValue: true, description: 'Deploy Sensor service')
         booleanParam(name: 'DEPLOY_DASHBOARD', defaultValue: true, description: 'Deploy Dashboard service')
+        booleanParam(name: 'DEPLOY_FRONTEND', defaultValue: true, description: 'Deploy Frontend service')
     }
 
     environment {
@@ -80,6 +81,8 @@ spec:
         ALARM_IMAGE = "${ACR_REGISTRY}/alarm:${BUILD_VERSION}"
         SENSOR_IMAGE = "${ACR_REGISTRY}/sensor:${BUILD_VERSION}"
         DASHBOARD_IMAGE = "${ACR_REGISTRY}/dashboard:${BUILD_VERSION}"
+        FRONTEND_IMAGE = "${ACR_REGISTRY}/frontend:${BUILD_VERSION}"
+        FRONTEND_WORKER_IMAGE = "${ACR_REGISTRY}/frontend-worker:${BUILD_VERSION}"
     }
 
     stages {
@@ -237,6 +240,7 @@ spec:
                 }
             }
         }
+
 
         stage('Docker Login') {
             steps {
@@ -405,6 +409,52 @@ spec:
             }
         }
 
+        stage('Build Frontend Admin Docker Image') {
+            when {
+                allOf {
+                    expression { return params.DEPLOY_FRONTEND == true }
+                    anyOf {
+                        changeset "frontend/**"
+                        expression { return params.FORCE_BUILD_ALL == true }
+                    }
+                }
+            }
+            steps {
+                echo 'Building Frontend Admin Docker image...'
+                dir('frontend') {
+                    container('docker-client') {
+                        sh '''
+                            docker build -t ${FRONTEND_IMAGE} .
+                            echo "Built Frontend Admin image: ${FRONTEND_IMAGE}"
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Build Frontend Worker Docker Image') {
+            when {
+                allOf {
+                    expression { return params.DEPLOY_FRONTEND == true }
+                    anyOf {
+                        changeset "frontend/**"
+                        expression { return params.FORCE_BUILD_ALL == true }
+                    }
+                }
+            }
+            steps {
+                echo 'Building Frontend Worker Docker image...'
+                dir('frontend') {
+                    container('docker-client') {
+                        sh '''
+                            docker build -f Dockerfile.worker -t ${FRONTEND_WORKER_IMAGE} .
+                            echo "Built Frontend Worker image: ${FRONTEND_WORKER_IMAGE}"
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Push to ACR') {
             steps {
                 echo 'Pushing images to Azure Container Registry...'
@@ -430,6 +480,10 @@ spec:
                         }
                         if (params.DEPLOY_DASHBOARD && (changes.contains('dashboard/') || changes.contains('gradlew') || changes.contains('build.gradle') || changes.contains('settings.gradle') || params.FORCE_BUILD_ALL)) {
                             sh "docker push ${DASHBOARD_IMAGE}"
+                        }
+                        if (params.DEPLOY_FRONTEND && (changes.contains('frontend/') || params.FORCE_BUILD_ALL)) {
+                            sh "docker push ${FRONTEND_IMAGE}"
+                            sh "docker push ${FRONTEND_WORKER_IMAGE}"
                         }
                     }
                 }
@@ -492,6 +546,16 @@ spec:
                                     kubectl rollout status deployment/dashboard-deployment --namespace=default --timeout=300s
                                 """
                             }
+
+                            // Frontend 서비스 배포
+                            if (params.DEPLOY_FRONTEND && (changes.contains('frontend/') || params.FORCE_BUILD_ALL)) {
+                                sh """
+                                    kubectl set image deployment/frontend-deployment frontend=${FRONTEND_IMAGE} --namespace=default
+                                    kubectl rollout status deployment/frontend-deployment --namespace=default --timeout=300s
+                                    kubectl set image deployment/frontend-worker-deployment frontend-worker=${FRONTEND_WORKER_IMAGE} --namespace=default
+                                    kubectl rollout status deployment/frontend-worker-deployment --namespace=default --timeout=300s
+                                """
+                            }
                         }
                     }
                 }
@@ -521,6 +585,8 @@ spec:
             echo "Alarm: ${ALARM_IMAGE}"
             echo "Sensor: ${SENSOR_IMAGE}"
             echo "Dashboard: ${DASHBOARD_IMAGE}"
+            echo "Frontend: ${FRONTEND_IMAGE}"
+            echo "Frontend Worker: ${FRONTEND_WORKER_IMAGE}"
         }
 
         failure {
