@@ -49,6 +49,11 @@ spec:
     command:
     - sleep
     - infinity
+  - name: node
+    image: node:18-alpine
+    command:
+    - cat
+    tty: true
 """
         }
     }
@@ -254,10 +259,12 @@ spec:
             steps {
                 echo 'Building Frontend Admin...'
                 dir('frontend') {
-                    sh '''
-                        npm ci --only=production
-                        npm run build
-                    '''
+                    container('node') {
+                        sh '''
+                            npm ci --only=production
+                            npm run build
+                        '''
+                    }
                 }
             }
         }
@@ -275,9 +282,11 @@ spec:
             steps {
                 echo 'Building Frontend Worker...'
                 dir('frontend') {
-                    sh '''
-                        npm run build:worker
-                    '''
+                    container('node') {
+                        sh '''
+                            npm run build:worker
+                        '''
+                    }
                 }
             }
         }
