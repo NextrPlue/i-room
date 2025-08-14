@@ -3,11 +3,39 @@ import React, { useState, useEffect } from "react";
 import { NotificationBell, NotificationDropdown, createNotificationFromWebSocket } from './notifications';
 import stompService from '../services/stompService';
 import { authUtils } from '../utils/auth';
+import { userAPI } from '../api/api';
 
 const Header = () => {
     // 알림 상태 관리
     const [notifications, setNotifications] = useState([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    // 관리자 정보 상태 관리
+    const [adminInfo, setAdminInfo] = useState(null);
+    const [loadingAdmin, setLoadingAdmin] = useState(true);
+
+    // 관리자 정보 조회
+    useEffect(() => {
+        const fetchAdminInfo = async () => {
+            try {
+                const token = authUtils.getToken();
+                if (!token) {
+                    setLoadingAdmin(false);
+                    return;
+                }
+
+                const response = await userAPI.getMyInfo();
+                if (response.status === 'success' && response.data) {
+                    setAdminInfo(response.data);
+                }
+            } catch (error) {
+                console.error('관리자 정보 조회 실패:', error);
+            } finally {
+                setLoadingAdmin(false);
+            }
+        };
+
+        fetchAdminInfo();
+    }, []);
 
     // 웹소켓 연결 및 이벤트 처리
     useEffect(() => {
@@ -137,7 +165,10 @@ const Header = () => {
                     <div style={avatarStyle}>
                         <User size={16} color="white" />
                     </div>
-                    <span style={usernameStyle}>관리자님</span>
+                    <span style={usernameStyle}>
+                        {loadingAdmin ? '로딩 중...' : 
+                         adminInfo ? `${adminInfo.name}님` : '관리자님'}
+                    </span>
                 </div>
             </div>
         </header>
