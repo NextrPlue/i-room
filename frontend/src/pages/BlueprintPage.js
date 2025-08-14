@@ -42,25 +42,49 @@ const BlueprintPage = () => {
     const pageSize = 7;
 
     // 도면 목록 조회 함수
-    const fetchBlueprints = useCallback(async (page = 0) => {
+    const fetchBlueprints = useCallback(async (page = 0, searchTarget = null, searchKeyword = null) => {
         try {
             setLoading(true);
             setError(null);
 
-            const response = await blueprintAPI.getBlueprints({
+            const params = {
                 page: page,
                 size: pageSize
-            });
+            };
 
-            const data = response.data || response;
-            
-            setBlueprints(data.content || []);
-            setCurrentPage(data.page || 0);
-            setTotalPages(data.totalPages || 0);
+            // 검색 파라미터 추가
+            if (searchTarget && searchKeyword && searchKeyword.trim()) {
+                params.target = searchTarget;
+                params.keyword = searchKeyword.trim();
+            }
 
-            // 첫 번째 도면을 기본 선택
-            if (data.content && data.content.length > 0) {
-                handleBlueprintSelect(data.content[0]);
+            const response = await blueprintAPI.getBlueprints(params);
+
+            // 새로운 API 응답 구조: { status, message, data: {...}, timestamp }
+            if (response.status === 'success' && response.data) {
+                const data = response.data;
+                
+                // 디버깅용 로그
+                console.log('API 응답 데이터:', data);
+                
+                setBlueprints(data.content || []);
+                setCurrentPage(data.page || 0);
+                setTotalPages(data.totalPages || 0);
+
+                // 첫 번째 도면을 기본 선택
+                if (data.content && data.content.length > 0) {
+                    handleBlueprintSelect(data.content[0]);
+                }
+            } else {
+                // API에서 성공 응답이지만 데이터가 없는 경우
+                console.warn('API 응답에 데이터가 없음:', response);
+                setBlueprints([]);
+                setCurrentPage(0);
+                setTotalPages(0);
+                
+                if (response.message) {
+                    setError(response.message);
+                }
             }
 
         } catch (err) {
@@ -71,6 +95,23 @@ const BlueprintPage = () => {
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageSize]);
+
+    // 검색 처리 함수
+    const handleSearch = useCallback(async (searchValue) => {
+        if (!searchValue || !searchValue.trim()) {
+            // 빈 검색어면 전체 목록 조회
+            await fetchBlueprints(0);
+            return;
+        }
+
+        const trimmedSearch = searchValue.trim();
+        
+        // 숫자면 층수로 검색, 아니면 이름으로 검색
+        const isNumber = /^\d+$/.test(trimmedSearch);
+        const target = isNumber ? 'floor' : 'name';
+        
+        await fetchBlueprints(0, target, trimmedSearch);
+    }, [fetchBlueprints]);
 
     // 컴포넌트 마운트 시 도면 목록 조회
     useEffect(() => {
@@ -95,16 +136,8 @@ const BlueprintPage = () => {
         { value: 'urgent', label: '삭제', color: '#EF4444' },
     ];
 
-    // 검색 필터링 (클라이언트 사이드) - 층수로 검색
-    const filteredBlueprints = blueprints.filter(blueprint => {
-        const matchesSearch = !searchTerm ||
-            blueprint.floor.toString().includes(searchTerm) ||
-            `${blueprint.floor}층`.includes(searchTerm);
-
-        // 필터는 층수 기준으로 단순화 (모든 도면 표시)
-        const matchesFilter = selectedFilter === 'all';
-        return matchesSearch && matchesFilter;
-    });
+    // 클라이언트 사이드 필터링 (검색은 서버에서 처리)
+    const filteredBlueprints = blueprints;
 
     // 이미지 로드 함수
     const loadBlueprintImage = async (blueprintId) => {
@@ -257,7 +290,7 @@ const BlueprintPage = () => {
 
         try {
             const imageUrl = blueprintAPI.getBlueprintImage(selectedBlueprint.id);
-            const fileName = `${selectedBlueprint.floor}층_도면.jpg`;
+            const fileName = `${selectedBlueprint.name && selectedBlueprint.name.trim() ? selectedBlueprint.name : `${selectedBlueprint.floor}층`}_도면.jpg`;
             
             // 이미지 다운로드 (JWT 토큰 포함)
             const response = await fetch(imageUrl, {
@@ -419,7 +452,7 @@ const BlueprintPage = () => {
             return;
         }
 
-        if (!window.confirm(`${selectedBlueprint.floor}층 도면을 정말 삭제하시겠습니까?`)) {
+        if (!window.confirm(`${selectedBlueprint.name && selectedBlueprint.name.trim() ? selectedBlueprint.name : `${selectedBlueprint.floor}층 도면`}을 정말 삭제하시겠습니까?`)) {
             return;
         }
 
@@ -459,9 +492,15 @@ const BlueprintPage = () => {
             <section className={styles.searchSection}>
                 <input
                     className={styles.searchInput}
-                    placeholder="층수로 검색해보세요 (예: 1, 2층)"
+                    placeholder="이름이나 층수로 검색해보세요 (예: 1구역, 1)"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                        const value = e.target.value;
+                        setSearchTerm(value);
+                        
+                        // 디바운싱 없이 즉시 검색 (또는 디바운싱을 원하면 setTimeout 사용)
+                        handleSearch(value).catch(console.error);
+                    }}
                 />
             </section>
 
@@ -498,9 +537,10 @@ const BlueprintPage = () => {
                                 <div className={styles.blueprintIcon}>📋</div>
                                 <div className={styles.blueprintInfo}>
                                     <h3 className={styles.blueprintTitle}>
-                                        {blueprint.floor}층 도면
+                                        {blueprint.name && blueprint.name.trim() ? blueprint.name : `${blueprint.floor}층 도면`}
                                     </h3>
                                     <div className={styles.blueprintMeta}>
+                                        <span>층수: {blueprint.floor}층</span>
                                         <span>크기: {blueprint.width}m × {blueprint.height}m</span>
                                     </div>
                                 </div>
@@ -518,7 +558,16 @@ const BlueprintPage = () => {
                     <div className={styles.pagination}>
                         <button
                             className={styles.pageBtn}
-                            onClick={() => fetchBlueprints(currentPage - 1).catch(console.error)}
+                            onClick={() => {
+                                const trimmedSearch = searchTerm.trim();
+                                if (trimmedSearch) {
+                                    const isNumber = /^\d+$/.test(trimmedSearch);
+                                    const target = isNumber ? 'floor' : 'name';
+                                    fetchBlueprints(currentPage - 1, target, trimmedSearch).catch(console.error);
+                                } else {
+                                    fetchBlueprints(currentPage - 1).catch(console.error);
+                                }
+                            }}
                             disabled={currentPage === 0}
                         >
                             이전
@@ -528,7 +577,16 @@ const BlueprintPage = () => {
                             <button
                                 key={index}
                                 className={`${styles.pageBtn} ${currentPage === index ? styles.active : ''}`}
-                                onClick={() => fetchBlueprints(index).catch(console.error)}
+                                onClick={() => {
+                                    const trimmedSearch = searchTerm.trim();
+                                    if (trimmedSearch) {
+                                        const isNumber = /^\d+$/.test(trimmedSearch);
+                                        const target = isNumber ? 'floor' : 'name';
+                                        fetchBlueprints(index, target, trimmedSearch).catch(console.error);
+                                    } else {
+                                        fetchBlueprints(index).catch(console.error);
+                                    }
+                                }}
                             >
                                 {index + 1}
                             </button>
@@ -536,7 +594,16 @@ const BlueprintPage = () => {
 
                         <button
                             className={styles.pageBtn}
-                            onClick={() => fetchBlueprints(currentPage + 1).catch(console.error)}
+                            onClick={() => {
+                                const trimmedSearch = searchTerm.trim();
+                                if (trimmedSearch) {
+                                    const isNumber = /^\d+$/.test(trimmedSearch);
+                                    const target = isNumber ? 'floor' : 'name';
+                                    fetchBlueprints(currentPage + 1, target, trimmedSearch).catch(console.error);
+                                } else {
+                                    fetchBlueprints(currentPage + 1).catch(console.error);
+                                }
+                            }}
                             disabled={currentPage >= totalPages - 1}
                         >
                             다음
@@ -548,12 +615,14 @@ const BlueprintPage = () => {
                 <section className={styles.previewSection}>
                     {selectedBlueprint ? (
                         <div className={styles.blueprintPreview}>
-                            <h3 className={styles.previewTitle}>{selectedBlueprint.floor}층 도면</h3>
+                            <h3 className={styles.previewTitle}>
+                                {selectedBlueprint.name && selectedBlueprint.name.trim() ? selectedBlueprint.name : `${selectedBlueprint.floor}층 도면`}
+                            </h3>
 
                             {selectedBlueprint.blueprintUrl && !imageError && imageBlob ? (
                                 <img
                                     src={typeof imageBlob === 'string' ? imageBlob : ''}
-                                    alt={`${selectedBlueprint.floor}층 도면 - 크기: ${selectedBlueprint.width}m × ${selectedBlueprint.height}m`}
+                                    alt={`${selectedBlueprint.name || `${selectedBlueprint.floor}층 도면`} - 크기: ${selectedBlueprint.width}m × ${selectedBlueprint.height}m`}
                                     className={styles.previewImage}
                                     onError={handleImageError}
                                     style={{ transform: `rotate(${blueprintRotation}deg)` }}
@@ -612,6 +681,12 @@ const BlueprintPage = () => {
                         <div className={styles.blueprintDetails}>
                             <h4 className={styles.detailsTitle}>도면 정보</h4>
                             <div className={styles.detailsGrid}>
+                                {selectedBlueprint.name && selectedBlueprint.name.trim() && (
+                                    <div className={styles.detailItem}>
+                                        <span className={styles.detailLabel}>구역명:</span>
+                                        <span className={styles.detailValue}>{selectedBlueprint.name}</span>
+                                    </div>
+                                )}
                                 <div className={styles.detailItem}>
                                     <span className={styles.detailLabel}>층수:</span>
                                     <span className={styles.detailValue}>{selectedBlueprint.floor}층</span>
@@ -630,6 +705,36 @@ const BlueprintPage = () => {
                                         {(selectedBlueprint.width * selectedBlueprint.height).toFixed(2)}㎡
                                     </span>
                                 </div>
+                                
+                                {/* 좌표 정보 */}
+                                {selectedBlueprint.topLeft && (
+                                    <>
+                                        <div className={styles.detailItem}>
+                                            <span className={styles.detailLabel}>좌상단 좌표:</span>
+                                            <span className={styles.detailValue}>
+                                                {selectedBlueprint.topLeft.lat.toFixed(4)}, {selectedBlueprint.topLeft.lon.toFixed(4)}
+                                            </span>
+                                        </div>
+                                        <div className={styles.detailItem}>
+                                            <span className={styles.detailLabel}>우상단 좌표:</span>
+                                            <span className={styles.detailValue}>
+                                                {selectedBlueprint.topRight.lat.toFixed(4)}, {selectedBlueprint.topRight.lon.toFixed(4)}
+                                            </span>
+                                        </div>
+                                        <div className={styles.detailItem}>
+                                            <span className={styles.detailLabel}>우하단 좌표:</span>
+                                            <span className={styles.detailValue}>
+                                                {selectedBlueprint.bottomRight.lat.toFixed(4)}, {selectedBlueprint.bottomRight.lon.toFixed(4)}
+                                            </span>
+                                        </div>
+                                        <div className={styles.detailItem}>
+                                            <span className={styles.detailLabel}>좌하단 좌표:</span>
+                                            <span className={styles.detailValue}>
+                                                {selectedBlueprint.bottomLeft.lat.toFixed(4)}, {selectedBlueprint.bottomLeft.lon.toFixed(4)}
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
                                 {selectedBlueprint.blueprintUrl && (
                                     <div className={styles.detailItem}>
                                         <span className={styles.detailLabel}>도면 URL:</span>
