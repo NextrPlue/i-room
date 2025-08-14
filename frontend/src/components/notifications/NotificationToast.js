@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { X, AlertTriangle, Shield, Activity, Info, CheckCircle } from 'lucide-react';
+import React, {useEffect, useState} from 'react';
+import {X} from 'lucide-react';
 
 const NotificationToast = ({ 
     notification, 
@@ -85,35 +85,35 @@ const NotificationToast = ({
             case 'SAFETY_GEAR':
             case 'PPE_VIOLATION':
                 return {
-                    icon: <Shield size={20} />,
-                    color: '#ef4444',
-                    bgColor: '#fef2f2',
-                    borderColor: '#fecaca'
-                };
-            case 'DANGER_ZONE':
-                return {
-                    icon: <AlertTriangle size={20} />,
+                    icon: '🦺',
                     color: '#f59e0b',
                     bgColor: '#fffbeb',
                     borderColor: '#fed7aa'
                 };
+            case 'DANGER_ZONE':
+                return {
+                    icon: '⚠️',
+                    color: '#ef4444',
+                    bgColor: '#fef2f2',
+                    borderColor: '#fecaca'
+                };
             case 'HEALTH_RISK':
                 return {
-                    icon: <Activity size={20} />,
-                    color: '#8b5cf6',
-                    bgColor: '#f5f3ff',
-                    borderColor: '#c4b5fd'
+                    icon: '🏥',
+                    color: '#3b82f6',
+                    bgColor: '#eff6ff',
+                    borderColor: '#bfdbfe'
                 };
             case 'SUCCESS':
                 return {
-                    icon: <CheckCircle size={20} />,
+                    icon: '✅',
                     color: '#10b981',
                     bgColor: '#ecfdf5',
                     borderColor: '#a7f3d0'
                 };
             default:
                 return {
-                    icon: <Info size={20} />,
+                    icon: 'ℹ️',
                     color: '#3b82f6',
                     bgColor: '#eff6ff',
                     borderColor: '#bfdbfe'
@@ -133,7 +133,7 @@ const NotificationToast = ({
     };
 
     const iconStyle = {
-        color: typeConfig.color,
+        fontSize: '20px',
         flexShrink: 0
     };
 
