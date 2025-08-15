@@ -1,5 +1,7 @@
 package com.iroom.management.controller;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.iroom.management.dto.response.WorkerManagementResponse;
 import com.iroom.management.dto.response.WorkerStatsResponse;
+import com.iroom.management.dto.response.WorkingWorkerResponse;
 import com.iroom.management.service.WorkerManagementService;
 import com.iroom.modulecommon.dto.response.ApiResponse;
 import com.iroom.modulecommon.dto.response.PagedResponse;
@@ -67,6 +70,12 @@ public class WorkerManagementController {
 	@GetMapping("/me")
 	public ResponseEntity<ApiResponse<WorkerManagementResponse>> getMyInfo(@RequestHeader("X-User-Id") Long workerId) {
 		WorkerManagementResponse response = workerManagementService.getWorkerEntry(workerId);
+		return ResponseEntity.ok(ApiResponse.success(response));
+	}
+
+	@GetMapping("/working-workers")
+	public ResponseEntity<ApiResponse<List<WorkingWorkerResponse>>> getWorkingWorkers() {
+		List<WorkingWorkerResponse> response = workerManagementService.getWorkingWorkers();
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 }
