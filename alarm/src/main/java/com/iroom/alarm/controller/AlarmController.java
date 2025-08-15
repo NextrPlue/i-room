@@ -1,6 +1,7 @@
 package com.iroom.alarm.controller;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,7 +50,7 @@ public class AlarmController {
 	}
 
 	@GetMapping("/admins")
-	public ResponseEntity<ApiResponse<PagedResponse<Alarm>>> getAlarmsForAdmin(
+	public ResponseEntity<ApiResponse<PagedResponse<Map<String, Object>>>> getAlarmsForAdmin(
 		@RequestParam(defaultValue = "0") Integer page,
 		@RequestParam(defaultValue = "10") Integer size,
 		@RequestParam(defaultValue = "3") Integer hours) {
@@ -63,7 +64,7 @@ public class AlarmController {
 		if (hours > 168)
 			hours = 168; // 최대 1주일(7일)
 
-		PagedResponse<Alarm> response = alarmService.getAlarmsForAdmin(page, size, hours);
+		PagedResponse<Map<String, Object>> response = alarmService.getAlarmsForAdmin(page, size, hours);
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 }
