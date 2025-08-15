@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.iroom.management.dto.response.WorkerManagementResponse;
 import com.iroom.management.dto.response.WorkerStatsResponse;
+import com.iroom.management.dto.response.WorkingWorkerResponse;
 import com.iroom.management.entity.WorkerManagement;
+import com.iroom.management.entity.WorkerReadModel;
 import com.iroom.management.repository.WorkerManagementRepository;
 import com.iroom.management.repository.WorkerReadModelRepository;
 import com.iroom.modulecommon.dto.response.PagedResponse;
@@ -156,5 +159,32 @@ public class WorkerManagementService {
 			.orElseThrow(() -> new CustomException(ErrorCode.USER_WORKER_NOT_FOUND));
 
 		return new WorkerManagementResponse(workerManagement);
+	}
+
+	// 근무중인 근로자 목록 조회
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
+	public List<WorkingWorkerResponse> getWorkingWorkers() {
+		// 오늘 날짜 범위 설정
+		LocalDate today = LocalDate.now();
+		LocalDateTime startOfDay = today.atStartOfDay();
+		LocalDateTime endOfDay = today.atTime(23, 59, 59);
+
+		// 오늘 출근했고 아직 퇴근하지 않은 근로자들 직접 조회
+		List<WorkerManagement> workingEntries = workerManagementRepository
+			.findByEnterDateBetweenAndOutDateIsNull(startOfDay, endOfDay);
+
+		return workingEntries.stream()
+			.map(entry -> {
+				// WorkerReadModel에서 근로자 상세 정보 조회
+				WorkerReadModel workerInfo = workerReadModelRepository.findById(entry.getWorkerId())
+					.orElse(null);
+				
+				String workerName = workerInfo != null ? workerInfo.getName() : "알 수 없음";
+				String department = workerInfo != null ? workerInfo.getDepartment() : "미정";
+				String occupation = workerInfo != null ? workerInfo.getOccupation() : "미정";
+				
+				return new WorkingWorkerResponse(entry, workerName, department, occupation);
+			})
+			.collect(Collectors.toList());
 	}
 }
