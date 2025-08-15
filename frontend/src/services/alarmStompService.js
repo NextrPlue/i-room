@@ -1,8 +1,8 @@
-// stompService.js — @stomp/stompjs Client 버전 (세션ID 기반 + 헤더 포함)
+// alarmStompService.js — @stomp/stompjs Client 버전 (세션ID 기반 + 헤더 포함)
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
 
-class StompService {
+class AlarmStompService {
     constructor() {
         this.client = null;           // @stomp/stompjs Client
         this.sock = null;             // SockJS 인스턴스 (세션ID 추출용)
@@ -266,5 +266,5 @@ class StompService {
     }
 }
 
-const stompService = new StompService();
-export default stompService;
+const alarmStompService = new AlarmStompService();
+export default alarmStompService;
