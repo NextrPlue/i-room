@@ -54,7 +54,7 @@ const Header = () => {
         const handleNewAlarm = (data) => {
             const newNotification = createNotificationFromWebSocket(data);
             
-            setNotifications(prev => [newNotification, ...prev.slice(0, 49)]); // 최대 50개 유지
+            setNotifications(prev => [newNotification, ...prev.slice(0, 7)]); // 최대 8개 유지
             
             // 토스트 알림 표시
             window.dispatchEvent(new CustomEvent('showNotificationToast', { 
