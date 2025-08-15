@@ -134,12 +134,7 @@ const MonitoringPage = () => {
 
             const data = response.data || response;
             const zones = data.content || [];
-            
-            console.log(`MonitoringPage - Blueprint ${blueprintId}의 위험구역 조회 결과:`, {
-                총개수: zones.length,
-                위험구역들: zones.map(z => ({ id: z.id, name: z.name, lat: z.latitude, lon: z.longitude }))
-            });
-            
+
             // 위험구역을 화면에 표시하기 위한 형태로 변환
             const formattedZones = zones
                 .map(zone => {
@@ -150,15 +145,7 @@ const MonitoringPage = () => {
                     // 중심점 기준으로 박스 위치 계산
                     const boxX = canvasPosition.x - canvasSize.width / 2;
                     const boxY = canvasPosition.y - canvasSize.height / 2;
-                    
-                    console.log(`위험구역 ${zone.id} 변환:`, {
-                        GPS: { lat: zone.latitude, lon: zone.longitude },
-                        캔버스중심: canvasPosition,
-                        박스크기: canvasSize,
-                        최종박스: { x: boxX, y: boxY, width: canvasSize.width, height: canvasSize.height },
-                        도면내부여부: isInsideBlueprint(canvasPosition.x, canvasPosition.y)
-                    });
-                    
+
                     return {
                         id: zone.id,
                         x: boxX,
@@ -181,14 +168,7 @@ const MonitoringPage = () => {
                     }
                     return true;
                 });
-            
-            console.log(`MonitoringPage - 필터링 후 최종 위험구역:`, {
-                필터링전개수: zones.length,
-                필터링후개수: formattedZones.length,
-                제거된개수: zones.length - formattedZones.length,
-                최종위험구역들: formattedZones.map(z => ({ id: z.id, name: z.name, x: z.x, y: z.y, isInside: z.isInside }))
-            });
-            
+
             setDangerZones(formattedZones);
         } catch (error) {
             console.error('위험구역 데이터 조회 실패:', error);
@@ -265,12 +245,6 @@ const MonitoringPage = () => {
             return { width: 5, height: 5 }; // 기본값
         }
 
-        console.log('박스 크기 변환:', {
-            입력크기: { width: widthMeters, height: heightMeters },
-            도면크기: { width: currentBlueprint.width, height: currentBlueprint.height },
-            단위: '미터'
-        });
-
         // Blueprint의 width, height가 픽셀이면 실제 건물 크기로 가정
         // 예: 1920x1080 픽셀 → 192m x 108m 건물로 가정 (1픽셀 = 0.1m)
         let realBuildingWidth, realBuildingHeight;
@@ -319,7 +293,7 @@ const MonitoringPage = () => {
 
 
     // API로부터 알람 목록 로드
-    const loadAlarms = async () => {
+    const loadAlarms = useCallback(async () => {
         setAlertsLoading(true);
         try {
             const response = await alarmAPI.getAlarmsForAdmin({
@@ -340,6 +314,7 @@ const MonitoringPage = () => {
                     time: getTimeAgo(alarm.createdAt),
                     timestamp: alarm.createdAt,
                     workerId: alarm.workerId,
+                    workerName: alarm.workerName,
                     originalData: alarm
                 };
             }) || [];
@@ -350,7 +325,7 @@ const MonitoringPage = () => {
         } finally {
             setAlertsLoading(false);
         }
-    };
+    }, [alertsPagination, getAlertTypeFromData, convertToDashboardType, getAlertTitle, getTimeAgo]);
 
     // 웹소켓 연결 및 실시간 데이터 처리
     useEffect(() => {
@@ -391,7 +366,9 @@ const MonitoringPage = () => {
 
         // 웹소켓 연결
         if (!stompService.isConnected()) {
-            connectWebSocket();
+            connectWebSocket().catch(error => {
+                console.error('웹소켓 연결 실패:', error);
+            });
         }
 
         // 클린업
@@ -416,15 +393,21 @@ const MonitoringPage = () => {
 
     // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
-        loadAlarms();
-        fetchAvailableBlueprints();
-    }, [alertsPagination.page, alertsPagination.size, alertsPagination.hours, fetchAvailableBlueprints]);
+        loadAlarms().catch(error => {
+            console.error('알람 로드 실패:', error);
+        });
+        fetchAvailableBlueprints().catch(error => {
+            console.error('도면 목록 로드 실패:', error);
+        });
+    }, [loadAlarms, fetchAvailableBlueprints]);
 
     // 초기 도면 자동 선택 (첫 번째 도면)
     useEffect(() => {
         if (availableBlueprints.length > 0 && !currentBlueprint) {
             const firstBlueprint = availableBlueprints[0];
-            selectBlueprint(firstBlueprint.id.toString());
+            selectBlueprint(firstBlueprint.id.toString()).catch(error => {
+                console.error('초기 도면 선택 실패:', error);
+            });
         }
     }, [availableBlueprints, currentBlueprint, selectBlueprint]);
 
@@ -681,6 +664,7 @@ const MonitoringPage = () => {
                                         </div>
                                         <div className={styles.alertContent}>
                                             <p className={styles.alertTitle}>{alert.title}</p>
+                                            <p className={styles.alertWorker}>작업자: {alert.workerName || "알 수 없음"}</p>
                                             <p className={styles.alertDesc}>{alert.description}</p>
                                         </div>
                                         <span className={styles.alertTime}>{alert.time}</span>

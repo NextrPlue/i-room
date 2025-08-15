@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -129,13 +130,17 @@ class AlarmServiceTest {
 		Page<Alarm> alarmPage = new PageImpl<>(List.of(alarm), pageable, 1);
 		when(alarmRepository.findByOccurredAtAfterOrderByOccurredAtDesc(any(LocalDateTime.class), eq(pageable)))
 			.thenReturn(alarmPage);
+		when(workerReadModelRepository.findById(1L)).thenReturn(Optional.of(workerReadModel));
 
 		// when
-		PagedResponse<Alarm> result = alarmService.getAlarmsForAdmin(0, 10, 3);
+		PagedResponse<Map<String, Object>> result = alarmService.getAlarmsForAdmin(0, 10, 3);
 
 		// then
 		assertThat(result.content()).hasSize(1);
-		assertThat(result.content().get(0).getIncidentId()).isEqualTo(101L);
+		Map<String, Object> alarmMap = result.content().get(0);
+		assertThat(alarmMap.get("workerId")).isEqualTo(1L);
+		assertThat(alarmMap.get("workerName")).isEqualTo("테스트 근로자");
+		assertThat(alarmMap.get("incidentId")).isEqualTo(101L);
 	}
 
 	@Test

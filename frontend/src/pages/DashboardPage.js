@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import styles from '../styles/Dashboard.module.css';
 import stompService from '../services/stompService';
 import {authUtils} from '../utils/auth';
@@ -85,7 +85,7 @@ const DashboardPage = () => {
 
 
     // API로부터 알람 목록 로드
-    const loadAlarms = async () => {
+    const loadAlarms = useCallback(async () => {
         setAlertsLoading(true);
         try {
             const response = await alarmAPI.getAlarmsForAdmin({
@@ -102,7 +102,7 @@ const DashboardPage = () => {
         } finally {
             setAlertsLoading(false);
         }
-    };
+    }, [alertsPagination.page, alertsPagination.size, alertsPagination.hours, transformAlarmData]);
 
     // 웹소켓 연결 및 실시간 데이터 처리
     useEffect(() => {
@@ -150,7 +150,7 @@ const DashboardPage = () => {
         return () => {
             stompService.off('alarm', handleNewAlarm);
         };
-    }, []);
+    }, [convertToDashboardType, getAlertTitle, getAlertTypeFromData]);
 
     // 시간 업데이트 (1분마다 상대시간 갱신)
     useEffect(() => {
@@ -164,12 +164,12 @@ const DashboardPage = () => {
         }, 60000); // 1분마다 업데이트
 
         return () => clearInterval(timer);
-    }, []);
+    }, [getTimeAgo]);
 
     // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
         loadAlarms().catch(console.error);
-    }, []);
+    }, [loadAlarms]);
 
     return (
         <div className={styles.page}>
@@ -276,6 +276,7 @@ const DashboardPage = () => {
                                     </div>
                                     <div className={styles.alertContent}>
                                         <p className={styles.alertTitle}>{alert.title}</p>
+                                        <p className={styles.alertWorker}>작업자: {alert.workerName || "알 수 없음"}</p>
                                         <p className={styles.alertDesc}>{alert.description}</p>
                                     </div>
                                     <span className={styles.alertTime}>{alert.time}</span>
