@@ -24,7 +24,9 @@ import org.springframework.web.client.RestTemplate;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -85,6 +87,19 @@ public class WorkerSensorService {
 			.orElseThrow(() -> new CustomException(ErrorCode.SENSOR_WORKER_NOT_FOUND));
 
 		return new WorkerLocationResponse(workerSensor);
+	}
+
+	//다중 근로자 위치 조회 기능
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
+	public List<WorkerLocationResponse> getWorkersLocation(List<Long> workerIds) {
+		if (workerIds == null || workerIds.isEmpty()) {
+			return List.of();
+		}
+
+		List<WorkerSensor> sensors = workerSensorRepository.findByWorkerIdIn(workerIds);
+		return sensors.stream()
+			.map(WorkerLocationResponse::new)
+			.collect(Collectors.toList());
 	}
 
 	private WorkerSensorUpdateRequest parseBinaryData(byte[] binaryData) {
