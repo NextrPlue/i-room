@@ -23,7 +23,7 @@ repositories {
 dependencies {
     // common module
     implementation project(':module-common')
-    
+
     // Spring Boot Starters
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -52,6 +52,9 @@ dependencies {
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
+    // WebSocket
+    implementation 'org.springframework.boot:spring-boot-starter-websocket'
 }
 dependencyManagement {
     imports {
