@@ -52,7 +52,7 @@ dependencies {
     // Lombok
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
-
+    // test
     // WebSocket
     implementation 'org.springframework.boot:spring-boot-starter-websocket'
 }
