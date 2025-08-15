@@ -1,7 +1,7 @@
 import { User } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { NotificationBell, NotificationDropdown, createNotificationFromWebSocket } from './notifications';
-import stompService from '../services/stompService';
+import alarmStompService from '../services/alarmStompService';
 import { authUtils } from '../utils/auth';
 import { userAPI } from '../api/api';
 
@@ -45,7 +45,7 @@ const Header = () => {
         // 웹소켓 연결
         const connectWebSocket = async () => {
             try {
-                await stompService.connect(token, 'admin');
+                await alarmStompService.connect(token, 'admin');
             } catch (error) {
             }
         };
@@ -63,15 +63,15 @@ const Header = () => {
         };
 
         // 이벤트 리스너 등록
-        stompService.on('alarm', handleNewAlarm);
+        alarmStompService.on('alarm', handleNewAlarm);
 
         // 웹소켓 연결
-        if (!stompService.isConnected()) {
+        if (!alarmStompService.isConnected()) {
             connectWebSocket().catch(console.error);
         }
 
         return () => {
-            stompService.off('alarm', handleNewAlarm);
+            alarmStompService.off('alarm', handleNewAlarm);
         };
     }, []);
 
