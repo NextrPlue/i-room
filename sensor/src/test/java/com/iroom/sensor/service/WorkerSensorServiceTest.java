@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateRequest;
@@ -38,6 +39,9 @@ public class WorkerSensorServiceTest {
 
 	@Mock
 	private KafkaProducerService kafkaProducerService;
+
+	@Mock
+	private SimpMessagingTemplate messagingTemplate;
 
 	@InjectMocks
 	private WorkerSensorService workerSensorService;
@@ -83,6 +87,7 @@ public class WorkerSensorServiceTest {
 		assertThat(response.stepPerMinute()).isEqualTo(stepPerMinute);
 		
 		verify(kafkaProducerService).publishMessage(eq("WORKER_SENSOR_UPDATED"), any());
+		verify(messagingTemplate).convertAndSend(eq("/sensor/topic/sensors/admin"), anyString());
 	}
 
 	@Test
@@ -122,6 +127,7 @@ public class WorkerSensorServiceTest {
 		assertThat(response.heartRate()).isEqualTo(heartRate);
 		
 		verify(kafkaProducerService).publishMessage(eq("WORKER_SENSOR_UPDATED"), any());
+		verify(messagingTemplate).convertAndSend(eq("/sensor/topic/sensors/admin"), anyString());
 	}
 
 	@Test
@@ -161,6 +167,7 @@ public class WorkerSensorServiceTest {
 		assertThat(response.heartRate()).isEqualTo(heartRate);
 		
 		verify(kafkaProducerService).publishMessage(eq("WORKER_SENSOR_UPDATED"), any());
+		verify(messagingTemplate).convertAndSend(eq("/sensor/topic/sensors/admin"), anyString());
 	}
 
 	@Test
@@ -198,6 +205,7 @@ public class WorkerSensorServiceTest {
 		assertThat(response.workerId()).isEqualTo(workerId);
 		verify(workerSensorRepository).save(any(WorkerSensor.class));
 		verify(kafkaProducerService).publishMessage(eq("WORKER_SENSOR_UPDATED"), any());
+		verify(messagingTemplate).convertAndSend(eq("/sensor/topic/sensors/admin"), anyString());
 	}
 
 	@Test
