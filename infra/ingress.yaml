@@ -33,7 +33,7 @@ spec:
                 name: i-room-kafka-ui
                 port:
                   number: 80
-          - path: /ws # Path for alarm websocket
+          - path: /alarm/ws # Path for alarm websocket
             pathType: Prefix
             backend:
               service:
