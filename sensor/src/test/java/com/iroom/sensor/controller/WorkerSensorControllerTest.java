@@ -7,14 +7,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateResponse;
 import com.iroom.sensor.dto.WorkerSensor.WorkerLocationResponse;
@@ -26,6 +32,9 @@ public class WorkerSensorControllerTest {
 
 	@Autowired
 	private MockMvc mockMvc;
+
+	@Autowired
+	private ObjectMapper objectMapper;
 
 	@MockitoBean
 	private WorkerSensorService workerSensorService;
@@ -83,6 +92,80 @@ public class WorkerSensorControllerTest {
 			.andExpect(jsonPath("$.data.workerId").value(workerId))
 			.andExpect(jsonPath("$.data.latitude").value(latitude))
 			.andExpect(jsonPath("$.data.longitude").value(longitude));
+	}
+
+	@Test
+	@DisplayName("POST /worker-sensor/locations - 다중 근로자 위치 조회 성공")
+	void getWorkersLocationTest() throws Exception {
+		// given
+		List<Long> workerIds = Arrays.asList(1L, 2L, 3L);
+		
+		List<WorkerLocationResponse> locationResponses = Arrays.asList(
+			new WorkerLocationResponse(1L, 37.5665, 126.9780),
+			new WorkerLocationResponse(2L, 37.5666, 126.9781),
+			new WorkerLocationResponse(3L, 37.5667, 126.9782)
+		);
+		
+		given(workerSensorService.getWorkersLocation(workerIds)).willReturn(locationResponses);
+
+		// when & then
+		mockMvc.perform(post("/worker-sensor/locations")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(workerIds)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.length()").value(3))
+			.andExpect(jsonPath("$.data[0].workerId").value(1L))
+			.andExpect(jsonPath("$.data[0].latitude").value(37.5665))
+			.andExpect(jsonPath("$.data[0].longitude").value(126.9780))
+			.andExpect(jsonPath("$.data[1].workerId").value(2L))
+			.andExpect(jsonPath("$.data[1].latitude").value(37.5666))
+			.andExpect(jsonPath("$.data[1].longitude").value(126.9781))
+			.andExpect(jsonPath("$.data[2].workerId").value(3L))
+			.andExpect(jsonPath("$.data[2].latitude").value(37.5667))
+			.andExpect(jsonPath("$.data[2].longitude").value(126.9782));
+	}
+
+	@Test
+	@DisplayName("POST /worker-sensor/locations - 빈 리스트 요청")
+	void getWorkersLocation_emptyListTest() throws Exception {
+		// given
+		List<Long> emptyWorkerIds = Collections.emptyList();
+		
+		given(workerSensorService.getWorkersLocation(emptyWorkerIds)).willReturn(Collections.emptyList());
+
+		// when & then
+		mockMvc.perform(post("/worker-sensor/locations")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(emptyWorkerIds)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.length()").value(0));
+	}
+
+	@Test
+	@DisplayName("POST /worker-sensor/locations - 일부 데이터만 존재")
+	void getWorkersLocation_partialDataTest() throws Exception {
+		// given
+		List<Long> workerIds = Arrays.asList(1L, 2L, 3L);
+		
+		// 1L만 센서 데이터 존재
+		List<WorkerLocationResponse> partialResponses = Arrays.asList(
+			new WorkerLocationResponse(1L, 37.5665, 126.9780)
+		);
+		
+		given(workerSensorService.getWorkersLocation(workerIds)).willReturn(partialResponses);
+
+		// when & then
+		mockMvc.perform(post("/worker-sensor/locations")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(workerIds)))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.length()").value(1))
+			.andExpect(jsonPath("$.data[0].workerId").value(1L))
+			.andExpect(jsonPath("$.data[0].latitude").value(37.5665))
+			.andExpect(jsonPath("$.data[0].longitude").value(126.9780));
 	}
 
 	private byte[] createBinaryData(Double latitude, Double longitude, Double heartRate,
