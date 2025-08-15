@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Sensor WebSocket Test - 권한별 센서 데이터 수신</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        #messages li {
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: #f0f0f0;
+            border-radius: 3px;
+        }
+
+        .admin-message {
+            background-color: #ffe6e6 !important;
+            border-left: 4px solid #ff4444;
+        }
+
+        .worker-message {
+            background-color: #e6ffe6 !important;
+            border-left: 4px solid #44ff44;
+        }
+
+        .system-message {
+            background-color: #e6f3ff !important;
+            border-left: 4px solid #4488ff;
+        }
+
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+        }
+
+        input[type="text"] {
+            padding: 5px;
+            margin: 5px;
+            width: 400px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .stat-card {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+<h1>Sensor WebSocket Test - 권한별 센서 데이터 수신</h1>
+
+<div class="section">
+    <h3>연결 설정</h3>
+    <div>
+        <label for="token">JWT Token:</label><br>
+        <input type="text" id="token" placeholder="Enter your JWT token here"/>
+    </div>
+    <div>
+        <label for="userType">사용자 유형:</label>
+        <select id="userType">
+            <option value="admin">관리자 (모든 센서 데이터 수신)</option>
+        </select>
+    </div>
+    <div>
+        <button id="connect" onclick="connect()">Connect</button>
+        <button id="disconnect" onclick="disconnect()" disabled>Disconnect</button>
+    </div>
+</div>
+
+<div class="section">
+    <h3>센서 데이터 통계</h3>
+    <div class="stats">
+        <div class="stat-card">
+            <h4>총 메시지 수</h4>
+            <span id="totalMessages">0</span>
+        </div>
+        <div class="stat-card">
+            <h4>마지막 심박수</h4>
+            <span id="lastHeartRate">-</span>
+        </div>
+        <div class="stat-card">
+            <h4>마지막 걸음수</h4>
+            <span id="lastSteps">-</span>
+        </div>
+        <div class="stat-card">
+            <h4>활성 근로자 수</h4>
+            <span id="activeWorkers">0</span>
+        </div>
+    </div>
+</div>
+
+<div class="section">
+    <h3>수신된 센서 메시지</h3>
+    <ul id="messages"></ul>
+    <div>
+        <button onclick="clearMessages()">메시지 클리어</button>
+        <button onclick="exportData()">데이터 내보내기</button>
+    </div>
+</div>
+
+<script type="text/javascript">
+    var stompClient = null;
+    var messageCount = 0;
+    var sensorData = [];
+    var activeWorkerIds = new Set();
+
+    function setConnected(connected) {
+        document.getElementById('connect').disabled = connected;
+        document.getElementById('disconnect').disabled = !connected;
+    }
+
+    function connect() {
+        var token = document.getElementById('token').value;
+        var userType = document.getElementById('userType').value;
+
+        if (!token) {
+            alert('Please enter a JWT token.');
+            return;
+        }
+
+        var socket = new SockJS('http://localhost:8083/sensor/ws'); // Sensor service endpoint
+        stompClient = Stomp.over(socket);
+
+        var headers = {
+            'Authorization': 'Bearer ' + token
+        };
+
+        stompClient.connect(headers, function (frame) {
+            setConnected(true);
+            console.log('Connected: ' + frame);
+            showMessage("✅ Sensor WebSocket 연결 성공!", "system");
+
+            // 관리자만 모든 센서 데이터 수신
+            stompClient.subscribe('/sensor/topic/sensors/admin', function (message) {
+                handleSensorMessage(message.body, "admin");
+            });
+            showMessage("🔴 관리자 모드 활성화 - 모든 센서 데이터 수신", "system");
+
+        }, function (error) {
+            console.error('STOMP error', error);
+            showMessage("❌ 연결 오류: " + error, "error");
+        });
+    }
+
+    function disconnect() {
+        if (stompClient !== null) {
+            stompClient.disconnect();
+        }
+        setConnected(false);
+        console.log("Disconnected");
+        showMessage("⚪ 연결이 해제되었습니다.", "system");
+    }
+
+    function handleSensorMessage(messageBody, type) {
+        messageCount++;
+
+        // 메시지 파싱
+        var sensorRegex = /\[센서 업데이트\] 작업자 ID: (\d+), 위치: \(([\d.-]+), ([\d.-]+)\), 심박수: ([\d.]+), 걸음수: (\d+)/;
+        var workerSensorRegex = /\[내 센서 정보\] 위치: \(([\d.-]+), ([\d.-]+)\), 심박수: ([\d.]+), 걸음수: (\d+)/;
+
+        var match = messageBody.match(sensorRegex) || messageBody.match(workerSensorRegex);
+
+        if (match) {
+            var sensorInfo;
+            if (sensorRegex.test(messageBody)) {
+                sensorInfo = {
+                    workerId: parseInt(match[1]),
+                    latitude: parseFloat(match[2]),
+                    longitude: parseFloat(match[3]),
+                    heartRate: parseFloat(match[4]),
+                    steps: parseInt(match[5]),
+                    timestamp: new Date()
+                };
+                activeWorkerIds.add(sensorInfo.workerId);
+            }
+
+            if (sensorInfo) {
+                sensorData.push(sensorInfo);
+                updateStats(sensorInfo);
+            }
+        }
+
+        var displayMessage = "🔴 [관리자] " + messageBody;
+        showMessage(displayMessage, "admin");
+    }
+
+    function updateStats(sensorInfo) {
+        document.getElementById('totalMessages').textContent = messageCount;
+        document.getElementById('lastHeartRate').textContent = sensorInfo.heartRate ? sensorInfo.heartRate + ' BPM' : '-';
+        document.getElementById('lastSteps').textContent = sensorInfo.steps ? sensorInfo.steps + ' 걸음' : '-';
+        document.getElementById('activeWorkers').textContent = activeWorkerIds.size;
+    }
+
+    function showMessage(message, type) {
+        var messageList = document.getElementById('messages');
+        var messageItem = document.createElement('li');
+
+        // 타입별 스타일 적용
+        if (type === 'admin') {
+            messageItem.className = 'admin-message';
+        } else if (type === 'worker') {
+            messageItem.className = 'worker-message';
+        } else if (type === 'system') {
+            messageItem.className = 'system-message';
+        }
+
+        // 시간 추가
+        var now = new Date();
+        var timeStr = now.toLocaleTimeString();
+        messageItem.appendChild(document.createTextNode(`[${timeStr}] ${message}`));
+
+        messageList.appendChild(messageItem);
+        messageList.scrollTop = messageList.scrollHeight; // 자동 스크롤
+    }
+
+    function clearMessages() {
+        document.getElementById('messages').innerHTML = '';
+        messageCount = 0;
+        sensorData = [];
+        activeWorkerIds.clear();
+        updateStats({});
+    }
+
+    function exportData() {
+        if (sensorData.length === 0) {
+            alert('내보낼 데이터가 없습니다.');
+            return;
+        }
+
+        var dataStr = JSON.stringify(sensorData, null, 2);
+        var dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+
+        var exportFileDefaultName = 'sensor-data-' + new Date().toISOString().slice(0, 19).replace(/:/g, '-') + '.json';
+
+        var linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+    }
+</script>
+</body>
+</html>
