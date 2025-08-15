@@ -1,3 +1,11 @@
+def GATEWAY_BUILT = false
+def USER_BUILT = false
+def MANAGEMENT_BUILT = false
+def ALARM_BUILT = false
+def SENSOR_BUILT = false
+def DASHBOARD_BUILT = false
+def FRONTEND_BUILT = false
+
 pipeline {
     agent {
         kubernetes {
@@ -83,15 +91,6 @@ spec:
         DASHBOARD_IMAGE = "${ACR_REGISTRY}/dashboard:${BUILD_VERSION}"
         FRONTEND_IMAGE = "${ACR_REGISTRY}/frontend:${BUILD_VERSION}"
         FRONTEND_WORKER_IMAGE = "${ACR_REGISTRY}/frontend-worker:${BUILD_VERSION}"
-
-        // Build flags
-        GATEWAY_BUILT = "false"
-        USER_BUILT = "false"
-        MANAGEMENT_BUILT = "false"
-        ALARM_BUILT = "false"
-        SENSOR_BUILT = "false"
-        DASHBOARD_BUILT = "false"
-        FRONTEND_BUILT = "false"
     }
 
     stages {
@@ -121,7 +120,7 @@ spec:
             }
             steps {
                 script {
-                    env.GATEWAY_BUILT = "true"
+                    GATEWAY_BUILT = true
                     echo 'Building Gateway service...'
                     dir('gateway') {
                         sh '''
@@ -148,7 +147,7 @@ spec:
             }
             steps {
                 script {
-                    env.USER_BUILT = "true"
+                    USER_BUILT = true
                     echo 'Building User service...'
                     dir('user') {
                         sh '''
@@ -175,7 +174,7 @@ spec:
             }
             steps {
                 script {
-                    env.MANAGEMENT_BUILT = "true"
+                    MANAGEMENT_BUILT = true
                     echo 'Building Management service...'
                     dir('management') {
                         sh '''
@@ -202,7 +201,7 @@ spec:
             }
             steps {
                 script {
-                    env.ALARM_BUILT = "true"
+                    ALARM_BUILT = true
                     echo 'Building Alarm service...'
                     dir('alarm') {
                         sh '''
@@ -229,7 +228,7 @@ spec:
             }
             steps {
                 script {
-                    env.SENSOR_BUILT = "true"
+                    SENSOR_BUILT = true
                     echo 'Building Sensor service...'
                     dir('sensor') {
                         sh '''
@@ -256,7 +255,7 @@ spec:
             }
             steps {
                 script {
-                    env.DASHBOARD_BUILT = "true"
+                    DASHBOARD_BUILT = true
                     echo 'Building Dashboard service...'
                     dir('dashboard') {
                         sh '''
@@ -282,7 +281,7 @@ spec:
 
         stage('Build Gateway Docker Image') {
             when {
-                expression { return env.GATEWAY_BUILT == "true" }
+                expression { return GATEWAY_BUILT }
             }
             steps {
                 echo 'Building Gateway Docker image...'
@@ -299,7 +298,7 @@ spec:
 
         stage('Build User Docker Image') {
             when {
-                expression { return env.USER_BUILT == "true" }
+                expression { return USER_BUILT }
             }
             steps {
                 echo 'Building User Docker image...'
@@ -316,7 +315,7 @@ spec:
 
         stage('Build Management Docker Image') {
             when {
-                expression { return env.MANAGEMENT_BUILT == "true" }
+                expression { return MANAGEMENT_BUILT }
             }
             steps {
                 echo 'Building Management Docker image...'
@@ -333,7 +332,7 @@ spec:
 
         stage('Build Alarm Docker Image') {
             when {
-                expression { return env.ALARM_BUILT == "true" }
+                expression { return ALARM_BUILT }
             }
             steps {
                 echo 'Building Alarm Docker image...'
@@ -350,7 +349,7 @@ spec:
 
         stage('Build Sensor Docker Image') {
             when {
-                expression { return env.SENSOR_BUILT == "true" }
+                expression { return SENSOR_BUILT }
             }
             steps {
                 echo 'Building Sensor Docker image...'
@@ -367,7 +366,7 @@ spec:
 
         stage('Build Dashboard Docker Image') {
             when {
-                expression { return env.DASHBOARD_BUILT == "true" }
+                expression { return DASHBOARD_BUILT }
             }
             steps {
                 echo 'Building Dashboard Docker image...'
@@ -394,7 +393,7 @@ spec:
             }
             steps {
                 script {
-                    env.FRONTEND_BUILT = "true"
+                    FRONTEND_BUILT = true
                     echo 'Building Frontend Admin Docker image...'
                     dir('frontend') {
                         container('docker-client') {
@@ -410,7 +409,7 @@ spec:
 
         stage('Build Frontend Worker Docker Image') {
             when {
-                expression { return env.FRONTEND_BUILT == "true" }
+                expression { return FRONTEND_BUILT }
             }
             steps {
                 echo 'Building Frontend Worker Docker image...'
@@ -430,25 +429,25 @@ spec:
                 echo 'Pushing images to Azure Container Registry...'
                 container('docker-client') {
                     script {
-                        if (params.DEPLOY_GATEWAY == true && env.GATEWAY_BUILT == "true") {
+                        if (params.DEPLOY_GATEWAY == true && GATEWAY_BUILT) {
                             sh "docker push ${GATEWAY_IMAGE}"
                         }
-                        if (params.DEPLOY_USER == true && env.USER_BUILT == "true") {
+                        if (params.DEPLOY_USER == true && USER_BUILT) {
                             sh "docker push ${USER_IMAGE}"
                         }
-                        if (params.DEPLOY_MANAGEMENT == true && env.MANAGEMENT_BUILT == "true") {
+                        if (params.DEPLOY_MANAGEMENT == true && MANAGEMENT_BUILT) {
                             sh "docker push ${MANAGEMENT_IMAGE}"
                         }
-                        if (params.DEPLOY_ALARM == true && env.ALARM_BUILT == "true") {
+                        if (params.DEPLOY_ALARM == true && ALARM_BUILT) {
                             sh "docker push ${ALARM_IMAGE}"
                         }
-                        if (params.DEPLOY_SENSOR == true && env.SENSOR_BUILT == "true") {
+                        if (params.DEPLOY_SENSOR == true && SENSOR_BUILT) {
                             sh "docker push ${SENSOR_IMAGE}"
                         }
-                        if (params.DEPLOY_DASHBOARD == true && env.DASHBOARD_BUILT == "true") {
+                        if (params.DEPLOY_DASHBOARD == true && DASHBOARD_BUILT) {
                             sh "docker push ${DASHBOARD_IMAGE}"
                         }
-                        if (params.DEPLOY_FRONTEND == true && env.FRONTEND_BUILT == "true") {
+                        if (params.DEPLOY_FRONTEND == true && FRONTEND_BUILT) {
                             sh "docker push ${FRONTEND_IMAGE}"
                             sh "docker push ${FRONTEND_WORKER_IMAGE}"
                         }
@@ -464,7 +463,7 @@ spec:
                     withKubeConfig([credentialsId: 'kubeconfig']) {
                         script {
                             // Gateway 배포
-                            if (params.DEPLOY_GATEWAY == true && env.GATEWAY_BUILT == "true") {
+                            if (params.DEPLOY_GATEWAY == true && GATEWAY_BUILT) {
                                 sh """
                                     kubectl set image deployment/gateway-deployment gateway=${GATEWAY_IMAGE} --namespace=default
                                     kubectl rollout status deployment/gateway-deployment --namespace=default --timeout=300s
@@ -472,7 +471,7 @@ spec:
                             }
 
                             // User 서비스 배포
-                            if (params.DEPLOY_USER == true && env.USER_BUILT == "true") {
+                            if (params.DEPLOY_USER == true && USER_BUILT) {
                                 sh """
                                     kubectl set image deployment/user-deployment user=${USER_IMAGE} --namespace=default
                                     kubectl rollout status deployment/user-deployment --namespace=default --timeout=300s
@@ -480,7 +479,7 @@ spec:
                             }
 
                             // Management 서비스 배포
-                            if (params.DEPLOY_MANAGEMENT == true && env.MANAGEMENT_BUILT == "true") {
+                            if (params.DEPLOY_MANAGEMENT == true && MANAGEMENT_BUILT) {
                                 sh """
                                     kubectl set image deployment/management-deployment management=${MANAGEMENT_IMAGE} --namespace=default
                                     kubectl rollout status deployment/management-deployment --namespace=default --timeout=300s
@@ -488,7 +487,7 @@ spec:
                             }
 
                             // Alarm 서비스 배포
-                            if (params.DEPLOY_ALARM == true && env.ALARM_BUILT == "true") {
+                            if (params.DEPLOY_ALARM == true && ALARM_BUILT) {
                                 sh """
                                     kubectl set image deployment/alarm-deployment alarm=${ALARM_IMAGE} --namespace=default
                                     kubectl rollout status deployment/alarm-deployment --namespace=default --timeout=300s
@@ -496,7 +495,7 @@ spec:
                             }
 
                             // Sensor 서비스 배포
-                            if (params.DEPLOY_SENSOR == true && env.SENSOR_BUILT == "true") {
+                            if (params.DEPLOY_SENSOR == true && SENSOR_BUILT) {
                                 sh """
                                     kubectl set image deployment/sensor-deployment sensor=${SENSOR_IMAGE} --namespace=default
                                     kubectl rollout status deployment/sensor-deployment --namespace=default --timeout=300s
@@ -504,7 +503,7 @@ spec:
                             }
 
                             // Dashboard 서비스 배포
-                            if (params.DEPLOY_DASHBOARD == true && env.DASHBOARD_BUILT == "true") {
+                            if (params.DEPLOY_DASHBOARD == true && DASHBOARD_BUILT) {
                                 sh """
                                     kubectl set image deployment/dashboard-deployment dashboard=${DASHBOARD_IMAGE} --namespace=default
                                     kubectl rollout status deployment/dashboard-deployment --namespace=default --timeout=300s
@@ -512,7 +511,7 @@ spec:
                             }
 
                             // Frontend 서비스 배포
-                            if (params.DEPLOY_FRONTEND == true && env.FRONTEND_BUILT == "true") {
+                            if (params.DEPLOY_FRONTEND == true && FRONTEND_BUILT) {
                                 sh """
                                     kubectl set image deployment/frontend-deployment frontend=${FRONTEND_IMAGE} --namespace=default
                                     kubectl rollout status deployment/frontend-deployment --namespace=default --timeout=300s
