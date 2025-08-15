@@ -1,6 +1,6 @@
 import React, {useEffect, useState, useCallback} from 'react';
 import styles from '../styles/Dashboard.module.css';
-import stompService from '../services/stompService';
+import alarmStompService from '../services/alarmStompService';
 import {authUtils} from '../utils/auth';
 import {alarmAPI} from '../api/api';
 import AlarmModal from '../components/AlarmModal';
@@ -112,7 +112,7 @@ const DashboardPage = () => {
         // 웹소켓 연결
         const connectWebSocket = async () => {
             try {
-                await stompService.connect(token, 'admin');
+                await alarmStompService.connect(token, 'admin');
             } catch (error) {
                 console.error('Dashboard: 웹소켓 연결 실패:', error);
             }
@@ -139,16 +139,16 @@ const DashboardPage = () => {
         };
 
         // 이벤트 리스너 등록
-        stompService.on('alarm', handleNewAlarm);
+        alarmStompService.on('alarm', handleNewAlarm);
 
         // 웹소켓 연결
-        if (!stompService.isConnected()) {
+        if (!alarmStompService.isConnected()) {
             connectWebSocket().catch(console.error);
         }
 
         // 클린업
         return () => {
-            stompService.off('alarm', handleNewAlarm);
+            alarmStompService.off('alarm', handleNewAlarm);
         };
     }, [convertToDashboardType, getAlertTitle, getAlertTypeFromData]);
 

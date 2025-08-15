@@ -1,8 +1,8 @@
-// alarmStompService.js — @stomp/stompjs Client 버전 (세션ID 기반 + 헤더 포함)
+// sensorStompService.js — Sensor WebSocket Service
 import SockJS from 'sockjs-client';
-import { Client } from '@stomp/stompjs';
+import {Client} from '@stomp/stompjs';
 
-class AlarmStompService {
+class SensorStompService {
     constructor() {
         this.client = null;           // @stomp/stompjs Client
         this.sock = null;             // SockJS 인스턴스 (세션ID 추출용)
@@ -32,8 +32,9 @@ class AlarmStompService {
                     const parts = url.split('/');
                     const sid = parts[parts.length - 2]; // 끝-1이 세션ID
                     const tail = parts[parts.length - 1];
-                    if (sid && tail) return { sid, url };
-                } catch (_) {}
+                    if (sid && tail) return {sid, url};
+                } catch (_) {
+                }
             }
             return null;
         };
@@ -50,15 +51,15 @@ class AlarmStompService {
     }
 
     // 연결
-    connect(token, userType = 'worker') {
+    connect(token, userType = 'admin') {
         return new Promise((resolve, reject) => {
             if (this.client?.active || this.connected) return resolve();
 
             this.token = token;
             this.userType = userType;
 
-            const wsUrl = process.env.REACT_APP_WS_URL || 'http://localhost:8084/alarm/ws';
-            if (!token) console.warn('[WS] token is empty!');
+            const wsUrl = process.env.REACT_APP_SENSOR_WS_URL || 'http://localhost:8083/sensor/ws';
+            if (!token) console.warn('[SENSOR WS] token is empty!');
 
             // SockJS 인스턴스를 직접 만들어서 보관(세션ID 추출용)
             const socket = new SockJS(wsUrl);
@@ -104,7 +105,7 @@ class AlarmStompService {
 
             // 소켓이 닫힘
             this.client.onWebSocketClose = (evt) => {
-                console.warn('🔌 WebSocket closed:', evt?.reason || evt);
+                console.warn('🔌 Sensor WebSocket closed:', evt?.reason || evt);
                 this.connected = false;
                 this.emit('disconnected');
             };
@@ -115,93 +116,50 @@ class AlarmStompService {
 
     // 구독 설정
     async setupSubscriptions() {
-        if (this.userType === 'admin') {
-            this.subscribe('/alarm/topic/alarms/admin', (message) => this.handleAlarmMessage(message));
-        } else {
-            if (!this.sessionId) throw new Error('No sessionId; cannot subscribe worker queue.');
-            const destination = `/alarm/queue/alarms-${this.sessionId}`;
-            this.subscribe(destination, (message) => {
-                this.handleAlarmMessage(message);
-            });
-        }
+        // 관리자만 센서 데이터 수신
+        this.subscribe('/sensor/topic/sensors/admin', (message) => this.handleSensorMessage(message));
     }
 
     // 메시지 파싱
-    handleAlarmMessage(message) {
+    handleSensorMessage(message) {
         try {
             const body = typeof message?.body === 'string' ? message.body : '';
 
-            const regex = /\[([^\]]+)\]\s*(.+)/;
-            const match = body.match(regex);
+            // 센서 데이터 메시지 파싱 (관리자용만)
+            const sensorRegex = /\[센서 업데이트\] 작업자 ID: (\d+), 위치: \(([\d.-]+), ([\d.-]+)\), 심박수: ([\d.]+), 걸음수: (\d+)/;
 
             let data;
-            if (match) {
-                const incidentType = match[1];
-                const normalizedType = incidentType.replace(/[ -]+/g, '_').toUpperCase();
-                const description = match[2];
-                const workerIdMatch = description.match(/작업자 ID: (\d+)/);
-                const workerId = workerIdMatch ? workerIdMatch[1] : null;
-                const imageUrlMatch = body.match(/\((https?:\/\/[^)]+)\)/);
-                const imageUrl = imageUrlMatch ? imageUrlMatch[1] : null;
+            const adminMatch = body.match(sensorRegex);
 
-                switch (normalizedType) {
-                    case 'PPE_VIOLATION':
-                        this.emit('safety-gear-alert', data);
-                        break;
-                    case 'DANGER_ZONE':
-                        this.emit('danger-zone-alert', data);
-                        break;
-                    case 'HEALTH_RISK':
-                        this.emit('health-risk-alert', data);
-                        break;
-                    default:
-                        this.emit('unknown-alert', data);
-                }
-
+            if (adminMatch) {
                 data = {
-                    incidentType,
-                    incidentDescription: description
-                        .replace(/\s*\(작업자 ID: \d+\)/, '')
-                        .replace(/\s*\(https?:\/\/[^)]+\)/, '')
-                        .trim(),
-                    workerId,
-                    workerImageUrl: imageUrl,
-                    occurredAt: new Date().toISOString(),
+                    type: 'sensor_update',
+                    workerId: parseInt(adminMatch[1]),
+                    latitude: parseFloat(adminMatch[2]),
+                    longitude: parseFloat(adminMatch[3]),
+                    heartRate: parseFloat(adminMatch[4]),
+                    steps: parseInt(adminMatch[5]),
+                    timestamp: new Date().toISOString(),
                 };
+                this.emit('sensor-update', data);
             } else {
-                let type = 'PPE_VIOLATION';
-                if (body.includes('위험구역') || body.includes('DANGER_ZONE')) type = 'DANGER_ZONE';
-                else if (body.includes('건강') || body.includes('HEALTH_RISK')) type = 'HEALTH_RISK';
-
+                // 기타 센서 관련 메시지
                 data = {
-                    incidentType: type,
-                    incidentDescription: body || '메시지 본문 없음',
-                    workerId: null,
-                    occurredAt: new Date().toISOString(),
+                    type: 'general_sensor',
+                    message: body || '센서 메시지',
+                    timestamp: new Date().toISOString(),
                 };
+                this.emit('sensor-message', data);
             }
 
-            switch (data.incidentType) {
-                case 'PPE_VIOLATION':
-                    this.emit('safety-gear-alert', data);
-                    break;
-                case 'DANGER_ZONE':
-                    this.emit('danger-zone-alert', data);
-                    break;
-                case 'HEALTH_RISK':
-                    this.emit('health-risk-alert', data);
-                    break;
-                default:
-                    this.emit('unknown-alert', data);
-            }
-            this.emit('alarm', data);
+            // 모든 센서 메시지를 sensor 이벤트로도 발행
+            this.emit('sensor', data);
         } catch (e) {
-            console.error('메시지 처리 에러:', e, '원본:', message?.body);
-            this.emit('safety-gear-alert', {
-                incidentType: 'PPE_VIOLATION',
-                incidentDescription: '알람이 발생했습니다',
-                workerId: null,
-                occurredAt: new Date().toISOString(),
+            console.error('센서 메시지 처리 에러:', e, '원본:', message?.body);
+            this.emit('sensor-error', {
+                type: 'error',
+                message: '센서 데이터 처리 중 오류가 발생했습니다',
+                timestamp: new Date().toISOString(),
             });
         }
     }
@@ -234,7 +192,7 @@ class AlarmStompService {
             'auth-token': this.token,
             token: this.token,
         };
-        this.client.publish({ destination, headers, body: JSON.stringify(body || {}) });
+        this.client.publish({destination, headers, body: JSON.stringify(body || {})});
     }
 
     // 연결 해제
@@ -252,11 +210,13 @@ class AlarmStompService {
     on(event, cb) {
         (this.listeners[event] ||= []).push(cb);
     }
+
     off(event, cb) {
         if (this.listeners[event]) {
             this.listeners[event] = this.listeners[event].filter((f) => f !== cb);
         }
     }
+
     emit(event, data) {
         (this.listeners[event] || []).forEach((cb) => cb(data));
     }
@@ -266,5 +226,5 @@ class AlarmStompService {
     }
 }
 
-const alarmStompService = new AlarmStompService();
-export default alarmStompService;
+const sensorStompService = new SensorStompService();
+export default sensorStompService;

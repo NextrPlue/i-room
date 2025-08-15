@@ -1,9 +1,9 @@
 import React, {useState, useEffect, useRef, useCallback} from 'react';
 import styles from '../styles/Monitoring.module.css';
 import AlarmModal from '../components/AlarmModal';
-import stompService from '../services/stompService';
+import alarmStompService from '../services/alarmStompService';
 import { authUtils } from '../utils/auth';
-import { alarmAPI, blueprintAPI, riskZoneAPI } from '../api/api';
+import { alarmAPI, blueprintAPI, riskZoneAPI, managementAPI, userAPI, sensorAPI } from '../api/api';
 import { useAlarmData } from '../hooks/useAlarmData';
 
 const MonitoringPage = () => {
@@ -16,17 +16,15 @@ const MonitoringPage = () => {
     
     const { getAlertIcon, getAlertTypeFromData, convertToDashboardType, getAlertTitle, getTimeAgo } = useAlarmData();
 
-    // 작업자 위치 데이터 (GPS 좌표 기반 - 실제로는 API에서 가져와야 함)
-    const [workers] = useState([
-        {id: 1, latitude: 37.5665, longitude: 126.9780, status: 'danger', name: '김철수'},
-        {id: 2, latitude: 37.5666, longitude: 126.9781, status: 'warning', name: '이영희'},
-        {id: 3, latitude: 37.5667, longitude: 126.9782, status: 'safe', name: '박민수'},
-        {id: 4, latitude: 37.5668, longitude: 126.9783, status: 'safe', name: '정수진'},
-        {id: 5, latitude: 37.5669, longitude: 126.9784, status: 'warning', name: '한지민'},
-        {id: 6, latitude: 37.5670, longitude: 126.9785, status: 'safe', name: '조현우'},
-        {id: 7, latitude: 37.5671, longitude: 126.9786, status: 'danger', name: '윤서연'},
-        {id: 8, latitude: 37.5672, longitude: 126.9787, status: 'safe', name: '장동건'}
-    ]);
+    // 근로자 관련 상태
+    const [workingWorkers, setWorkingWorkers] = useState([]); // 현재 근무중인 근로자 (위치 정보 포함)
+    const [workerStats, setWorkerStats] = useState({
+        total: 0,
+        working: 0,
+        offWork: 0,
+        absent: 0,
+        loading: false
+    });
 
     // 도면 관련 상태
     const [currentBlueprint, setCurrentBlueprint] = useState(null);
@@ -36,13 +34,98 @@ const MonitoringPage = () => {
     // 위험구역 데이터 (실제 API에서 가져옴)
     const [dangerZones, setDangerZones] = useState([]);
 
-    // 현장 현황 데이터
-    const [fieldStatus] = useState({
-        totalWorkers: 24,
-        safeWorkers: 18,
-        warningWorkers: 4,
-        dangerWorkers: 2
-    });
+    // 근로자 데이터 가져오기 함수들
+    const fetchWorkerStats = async () => {
+        try {
+            setWorkerStats(prev => ({...prev, loading: true}));
+            const response = await managementAPI.getWorkerStats();
+            setWorkerStats({
+                ...response.data,
+                loading: false
+            });
+        } catch (error) {
+            console.error('출입 통계 조회 실패:', error);
+            setWorkerStats(prev => ({...prev, loading: false}));
+        }
+    };
+
+    // 근무중인 근로자와 위치 정보를 통합 조회
+    const fetchWorkingWorkersWithLocation = async () => {
+        try {
+            // 1. 근무중인 근로자 목록 조회
+            const workingResponse = await managementAPI.getWorkingWorkers();
+            const workingWorkers = workingResponse.data || [];
+            
+            console.log('🔍 근무중인 근로자 수:', workingWorkers.length);
+            console.log('🔍 근무중인 근로자 상세:', workingWorkers);
+
+            if (workingWorkers.length === 0) {
+                setWorkingWorkers([]);
+                return;
+            }
+
+            // 2. 해당 근로자들의 위치 정보 조회
+            const workerIds = workingWorkers.map(w => w.workerId);
+            let workersWithLocation = [];
+
+            try {
+                const locationResponse = await sensorAPI.getWorkersLocation(workerIds);
+                const locations = locationResponse.data || [];
+                
+                console.log('위치 정보:', locations);
+
+                // 3. 데이터 통합
+                workersWithLocation = workingWorkers.map((worker, index) => {
+                    const location = locations.find(loc => loc.workerId === worker.workerId);
+                    return {
+                        ...worker,
+                        id: worker.workerId, // MonitoringPage에서 사용하는 id 필드
+                        name: worker.workerName,
+                        department: worker.department,
+                        occupation: worker.occupation,
+                        enterDate: worker.enterDate,
+                        latitude: location?.latitude || (37.5665 + (index * 0.0001)), // 위치가 없으면 기본값
+                        longitude: location?.longitude || (126.9780 + (index * 0.0001)),
+                        status: ['safe', 'warning', 'danger'][index % 3], // 임시 상태 (추후 센서 데이터 기반으로 변경)
+                        isWorking: true,
+                        workStartTime: worker.enterDate
+                    };
+                });
+            } catch (locationError) {
+                console.error('위치 정보 조회 실패:', locationError);
+                
+                // 위치 정보 조회 실패 시 기본 위치로 설정
+                workersWithLocation = workingWorkers.map((worker, index) => ({
+                    ...worker,
+                    id: worker.workerId,
+                    name: worker.workerName,
+                    department: worker.department,
+                    occupation: worker.occupation,
+                    enterDate: worker.enterDate,
+                    latitude: 37.5665 + (index * 0.0001),
+                    longitude: 126.9780 + (index * 0.0001),
+                    status: ['safe', 'warning', 'danger'][index % 3],
+                    isWorking: true,
+                    workStartTime: worker.enterDate
+                }));
+            }
+
+            setWorkingWorkers(workersWithLocation);
+            console.log('최종 근무중인 근로자 데이터:', workersWithLocation);
+            
+        } catch (error) {
+            console.error('근무중인 근로자 조회 실패:', error);
+            setWorkingWorkers([]);
+        }
+    };
+
+    // 현장 현황 계산 (실시간 업데이트)
+    const fieldStatus = {
+        totalWorkers: workerStats.working || 0,
+        safeWorkers: workingWorkers.filter(w => w.status === 'safe').length,
+        warningWorkers: workingWorkers.filter(w => w.status === 'warning').length,
+        dangerWorkers: workingWorkers.filter(w => w.status === 'danger').length
+    };
 
     // 실시간 경고 알림 데이터 (API + 웹소켓)
     const [alerts, setAlerts] = useState([]);
@@ -335,7 +418,7 @@ const MonitoringPage = () => {
         // 웹소켓 연결
         const connectWebSocket = async () => {
             try {
-                await stompService.connect(token, 'admin');
+                await alarmStompService.connect(token, 'admin');
             } catch (error) {
                 console.error('Monitoring: 웹소켓 연결 실패:', error);
             }
@@ -362,10 +445,10 @@ const MonitoringPage = () => {
         };
 
         // 이벤트 리스너 등록
-        stompService.on('alarm', handleNewAlarm);
+        alarmStompService.on('alarm', handleNewAlarm);
 
         // 웹소켓 연결
-        if (!stompService.isConnected()) {
+        if (!alarmStompService.isConnected()) {
             connectWebSocket().catch(error => {
                 console.error('웹소켓 연결 실패:', error);
             });
@@ -373,8 +456,28 @@ const MonitoringPage = () => {
 
         // 클린업
         return () => {
-            stompService.off('alarm', handleNewAlarm);
+            alarmStompService.off('alarm', handleNewAlarm);
         };
+    }, []);
+
+    // 근로자 데이터 초기화
+    useEffect(() => {
+        const initializeWorkerData = async () => {
+            await fetchWorkerStats();
+            await fetchWorkingWorkersWithLocation();
+        };
+        
+        initializeWorkerData();
+    }, []);
+
+    // 데이터 새로고침을 위한 주기적 업데이트 (5분마다)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            fetchWorkerStats();
+            fetchWorkingWorkersWithLocation();
+        }, 5 * 60 * 1000); // 5분
+
+        return () => clearInterval(interval);
     }, []);
 
     // 시간 업데이트 (1분마다 상대시간 갱신)
@@ -447,8 +550,8 @@ const MonitoringPage = () => {
         }
     };
 
-    // 필터된 작업자 목록 (GPS 좌표를 캔버스 좌표로 변환)
-    const filteredWorkers = workers
+    // 필터된 작업자 목록 (실제 근무중인 근로자만, GPS 좌표를 캔버스 좌표로 변환)
+    const filteredWorkers = workingWorkers
         .filter(worker => {
             if (selectedFilter.attribute === 'all') return true;
             return worker.status === selectedFilter.attribute;
@@ -585,15 +688,15 @@ const MonitoringPage = () => {
                         <div className={styles.legendGroup}>
                             <div className={styles.legendItem}>
                                 <div className={`${styles.legendColor} ${styles.safe}`}></div>
-                                <span>정상(18명)</span>
+                                <span>정상({fieldStatus.safeWorkers}명)</span>
                             </div>
                             <div className={styles.legendItem}>
                                 <div className={`${styles.legendColor} ${styles.warning}`}></div>
-                                <span>주의(4명)</span>
+                                <span>주의({fieldStatus.warningWorkers}명)</span>
                             </div>
                             <div className={styles.legendItem}>
                                 <div className={`${styles.legendColor} ${styles.danger}`}></div>
-                                <span>위험(2명)</span>
+                                <span>위험({fieldStatus.dangerWorkers}명)</span>
                             </div>
                         </div>
 
@@ -625,8 +728,8 @@ const MonitoringPage = () => {
                         </div>
 
                         <p className={styles.statusDetails}>
-                            건설: {fieldStatus.safeWorkers}명 | 안전: {fieldStatus.warningWorkers}명 |
-                            관리: {fieldStatus.dangerWorkers}명
+                            안전: {fieldStatus.safeWorkers}명 | 주의: {fieldStatus.warningWorkers}명 |
+                            위험: {fieldStatus.dangerWorkers}명
                         </p>
 
                         <button className={styles.statusButton}>

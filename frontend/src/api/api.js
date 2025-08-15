@@ -439,6 +439,15 @@ export const managementAPI = {
         const url = `${API_CONFIG.gateway}/api/management/entries/statistics`;
         return await apiRequest(url);
     },
+
+    /**
+     * 근무중인 근로자 목록 조회
+     * @returns {Promise} 근무중인 근로자 목록
+     */
+    getWorkingWorkers: async () => {
+        const url = `${API_CONFIG.gateway}/api/management/entries/working-workers`;
+        return await apiRequest(url);
+    },
 };
 
 /**
@@ -586,6 +595,36 @@ export const alarmAPI = {
         const url = `${API_CONFIG.gateway}/api/alarm/alarms/admins?${queryParams.toString()}`;
         return await apiRequest(url);
     }
+};
+
+/**
+ * Sensor API 서비스
+ */
+export const sensorAPI = {
+    /**
+     * 다중 근로자 위치 정보 조회
+     * @param {Array<number>} workerIds - 근로자 ID 배열
+     * @returns {Promise} 근로자 위치 정보 배열
+     */
+    getWorkersLocation: async (workerIds) => {
+        const url = `${API_CONFIG.gateway}/api/sensor/worker-sensor/locations`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authUtils.getToken()}`
+            },
+            body: JSON.stringify(workerIds)
+        });
+
+        if (!response.ok) {
+            const errorMessage = await handleFetchError(response);
+            throw new Error(errorMessage);
+        }
+
+        return await response.json();
+    },
 };
 
 /**
