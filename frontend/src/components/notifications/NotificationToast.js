@@ -22,7 +22,7 @@ const NotificationToast = ({
 
             return () => clearTimeout(timer);
         }
-    }, [notification, duration]);
+    }, [notification, duration, handleClose]);
 
     // CSS 애니메이션을 위한 스타일 주입
     useEffect(() => {

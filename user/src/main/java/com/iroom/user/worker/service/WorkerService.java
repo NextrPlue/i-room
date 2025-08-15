@@ -128,7 +128,7 @@ public class WorkerService {
 			workerPage = workerRepository.findAll(pageable);
 		}
 
-		Page<WorkerInfoResponse> responsePage = workerPage.map(WorkerInfoResponse::new);
+		Page<WorkerInfoResponse> responsePage = workerPage.map(WorkerInfoResponse::maskedFrom);
 
 		return PagedResponse.of(responsePage);
 	}

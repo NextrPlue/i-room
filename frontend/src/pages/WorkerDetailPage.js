@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { userAPI, managementAPI } from '../api/api';
 import EducationAddModal from '../components/EducationAddModal';
@@ -31,7 +31,7 @@ const WorkerDetailPage = () => {
     const [attendanceError, setAttendanceError] = useState(null);
 
     // 출입현황 조회 함수
-    const fetchWorkerAttendance = async () => {
+    const fetchWorkerAttendance = useCallback(async () => {
         setAttendanceLoading(true);
         setAttendanceError(null);
 
@@ -51,10 +51,10 @@ const WorkerDetailPage = () => {
         } finally {
             setAttendanceLoading(false);
         }
-    };
+    }, [workerId]);
 
     // 교육이력 조회 함수
-    const fetchWorkerEducation = async (page = 0) => {
+    const fetchWorkerEducation = useCallback(async (page = 0) => {
         setEducationLoading(true);
         setEducationError(null);
 
@@ -70,7 +70,7 @@ const WorkerDetailPage = () => {
         } finally {
             setEducationLoading(false);
         }
-    };
+    }, [workerId, pageSize]);
 
     useEffect(() => {
         const fetchWorkerDetail = async () => {
@@ -92,7 +92,7 @@ const WorkerDetailPage = () => {
                 await fetchWorkerAttendance();
             })();
         }
-    }, [workerId]);
+    }, [workerId, fetchWorkerAttendance, fetchWorkerEducation]);
 
     const handleBackClick = () => {
         navigate('/worker');

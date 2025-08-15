@@ -92,6 +92,7 @@ export const useAlarmData = () => {
             time: getTimeAgo(alarm.createdAt),
             timestamp: alarm.createdAt,
             workerId: alarm.workerId,
+            workerName: alarm.workerName,
             originalData: alarm
         };
     }, [getAlertTypeFromData, convertToDashboardType, getAlertTitle, getTimeAgo]);
