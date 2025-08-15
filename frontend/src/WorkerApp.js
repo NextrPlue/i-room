@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
 import WorkerLogin from './pages/WorkerLogin';
 import WorkerHome from "./pages/WorkerHome";
-import stompService from './services/stompService';
+import alarmStompService from './services/alarmStompService';
 import { SafetyGearAlert, DangerZoneAlert, HealthRiskAlert } from './pages/WorkerAlertPage';
 import {authUtils as workerAuth, authUtils} from './utils/workerAuth';
 import './WorkerApp.css';
@@ -41,26 +41,26 @@ const WorkerApp = () => {
     const connectWebSocket = async (token) => {
         try {
             // 근로자는 항상 'worker' 타입으로 연결
-            await stompService.connect(token, 'worker');
+            await alarmStompService.connect(token, 'worker');
 
             // 연결 상태 이벤트
-            stompService.on('connected', () => {
+            alarmStompService.on('connected', () => {
                 setConnectionStatus('connected');
                 console.log('✅ 근로자 WebSocket 연결 성공');
             });
 
-            stompService.on('disconnected', () => {
+            alarmStompService.on('disconnected', () => {
                 setConnectionStatus('disconnected');
                 console.log('❌ WebSocket 연결 끊김');
             });
 
-            stompService.on('error', (error) => {
+            alarmStompService.on('error', (error) => {
                 console.error('WebSocket 에러:', error);
                 setConnectionStatus('error');
             });
 
             // 보호구 미착용 알람 (PPE_VIOLATION)
-            stompService.on('safety-gear-alert', (data) => {
+            alarmStompService.on('safety-gear-alert', (data) => {
                 console.log('🦺 보호구 미착용 알람 수신:', data);
                 setSafetyAlert({ isOpen: true, data });
 
@@ -71,7 +71,7 @@ const WorkerApp = () => {
             });
 
             // 위험구역 접근 알람 (DANGER_ZONE)
-            stompService.on('danger-zone-alert', (data) => {
+            alarmStompService.on('danger-zone-alert', (data) => {
                 console.log('⚠️ 위험구역 접근 알람 수신:', data);
                 setDangerAlert({ isOpen: true, data });
 
@@ -81,7 +81,7 @@ const WorkerApp = () => {
             });
 
             // 건강 위험 알람 (HEALTH_RISK)
-            stompService.on('health-risk-alert', (data) => {
+            alarmStompService.on('health-risk-alert', (data) => {
                 console.log('🏥 건강 위험 알람 수신:', data);
                 setHealthAlert({ isOpen: true, data });
 
@@ -91,7 +91,7 @@ const WorkerApp = () => {
             });
 
             // 전체 알람 이벤트 (디버깅용)
-            stompService.on('alarm', (data) => {
+            alarmStompService.on('alarm', (data) => {
                 console.log('📨 알람 전체 데이터:', data);
             });
 
@@ -128,8 +128,8 @@ const WorkerApp = () => {
     // 컴포넌트 언마운트 시 WebSocket 연결 해제
     useEffect(() => {
         return () => {
-            if (stompService.isConnected()) {
-                stompService.disconnect();
+            if (alarmStompService.isConnected()) {
+                alarmStompService.disconnect();
             }
         };
     }, []);
