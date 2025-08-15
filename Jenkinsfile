@@ -122,13 +122,13 @@ spec:
             steps {
                 script {
                     env.GATEWAY_BUILT = "true"
-                }
-                echo 'Building Gateway service...'
-                dir('gateway') {
-                    sh '''
-                        chmod +x ../gradlew
-                        ../gradlew clean build -x test
-                    '''
+                    echo 'Building Gateway service...'
+                    dir('gateway') {
+                        sh '''
+                            chmod +x ../gradlew
+                            ../gradlew clean build -x test
+                        '''
+                    }
                 }
             }
         }
@@ -149,13 +149,13 @@ spec:
             steps {
                 script {
                     env.USER_BUILT = "true"
-                }
-                echo 'Building User service...'
-                dir('user') {
-                    sh '''
-                        chmod +x ../gradlew
-                        ../gradlew clean build -x test
-                    '''
+                    echo 'Building User service...'
+                    dir('user') {
+                        sh '''
+                            chmod +x ../gradlew
+                            ../gradlew clean build -x test
+                        '''
+                    }
                 }
             }
         }
@@ -176,13 +176,13 @@ spec:
             steps {
                 script {
                     env.MANAGEMENT_BUILT = "true"
-                }
-                echo 'Building Management service...'
-                dir('management') {
-                    sh '''
-                        chmod +x ../gradlew
-                        ../gradlew clean build -x test
-                    '''
+                    echo 'Building Management service...'
+                    dir('management') {
+                        sh '''
+                            chmod +x ../gradlew
+                            ../gradlew clean build -x test
+                        '''
+                    }
                 }
             }
         }
@@ -203,13 +203,13 @@ spec:
             steps {
                 script {
                     env.ALARM_BUILT = "true"
-                }
-                echo 'Building Alarm service...'
-                dir('alarm') {
-                    sh '''
-                        chmod +x ../gradlew
-                        ../gradlew clean build -x test
-                    '''
+                    echo 'Building Alarm service...'
+                    dir('alarm') {
+                        sh '''
+                            chmod +x ../gradlew
+                            ../gradlew clean build -x test
+                        '''
+                    }
                 }
             }
         }
@@ -230,13 +230,13 @@ spec:
             steps {
                 script {
                     env.SENSOR_BUILT = "true"
-                }
-                echo 'Building Sensor service...'
-                dir('sensor') {
-                    sh '''
-                        chmod +x ../gradlew
-                        ../gradlew clean build -x test
-                    '''
+                    echo 'Building Sensor service...'
+                    dir('sensor') {
+                        sh '''
+                            chmod +x ../gradlew
+                            ../gradlew clean build -x test
+                        '''
+                    }
                 }
             }
         }
@@ -257,13 +257,13 @@ spec:
             steps {
                 script {
                     env.DASHBOARD_BUILT = "true"
-                }
-                echo 'Building Dashboard service...'
-                dir('dashboard') {
-                    sh '''
-                        chmod +x ../gradlew
-                        ../gradlew clean build -x test
-                    '''
+                    echo 'Building Dashboard service...'
+                    dir('dashboard') {
+                        sh '''
+                            chmod +x ../gradlew
+                            ../gradlew clean build -x test
+                        '''
+                    }
                 }
             }
         }
@@ -395,14 +395,14 @@ spec:
             steps {
                 script {
                     env.FRONTEND_BUILT = "true"
-                }
-                echo 'Building Frontend Admin Docker image...'
-                dir('frontend') {
-                    container('docker-client') {
-                        sh '''
-                            docker build -t ${FRONTEND_IMAGE} .
-                            echo "Built Frontend Admin image: ${FRONTEND_IMAGE}"
-                        '''
+                    echo 'Building Frontend Admin Docker image...'
+                    dir('frontend') {
+                        container('docker-client') {
+                            sh '''
+                                docker build -t ${FRONTEND_IMAGE} .
+                                echo "Built Frontend Admin image: ${FRONTEND_IMAGE}"
+                            '''
+                        }
                     }
                 }
             }
