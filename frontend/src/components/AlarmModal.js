@@ -116,7 +116,7 @@ const AlarmModal = ({ isOpen, onClose }) => {
                                         <div className={styles.alarmContent}>
                                             <p className={styles.alarmTitle}>{alarm.title}</p>
                                             <p className={styles.alarmDesc}>{alarm.description}</p>
-                                            <p className={styles.alarmMeta}>작업자 ID: {alarm.workerId}</p>
+                                            <p className={styles.alarmMeta}>작업자: {alarm.workerName || "알 수 없음"}</p>
                                         </div>
                                         <span className={styles.alarmTime}>{alarm.time}</span>
                                     </div>

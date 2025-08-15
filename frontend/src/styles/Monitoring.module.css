@@ -411,9 +411,16 @@
     margin: 0 0 2px 0;
 }
 
-.alertDesc {
-    font-size: 12px;
+.alertWorker {
+    font-size: 11px;
     color: #6B7280;
+    margin: 0 0 2px 0;
+    font-weight: 600;
+}
+
+.alertDesc {
+    font-size: 11px;
+    color: #9CA3AF;
     margin: 0;
 }
 

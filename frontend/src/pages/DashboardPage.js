@@ -276,6 +276,7 @@ const DashboardPage = () => {
                                     </div>
                                     <div className={styles.alertContent}>
                                         <p className={styles.alertTitle}>{alert.title}</p>
+                                        <p className={styles.alertWorker}>작업자: {alert.workerName || "알 수 없음"}</p>
                                         <p className={styles.alertDesc}>{alert.description}</p>
                                     </div>
                                     <span className={styles.alertTime}>{alert.time}</span>
