@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styles from '../styles/Report.module.css';
 // import { reportAPI } from '../api/api'; // API 연동 시 사용
 
@@ -88,13 +88,8 @@ const ReportPage = () => {
         complianceRate: 98
     });
 
-    // 컴포넌트 마운트 시 데이터 로드
-    useEffect(() => {
-        fetchReports();
-    }, [currentPage]);
-
     // 리포트 목록 조회
-    const fetchReports = async () => {
+    const fetchReports = useCallback(async () => {
         try {
             // API 호출 로직
             // const response = await reportAPI.getReports({
@@ -108,7 +103,12 @@ const ReportPage = () => {
         } catch (error) {
             console.error('리포트 데이터 조회 실패:', error);
         }
-    };
+    }, [currentPage, pageSize]);
+
+    // 컴포넌트 마운트 시 데이터 로드
+    useEffect(() => {
+        fetchReports();
+    }, [fetchReports]);
 
     // 폼 입력 핸들러
     const handleFormChange = (field, value) => {

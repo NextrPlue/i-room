@@ -50,7 +50,7 @@ const AlarmModal = ({ isOpen, onClose }) => {
         if (isOpen) {
             loadAlarms(0).catch(console.error);
         }
-    }, [isOpen]);
+    }, [isOpen, loadAlarms]);
 
     // 페이지 변경
     const handlePageChange = (newPage) => {
