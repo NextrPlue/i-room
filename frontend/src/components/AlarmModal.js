@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styles from '../styles/AlarmModal.module.css';
 import { alarmAPI } from '../api/api';
 import { useAlarmData } from '../hooks/useAlarmData';
@@ -18,7 +18,7 @@ const AlarmModal = ({ isOpen, onClose }) => {
 
 
     // 알림 목록 로드
-    const loadAlarms = async (page = 0, hours = pagination.hours) => {
+    const loadAlarms = useCallback(async (page = 0, hours = pagination.hours) => {
         setLoading(true);
         try {
             const response = await alarmAPI.getAlarmsForAdmin({
@@ -43,7 +43,7 @@ const AlarmModal = ({ isOpen, onClose }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [pagination.hours, pagination.size, transformAlarmData]);
 
     // 모달이 열릴 때 데이터 로드
     useEffect(() => {
