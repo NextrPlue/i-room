@@ -1,173 +1,144 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import styles from '../styles/Report.module.css';
-// import { reportAPI } from '../api/api'; // API 연동 시 사용
+import { reportAPI } from '../api/api';
 
 const ReportPage = () => {
-    // 새 리포트 생성 폼 데이터
-    const [reportForm, setReportForm] = useState({
-        startDate: '',
-        endDate: '',
-        reportType: 'safety'
+    // 일일 리포트 폼 데이터
+    const [dailyReportForm, setDailyReportForm] = useState({
+        date: ''
     });
+
+    // 개선안 리포트 폼 데이터
+    const [improvementReportForm, setImprovementReportForm] = useState({
+        interval: 'week'
+    });
+
+    // 로딩 상태
+    const [loadingStates, setLoadingStates] = useState({
+        dailyReport: false,
+        improvementReport: false
+    });
+
+    // 에러 상태
+    const [error, setError] = useState('');
 
     // 현재 페이지 상태
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize] = useState(5);
-    const [totalPages, setTotalPages] = useState(2);
+    const [totalPages, setTotalPages] = useState(1);
 
-    // 리포트 목록 데이터
-    const [reports, setReports] = useState([
-        {
-            id: 1,
-            title: '6월 보호구 착용 분석',
-            type: '보호구 착용 분석',
-            period: '2025.06.01~06.30',
-            createdDate: '2025.07.01',
-            status: 'completed'
-        },
-        {
-            id: 2,
-            title: '6월 위험구역 분석',
-            type: '위험구역 분석',
-            period: '2025.06.01~06.30',
-            createdDate: '2025.07.01',
-            status: 'completed'
-        },
-        {
-            id: 3,
-            title: '6월 주간 안전 현황',
-            type: '종합 안전 현황',
-            period: '2025.06.01~06.08',
-            createdDate: '2025.06.09',
-            status: 'processing'
-        },
-        {
-            id: 4,
-            title: '6월 주간 안전 현황',
-            type: '종합 안전 현황',
-            period: '2025.06.01~06.08',
-            createdDate: '2025.06.09',
-            status: 'processing'
-        },
-        {
-            id: 5,
-            title: '6월 주간 안전 현황',
-            type: '종합 안전 현황',
-            period: '2025.06.01~06.08',
-            createdDate: '2025.06.09',
-            status: 'processing'
-        }
-    ]);
+    // 리포트 생성 이력 데이터
+    const [reportHistory, setReportHistory] = useState([]);
 
-    // AI 추천사항 데이터
-    const [recommendations] = useState([
-        {
-            id: 1,
-            icon: '⚠️',
-            title: '위험구역 접근 감소 방안',
-            description: '3구역 크레인 작업 시 주의 안전 클래스 설치로 경고합니다.'
-        },
-        {
-            id: 2,
-            icon: '🔷',
-            title: '보호구 착용 개선',
-            description: '오전 시간대 보호구 미착용 발견률이 높습니다. 안전 장갑 감지기 운용 개선.'
-        },
-        {
-            id: 3,
-            icon: '📊',
-            title: '근로자 건강 관리',
-            description: '고온 작업 시간대 휴식 시간을 10분 증가시킵니다. 건강 관리 보완.'
-        }
-    ]);
+    // 각 기간별 설명
+    const INTERVAL_DESCRIPTIONS = {
+        day: '어제 하루 데이터 분석',
+        week: '최근 1주일 데이터 분석',
+        month: '최근 1개월 데이터 분석'
+    };
 
-    // 미리보기 통계 데이터
-    const [previewStats] = useState({
-        safetyScore: 87,
-        riskEvents: 12,
-        complianceRate: 98
-    });
+    // 에러 컨럤 초기화
+    const clearError = () => {
+        setError('');
+    };
 
-    // 리포트 목록 조회
-    const fetchReports = useCallback(async () => {
-        try {
-            // API 호출 로직
-            // const response = await reportAPI.getReports({
-            //     page: currentPage,
-            //     size: pageSize
-            // });
-            // setReports(response.data.content || []);
-            // setTotalPages(response.data.totalPages || 1);
+    // 오늘 날짜 가져오기
+    const getTodayDate = () => {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    };
 
-            console.log('리포트 목록 조회 - 페이지:', currentPage);
-        } catch (error) {
-            console.error('리포트 데이터 조회 실패:', error);
-        }
-    }, [currentPage, pageSize]);
-
-    // 컴포넌트 마운트 시 데이터 로드
-    useEffect(() => {
-        fetchReports();
-    }, [fetchReports]);
-
-    // 폼 입력 핸들러
-    const handleFormChange = (field, value) => {
-        setReportForm(prev => ({
+    // 일일 리포트 폼 입력 핸들러
+    const handleDailyFormChange = (field, value) => {
+        setDailyReportForm(prev => ({
             ...prev,
             [field]: value
         }));
+        clearError();
     };
 
-    // 리포트 생성
-    const handleGenerateReport = async () => {
-        if (!reportForm.startDate || !reportForm.endDate) {
-            alert('보고서 기간을 선택해주세요.');
+    // 개선안 리포트 폼 입력 핸들러
+    const handleImprovementFormChange = (field, value) => {
+        setImprovementReportForm(prev => ({
+            ...prev,
+            [field]: value
+        }));
+        clearError();
+    };
+
+    // 일일 리포트 생성
+    const handleGenerateDailyReport = async () => {
+        if (!dailyReportForm.date) {
+            setError('날짜를 선택해주세요.');
             return;
         }
 
+        setLoadingStates(prev => ({...prev, dailyReport: true}));
+        clearError();
+
         try {
-            // API 호출 로직
-            // const reportData = {
-            //     startDate: reportForm.startDate,
-            //     endDate: reportForm.endDate,
-            //     type: reportForm.reportType
-            // };
-            // await reportAPI.generateReport(reportData);
-
-            alert('리포트 생성이 시작되었습니다.');
-
-            // 새로운 리포트를 목록에 추가 (임시)
+            const blob = await reportAPI.generateDailyReport(dailyReportForm.date);
+            reportAPI.downloadFile(blob, `daily_report_${dailyReportForm.date}.pdf`);
+            
+            // 생성 이력에 추가
             const newReport = {
                 id: Date.now(),
-                title: `${getReportTypeLabel(reportForm.reportType)} 분석`,
-                type: getReportTypeLabel(reportForm.reportType),
-                period: `${reportForm.startDate}~${reportForm.endDate}`,
-                createdDate: new Date().toISOString().split('T')[0].replace(/-/g, '.'),
-                status: 'processing'
+                title: `일일 안전 리포트`,
+                type: '일일 리포트',
+                period: dailyReportForm.date,
+                createdDate: new Date().toISOString().split('T')[0],
+                status: 'completed'
             };
-
-            setReports(prev => [newReport, ...prev]);
-
-            // 폼 초기화
-            setReportForm({
-                startDate: '',
-                endDate: '',
-                reportType: 'safety'
-            });
-
+            setReportHistory(prev => [newReport, ...prev]);
+            
+            alert('리포트 다운로드가 시작되었습니다.');
+            
         } catch (error) {
-            console.error('리포트 생성 실패:', error);
-            alert('리포트 생성에 실패했습니다.');
+            console.error('일일 리포트 생성 실패:', error);
+            setError('리포트 생성에 실패했습니다: ' + error.message);
+        } finally {
+            setLoadingStates(prev => ({...prev, dailyReport: false}));
         }
     };
 
-    // 리포트 타입 라벨 변환
-    const getReportTypeLabel = (type) => {
-        switch (type) {
-            case 'safety': return '종합 안전 현황';
-            case 'equipment': return '보호구 착용 분석';
-            case 'risk': return '위험구역 분석';
-            default: return '안전 분석';
+    // 개선안 리포트 생성
+    const handleGenerateImprovementReport = async () => {
+        setLoadingStates(prev => ({...prev, improvementReport: true}));
+        clearError();
+
+        try {
+            const blob = await reportAPI.generateImprovementReport(improvementReportForm.interval);
+            const intervalLabels = { day: '일간', week: '주간', month: '월간' };
+            reportAPI.downloadFile(blob, `${improvementReportForm.interval}_improvement_report.pdf`);
+            
+            // 생성 이력에 추가
+            const newReport = {
+                id: Date.now(),
+                title: `${intervalLabels[improvementReportForm.interval]} AI 개선안 리포트`,
+                type: 'AI 개선안 리포트',
+                period: `${intervalLabels[improvementReportForm.interval]} 분석`,
+                createdDate: new Date().toISOString().split('T')[0],
+                status: 'completed'
+            };
+            setReportHistory(prev => [newReport, ...prev]);
+            
+            alert('개선안 리포트 다운로드가 시작되었습니다.');
+            
+        } catch (error) {
+            console.error('개선안 리포트 생성 실패:', error);
+            setError('개선안 리포트 생성에 실패했습니다: ' + error.message);
+        } finally {
+            setLoadingStates(prev => ({...prev, improvementReport: false}));
+        }
+    };
+
+    // 간격 라벨 변환
+    const getIntervalLabel = (interval) => {
+        switch (interval) {
+            case 'day': return '일간';
+            case 'week': return '주간';
+            case 'month': return '월간';
+            default: return '기간';
         }
     };
 
@@ -181,15 +152,6 @@ const ReportPage = () => {
         }
     };
 
-    // PDF 다운로드
-    const handlePdfDownload = () => {
-        alert('PDF 다운로드가 시작됩니다.');
-    };
-
-    // 엑셀 내보내기
-    const handleExcelExport = () => {
-        alert('엑셀 내보내기가 시작됩니다.');
-    };
 
     // 리포트 다운로드
     const handleDownload = (reportId) => {
@@ -203,16 +165,15 @@ const ReportPage = () => {
         alert('공유 링크가 클립보드에 복사되었습니다.');
     };
 
-    // 더 많은 추천사항 보기
-    const handleMoreRecommendations = () => {
-        alert('AI 추천사항 상세 페이지로 이동합니다.');
-    };
 
     // 현재 페이지 데이터
-    const currentReports = reports.slice(
+    const currentReports = reportHistory.slice(
         currentPage * pageSize,
         (currentPage + 1) * pageSize
     );
+
+    // 전체 페이지 수 계산
+    const totalPagesCalculated = Math.ceil(reportHistory.length / pageSize) || 1;
 
     return (
         <div className={styles.page}>
@@ -221,116 +182,92 @@ const ReportPage = () => {
                 <h1 className={styles.pageTitle}>안전 보고서 생성 및 관리</h1>
             </header>
 
-            {/* 상단 섹션 - 새 리포트 생성 + 미리보기 */}
+            {/* 에러 메시지 */}
+            {error && (
+                <div className={styles.errorMessage}>
+                    <span>⚠️ {error}</span>
+                    <button onClick={clearError} className={styles.closeError}>×</button>
+                </div>
+            )}
+
+            {/* 상단 섹션 - 리포트 생성 카드들 */}
             <section className={styles.topSection}>
-                {/* 좌측: 새 리포트 생성 */}
+                {/* 좌측: 일일 리포트 생성 */}
                 <div className={styles.reportCreateSection}>
-                    <h2 className={styles.sectionTitle}>새 리포트 생성</h2>
+                    <h2 className={styles.sectionTitle}>일일 안전 리포트 생성</h2>
+                    <p className={styles.sectionDescription}>특정 날짜의 안전 현황을 종합하여 보고서를 생성합니다.</p>
 
                     <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>보고서 기간</label>
+                        <label className={styles.formLabel}>날짜 선택</label>
                         <input
                             type="date"
                             className={styles.formInput}
-                            value={reportForm.startDate}
-                            onChange={(e) => handleFormChange('startDate', e.target.value)}
+                            value={dailyReportForm.date}
+                            max={getTodayDate()}
+                            onChange={(e) => handleDailyFormChange('date', e.target.value)}
                         />
                     </div>
 
+                    <button
+                        className={`${styles.generateButton} ${styles.dailyButton}`}
+                        onClick={handleGenerateDailyReport}
+                        disabled={!dailyReportForm.date || loadingStates.dailyReport}
+                    >
+                        {loadingStates.dailyReport ? (
+                            <>
+                                <span className={styles.spinner}></span>
+                                리포트 생성 중...
+                            </>
+                        ) : (
+                            '일일 리포트 생성'
+                        )}
+                    </button>
+                </div>
+
+                {/* 우측: AI 개선안 리포트 생성 */}
+                <div className={styles.improvementSection}>
+                    <h2 className={styles.sectionTitle}>AI 개선안 리포트 생성</h2>
+                    <p className={styles.sectionDescription}>AI가 안전 데이터를 분석하여 맞춤형 개선 방안을 제시합니다.</p>
+
                     <div className={styles.formGroup}>
-                        <label className={styles.formLabel}>리포트 타입</label>
+                        <label className={styles.formLabel}>분석 기간</label>
                         <select
                             className={styles.formSelect}
-                            value={reportForm.reportType}
-                            onChange={(e) => handleFormChange('reportType', e.target.value)}
+                            value={improvementReportForm.interval}
+                            onChange={(e) => handleImprovementFormChange('interval', e.target.value)}
                         >
-                            <option value="safety">종합 안전 현황</option>
-                            <option value="equipment">보호구 착용 분석</option>
-                            <option value="risk">위험구역 분석</option>
+                            <option value="day">일간 분석</option>
+                            <option value="week">주간 분석</option>
+                            <option value="month">월간 분석</option>
                         </select>
+                        <p className={styles.intervalDescription}>
+                            {INTERVAL_DESCRIPTIONS[improvementReportForm.interval]}
+                        </p>
                     </div>
 
                     <button
-                        className={styles.generateButton}
-                        onClick={handleGenerateReport}
-                        disabled={!reportForm.startDate || !reportForm.endDate}
+                        className={`${styles.generateButton} ${styles.improvementButton}`}
+                        onClick={handleGenerateImprovementReport}
+                        disabled={loadingStates.improvementReport}
                     >
-                        리포트 생성
+                        {loadingStates.improvementReport ? (
+                            <>
+                                <span className={styles.spinner}></span>
+                                AI 분석 중... (약 30초 소요)
+                            </>
+                        ) : (
+                            <>
+                                🤖 AI 개선안 리포트 생성
+                            </>
+                        )}
                     </button>
-                </div>
-
-                {/* 우측: 리포트 미리보기 */}
-                <div className={styles.previewSection}>
-                    <div className={styles.previewHeader}>
-                        <h2 className={styles.previewTitle}>리포트 미리보기</h2>
-                    </div>
-
-                    <div className={styles.chartsContainer}>
-                        <div className={styles.chartItem}>
-                            <p className={styles.chartTitle}>안전 점수 추이</p>
-                            <div className={styles.chartContainer}>
-                                <div className={styles.chartPlaceholder}>📊 안전 점수 차트</div>
-                                <div className={styles.chartStats}>
-                                    <p className={`${styles.chartValue} ${styles.safe}`}>{previewStats.safetyScore}점</p>
-                                    <p className={styles.chartLabel}>평균 안전 점수</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className={styles.chartItem}>
-                            <p className={styles.chartTitle}>위험 시간 발생 현황</p>
-                            <div className={styles.chartContainer}>
-                                <div className={styles.chartPlaceholder}>📈 위험 발생 차트</div>
-                                <div className={styles.chartStats}>
-                                    <p className={`${styles.chartValue} ${styles.danger}`}>{previewStats.riskEvents}건</p>
-                                    <p className={styles.chartLabel}>위험 시간</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className={styles.previewActions}>
-                        <button className={`${styles.previewButton} ${styles.pdfButton}`} onClick={handlePdfDownload}>
-                            PDF 다운로드
-                        </button>
-                        <button className={`${styles.previewButton} ${styles.exportButton}`} onClick={handleExcelExport}>
-                            엑셀 내보내기
-                        </button>
-                    </div>
                 </div>
             </section>
 
-            {/* AI 개선사항 추천 섹션 */}
-            <section className={styles.aiRecommendationSection}>
-                <div className={styles.aiHeader}>
-                    <h2 className={styles.aiTitle}>AI 개선사항 추천</h2>
-                    <button className={styles.moreRecommendationsButton} onClick={handleMoreRecommendations}>
-                        더 많은 추천사항 보기
-                    </button>
-                </div>
 
-                <div className={styles.aiRecommendations}>
-                    {recommendations.map(recommendation => (
-                        <div key={recommendation.id} className={styles.recommendationCard}>
-                            <div className={styles.recommendationHeader}>
-                                <div className={styles.recommendationIcon}>
-                                    {recommendation.icon}
-                                </div>
-                                <h3 className={styles.recommendationTitle}>
-                                    {recommendation.title}
-                                </h3>
-                            </div>
-                            <p className={styles.recommendationDesc}>
-                                {recommendation.description}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* 하단: 리포트 목록 테이블 */}
+            {/* 리포트 생성 이력 */}
             <section className={styles.tableSection}>
-                <h2 className={styles.tableTitle}>리포트 목록</h2>
+                <h2 className={styles.tableTitle}>리포트 생성 이력</h2>
 
                 <table className={styles.dataTable}>
                     <thead>
@@ -379,7 +316,7 @@ const ReportPage = () => {
                     ) : (
                         <tr>
                             <td colSpan="6" className={styles.emptyState}>
-                                생성된 리포트가 없습니다.
+                                아직 생성된 리포트가 없습니다.
                             </td>
                         </tr>
                     )}
@@ -387,7 +324,7 @@ const ReportPage = () => {
                 </table>
 
                 {/* 페이지네이션 */}
-                {totalPages > 1 && (
+                {totalPagesCalculated > 1 && (
                     <div className={styles.pagination}>
                         <button
                             className={styles.pageBtn}
@@ -397,7 +334,7 @@ const ReportPage = () => {
                             ‹
                         </button>
 
-                        {Array.from({ length: totalPages }, (_, index) => (
+                        {Array.from({ length: totalPagesCalculated }, (_, index) => (
                             <button
                                 key={index}
                                 className={`${styles.pageBtn} ${currentPage === index ? styles.active : ''}`}
@@ -409,23 +346,10 @@ const ReportPage = () => {
 
                         <button
                             className={styles.pageBtn}
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages - 1))}
-                            disabled={currentPage >= totalPages - 1}
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPagesCalculated - 1))}
+                            disabled={currentPage >= totalPagesCalculated - 1}
                         >
                             ›
-                        </button>
-
-                        <span style={{ margin: '0 16px', color: '#6B7280', fontSize: '14px' }}>...</span>
-
-                        <button className={styles.pageBtn}>
-                            40
-                        </button>
-
-                        <button
-                            className={styles.pageBtn}
-                            onClick={() => setCurrentPage(totalPages - 1)}
-                        >
-                            ››
                         </button>
                     </div>
                 )}
