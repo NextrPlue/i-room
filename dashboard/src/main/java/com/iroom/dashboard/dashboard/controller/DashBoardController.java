@@ -24,12 +24,12 @@ public class DashBoardController {
 	private final ChatService chatService;
 	private final PdfService pdfService;
 
-	@GetMapping(value = "/{interval}")
+	@GetMapping(value = "/metrics/{interval}")
 	public  ResponseEntity<List<MetricResponse>> getMetricScore(@PathVariable String interval){//day,week,month
 		return ResponseEntity.ok(dashBoardService.getMetricScore(interval));
 	}
 	//대시보드 조회하기
-	@GetMapping(value = "/{metricType}", produces = "application/json;charset=UTF-8")
+	@GetMapping(value = "/dashboard/{metricType}", produces = "application/json;charset=UTF-8")
 	public ResponseEntity<DashBoardResponse> getDashBoard(@PathVariable String metricType) {
 		DashBoardResponse dashBoardDto = dashBoardService.getDashBoard(metricType);
 		return ResponseEntity.ok(dashBoardDto);
