@@ -378,6 +378,11 @@
     border-left-color: #EF4444;
 }
 
+.alertItem.health {
+    background: #FEE2E2;
+    border-left-color: #EF4444;
+}
+
 .alertIcon {
     width: 24px;
     height: 24px;
@@ -396,6 +401,10 @@
 }
 
 .alertIcon.danger {
+    background: #EF4444;
+}
+
+.alertIcon.health {
     background: #EF4444;
 }
 
@@ -579,14 +588,4 @@
     border-color: #3B82F6;
     background: #EFF6FF;
     color: #3B82F6;
-}
-
-/* 건강 위험 타입 스타일 */
-.alertItem.health {
-    background: #EFF6FF;
-    border-left-color: #3B82F6;
-}
-
-.alertIcon.health {
-    background: #3B82F6;
 }

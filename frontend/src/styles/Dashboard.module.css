@@ -256,8 +256,8 @@
 }
 
 .alertItem.health {
-    background: #EFF6FF;
-    border-left-color: #3B82F6;
+    background: #FEE2E2;
+    border-left-color: #EF4444;
 }
 
 .alertIcon {
@@ -282,7 +282,7 @@
 }
 
 .alertIcon.health {
-    background: #3B82F6;
+    background: #EF4444;
 }
 
 .alertContent {
