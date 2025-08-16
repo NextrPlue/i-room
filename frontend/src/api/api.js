@@ -699,3 +699,28 @@ export const riskZoneAPI = {
         });
     }
 };
+
+/**
+ * Dashboard API 서비스
+ */
+export const dashboardAPI = {
+    /**
+     * 메트릭 점수 조회 (안전 점수 변동 추이용)
+     * @param {string} interval - 조회 간격 (day, week, month)
+     * @returns {Promise} 메트릭 데이터 배열
+     */
+    getMetrics: async (interval) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/dashboards/metrics/${interval}`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 특정 메트릭 타입 대시보드 조회
+     * @param {string} metricType - 메트릭 타입 (PPE_VIOLATION, DANGER_AREA_ACCESS, HEALTH_ANOMALY)
+     * @returns {Promise} 대시보드 데이터
+     */
+    getDashboard: async (metricType) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/dashboards/${metricType}`;
+        return await apiRequest(url);
+    }
+};
