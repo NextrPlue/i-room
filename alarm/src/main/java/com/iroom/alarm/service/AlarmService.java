@@ -73,8 +73,8 @@ public class AlarmService {
 		alarmRepository.save(alarm);
 
 		// WebSocket 실시간 전송
-		String adminMessage = String.format("[%s] %s (%s)", alarmEvent.incidentType(),
-			alarmEvent.incidentDescription(), worker.getName());
+		String adminMessage = String.format("[%s] %s (%s) (작업자 ID: %d)", alarmEvent.incidentType(),
+			alarmEvent.incidentDescription(), worker.getName(), alarmEvent.workerId());
 		if (alarmEvent.workerImageUrl() != null) {
 			adminMessage += " (" + alarmEvent.workerImageUrl() + ")";
 		}
