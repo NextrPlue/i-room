@@ -40,6 +40,13 @@ spec:
                 name: alarm-service
                 port:
                   number: 80
+          - path: /sensor/ws # Path for alarm websocket
+            pathType: Prefix
+            backend:
+              service:
+                name: sensor-service
+                port:
+                  number: 80
           - path: /api # Path for gateway
             pathType: Prefix
             backend:
