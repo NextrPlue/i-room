@@ -35,7 +35,7 @@ const DashboardPage = () => {
     const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
     const alertsPagination = {
         page: 0,
-        size: 4, // 대시보드에는 최근 4개만 표시
+        size: 3, // 대시보드에는 최근 3개만 표시
         hours: 168 // 최근 7일 (168시간)로 범위 확대
     };
 
@@ -405,8 +405,8 @@ const DashboardPage = () => {
                 originalData: data
             };
 
-            // 기존 알림 목록에 추가 (최신 알림을 맨 위에, 최대 3개 유지)
-            setAlerts(prevAlerts => [newAlert, ...prevAlerts.slice(0, 3)]);
+            // 기존 알림 목록에 추가 (최신 알림을 맨 위에, 최대 2개 유지하여 총 3개)
+            setAlerts(prevAlerts => [newAlert, ...prevAlerts.slice(0, 2)]);
             
             // 24시간 알림 목록에도 추가 (안전 지표 업데이트용)
             setDayAlerts(prevDayAlerts => [newAlert, ...prevDayAlerts]);
@@ -543,25 +543,6 @@ const DashboardPage = () => {
                         </div>
                     </div>
 
-                    {/* 주요 안전 지표 */}
-                    <div className={`${styles.widgetCard} ${styles.indicatorWidget}`}>
-                        <h3 className={styles.widgetTitle}>주요 안전 지표</h3>
-
-                        <div className={styles.indicatorList}>
-                            {indicators.map(indicator => (
-                                <div key={indicator.id} className={styles.indicatorItem}>
-                                    <div className={`${styles.indicatorIcon} ${styles[indicator.type]}`}>
-                                        {indicator.icon}
-                                    </div>
-                                    <div className={styles.indicatorContent}>
-                                        <p className={styles.indicatorTitle}>{indicator.title}</p>
-                                        <p className={styles.indicatorValue}>{indicator.value}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
                     {/* 근로자 현황 */}
                     <div className={`${styles.widgetCard} ${styles.statusWidget}`}>
                         <h3 className={styles.widgetTitle}>근로자 현황</h3>
@@ -603,6 +584,25 @@ const DashboardPage = () => {
                                     </p>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+
+                    {/* 주요 안전 지표 */}
+                    <div className={`${styles.widgetCard} ${styles.indicatorWidget}`}>
+                        <h3 className={styles.widgetTitle}>주요 안전 지표</h3>
+
+                        <div className={styles.indicatorList}>
+                            {indicators.map(indicator => (
+                                <div key={indicator.id} className={styles.indicatorItem}>
+                                    <div className={`${styles.indicatorIcon} ${styles[indicator.type]}`}>
+                                        {indicator.icon}
+                                    </div>
+                                    <div className={styles.indicatorContent}>
+                                        <p className={styles.indicatorTitle}>{indicator.title}</p>
+                                        <p className={styles.indicatorValue}>{indicator.value}</p>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
 

@@ -26,9 +26,8 @@
 /* 상단 섹션 - 종합 안전 점수 + 우측 위젯들 */
 .topSection {
     display: grid;
-    grid-template-columns: minmax(300px, 400px) 1fr;
+    grid-template-columns: minmax(280px, 340px) 1fr;
     gap: 24px;
-    margin-bottom: 32px;
     min-height: 400px;
 }
 
@@ -45,7 +44,7 @@
         gap: 16px;
         min-height: auto;
     }
-    
+
     .rightWidgetsGrid {
         grid-template-columns: 1fr;
         gap: 12px;
@@ -127,11 +126,12 @@
     color: white;
     border: none;
     border-radius: 24px;
-    padding: 12px 32px;
+    padding: 8px 32px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    width: 100%;
 }
 
 .safetyStatusBtn:hover {
@@ -332,7 +332,6 @@
     display: flex;
     flex-direction: column;
     min-height: 200px;
-    height: 100%;
 }
 
 .widgetTitle {
@@ -528,11 +527,11 @@
     /* 기본 위젯 스타일 상속 */
 }
 
-/* 새로운 상태 목록 스타일 (indicatorList와 유사) */
+/* 새로운 상태 목록 스타일 (indicatorList와 동일) */
 .statusList {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
     flex: 1;
 }
 
@@ -540,7 +539,6 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 8px 0;
 }
 
 .statusItemIcon {
