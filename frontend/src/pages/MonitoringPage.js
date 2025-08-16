@@ -457,8 +457,6 @@ const MonitoringPage = () => {
 
         // 새로운 알림 처리
         const handleNewAlarm = (data) => {
-            console.log('🚨 handleNewAlarm 호출됨:', data);
-            
             const alertType = getAlertTypeFromData(data.incidentType, data.incidentDescription);
             const dashboardType = convertToDashboardType(alertType);
 
@@ -477,34 +475,25 @@ const MonitoringPage = () => {
             setAlerts(prevAlerts => [newAlert, ...prevAlerts.slice(0, 2)]);
 
             // 알림 유형에 따른 근로자 상태 업데이트
-            console.log('📋 알림 workerId:', data.workerId);
             if (data.workerId) {
                 setWorkingWorkers(prevWorkers => {
-                    console.log('👥 현재 근로자 목록:', prevWorkers.map(w => ({id: w.workerId, name: w.name})));
-                    
-                    const updatedWorkers = prevWorkers.map(worker => {
-                        console.log(`🔍 비교: worker.workerId(${worker.workerId}) vs data.workerId(${data.workerId})`);
-                        
+                    return prevWorkers.map(worker => {
                         if (worker.workerId.toString() === data.workerId.toString()) {
                             let newStatus = worker.status;
 
                             switch (data.incidentType) {
                                 case 'PPE_VIOLATION':
                                     newStatus = 'warning'; // 보호구 미착용 -> 주의
-                                    console.log('⚠️ PPE 위반 -> warning 상태로 변경');
                                     break;
                                 case 'DANGER_ZONE':
                                 case 'HEALTH_RISK':
                                     newStatus = 'danger'; // 위험구역 접근, 건강 위험 -> 위험
-                                    console.log('🚫 위험구역/건강위험 -> danger 상태로 변경');
                                     break;
                                 default:
-                                    console.log('❓ 알 수 없는 알림 유형:', data.incidentType);
+                                    // 기타 알림은 상태 변경 없음
                                     break;
                             }
 
-                            console.log(`✅ 근로자 ${worker.workerId} 상태 변경: ${worker.status} -> ${newStatus}`);
-                            
                             return {
                                 ...worker,
                                 status: newStatus,
@@ -514,12 +503,7 @@ const MonitoringPage = () => {
                         }
                         return worker;
                     });
-                    
-                    console.log('🔄 업데이트된 근로자 목록:', updatedWorkers.map(w => ({id: w.workerId, name: w.name, status: w.status})));
-                    return updatedWorkers;
                 });
-            } else {
-                console.log('❌ workerId가 없어서 근로자 상태 업데이트 생략');
             }
         };
 
