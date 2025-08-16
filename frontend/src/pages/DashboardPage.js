@@ -39,9 +39,14 @@ const DashboardPage = () => {
         hours: 168 // 최근 7일 (168시간)로 범위 확대
     };
 
-    // 24시간 알림 데이터 (안전 지표 계산용)
-    const [dayAlerts, setDayAlerts] = useState([]);
-    const [dayAlertsLoading, setDayAlertsLoading] = useState(true);
+
+    // Dashboard 메트릭 기반 안전 지표 데이터
+    const [safetyMetrics, setSafetyMetrics] = useState({
+        PPE_VIOLATION: 0,
+        DANGER_ZONE: 0,
+        HEALTH_RISK: 0
+    });
+    const [safetyMetricsLoading, setSafetyMetricsLoading] = useState(true);
 
     // 메트릭 데이터 상태 (안전 점수 변동 추이용)
     const [metricsData, setMetricsData] = useState({
@@ -195,56 +200,33 @@ const DashboardPage = () => {
         );
     }, []);
 
-    // 알림 데이터 기반 안전 지표 계산
+    // Dashboard API 기반 안전 지표 계산
     const calculateSafetyIndicators = useCallback(() => {
-        if (dayAlertsLoading || !dayAlerts.length) {
+        if (safetyMetricsLoading) {
             return [
                 {
                     id: 1,
                     type: 'normal',
                     title: '보호구 미착용 적발 횟수',
-                    value: dayAlertsLoading ? '...' : '0건',
+                    value: '...',
                     icon: '🦺'
                 },
                 {
                     id: 2,
                     type: 'normal',
-                    title: '작업 안전 경고 발생 횟수',
-                    value: dayAlertsLoading ? '...' : '0건',
+                    title: '위험지역 접근 횟수',
+                    value: '...',
                     icon: '⚠️'
                 },
                 {
                     id: 3,
                     type: 'normal',
                     title: '건강상태 이상 발생 횟수',
-                    value: dayAlertsLoading ? '...' : '0건',
+                    value: '...',
                     icon: '🏥'
                 }
             ];
         }
-
-        // 보호구 미착용 관련 알림 수 계산
-        const ppeViolations = dayAlerts.filter(alert => 
-            alert.originalData?.incidentType === 'PPE_VIOLATION' || 
-            alert.title?.includes('보호구') || 
-            alert.description?.includes('보호구')
-        ).length;
-
-        // 작업 안전 경고 관련 알림 수 계산 (위험구역, 안전사고 등)
-        const safetyWarnings = dayAlerts.filter(alert => 
-            alert.originalData?.incidentType === 'DANGER_ZONE' ||
-            alert.originalData?.incidentType === 'SAFETY_ACCIDENT' ||
-            alert.title?.includes('위험') || 
-            alert.title?.includes('경고')
-        ).length;
-
-        // 건강상태 이상 관련 알림 수 계산
-        const healthRisks = dayAlerts.filter(alert => 
-            alert.originalData?.incidentType === 'HEALTH_RISK' ||
-            alert.title?.includes('건강') || 
-            alert.title?.includes('심박') ||
-            alert.title?.includes('체온')
-        ).length;
 
         // 위험도 결정 함수
         const getRiskType = (count) => {
@@ -256,27 +238,27 @@ const DashboardPage = () => {
         return [
             {
                 id: 1,
-                type: getRiskType(ppeViolations),
+                type: getRiskType(safetyMetrics.PPE_VIOLATION),
                 title: '보호구 미착용 적발 횟수',
-                value: `${ppeViolations}건`,
+                value: `${safetyMetrics.PPE_VIOLATION}건`,
                 icon: '🦺'
             },
             {
                 id: 2,
-                type: getRiskType(safetyWarnings),
-                title: '작업 안전 경고 발생 횟수',
-                value: `${safetyWarnings}건`,
+                type: getRiskType(safetyMetrics.DANGER_ZONE),
+                title: '위험지역 접근 횟수',
+                value: `${safetyMetrics.DANGER_ZONE}건`,
                 icon: '⚠️'
             },
             {
                 id: 3,
-                type: getRiskType(healthRisks),
+                type: getRiskType(safetyMetrics.HEALTH_RISK),
                 title: '건강상태 이상 발생 횟수',
-                value: `${healthRisks}건`,
+                value: `${safetyMetrics.HEALTH_RISK}건`,
                 icon: '🏥'
             }
         ];
-    }, [dayAlerts, dayAlertsLoading]);
+    }, [safetyMetrics, safetyMetricsLoading]);
 
     // 계산된 안전 지표
     const indicators = calculateSafetyIndicators();
@@ -322,25 +304,6 @@ const DashboardPage = () => {
         }
     }, [alertsPagination.page, alertsPagination.size, alertsPagination.hours, transformAlarmData]);
 
-    // 24시간 알람 데이터 로드 (안전 지표 계산용)
-    const loadDayAlarms = useCallback(async () => {
-        setDayAlertsLoading(true);
-        try {
-            const response = await alarmAPI.getAlarmsForAdmin({
-                page: 0,
-                size: 100, // 24시간 내 모든 알림 조회
-                hours: 24 // 최근 24시간
-            });
-
-            const apiAlerts = response.data?.content?.map(transformAlarmData) || [];
-            setDayAlerts(apiAlerts);
-        } catch (error) {
-            console.error('24시간 알람 목록 로드 실패:', error);
-            setDayAlerts([]);
-        } finally {
-            setDayAlertsLoading(false);
-        }
-    }, [transformAlarmData]);
 
     // 메트릭 데이터 로드 함수
     const loadMetrics = useCallback(async (interval) => {
@@ -375,6 +338,33 @@ const DashboardPage = () => {
         ]);
     }, [loadMetrics]);
 
+    // 개별 메트릭 조회 함수 (안전 지표용)
+    const loadSafetyMetrics = useCallback(async () => {
+        setSafetyMetricsLoading(true);
+        try {
+            const [ppeResponse, dangerResponse, healthResponse] = await Promise.all([
+                dashboardAPI.getDashboard('PPE_VIOLATION'),
+                dashboardAPI.getDashboard('DANGER_ZONE'),
+                dashboardAPI.getDashboard('HEALTH_RISK')
+            ]);
+
+            setSafetyMetrics({
+                PPE_VIOLATION: ppeResponse?.metricValue || 0,
+                DANGER_ZONE: dangerResponse?.metricValue || 0,
+                HEALTH_RISK: healthResponse?.metricValue || 0
+            });
+        } catch (error) {
+            console.error('안전 메트릭 로드 실패:', error);
+            setSafetyMetrics({
+                PPE_VIOLATION: 0,
+                DANGER_ZONE: 0,
+                HEALTH_RISK: 0
+            });
+        } finally {
+            setSafetyMetricsLoading(false);
+        }
+    }, []);
+
     // 웹소켓 연결 및 실시간 데이터 처리
     useEffect(() => {
         const token = authUtils.getToken();
@@ -408,8 +398,11 @@ const DashboardPage = () => {
             // 기존 알림 목록에 추가 (최신 알림을 맨 위에, 최대 2개 유지하여 총 3개)
             setAlerts(prevAlerts => [newAlert, ...prevAlerts.slice(0, 2)]);
             
-            // 24시간 알림 목록에도 추가 (안전 지표 업데이트용)
-            setDayAlerts(prevDayAlerts => [newAlert, ...prevDayAlerts]);
+            
+            // 새 알림에 따라 안전 메트릭 업데이트
+            if (data.incidentType) {
+                loadSafetyMetrics().catch(console.error);
+            }
         };
 
         // 이벤트 리스너 등록
@@ -443,10 +436,10 @@ const DashboardPage = () => {
     // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
         loadAlarms().catch(console.error);
-        loadDayAlarms().catch(console.error);
         fetchWorkerStats().catch(console.error);
         loadAllMetrics().catch(console.error);
-    }, [loadAlarms, loadDayAlarms, fetchWorkerStats, loadAllMetrics]);
+        loadSafetyMetrics().catch(console.error);
+    }, [loadAlarms, fetchWorkerStats, loadAllMetrics, loadSafetyMetrics]);
 
     return (
         <div className={styles.page}>
