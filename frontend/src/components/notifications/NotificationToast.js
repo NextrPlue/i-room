@@ -100,9 +100,9 @@ const NotificationToast = ({
             case 'HEALTH_RISK':
                 return {
                     icon: '🏥',
-                    color: '#3b82f6',
-                    bgColor: '#eff6ff',
-                    borderColor: '#bfdbfe'
+                    color: '#ef4444',
+                    bgColor: '#fef2f2',
+                    borderColor: '#fecaca'
                 };
             case 'SUCCESS':
                 return {
