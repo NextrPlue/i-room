@@ -97,16 +97,23 @@ const DashboardPage = () => {
         const innerWidth = chartWidth - 2 * padding;
         const innerHeight = chartHeight - 2 * padding;
 
-        // 최대값 계산
-        const maxValue = Math.max(
-            ...data.flatMap(d => [d.PPE_VIOLATION, d.DANGER_ZONE, d.HEALTH_RISK])
-        ) || 1;
+        // 최대값 계산 (유효한 숫자만 필터링)
+        const validValues = data.flatMap(d => [d.PPE_VIOLATION, d.DANGER_ZONE, d.HEALTH_RISK])
+            .filter(val => typeof val === 'number' && !isNaN(val) && isFinite(val));
+        const maxValue = Math.max(...validValues, 1); // 최소값 1로 설정
 
         // 점 좌표 계산 함수
         const getPoints = (metricType) => {
             return data.map((d, i) => {
-                const x = padding + (i / (data.length - 1)) * innerWidth;
-                const y = padding + innerHeight - (d[metricType] / maxValue) * innerHeight;
+                // 단일 데이터 포인트 처리
+                const x = data.length === 1 
+                    ? padding + innerWidth / 2 
+                    : padding + (i / (data.length - 1)) * innerWidth;
+                
+                // 유효하지 않은 값 처리
+                const value = typeof d[metricType] === 'number' && !isNaN(d[metricType]) ? d[metricType] : 0;
+                const y = padding + innerHeight - (value / maxValue) * innerHeight;
+                
                 return `${x},${y}`;
             }).join(' ');
         };
@@ -114,7 +121,9 @@ const DashboardPage = () => {
         // 날짜 레이블 생성
         const dateLabels = data.map((d, i) => {
             const date = new Date(d.date);
-            const x = padding + (i / (data.length - 1)) * innerWidth;
+            const x = data.length === 1 
+                ? padding + innerWidth / 2 
+                : padding + (i / (data.length - 1)) * innerWidth;
             const label = interval === 'day' 
                 ? `${date.getMonth() + 1}/${date.getDate()}`
                 : interval === 'week'
@@ -176,8 +185,12 @@ const DashboardPage = () => {
                 {['PPE_VIOLATION', 'DANGER_ZONE', 'HEALTH_RISK'].map((metricType, typeIndex) => {
                     const colors = ['#f59e0b', '#ef4444', '#8b5cf6'];
                     return data.map((d, i) => {
-                        const x = padding + (i / (data.length - 1)) * innerWidth;
-                        const y = padding + innerHeight - (d[metricType] / maxValue) * innerHeight;
+                        const x = data.length === 1 
+                            ? padding + innerWidth / 2 
+                            : padding + (i / (data.length - 1)) * innerWidth;
+                        
+                        const value = typeof d[metricType] === 'number' && !isNaN(d[metricType]) ? d[metricType] : 0;
+                        const y = padding + innerHeight - (value / maxValue) * innerHeight;
                         return (
                             <circle
                                 key={`${metricType}-${i}`}
