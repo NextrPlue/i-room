@@ -455,7 +455,7 @@ const DashboardPage = () => {
                 <h1 className={styles.pageTitle}>대시보드</h1>
             </header>
 
-            {/* 상단 섹션 - 종합 안전 점수 + 변동 추이 */}
+            {/* 상단 섹션 - 종합 안전 점수 + 위젯들 */}
             <section className={styles.topSection}>
                 {/* 종합 안전 점수 */}
                 <div className={styles.safetyScoreCard}>
@@ -492,6 +492,147 @@ const DashboardPage = () => {
                     </button>
                 </div>
 
+                {/* 우측 위젯 그리드 */}
+                <div className={styles.rightWidgetsGrid}>
+                    {/* 실시간 위험 알림 */}
+                    <div className={`${styles.widgetCard} ${styles.alertWidget}`}>
+                        <div className={styles.widgetHeader}>
+                            <h3 className={styles.widgetTitle}>실시간 위험 알림</h3>
+                            <button
+                                className={styles.moreButton}
+                                onClick={() => setIsAlarmModalOpen(true)}
+                            >
+                                +
+                            </button>
+                        </div>
+
+                        <div className={styles.alertList}>
+                            {alertsLoading ? (
+                                <div style={{
+                                    textAlign: 'center',
+                                    padding: '40px 20px',
+                                    color: '#9CA3AF',
+                                    fontSize: '14px'
+                                }}>
+                                    📡 알림 목록을 불러오는 중...
+                                </div>
+                            ) : alerts.length > 0 ? (
+                                alerts.map(alert => (
+                                    <div key={alert.id} className={`${styles.alertItem} ${styles[alert.type]}`}>
+                                        <div className={`${styles.alertIcon} ${styles[alert.type]}`}>
+                                            {getAlertIcon(alert.type)}
+                                        </div>
+                                        <div className={styles.alertContent}>
+                                            <p className={styles.alertTitle}>{alert.title}</p>
+                                            <p className={styles.alertWorker}>작업자: {alert.workerName || "알 수 없음"}</p>
+                                            <p className={styles.alertDesc}>{alert.description}</p>
+                                        </div>
+                                        <span className={styles.alertTime}>{alert.time}</span>
+                                    </div>
+                                ))
+                            ) : (
+                                <div style={{
+                                    textAlign: 'center',
+                                    padding: '40px 20px',
+                                    color: '#9CA3AF',
+                                    fontSize: '14px'
+                                }}>
+                                    📋 최근 {alertsPagination.hours}시간 내 알림이 없습니다.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 주요 안전 지표 */}
+                    <div className={`${styles.widgetCard} ${styles.indicatorWidget}`}>
+                        <h3 className={styles.widgetTitle}>주요 안전 지표</h3>
+
+                        <div className={styles.indicatorList}>
+                            {indicators.map(indicator => (
+                                <div key={indicator.id} className={styles.indicatorItem}>
+                                    <div className={`${styles.indicatorIcon} ${styles[indicator.type]}`}>
+                                        {indicator.icon}
+                                    </div>
+                                    <div className={styles.indicatorContent}>
+                                        <p className={styles.indicatorTitle}>{indicator.title}</p>
+                                        <p className={styles.indicatorValue}>{indicator.value}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* 근로자 현황 */}
+                    <div className={`${styles.widgetCard} ${styles.statusWidget}`}>
+                        <h3 className={styles.widgetTitle}>근로자 현황</h3>
+
+                        <div className={styles.statusList}>
+                            <div className={styles.statusItem}>
+                                <div className={styles.statusItemIcon}>👥</div>
+                                <div className={styles.statusItemContent}>
+                                    <p className={styles.statusItemLabel}>총근무자</p>
+                                    <p className={styles.statusItemValue}>
+                                        {workerStats.loading ? '...' : workerStats.total}명
+                                    </p>
+                                </div>
+                            </div>
+                            <div className={styles.statusItem}>
+                                <div className={styles.statusItemIcon}>💼</div>
+                                <div className={styles.statusItemContent}>
+                                    <p className={styles.statusItemLabel}>근무중</p>
+                                    <p className={styles.statusItemValue}>
+                                        {workerStats.loading ? '...' : workerStats.working}명
+                                    </p>
+                                </div>
+                            </div>
+                            <div className={styles.statusItem}>
+                                <div className={styles.statusItemIcon}>🏠</div>
+                                <div className={styles.statusItemContent}>
+                                    <p className={styles.statusItemLabel}>퇴근</p>
+                                    <p className={styles.statusItemValue}>
+                                        {workerStats.loading ? '...' : workerStats.offWork}명
+                                    </p>
+                                </div>
+                            </div>
+                            <div className={styles.statusItem}>
+                                <div className={styles.statusItemIcon}>⚪</div>
+                                <div className={styles.statusItemContent}>
+                                    <p className={styles.statusItemLabel}>미출근</p>
+                                    <p className={styles.statusItemValue}>
+                                        {workerStats.loading ? '...' : workerStats.absent}명
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 실시간 현장 현황 */}
+                    <div className={`${styles.widgetCard} ${styles.statusWidget}`}>
+                        <h3 className={styles.widgetTitle}>실시간 현장 현황</h3>
+
+                        <div className={styles.statusSummary}>
+                            <div className={styles.statusIcon}>👨‍💼</div>
+                            <div className={styles.statusText}>
+                                <p className={styles.statusLabel}>현재 인원</p>
+                                <p className={styles.statusValue}>
+                                    {workerStats.loading ? '...' : workerStats.working}명
+                                </p>
+                            </div>
+                        </div>
+
+                        <p className={styles.statusDetails}>
+                            안전: {workerStats.working - workerStats.absent}명 | 주의: 0명 | 위험: 0명
+                        </p>
+
+                        <button className={styles.statusBtn}>
+                            정상 운영
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            {/* 하단 섹션 - 안전 점수 변동 추이 */}
+            <section className={styles.bottomSection}>
                 {/* 안전 점수 변동 추이 */}
                 <div className={styles.trendCard}>
                     <h2 className={styles.trendTitle}>안전 점수 변동 추이</h2>
@@ -571,145 +712,6 @@ const DashboardPage = () => {
                             )}
                         </div>
                     </div>
-                </div>
-            </section>
-
-            {/* 하단 위젯 섹션 */}
-            <section className={styles.widgetsSection}>
-                {/* 실시간 위험 알림 */}
-                <div className={`${styles.widgetCard} ${styles.alertWidget}`}>
-                    <div className={styles.widgetHeader}>
-                        <h3 className={styles.widgetTitle}>실시간 위험 알림</h3>
-                        <button
-                            className={styles.moreButton}
-                            onClick={() => setIsAlarmModalOpen(true)}
-                        >
-                            +
-                        </button>
-                    </div>
-
-                    <div className={styles.alertList}>
-                        {alertsLoading ? (
-                            <div style={{
-                                textAlign: 'center',
-                                padding: '40px 20px',
-                                color: '#9CA3AF',
-                                fontSize: '14px'
-                            }}>
-                                📡 알림 목록을 불러오는 중...
-                            </div>
-                        ) : alerts.length > 0 ? (
-                            alerts.map(alert => (
-                                <div key={alert.id} className={`${styles.alertItem} ${styles[alert.type]}`}>
-                                    <div className={`${styles.alertIcon} ${styles[alert.type]}`}>
-                                        {getAlertIcon(alert.type)}
-                                    </div>
-                                    <div className={styles.alertContent}>
-                                        <p className={styles.alertTitle}>{alert.title}</p>
-                                        <p className={styles.alertWorker}>작업자: {alert.workerName || "알 수 없음"}</p>
-                                        <p className={styles.alertDesc}>{alert.description}</p>
-                                    </div>
-                                    <span className={styles.alertTime}>{alert.time}</span>
-                                </div>
-                            ))
-                        ) : (
-                            <div style={{
-                                textAlign: 'center',
-                                padding: '40px 20px',
-                                color: '#9CA3AF',
-                                fontSize: '14px'
-                            }}>
-                                📋 최근 {alertsPagination.hours}시간 내 알림이 없습니다.
-                            </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* 주요 안전 지표 */}
-                <div className={`${styles.widgetCard} ${styles.indicatorWidget}`}>
-                    <h3 className={styles.widgetTitle}>주요 안전 지표</h3>
-
-                    <div className={styles.indicatorList}>
-                        {indicators.map(indicator => (
-                            <div key={indicator.id} className={styles.indicatorItem}>
-                                <div className={`${styles.indicatorIcon} ${styles[indicator.type]}`}>
-                                    {indicator.icon}
-                                </div>
-                                <div className={styles.indicatorContent}>
-                                    <p className={styles.indicatorTitle}>{indicator.title}</p>
-                                    <p className={styles.indicatorValue}>{indicator.value}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* 근로자 현황 */}
-                <div className={`${styles.widgetCard} ${styles.statusWidget}`}>
-                    <h3 className={styles.widgetTitle}>근로자 현황</h3>
-
-                    <div className={styles.statusList}>
-                        <div className={styles.statusItem}>
-                            <div className={styles.statusItemIcon}>👥</div>
-                            <div className={styles.statusItemContent}>
-                                <p className={styles.statusItemLabel}>총근무자</p>
-                                <p className={styles.statusItemValue}>
-                                    {workerStats.loading ? '...' : workerStats.total}명
-                                </p>
-                            </div>
-                        </div>
-                        <div className={styles.statusItem}>
-                            <div className={styles.statusItemIcon}>💼</div>
-                            <div className={styles.statusItemContent}>
-                                <p className={styles.statusItemLabel}>근무중</p>
-                                <p className={styles.statusItemValue}>
-                                    {workerStats.loading ? '...' : workerStats.working}명
-                                </p>
-                            </div>
-                        </div>
-                        <div className={styles.statusItem}>
-                            <div className={styles.statusItemIcon}>🏠</div>
-                            <div className={styles.statusItemContent}>
-                                <p className={styles.statusItemLabel}>퇴근</p>
-                                <p className={styles.statusItemValue}>
-                                    {workerStats.loading ? '...' : workerStats.offWork}명
-                                </p>
-                            </div>
-                        </div>
-                        <div className={styles.statusItem}>
-                            <div className={styles.statusItemIcon}>⚪</div>
-                            <div className={styles.statusItemContent}>
-                                <p className={styles.statusItemLabel}>미출근</p>
-                                <p className={styles.statusItemValue}>
-                                    {workerStats.loading ? '...' : workerStats.absent}명
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-
-                {/* 실시간 현장 현황 */}
-                <div className={`${styles.widgetCard} ${styles.statusWidget}`}>
-                    <h3 className={styles.widgetTitle}>실시간 현장 현황</h3>
-
-                    <div className={styles.statusSummary}>
-                        <div className={styles.statusIcon}>👨‍💼</div>
-                        <div className={styles.statusText}>
-                            <p className={styles.statusLabel}>현재 인원</p>
-                            <p className={styles.statusValue}>
-                                {workerStats.loading ? '...' : workerStats.working}명
-                            </p>
-                        </div>
-                    </div>
-
-                    <p className={styles.statusDetails}>
-                        안전: {workerStats.working - workerStats.absent}명 | 주의: 0명 | 위험: 0명
-                    </p>
-
-                    <button className={styles.statusBtn}>
-                        정상 운영
-                    </button>
                 </div>
             </section>
 

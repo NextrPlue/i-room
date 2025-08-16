@@ -23,19 +23,32 @@
     margin: 0;
 }
 
-/* 상단 섹션 - 종합 안전 점수 + 변동 추이 */
+/* 상단 섹션 - 종합 안전 점수 + 우측 위젯들 */
 .topSection {
     display: grid;
     grid-template-columns: minmax(300px, 400px) 1fr;
     gap: 24px;
     margin-bottom: 32px;
-    min-height: 500px;
+    min-height: 400px;
+}
+
+@media (max-width: 1200px) {
+    .rightWidgetsGrid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
 }
 
 @media (max-width: 768px) {
     .topSection {
         grid-template-columns: 1fr;
         gap: 16px;
+        min-height: auto;
+    }
+    
+    .rightWidgetsGrid {
+        grid-template-columns: 1fr;
+        gap: 12px;
     }
 }
 
@@ -290,7 +303,20 @@
     }
 }
 
-/* 하단 위젯 그리드 */
+/* 우측 위젯 그리드 */
+.rightWidgetsGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 16px;
+    height: 100%;
+}
+
+/* 하단 섹션 - 안전 점수 변동 추이 */
+.bottomSection {
+    margin-bottom: 32px;
+}
+
+/* 기존 하단 위젯 그리드 (사용 안함) */
 .widgetsSection {
     display: grid;
     grid-template-columns: 1.5fr 1fr 1fr 1fr; /* 실시간 알림은 1.5배, 나머지는 1배 */
@@ -301,11 +327,12 @@
 .widgetCard {
     background: #fff;
     border-radius: 12px;
-    padding: 24px;
+    padding: 20px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     display: flex;
     flex-direction: column;
-    min-height: 240px;
+    min-height: 200px;
+    height: 100%;
 }
 
 .widgetTitle {
