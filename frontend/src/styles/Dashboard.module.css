@@ -345,6 +345,10 @@
     flex-shrink: 0;
 }
 
+.indicatorIcon.normal {
+    background: #F0FDF4;
+}
+
 .indicatorIcon.warning {
     background: #FEF3C7;
 }

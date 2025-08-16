@@ -39,30 +39,95 @@ const DashboardPage = () => {
         hours: 168 // 최근 7일 (168시간)로 범위 확대
     };
 
-    // 주요 안전 지표 데이터
-    const [indicators] = useState([
-        {
-            id: 1,
-            type: 'warning',
-            title: '보호구 미착용 적발 횟수',
-            value: '2건',
-            icon: '🦺'
-        },
-        {
-            id: 2,
-            type: 'danger',
-            title: '작업 안전 경고 발생 횟수',
-            value: '1건',
-            icon: '⚠️'
-        },
-        {
-            id: 3,
-            type: 'danger',
-            title: '건강상태 이상 발생 횟수',
-            value: '3명',
-            icon: '🏥'
+    // 24시간 알림 데이터 (안전 지표 계산용)
+    const [dayAlerts, setDayAlerts] = useState([]);
+    const [dayAlertsLoading, setDayAlertsLoading] = useState(true);
+
+    // 알림 데이터 기반 안전 지표 계산
+    const calculateSafetyIndicators = useCallback(() => {
+        if (dayAlertsLoading || !dayAlerts.length) {
+            return [
+                {
+                    id: 1,
+                    type: 'normal',
+                    title: '보호구 미착용 적발 횟수',
+                    value: dayAlertsLoading ? '...' : '0건',
+                    icon: '🦺'
+                },
+                {
+                    id: 2,
+                    type: 'normal',
+                    title: '작업 안전 경고 발생 횟수',
+                    value: dayAlertsLoading ? '...' : '0건',
+                    icon: '⚠️'
+                },
+                {
+                    id: 3,
+                    type: 'normal',
+                    title: '건강상태 이상 발생 횟수',
+                    value: dayAlertsLoading ? '...' : '0건',
+                    icon: '🏥'
+                }
+            ];
         }
-    ]);
+
+        // 보호구 미착용 관련 알림 수 계산
+        const ppeViolations = dayAlerts.filter(alert => 
+            alert.originalData?.incidentType === 'PPE_VIOLATION' || 
+            alert.title?.includes('보호구') || 
+            alert.description?.includes('보호구')
+        ).length;
+
+        // 작업 안전 경고 관련 알림 수 계산 (위험구역, 안전사고 등)
+        const safetyWarnings = dayAlerts.filter(alert => 
+            alert.originalData?.incidentType === 'DANGER_ZONE' ||
+            alert.originalData?.incidentType === 'SAFETY_ACCIDENT' ||
+            alert.title?.includes('위험') || 
+            alert.title?.includes('경고')
+        ).length;
+
+        // 건강상태 이상 관련 알림 수 계산
+        const healthRisks = dayAlerts.filter(alert => 
+            alert.originalData?.incidentType === 'HEALTH_RISK' ||
+            alert.title?.includes('건강') || 
+            alert.title?.includes('심박') ||
+            alert.title?.includes('체온')
+        ).length;
+
+        // 위험도 결정 함수
+        const getRiskType = (count) => {
+            if (count === 0) return 'normal';
+            if (count <= 2) return 'warning';
+            return 'danger';
+        };
+
+        return [
+            {
+                id: 1,
+                type: getRiskType(ppeViolations),
+                title: '보호구 미착용 적발 횟수',
+                value: `${ppeViolations}건`,
+                icon: '🦺'
+            },
+            {
+                id: 2,
+                type: getRiskType(safetyWarnings),
+                title: '작업 안전 경고 발생 횟수',
+                value: `${safetyWarnings}건`,
+                icon: '⚠️'
+            },
+            {
+                id: 3,
+                type: getRiskType(healthRisks),
+                title: '건강상태 이상 발생 횟수',
+                value: `${healthRisks}건`,
+                icon: '🏥'
+            }
+        ];
+    }, [dayAlerts, dayAlertsLoading]);
+
+    // 계산된 안전 지표
+    const indicators = calculateSafetyIndicators();
 
 
     // 도넛 차트 계산
@@ -105,6 +170,26 @@ const DashboardPage = () => {
         }
     }, [alertsPagination.page, alertsPagination.size, alertsPagination.hours, transformAlarmData]);
 
+    // 24시간 알람 데이터 로드 (안전 지표 계산용)
+    const loadDayAlarms = useCallback(async () => {
+        setDayAlertsLoading(true);
+        try {
+            const response = await alarmAPI.getAlarmsForAdmin({
+                page: 0,
+                size: 100, // 24시간 내 모든 알림 조회
+                hours: 24 // 최근 24시간
+            });
+
+            const apiAlerts = response.data?.content?.map(transformAlarmData) || [];
+            setDayAlerts(apiAlerts);
+        } catch (error) {
+            console.error('24시간 알람 목록 로드 실패:', error);
+            setDayAlerts([]);
+        } finally {
+            setDayAlertsLoading(false);
+        }
+    }, [transformAlarmData]);
+
     // 웹소켓 연결 및 실시간 데이터 처리
     useEffect(() => {
         const token = authUtils.getToken();
@@ -137,6 +222,9 @@ const DashboardPage = () => {
 
             // 기존 알림 목록에 추가 (최신 알림을 맨 위에, 최대 3개 유지)
             setAlerts(prevAlerts => [newAlert, ...prevAlerts.slice(0, 3)]);
+            
+            // 24시간 알림 목록에도 추가 (안전 지표 업데이트용)
+            setDayAlerts(prevDayAlerts => [newAlert, ...prevDayAlerts]);
         };
 
         // 이벤트 리스너 등록
@@ -170,8 +258,9 @@ const DashboardPage = () => {
     // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
         loadAlarms().catch(console.error);
+        loadDayAlarms().catch(console.error);
         fetchWorkerStats().catch(console.error);
-    }, [loadAlarms, fetchWorkerStats]);
+    }, [loadAlarms, loadDayAlarms, fetchWorkerStats]);
 
     return (
         <div className={styles.page}>
