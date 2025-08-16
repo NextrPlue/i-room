@@ -724,3 +724,70 @@ export const dashboardAPI = {
         return await apiRequest(url);
     }
 };
+
+/**
+ * Report API 서비스
+ */
+export const reportAPI = {
+    /**
+     * 일일 리포트 생성 및 다운로드
+     * @param {string} date - 조회할 날짜 (YYYY-MM-DD 형식)
+     * @returns {Promise<Blob>} PDF 파일 Blob
+     */
+    generateDailyReport: async (date) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/dashboards/report/${date}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': authUtils.getAuthHeader()
+            }
+        });
+
+        if (!response.ok) {
+            const errorMessage = await handleFetchError(response);
+            throw new Error(errorMessage);
+        }
+
+        return await response.blob();
+    },
+
+    /**
+     * 개선안 리포트 생성 및 다운로드
+     * @param {string} interval - 조회 간격 (day, week, month)
+     * @returns {Promise<Blob>} PDF 파일 Blob
+     */
+    generateImprovementReport: async (interval) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/dashboards/improvement-report/${interval}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': authUtils.getAuthHeader()
+            }
+        });
+
+        if (!response.ok) {
+            const errorMessage = await handleFetchError(response);
+            throw new Error(errorMessage);
+        }
+
+        return await response.blob();
+    },
+
+    /**
+     * 파일 다운로드 헬퍼 함수
+     * @param {Blob} blob - 다운로드할 파일 Blob
+     * @param {string} filename - 저장할 파일명
+     */
+    downloadFile: (blob, filename) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    }
+};
