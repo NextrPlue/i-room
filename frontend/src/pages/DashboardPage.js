@@ -2,31 +2,32 @@ import React, {useEffect, useState, useCallback} from 'react';
 import styles from '../styles/Dashboard.module.css';
 import alarmStompService from '../services/alarmStompService';
 import {authUtils} from '../utils/auth';
-import {alarmAPI} from '../api/api';
+import {alarmAPI, managementAPI} from '../api/api';
 import AlarmModal from '../components/AlarmModal';
 import {useAlarmData} from '../hooks/useAlarmData';
 
 const DashboardPage = () => {
-    const { getAlertIcon, getAlertTypeFromData, convertToDashboardType, getAlertTitle, getTimeAgo, transformAlarmData } = useAlarmData();
-    
-    // 상태 표시 컴포넌트 (중복 코드 제거용)
-    const StatusDisplay = ({ icon, label, value, details, classPrefix }) => (
-        <>
-            <div className={styles[`${classPrefix}Content`]}>
-                <div className={styles[`${classPrefix}Icon`]}>{icon}</div>
-                <div className={styles[`${classPrefix}Text`]}>
-                    <p className={styles[`${classPrefix}Label`]}>{label}</p>
-                    <p className={styles[`${classPrefix}Value`]}>{value}</p>
-                </div>
-            </div>
-            <p className={styles[`${classPrefix}Details`]}>
-                {details}
-            </p>
-        </>
-    );
+    const {
+        getAlertIcon,
+        getAlertTypeFromData,
+        convertToDashboardType,
+        getAlertTitle,
+        getTimeAgo,
+        transformAlarmData
+    } = useAlarmData();
+
 
     // 종합 안전 점수
     const [safetyScore] = useState(85);
+
+    // 출입 통계 상태
+    const [workerStats, setWorkerStats] = useState({
+        total: 0,
+        working: 0,
+        offWork: 0,
+        absent: 0,
+        loading: false
+    });
 
     // 실시간 위험 알림 데이터 (API + 웹소켓)
     const [alerts, setAlerts] = useState([]);
@@ -38,51 +39,116 @@ const DashboardPage = () => {
         hours: 168 // 최근 7일 (168시간)로 범위 확대
     };
 
-    // 주요 안전 지표 데이터
-    const [indicators] = useState([
-        {
-            id: 1,
-            type: 'warning',
-            title: '보호구 미착용 작업자 수',
-            value: '2건',
-            icon: '⚠️'
-        },
-        {
-            id: 2,
-            type: 'warning',
-            title: '작업 안전 경고',
-            value: '1건',
-            icon: '⚠️'
-        },
-        {
-            id: 3,
-            type: 'danger',
-            title: '직원 이상 교원 수',
-            value: '3명',
-            icon: '😷'
+    // 24시간 알림 데이터 (안전 지표 계산용)
+    const [dayAlerts, setDayAlerts] = useState([]);
+    const [dayAlertsLoading, setDayAlertsLoading] = useState(true);
+
+    // 알림 데이터 기반 안전 지표 계산
+    const calculateSafetyIndicators = useCallback(() => {
+        if (dayAlertsLoading || !dayAlerts.length) {
+            return [
+                {
+                    id: 1,
+                    type: 'normal',
+                    title: '보호구 미착용 적발 횟수',
+                    value: dayAlertsLoading ? '...' : '0건',
+                    icon: '🦺'
+                },
+                {
+                    id: 2,
+                    type: 'normal',
+                    title: '작업 안전 경고 발생 횟수',
+                    value: dayAlertsLoading ? '...' : '0건',
+                    icon: '⚠️'
+                },
+                {
+                    id: 3,
+                    type: 'normal',
+                    title: '건강상태 이상 발생 횟수',
+                    value: dayAlertsLoading ? '...' : '0건',
+                    icon: '🏥'
+                }
+            ];
         }
-    ]);
 
-    // 현장 현황 데이터
-    const [fieldStatus] = useState({
-        currentWorkers: 24,
-        totalCapacity: 18,
-        dangerWorkers: 4,
-        normalWorkers: 2
-    });
+        // 보호구 미착용 관련 알림 수 계산
+        const ppeViolations = dayAlerts.filter(alert => 
+            alert.originalData?.incidentType === 'PPE_VIOLATION' || 
+            alert.title?.includes('보호구') || 
+            alert.description?.includes('보호구')
+        ).length;
 
+        // 작업 안전 경고 관련 알림 수 계산 (위험구역, 안전사고 등)
+        const safetyWarnings = dayAlerts.filter(alert => 
+            alert.originalData?.incidentType === 'DANGER_ZONE' ||
+            alert.originalData?.incidentType === 'SAFETY_ACCIDENT' ||
+            alert.title?.includes('위험') || 
+            alert.title?.includes('경고')
+        ).length;
 
-    // 긴급 이상 탐지
-    const [emergencyStatus] = useState({
-        count: 1,
-        location: '박영희 - 심박수 이상'
-    });
+        // 건강상태 이상 관련 알림 수 계산
+        const healthRisks = dayAlerts.filter(alert => 
+            alert.originalData?.incidentType === 'HEALTH_RISK' ||
+            alert.title?.includes('건강') || 
+            alert.title?.includes('심박') ||
+            alert.title?.includes('체온')
+        ).length;
+
+        // 위험도 결정 함수
+        const getRiskType = (count) => {
+            if (count === 0) return 'normal';
+            if (count <= 2) return 'warning';
+            return 'danger';
+        };
+
+        return [
+            {
+                id: 1,
+                type: getRiskType(ppeViolations),
+                title: '보호구 미착용 적발 횟수',
+                value: `${ppeViolations}건`,
+                icon: '🦺'
+            },
+            {
+                id: 2,
+                type: getRiskType(safetyWarnings),
+                title: '작업 안전 경고 발생 횟수',
+                value: `${safetyWarnings}건`,
+                icon: '⚠️'
+            },
+            {
+                id: 3,
+                type: getRiskType(healthRisks),
+                title: '건강상태 이상 발생 횟수',
+                value: `${healthRisks}건`,
+                icon: '🏥'
+            }
+        ];
+    }, [dayAlerts, dayAlertsLoading]);
+
+    // 계산된 안전 지표
+    const indicators = calculateSafetyIndicators();
+
 
     // 도넛 차트 계산
     const circumference = 2 * Math.PI * 90; // 반지름 90
     const strokeDasharray = circumference;
     const strokeDashoffset = circumference - (safetyScore / 100) * circumference;
 
+    // 출입 통계 조회 함수
+    const fetchWorkerStats = useCallback(async () => {
+        try {
+            setWorkerStats(prev => ({...prev, loading: true}));
+            const response = await managementAPI.getWorkerStats();
+            setWorkerStats({
+                ...response.data,
+                loading: false
+            });
+        } catch (error) {
+            console.error('출입 통계 조회 실패:', error);
+            setWorkerStats(prev => ({...prev, loading: false}));
+        }
+    }, []);
 
     // API로부터 알람 목록 로드
     const loadAlarms = useCallback(async () => {
@@ -104,6 +170,26 @@ const DashboardPage = () => {
         }
     }, [alertsPagination.page, alertsPagination.size, alertsPagination.hours, transformAlarmData]);
 
+    // 24시간 알람 데이터 로드 (안전 지표 계산용)
+    const loadDayAlarms = useCallback(async () => {
+        setDayAlertsLoading(true);
+        try {
+            const response = await alarmAPI.getAlarmsForAdmin({
+                page: 0,
+                size: 100, // 24시간 내 모든 알림 조회
+                hours: 24 // 최근 24시간
+            });
+
+            const apiAlerts = response.data?.content?.map(transformAlarmData) || [];
+            setDayAlerts(apiAlerts);
+        } catch (error) {
+            console.error('24시간 알람 목록 로드 실패:', error);
+            setDayAlerts([]);
+        } finally {
+            setDayAlertsLoading(false);
+        }
+    }, [transformAlarmData]);
+
     // 웹소켓 연결 및 실시간 데이터 처리
     useEffect(() => {
         const token = authUtils.getToken();
@@ -122,7 +208,7 @@ const DashboardPage = () => {
         const handleNewAlarm = (data) => {
             const alertType = getAlertTypeFromData(data.incidentType, data.incidentDescription);
             const dashboardType = convertToDashboardType(alertType);
-            
+
             const newAlert = {
                 id: data.id || Date.now(), // 웹소켓에서 ID가 오면 사용, 없으면 임시 ID
                 type: dashboardType,
@@ -136,6 +222,9 @@ const DashboardPage = () => {
 
             // 기존 알림 목록에 추가 (최신 알림을 맨 위에, 최대 3개 유지)
             setAlerts(prevAlerts => [newAlert, ...prevAlerts.slice(0, 3)]);
+            
+            // 24시간 알림 목록에도 추가 (안전 지표 업데이트용)
+            setDayAlerts(prevDayAlerts => [newAlert, ...prevDayAlerts]);
         };
 
         // 이벤트 리스너 등록
@@ -155,7 +244,7 @@ const DashboardPage = () => {
     // 시간 업데이트 (1분마다 상대시간 갱신)
     useEffect(() => {
         const timer = setInterval(() => {
-            setAlerts(prevAlerts => 
+            setAlerts(prevAlerts =>
                 prevAlerts.map(alert => ({
                     ...alert,
                     time: getTimeAgo(alert.timestamp)
@@ -169,7 +258,9 @@ const DashboardPage = () => {
     // 컴포넌트 마운트 시 데이터 로드
     useEffect(() => {
         loadAlarms().catch(console.error);
-    }, [loadAlarms]);
+        loadDayAlarms().catch(console.error);
+        fetchWorkerStats().catch(console.error);
+    }, [loadAlarms, loadDayAlarms, fetchWorkerStats]);
 
     return (
         <div className={styles.page}>
@@ -250,7 +341,7 @@ const DashboardPage = () => {
                 <div className={`${styles.widgetCard} ${styles.alertWidget}`}>
                     <div className={styles.widgetHeader}>
                         <h3 className={styles.widgetTitle}>실시간 위험 알림</h3>
-                        <button 
+                        <button
                             className={styles.moreButton}
                             onClick={() => setIsAlarmModalOpen(true)}
                         >
@@ -260,9 +351,9 @@ const DashboardPage = () => {
 
                     <div className={styles.alertList}>
                         {alertsLoading ? (
-                            <div style={{ 
-                                textAlign: 'center', 
-                                padding: '40px 20px', 
+                            <div style={{
+                                textAlign: 'center',
+                                padding: '40px 20px',
                                 color: '#9CA3AF',
                                 fontSize: '14px'
                             }}>
@@ -283,9 +374,9 @@ const DashboardPage = () => {
                                 </div>
                             ))
                         ) : (
-                            <div style={{ 
-                                textAlign: 'center', 
-                                padding: '40px 20px', 
+                            <div style={{
+                                textAlign: 'center',
+                                padding: '40px 20px',
                                 color: '#9CA3AF',
                                 fontSize: '14px'
                             }}>
@@ -314,6 +405,51 @@ const DashboardPage = () => {
                     </div>
                 </div>
 
+                {/* 근로자 현황 */}
+                <div className={`${styles.widgetCard} ${styles.statusWidget}`}>
+                    <h3 className={styles.widgetTitle}>근로자 현황</h3>
+
+                    <div className={styles.statusList}>
+                        <div className={styles.statusItem}>
+                            <div className={styles.statusItemIcon}>👥</div>
+                            <div className={styles.statusItemContent}>
+                                <p className={styles.statusItemLabel}>총근무자</p>
+                                <p className={styles.statusItemValue}>
+                                    {workerStats.loading ? '...' : workerStats.total}명
+                                </p>
+                            </div>
+                        </div>
+                        <div className={styles.statusItem}>
+                            <div className={styles.statusItemIcon}>💼</div>
+                            <div className={styles.statusItemContent}>
+                                <p className={styles.statusItemLabel}>근무중</p>
+                                <p className={styles.statusItemValue}>
+                                    {workerStats.loading ? '...' : workerStats.working}명
+                                </p>
+                            </div>
+                        </div>
+                        <div className={styles.statusItem}>
+                            <div className={styles.statusItemIcon}>🏠</div>
+                            <div className={styles.statusItemContent}>
+                                <p className={styles.statusItemLabel}>퇴근</p>
+                                <p className={styles.statusItemValue}>
+                                    {workerStats.loading ? '...' : workerStats.offWork}명
+                                </p>
+                            </div>
+                        </div>
+                        <div className={styles.statusItem}>
+                            <div className={styles.statusItemIcon}>⚪</div>
+                            <div className={styles.statusItemContent}>
+                                <p className={styles.statusItemLabel}>미출근</p>
+                                <p className={styles.statusItemValue}>
+                                    {workerStats.loading ? '...' : workerStats.absent}명
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
                 {/* 실시간 현장 현황 */}
                 <div className={`${styles.widgetCard} ${styles.statusWidget}`}>
                     <h3 className={styles.widgetTitle}>실시간 현장 현황</h3>
@@ -322,38 +458,26 @@ const DashboardPage = () => {
                         <div className={styles.statusIcon}>👨‍💼</div>
                         <div className={styles.statusText}>
                             <p className={styles.statusLabel}>현재 인원</p>
-                            <p className={styles.statusValue}>{fieldStatus.currentWorkers}명</p>
+                            <p className={styles.statusValue}>
+                                {workerStats.loading ? '...' : workerStats.working}명
+                            </p>
                         </div>
                     </div>
 
                     <p className={styles.statusDetails}>
-                        건설: {fieldStatus.totalCapacity}명 | 안전: {fieldStatus.dangerWorkers}명 | 관리: {fieldStatus.normalWorkers}명
+                        안전: {workerStats.working - workerStats.absent}명 | 주의: 0명 | 위험: 0명
                     </p>
 
                     <button className={styles.statusBtn}>
                         정상 운영
                     </button>
                 </div>
-
-
-                {/* 긴급 이상 탐지 */}
-                <div className={`${styles.widgetCard} ${styles.emergencyWidget}`}>
-                    <h3 className={styles.widgetTitle}>긴급 이상 탐지</h3>
-
-                    <StatusDisplay
-                        icon="🏥"
-                        label="이상 징후"
-                        value={`${emergencyStatus.count}명`}
-                        details={emergencyStatus.location}
-                        classPrefix="emergency"
-                    />
-                </div>
             </section>
 
             {/* 알림 모달 */}
-            <AlarmModal 
-                isOpen={isAlarmModalOpen} 
-                onClose={() => setIsAlarmModalOpen(false)} 
+            <AlarmModal
+                isOpen={isAlarmModalOpen}
+                onClose={() => setIsAlarmModalOpen(false)}
             />
         </div>
     );
