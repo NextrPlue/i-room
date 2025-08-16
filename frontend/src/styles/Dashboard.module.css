@@ -375,6 +375,51 @@
     /* 기본 위젯 스타일 상속 */
 }
 
+/* 새로운 상태 목록 스타일 (indicatorList와 유사) */
+.statusList {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    flex: 1;
+}
+
+.statusItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+.statusItemIcon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    background: #F3F4F6;
+}
+
+.statusItemContent {
+    flex: 1;
+}
+
+.statusItemLabel {
+    font-size: 14px;
+    color: #6B7280;
+    margin: 0 0 2px 0;
+}
+
+.statusItemValue {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1F2937;
+    margin: 0;
+}
+
+/* 기존 스타일들 (legacy - 필요시 제거 가능) */
 .statusSummary {
     display: flex;
     align-items: center;
