@@ -29,7 +29,7 @@ public class DashBoardController {
 		return ResponseEntity.ok(dashBoardService.getMetricScore(interval));
 	}
 	//대시보드 조회하기
-	@GetMapping(value = "/dashboard/{metricType}", produces = "application/json;charset=UTF-8")
+	@GetMapping(value = "/{metricType}", produces = "application/json;charset=UTF-8")
 	public ResponseEntity<DashBoardResponse> getDashBoard(@PathVariable String metricType) {
 		DashBoardResponse dashBoardDto = dashBoardService.getDashBoard(metricType);
 		return ResponseEntity.ok(dashBoardDto);
