@@ -144,20 +144,6 @@ class AlarmStompService {
                 const imageUrlMatch = body.match(/\((https?:\/\/[^)]+)\)/);
                 const imageUrl = imageUrlMatch ? imageUrlMatch[1] : null;
 
-                switch (normalizedType) {
-                    case 'PPE_VIOLATION':
-                        this.emit('safety-gear-alert', data);
-                        break;
-                    case 'DANGER_ZONE':
-                        this.emit('danger-zone-alert', data);
-                        break;
-                    case 'HEALTH_RISK':
-                        this.emit('health-risk-alert', data);
-                        break;
-                    default:
-                        this.emit('unknown-alert', data);
-                }
-
                 data = {
                     incidentType,
                     incidentDescription: description
