@@ -130,6 +130,7 @@ class AlarmStompService {
     handleAlarmMessage(message) {
         try {
             const body = typeof message?.body === 'string' ? message.body : '';
+            console.log('🔍 원본 웹소켓 메시지:', body);
 
             const regex = /\[([^\]]+)\]\s*(.+)/;
             const match = body.match(regex);
@@ -139,8 +140,12 @@ class AlarmStompService {
                 const incidentType = match[1];
                 const normalizedType = incidentType.replace(/[ -]+/g, '_').toUpperCase();
                 const description = match[2];
+                console.log('📋 파싱된 정보:', { incidentType, description });
+                
                 const workerIdMatch = description.match(/작업자 ID: (\d+)/);
                 const workerId = workerIdMatch ? workerIdMatch[1] : null;
+                console.log('🆔 workerId 추출 결과:', { workerIdMatch, workerId });
+                
                 const imageUrlMatch = body.match(/\((https?:\/\/[^)]+)\)/);
                 const imageUrl = imageUrlMatch ? imageUrlMatch[1] : null;
 
