@@ -17,8 +17,28 @@ const DashboardPage = () => {
     } = useAlarmData();
 
 
-    // 종합 안전 점수
-    const [safetyScore] = useState(85);
+    // 종합 안전 점수 계산
+    const calculateSafetyScore = useCallback((metrics) => {
+        const baseScore = 100;
+        const penalties = {
+            PPE_VIOLATION: 3,     // 보호구 미착용: 건당 3점 감점
+            DANGER_ZONE: 5,      // 위험지역 접근: 건당 5점 감점  
+            HEALTH_RISK: 4       // 건강 이상: 건당 4점 감점
+        };
+        
+        const totalPenalty = Object.entries(metrics).reduce((sum, [type, count]) => {
+            return sum + (count * penalties[type]);
+        }, 0);
+        
+        return Math.max(0, baseScore - totalPenalty); // 최소 0점
+    }, []);
+
+    // 안전 점수별 색상 결정
+    const getSafetyScoreColor = useCallback((score) => {
+        if (score >= 80) return { color: '#10B981', status: '양호' }; // 녹색
+        if (score >= 60) return { color: '#F59E0B', status: '주의' }; // 주황색
+        return { color: '#EF4444', status: '위험' }; // 붉은색
+    }, []);
 
     // 출입 통계 상태
     const [workerStats, setWorkerStats] = useState({
@@ -47,6 +67,10 @@ const DashboardPage = () => {
         HEALTH_RISK: 0
     });
     const [safetyMetricsLoading, setSafetyMetricsLoading] = useState(true);
+
+    // 현재 안전 점수 계산
+    const safetyScore = calculateSafetyScore(safetyMetrics);
+    const scoreColor = getSafetyScoreColor(safetyScore);
 
     // 메트릭 데이터 상태 (안전 점수 변동 추이용)
     const [metricsData, setMetricsData] = useState({
@@ -100,7 +124,8 @@ const DashboardPage = () => {
         // 최대값 계산 (유효한 숫자만 필터링)
         const validValues = data.flatMap(d => [d.PPE_VIOLATION, d.DANGER_ZONE, d.HEALTH_RISK])
             .filter(val => typeof val === 'number' && !isNaN(val) && isFinite(val));
-        const maxValue = Math.max(...validValues, 1); // 최소값 1로 설정
+        const rawMaxValue = Math.max(...validValues, 1); // 최소값 1로 설정
+        const maxValue = Math.ceil(rawMaxValue / 5) * 5; // 5의 배수로 올림
 
         // 점 좌표 계산 함수
         const getPoints = (metricType) => {
@@ -144,6 +169,26 @@ const DashboardPage = () => {
             );
         });
 
+        // Y축 레이블 생성
+        const yAxisLabels = [];
+        const ySteps = 5; // 5개 눈금
+        for (let i = 0; i <= ySteps; i++) {
+            const value = Math.round((maxValue / ySteps) * i);
+            const y = padding + innerHeight - (i / ySteps) * innerHeight;
+            yAxisLabels.push(
+                <text
+                    key={`y-label-${i}`}
+                    x={padding - 10}
+                    y={y + 4}
+                    textAnchor="end"
+                    fontSize="10"
+                    fill="#6B7280"
+                >
+                    {value}
+                </text>
+            );
+        }
+
         return (
             <svg 
                 viewBox={`0 0 ${chartWidth} ${chartHeight}`} 
@@ -157,6 +202,25 @@ const DashboardPage = () => {
                     </pattern>
                 </defs>
                 <rect width={chartWidth} height={chartHeight} fill={`url(#grid-${interval})`} opacity="0.5"/>
+
+                {/* Y축 눈금선 */}
+                {Array.from({length: 6}, (_, i) => {
+                    const y = padding + (i / 5) * innerHeight;
+                    return (
+                        <line
+                            key={`y-grid-${i}`}
+                            x1={padding}
+                            y1={y}
+                            x2={padding + innerWidth}
+                            y2={y}
+                            stroke="#E5E7EB"
+                            strokeWidth="1"
+                        />
+                    );
+                })}
+
+                {/* Y축 레이블 */}
+                {yAxisLabels}
 
                 {/* 선 그래프 */}
                 <polyline
@@ -484,17 +548,18 @@ const DashboardPage = () => {
                                 r="90"
                                 strokeDasharray={strokeDasharray}
                                 strokeDashoffset={strokeDashoffset}
+                                style={{ stroke: scoreColor.color }}
                             />
                         </svg>
 
                         <div className={styles.chartText}>
-                            <p className={styles.chartScore}>{safetyScore}점</p>
+                            <p className={styles.chartScore} style={{ color: scoreColor.color }}>{safetyScore}점</p>
                             <p className={styles.chartLabel}>안전 점수</p>
                         </div>
                     </div>
 
-                    <button className={styles.safetyStatusBtn}>
-                        양호
+                    <button className={styles.safetyStatusBtn} style={{ backgroundColor: scoreColor.color }}>
+                        {scoreColor.status}
                     </button>
                 </div>
 
