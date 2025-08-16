@@ -10,6 +10,14 @@ const NotificationToast = ({
     const [isVisible, setIsVisible] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
 
+    const handleClose = () => {
+        setIsClosing(true);
+        setTimeout(() => {
+            setIsVisible(false);
+            onClose?.();
+        }, 300); // 애니메이션 시간
+    };
+
     useEffect(() => {
         if (notification) {
             setIsVisible(true);
@@ -22,7 +30,7 @@ const NotificationToast = ({
 
             return () => clearTimeout(timer);
         }
-    }, [notification, duration, handleClose]);
+    }, [notification, duration]);
 
     // CSS 애니메이션을 위한 스타일 주입
     useEffect(() => {
@@ -38,14 +46,6 @@ const NotificationToast = ({
             document.head.appendChild(style);
         }
     }, []);
-
-    const handleClose = () => {
-        setIsClosing(true);
-        setTimeout(() => {
-            setIsVisible(false);
-            onClose?.();
-        }, 300); // 애니메이션 시간
-    };
 
     if (!notification || !isVisible) return null;
 
