@@ -676,6 +676,42 @@
     cursor: not-allowed;
 }
 
+/* 삭제 확인 모달 전용 스타일 */
+.deleteWarningIcon {
+    font-size: 48px;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.deleteWarningText {
+    font-size: 12px;
+    color: #6B7280;
+    text-align: center;
+    margin: 8px 0 0 0;
+    font-style: italic;
+}
+
+.modalDeleteButton {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    background: #EF4444;
+    color: white;
+}
+
+.modalDeleteButton:hover:not(:disabled) {
+    background: #DC2626;
+}
+
+.modalDeleteButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 @media (max-width: 480px) {
     .modalContent {
         margin: 20px;

@@ -37,6 +37,13 @@ const SettingsPage = () => {
         newRole: ''
     });
 
+    // 삭제 확인 모달 상태
+    const [deleteConfirmModal, setDeleteConfirmModal] = useState({
+        isOpen: false,
+        adminId: null,
+        adminName: ''
+    });
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -427,29 +434,53 @@ const SettingsPage = () => {
         }
     };
 
-    // 관리자 삭제
-    const handleDeleteAdmin = async (adminId) => {
+    // 삭제 확인 모달 열기
+    const handleDeleteAdmin = (adminId) => {
         if (!isSuperAdmin()) {
             alert('관리자 삭제는 Super Admin만 가능합니다.');
+            return;
+        }
+
+        if (adminId === myAccount?.id) {
+            alert('본인 계정은 삭제할 수 없습니다.');
             return;
         }
 
         const admin = admins.find(a => a.id === adminId);
         if (!admin) return;
 
-        if (window.confirm(`정말로 ${admin.name} 관리자를 삭제하시겠습니까?`)) {
-            try {
-                setLoading(true);
-                await userAPI.deleteAdmin(adminId);
+        setDeleteConfirmModal({
+            isOpen: true,
+            adminId: adminId,
+            adminName: admin.name
+        });
+    };
 
-                setAdmins(prev => prev.filter(a => a.id !== adminId));
-                alert(`${admin.name} 관리자가 삭제되었습니다.`);
-            } catch (err) {
-                console.error('관리자 삭제 실패:', err);
-                alert(err.message || '관리자 삭제에 실패했습니다.');
-            } finally {
-                setLoading(false);
-            }
+    // 삭제 확인 모달 닫기
+    const handleCloseDeleteModal = () => {
+        setDeleteConfirmModal({
+            isOpen: false,
+            adminId: null,
+            adminName: ''
+        });
+    };
+
+    // 관리자 삭제 실행
+    const handleConfirmDelete = async () => {
+        const { adminId, adminName } = deleteConfirmModal;
+        
+        try {
+            setLoading(true);
+            await userAPI.deleteAdmin(adminId);
+
+            setAdmins(prev => prev.filter(a => a.id !== adminId));
+            alert(`${adminName} 관리자가 삭제되었습니다.`);
+            handleCloseDeleteModal();
+        } catch (err) {
+            console.error('관리자 삭제 실패:', err);
+            alert(err.message || '관리자 삭제에 실패했습니다.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -777,6 +808,44 @@ const SettingsPage = () => {
                                 disabled={loading || roleChangeModal.newRole === roleChangeModal.currentRole}
                             >
                                 {loading ? '변경 중...' : '변경하기'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 삭제 확인 모달 */}
+            {deleteConfirmModal.isOpen && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent}>
+                        <h3 className={styles.modalTitle}>관리자 삭제 확인</h3>
+                        
+                        <div className={styles.modalBody}>
+                            <div className={styles.deleteWarningIcon}>
+                                ⚠️
+                            </div>
+                            <p className={styles.modalText}>
+                                정말로 <strong>{deleteConfirmModal.adminName}</strong> 관리자를 삭제하시겠습니까?
+                            </p>
+                            <p className={styles.deleteWarningText}>
+                                이 작업은 되돌릴 수 없습니다.
+                            </p>
+                        </div>
+                        
+                        <div className={styles.modalActions}>
+                            <button 
+                                className={styles.modalCancelButton}
+                                onClick={handleCloseDeleteModal}
+                                disabled={loading}
+                            >
+                                취소
+                            </button>
+                            <button 
+                                className={styles.modalDeleteButton}
+                                onClick={handleConfirmDelete}
+                                disabled={loading}
+                            >
+                                {loading ? '삭제 중...' : '삭제하기'}
                             </button>
                         </div>
                     </div>
