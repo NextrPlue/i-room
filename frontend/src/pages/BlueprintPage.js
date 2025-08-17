@@ -4,6 +4,7 @@ import { blueprintAPI } from '../api/api';
 import { authUtils } from '../utils/auth';
 import BlueprintAddModal from '../components/BlueprintAddModal';
 import BlueprintEditModal from '../components/BlueprintEditModal';
+import SuccessModal from '../components/SuccessModal';
 
 const BlueprintPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -32,6 +33,13 @@ const BlueprintPage = () => {
     const [blueprintRotation, setBlueprintRotation] = useState(0);
     const [imageBlob, setImageBlob] = useState(null);
     const [showEditForm, setShowEditForm] = useState(false);
+    
+    // 성공 모달 상태
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
     
     /** @type {[{id: number|null, file: File|null, floor: number, width: number, height: number}, Function]} */
     const [editForm, setEditForm] = useState({
@@ -469,7 +477,7 @@ const BlueprintPage = () => {
             await fetchBlueprints(currentPage);
 
             // 성공 메시지 표시
-            alert('도면이 성공적으로 수정되었습니다!');
+            showSuccessModal('수정 완료', '도면이 성공적으로 수정되었습니다!');
 
             // 수정 폼 초기화 및 닫기
             setEditForm({
@@ -536,12 +544,33 @@ const BlueprintPage = () => {
             // 목록 새로고침
             await fetchBlueprints(currentPage);
             
+            // 성공 모달 표시
+            showSuccessModal('삭제 완료', '도면이 성공적으로 삭제되었습니다.');
+            
         } catch (err) {
             console.error('삭제 실패:', err);
             setError(err.message || '도면 삭제에 실패했습니다.');
         } finally {
             setLoading(false);
         }
+    };
+
+    // 성공 모달 표시
+    const showSuccessModal = (title, message) => {
+        setSuccessModal({
+            isOpen: true,
+            title: title,
+            message: message
+        });
+    };
+
+    // 성공 모달 닫기
+    const handleCloseSuccessModal = () => {
+        setSuccessModal({
+            isOpen: false,
+            title: '',
+            message: ''
+        });
     };
 
     return (
@@ -853,6 +882,14 @@ const BlueprintPage = () => {
                 editPreview={editPreview}
                 editing={editing}
                 error={error}
+            />
+            
+            {/* 성공 모달 */}
+            <SuccessModal
+                isOpen={successModal.isOpen}
+                title={successModal.title}
+                message={successModal.message}
+                onClose={handleCloseSuccessModal}
             />
         </div>
     );
