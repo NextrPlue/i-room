@@ -359,7 +359,7 @@ export const userAPI = {
     /**
      * 관리자 권한 변경
      * @param {string} adminId - 관리자 ID
-     * @param {string} role - 새로운 권한 (SUPER_ADMIN, READER)
+     * @param {string} role - 새로운 권한 (SUPER_ADMIN, ADMIN, READER)
      * @returns {Promise} 변경된 관리자 정보
      */
     changeAdminRole: async (adminId, role) => {

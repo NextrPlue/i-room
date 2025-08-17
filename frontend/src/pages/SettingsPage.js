@@ -92,6 +92,10 @@ const SettingsPage = () => {
                             displayRole = 'Super Admin';
                             roleType = 'superAdmin';
                             break;
+                        case 'ADMIN':
+                            displayRole = 'Admin';
+                            roleType = 'admin';
+                            break;
                         case 'READER':
                             displayRole = 'Reader';
                             roleType = 'reader';
@@ -310,17 +314,30 @@ const SettingsPage = () => {
         const admin = admins.find(a => a.id === adminId);
         if (!admin) return;
 
-        const currentRole = admin.roleType === 'superAdmin' ? 'SUPER_ADMIN' : 'READER';
+        let currentRole;
+        switch(admin.roleType) {
+            case 'superAdmin':
+                currentRole = 'SUPER_ADMIN';
+                break;
+            case 'admin':
+                currentRole = 'ADMIN';
+                break;
+            case 'reader':
+                currentRole = 'READER';
+                break;
+            default:
+                currentRole = 'READER';
+        }
 
         const newRole = prompt(
-            `${admin.name}의 현재 권한: ${admin.role}\n\n새로운 권한을 입력하세요:\n- SUPER_ADMIN\n- READER`,
+            `${admin.name}의 현재 권한: ${admin.role}\n\n새로운 권한을 입력하세요:\n- SUPER_ADMIN\n- ADMIN\n- READER`,
             currentRole
         );
 
         if (!newRole || newRole === currentRole) return;
 
-        if (!['SUPER_ADMIN', 'READER'].includes(newRole)) {
-            alert('올바른 권한을 입력해주세요 (SUPER_ADMIN, READER)');
+        if (!['SUPER_ADMIN', 'ADMIN', 'READER'].includes(newRole)) {
+            alert('올바른 권한을 입력해주세요 (SUPER_ADMIN, ADMIN, READER)');
             return;
         }
 
@@ -329,8 +346,24 @@ const SettingsPage = () => {
             const response = await userAPI.changeAdminRole(adminId, newRole);
             
             if (response.data) {
-                const displayRole = newRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Reader';
-                const roleType = newRole === 'SUPER_ADMIN' ? 'superAdmin' : 'reader';
+                let displayRole, roleType;
+                switch(newRole) {
+                    case 'SUPER_ADMIN':
+                        displayRole = 'Super Admin';
+                        roleType = 'superAdmin';
+                        break;
+                    case 'ADMIN':
+                        displayRole = 'Admin';
+                        roleType = 'admin';
+                        break;
+                    case 'READER':
+                        displayRole = 'Reader';
+                        roleType = 'reader';
+                        break;
+                    default:
+                        displayRole = newRole;
+                        roleType = newRole.toLowerCase();
+                }
 
                 setAdmins(prev => prev.map(a => 
                     a.id === adminId
