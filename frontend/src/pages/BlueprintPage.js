@@ -5,6 +5,7 @@ import { authUtils } from '../utils/auth';
 import BlueprintAddModal from '../components/BlueprintAddModal';
 import BlueprintEditModal from '../components/BlueprintEditModal';
 import SuccessModal from '../components/SuccessModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const BlueprintPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -39,6 +40,12 @@ const BlueprintPage = () => {
         isOpen: false,
         title: '',
         message: ''
+    });
+    
+    // 확인 모달 상태
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        targetBlueprint: null
     });
     
     /** @type {[{id: number|null, file: File|null, floor: number, width: number, height: number}, Function]} */
@@ -523,19 +530,25 @@ const BlueprintPage = () => {
     };
 
     // 삭제 버튼 클릭 핸들러
-    const handleDeleteClick = async () => {
+    const handleDeleteClick = () => {
         if (!selectedBlueprint) {
             setError('삭제할 도면을 선택해주세요.');
             return;
         }
 
-        if (!window.confirm(`${selectedBlueprint.name && selectedBlueprint.name.trim() ? selectedBlueprint.name : `${selectedBlueprint.floor}층 도면`}을 정말 삭제하시겠습니까?`)) {
-            return;
-        }
+        setConfirmModal({
+            isOpen: true,
+            targetBlueprint: selectedBlueprint
+        });
+    };
+    
+    // 삭제 확인 실행
+    const handleConfirmDelete = async () => {
+        if (!confirmModal.targetBlueprint) return;
 
         try {
             setLoading(true);
-            await blueprintAPI.deleteBlueprint(selectedBlueprint.id);
+            await blueprintAPI.deleteBlueprint(confirmModal.targetBlueprint.id);
             
             // 선택 해제
             setSelectedBlueprint(null);
@@ -552,6 +565,7 @@ const BlueprintPage = () => {
             setError(err.message || '도면 삭제에 실패했습니다.');
         } finally {
             setLoading(false);
+            handleCloseConfirmModal();
         }
     };
 
@@ -570,6 +584,14 @@ const BlueprintPage = () => {
             isOpen: false,
             title: '',
             message: ''
+        });
+    };
+    
+    // 확인 모달 닫기
+    const handleCloseConfirmModal = () => {
+        setConfirmModal({
+            isOpen: false,
+            targetBlueprint: null
         });
     };
 
@@ -763,7 +785,7 @@ const BlueprintPage = () => {
                                     } else if (option.value === 'maintenance') {
                                         handleEditClick().catch(console.error);
                                     } else if (option.value === 'urgent') {
-                                        handleDeleteClick().catch(console.error);
+                                        handleDeleteClick();
                                     } else {
                                         setSelectedFilter(option.value);
                                     }
@@ -890,6 +912,25 @@ const BlueprintPage = () => {
                 title={successModal.title}
                 message={successModal.message}
                 onClose={handleCloseSuccessModal}
+            />
+            
+            {/* 삭제 확인 모달 */}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title="도면 삭제 확인"
+                message="을 정말 삭제하시겠습니까?"
+                targetName={confirmModal.targetBlueprint ? 
+                    (confirmModal.targetBlueprint.name && confirmModal.targetBlueprint.name.trim() ? 
+                        confirmModal.targetBlueprint.name : 
+                        `${confirmModal.targetBlueprint.floor}층 도면`) : 
+                    ''
+                }
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCloseConfirmModal}
+                loading={loading}
+                confirmButtonText="삭제하기"
+                loadingText="삭제 중..."
+                type="danger"
             />
         </div>
     );
