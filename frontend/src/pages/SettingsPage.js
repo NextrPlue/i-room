@@ -334,6 +334,11 @@ const SettingsPage = () => {
             return;
         }
 
+        if (adminId === myAccount?.id) {
+            alert('본인의 권한은 변경할 수 없습니다.');
+            return;
+        }
+
         const admin = admins.find(a => a.id === adminId);
         if (!admin) return;
 
@@ -673,14 +678,18 @@ const SettingsPage = () => {
                                                             <button
                                                                 className={`${styles.actionButton} ${styles.editActionButton}`}
                                                                 onClick={() => handleEditAdmin(admin.id)}
-                                                                disabled={loading}
+                                                                disabled={loading || admin.id === myAccount?.id}
+                                                                style={admin.id === myAccount?.id ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+                                                                title={admin.id === myAccount?.id ? '본인의 권한은 변경할 수 없습니다' : ''}
                                                             >
                                                                 권한변경
                                                             </button>
                                                             <button
                                                                 className={`${styles.actionButton} ${styles.deleteActionButton}`}
                                                                 onClick={() => handleDeleteAdmin(admin.id)}
-                                                                disabled={loading}
+                                                                disabled={loading || admin.id === myAccount?.id}
+                                                                style={admin.id === myAccount?.id ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+                                                                title={admin.id === myAccount?.id ? '본인 계정은 삭제할 수 없습니다' : ''}
                                                             >
                                                                 삭제
                                                             </button>
