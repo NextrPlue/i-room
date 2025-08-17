@@ -1,12 +1,13 @@
 package com.iroom.dashboard.dashboard.controller;
 
-import com.iroom.dashboard.dashboard.dto.request.ReportRequest;
 import com.iroom.dashboard.dashboard.dto.response.DashBoardResponse;
 import com.iroom.dashboard.dashboard.dto.response.MetricResponse;
 import com.iroom.dashboard.dashboard.entity.DashBoard;
 import com.iroom.dashboard.pdf.service.ChatService;
 import com.iroom.dashboard.dashboard.service.DashBoardService;
 import com.iroom.dashboard.pdf.service.PdfService;
+import com.iroom.dashboard.report.entity.Report;
+import com.iroom.dashboard.report.service.ReportService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,11 +24,13 @@ public class DashBoardController {
 	private final DashBoardService dashBoardService;
 	private final ChatService chatService;
 	private final PdfService pdfService;
+	private final ReportService reportService;
 
 	@GetMapping(value = "/metrics/{interval}")
-	public  ResponseEntity<List<MetricResponse>> getMetricScore(@PathVariable String interval){//day,week,month
+	public ResponseEntity<List<MetricResponse>> getMetricScore(@PathVariable String interval) {//day,week,month
 		return ResponseEntity.ok(dashBoardService.getMetricScore(interval));
 	}
+
 	//대시보드 조회하기
 	@GetMapping(value = "/{metricType}", produces = "application/json;charset=UTF-8")
 	public ResponseEntity<DashBoardResponse> getDashBoard(@PathVariable String metricType) {
@@ -44,11 +47,11 @@ public class DashBoardController {
 		String missingPpeCnt = "";
 		String dangerZoneAccessCnt = "";
 		String healthAlertCnt = "";
-		for (DashBoard dashBoard : dashBoards){
-			switch (dashBoard.getMetricType()){
-				case "PPE_VIOLATION" ->missingPpeCnt=String.valueOf(dashBoard.getMetricValue());
-				case "DANGER_ZONE"->dangerZoneAccessCnt=String.valueOf(dashBoard.getMetricValue());
-				case "HEALTH_RISK"->healthAlertCnt=String.valueOf(dashBoard.getMetricValue());
+		for (DashBoard dashBoard : dashBoards) {
+			switch (dashBoard.getMetricType()) {
+				case "PPE_VIOLATION" -> missingPpeCnt = String.valueOf(dashBoard.getMetricValue());
+				case "DANGER_ZONE" -> dangerZoneAccessCnt = String.valueOf(dashBoard.getMetricValue());
+				case "HEALTH_RISK" -> healthAlertCnt = String.valueOf(dashBoard.getMetricValue());
 			}
 		}
 		// 1. 질의 프롬프트 생성
@@ -56,7 +59,7 @@ public class DashBoardController {
 			"오늘 보호구 미착용 " + missingPpeCnt + "건, 위험지역 접근 " + dangerZoneAccessCnt
 				+ "건, 건강 이상 알림 " + healthAlertCnt + "건이 있었습니다. 이에 따른 안전 보고서를 작성해주세요."
 		);
-		System.out.println("userPrompt: "+userPrompt);
+		System.out.println("userPrompt: " + userPrompt);
 
 		String context = dashBoardService.getContext(userPrompt);
 		String finalPrompt = context + "\n" + userPrompt;
@@ -65,11 +68,21 @@ public class DashBoardController {
 		String gptResponse = chatService.questionReport(finalPrompt);
 		// 5. 리포트 PDF로 생성
 		LocalDate currentDate = LocalDate.now();
-		byte[] pdfBytes = pdfService.generateDashboardPdf("report_" + currentDate, gptResponse);
+		String reportTitle = "daily_safety_report_" + date;
+		byte[] pdfBytes = pdfService.generateDashboardPdf(reportTitle, gptResponse);
+
+		// 6. 리포트 정보 저장
+		Report savedReport = reportService.saveReport(
+			pdfBytes,
+			reportTitle,
+			Report.ReportType.DAILY_REPORT,
+			date
+		);
+
 		HttpHeaders pdfHeaders = new HttpHeaders();
 		pdfHeaders.setContentType(MediaType.APPLICATION_PDF);
 		pdfHeaders.setContentDisposition(ContentDisposition.builder("attachment")
-			.filename("report_" + currentDate + ".pdf") //
+			.filename("report_" + currentDate + ".pdf")
 			.build());
 		return ResponseEntity.ok().headers(pdfHeaders).body(pdfBytes);
 	}
@@ -82,9 +95,19 @@ public class DashBoardController {
 
 		String content = dashBoardService.createImprovement(interval);
 		LocalDate currentDate = LocalDate.now();
-		byte[] pdfBytes = pdfService.generateDashboardPdf(interval+"ly_"+"improvement_report_" + currentDate, content);
-		HttpHeaders headers = new HttpHeaders();
+		String reportTitle = interval + "ly_improvement_report_" + currentDate;
+		byte[] pdfBytes = pdfService.generateDashboardPdf(reportTitle, content);
 
+		// 개선안 리포트 정보 저장
+		String period = dashBoardService.getImprovementPeriod(interval);
+		Report savedReport = reportService.saveReport(
+			pdfBytes,
+			reportTitle,
+			Report.ReportType.IMPROVEMENT_REPORT,
+			period
+		);
+
+		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_PDF);
 		headers.setContentDisposition(ContentDisposition.builder("attachment")
 			.filename("improvement_report_" + currentDate + ".pdf")

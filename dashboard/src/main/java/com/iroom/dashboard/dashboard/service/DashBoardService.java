@@ -14,6 +14,8 @@ import com.iroom.dashboard.dashboard.repository.DashBoardRepository;
 import com.iroom.dashboard.pdf.service.ChatService;
 import com.iroom.dashboard.pdf.service.EmbeddingService;
 import com.iroom.dashboard.pdf.service.PdfService;
+import com.iroom.dashboard.report.entity.Report;
+import com.iroom.dashboard.report.service.ReportService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,6 +37,7 @@ public class DashBoardService {
 	private final EmbeddingService embeddingService;
 	private final DashBoardRepository dashBoardRepository;
 	private final ChatService chatService;
+	private final ReportService reportService;
 	@Value("${qdrant.url}")
 	private String qdrantUrl;
 
@@ -133,5 +136,23 @@ public class DashBoardService {
 		String gptResponse = chatService.questionReport(finalPrompt);
 
 		return gptResponse;
+	}
+
+	public String getImprovementPeriod(String interval) {
+		List<Object[]> rows = switch (interval.toLowerCase()) {
+			case "day" -> dashBoardRepository.getDailyMetricSummaryRaw();
+			case "week" -> dashBoardRepository.getWeeklyMetricSummaryRaw();
+			case "month" -> dashBoardRepository.getMonthlyMetricSummaryRaw();
+			default -> throw new IllegalArgumentException("Invalid interval: " + interval);
+		};
+		
+		if (rows.isEmpty()) {
+			return LocalDate.now().toString();
+		}
+		
+		String startDate = rows.get(rows.size() - 1)[0].toString();
+		String endDate = rows.get(0)[0].toString();
+		
+		return startDate + " ~ " + endDate;
 	}
 }
