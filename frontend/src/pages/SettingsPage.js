@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styles from '../styles/Settings.module.css';
 import { userAPI } from '../api/api';
 import SuccessModal from '../components/SuccessModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const SettingsPage = () => {
     const [myAccount, setMyAccount] = useState(null);
@@ -841,42 +842,18 @@ const SettingsPage = () => {
             )}
 
             {/* 삭제 확인 모달 */}
-            {deleteConfirmModal.isOpen && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modalContent}>
-                        <h3 className={styles.modalTitle}>관리자 삭제 확인</h3>
-                        
-                        <div className={styles.modalBody}>
-                            <div className={styles.deleteWarningIcon}>
-                                ⚠️
-                            </div>
-                            <p className={styles.modalText}>
-                                정말로 <strong>{deleteConfirmModal.adminName}</strong> 관리자를 삭제하시겠습니까?
-                            </p>
-                            <p className={styles.deleteWarningText}>
-                                이 작업은 되돌릴 수 없습니다.
-                            </p>
-                        </div>
-                        
-                        <div className={styles.modalActions}>
-                            <button 
-                                className={styles.modalCancelButton}
-                                onClick={handleCloseDeleteModal}
-                                disabled={loading}
-                            >
-                                취소
-                            </button>
-                            <button 
-                                className={styles.modalDeleteButton}
-                                onClick={handleConfirmDelete}
-                                disabled={loading}
-                            >
-                                {loading ? '삭제 중...' : '삭제하기'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmModal
+                isOpen={deleteConfirmModal.isOpen}
+                title="관리자 삭제 확인"
+                message="관리자를 삭제하시겠습니까?"
+                targetName={deleteConfirmModal.adminName}
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCloseDeleteModal}
+                loading={loading}
+                confirmButtonText="삭제하기"
+                loadingText="삭제 중..."
+                type="danger"
+            />
 
             {/* 성공 알림 모달 */}
             <SuccessModal
