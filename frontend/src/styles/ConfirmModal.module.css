@@ -1,0 +1,214 @@
+/* 확인 모달 스타일 */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.1s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes slideInScale {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -60%) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes slideOutScale {
+    from {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, -60%) scale(0.8);
+    }
+}
+
+.modalContent {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: slideInScale 0.1s ease-out;
+}
+
+.modalContent.closing {
+    animation: slideOutScale 0.1s ease-in forwards;
+}
+
+.modalOverlay.closing {
+    animation: fadeOut 0.1s ease-in forwards;
+}
+
+.modalTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0 0 20px 0;
+    text-align: center;
+}
+
+.modalBody {
+    margin-bottom: 24px;
+}
+
+.modalIcon {
+    font-size: 48px;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.modalText {
+    font-size: 14px;
+    color: #374151;
+    margin: 0 0 8px 0;
+    text-align: center;
+}
+
+.warningText {
+    font-size: 12px;
+    color: #6B7280;
+    text-align: center;
+    margin: 8px 0 0 0;
+    font-style: italic;
+}
+
+.modalActions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.modalCancelButton,
+.modalConfirmButton {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.modalCancelButton {
+    background: #F3F4F6;
+    color: #374151;
+}
+
+.modalCancelButton:hover:not(:disabled) {
+    background: #E5E7EB;
+}
+
+/* 기본 확인 버튼 */
+.modalConfirmButton.default {
+    background: #3B82F6;
+    color: white;
+}
+
+.modalConfirmButton.default:hover:not(:disabled) {
+    background: #2563EB;
+}
+
+/* 경고 확인 버튼 */
+.modalConfirmButton.warning {
+    background: #F59E0B;
+    color: white;
+}
+
+.modalConfirmButton.warning:hover:not(:disabled) {
+    background: #D97706;
+}
+
+/* 위험 확인 버튼 (삭제 등) */
+.modalConfirmButton.danger {
+    background: #EF4444;
+    color: white;
+}
+
+.modalConfirmButton.danger:hover:not(:disabled) {
+    background: #DC2626;
+}
+
+.modalCancelButton:disabled,
+.modalConfirmButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+    .modalContent {
+        margin: 20px;
+        padding: 20px;
+        max-width: none;
+        left: 20px;
+        right: 20px;
+        transform: translateY(-50%);
+        width: calc(100% - 40px);
+    }
+    
+    @keyframes slideInScale {
+        from {
+            opacity: 0;
+            transform: translateY(-60%) scale(0.8);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(-50%) scale(1);
+        }
+    }
+    
+    @keyframes slideOutScale {
+        from {
+            opacity: 1;
+            transform: translateY(-50%) scale(1);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-60%) scale(0.8);
+        }
+    }
+    
+    .modalActions {
+        flex-direction: column;
+    }
+    
+    .modalCancelButton,
+    .modalConfirmButton {
+        width: 100%;
+    }
+}

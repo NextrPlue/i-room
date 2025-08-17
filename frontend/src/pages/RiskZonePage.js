@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import styles from '../styles/RiskZone.module.css';
 import { riskZoneAPI, blueprintAPI } from '../api/api';
+import SuccessModal from '../components/SuccessModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const RiskZonePage = () => {
     const canvasRef = useRef(null);
@@ -38,6 +40,19 @@ const RiskZonePage = () => {
         width: '',
         height: '',
         name: ''
+    });
+    
+    // 성공 모달 상태
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
+    
+    // 확인 모달 상태
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        targetZoneId: null
     });
 
     // 위험구역 데이터 조회
@@ -304,7 +319,7 @@ const RiskZonePage = () => {
             const response = await riskZoneAPI.createRiskZone(riskZoneData);
             console.log('위험구역 등록 완료:', response);
 
-            alert('위험구역이 성공적으로 등록되었습니다.');
+            showSuccessModal('등록 완료', '위험구역이 성공적으로 등록되었습니다.');
 
             // 폼 초기화
             setClickedPoint(null);
@@ -402,7 +417,7 @@ const RiskZonePage = () => {
 
             await riskZoneAPI.updateRiskZone(editingZone.id, updateData);
 
-            alert('위험구역이 성공적으로 수정되었습니다.');
+            showSuccessModal('수정 완료', '위험구역이 성공적으로 수정되었습니다.');
             handleCloseEditModal();
 
             // 목록 새로고침
@@ -414,22 +429,56 @@ const RiskZonePage = () => {
         }
     };
 
-    // 위험구역 삭제
-    const handleDelete = async (zoneId) => {
-        if (!window.confirm('정말로 이 위험구역을 삭제하시겠습니까?')) {
-            return;
-        }
+    // 위험구역 삭제 확인 모달 열기
+    const handleDelete = (zoneId) => {
+        setConfirmModal({
+            isOpen: true,
+            targetZoneId: zoneId
+        });
+    };
+    
+    // 위험구역 삭제 실행
+    const handleConfirmDelete = async () => {
+        if (!confirmModal.targetZoneId) return;
 
         try {
-            await riskZoneAPI.deleteRiskZone(zoneId);
-            alert('위험구역이 성공적으로 삭제되었습니다.');
+            await riskZoneAPI.deleteRiskZone(confirmModal.targetZoneId);
+            showSuccessModal('삭제 완료', '위험구역이 성공적으로 삭제되었습니다.');
 
             // 목록 새로고침
             await fetchRiskZones();
         } catch (error) {
             console.error('위험구역 삭제 실패:', error);
             alert(`삭제에 실패했습니다: ${error.message}`);
+        } finally {
+            handleCloseConfirmModal();
         }
+    };
+
+    // 성공 모달 표시
+    const showSuccessModal = (title, message) => {
+        setSuccessModal({
+            isOpen: true,
+            title: title,
+            message: message
+        });
+    };
+
+    // 성공 모달 닫기
+    const handleCloseSuccessModal = () => {
+        setSuccessModal({
+            isOpen: false,
+            title: '',
+            message: ''
+        });
+    };
+    
+    // 확인 모달 닫기
+    const handleCloseConfirmModal = () => {
+        setConfirmModal({
+            isOpen: false,
+            targetZoneId: null
+        });
     };
 
 
@@ -871,6 +920,26 @@ const RiskZonePage = () => {
                     </div>
                 </div>
             )}
+            
+            {/* 성공 모달 */}
+            <SuccessModal
+                isOpen={successModal.isOpen}
+                title={successModal.title}
+                message={successModal.message}
+                onClose={handleCloseSuccessModal}
+            />
+            
+            {/* 삭제 확인 모달 */}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title="위험구역 삭제 확인"
+                message="을 정말 삭제하시겠습니까?"
+                targetName="이 위험구역"
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCloseConfirmModal}
+                confirmButtonText="삭제하기"
+                type="danger"
+            />
         </div>
     );
 };

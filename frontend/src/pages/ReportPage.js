@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styles from '../styles/Report.module.css';
 import { reportAPI } from '../api/api';
+import SuccessModal from '../components/SuccessModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const ReportPage = () => {
     // 일일 리포트 폼 데이터
@@ -30,6 +32,18 @@ const ReportPage = () => {
     // 리포트 데이터 상태
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(false);
+    
+    // 모달 상태
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
+    
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        targetId: null
+    });
 
     // 각 기간별 설명
     const INTERVAL_DESCRIPTIONS = {
@@ -110,7 +124,7 @@ const ReportPage = () => {
             // 리포트 목록 새로고침
             await fetchReports();
             
-            alert('리포트 다운로드가 시작되었습니다.');
+            showSuccessModal('다운로드 시작', '리포트 다운로드가 시작되었습니다.');
             
         } catch (error) {
             console.error('일일 리포트 생성 실패:', error);
@@ -133,7 +147,7 @@ const ReportPage = () => {
             // 리포트 목록 새로고침
             await fetchReports();
             
-            alert('개선안 리포트 다운로드가 시작되었습니다.');
+            showSuccessModal('다운로드 시작', '개선안 리포트 다운로드가 시작되었습니다.');
             
         } catch (error) {
             console.error('개선안 리포트 생성 실패:', error);
@@ -170,20 +184,52 @@ const ReportPage = () => {
         }
     };
 
-    // 리포트 삭제
-    const handleDelete = async (reportId) => {
-        if (!window.confirm('정말 이 리포트를 삭제하시겠습니까?')) {
-            return;
-        }
+    // 리포트 삭제 확인 모달 열기
+    const handleDelete = (reportId) => {
+        setConfirmModal({
+            isOpen: true,
+            targetId: reportId
+        });
+    };
+    
+    // 리포트 삭제 실행
+    const handleConfirmDelete = async () => {
+        if (!confirmModal.targetId) return;
         
         try {
-            await reportAPI.deleteReport(reportId);
+            await reportAPI.deleteReport(confirmModal.targetId);
             await fetchReports(); // 목록 새로고침
-            alert('리포트가 삭제되었습니다.');
+            showSuccessModal('삭제 완료', '리포트가 삭제되었습니다.');
         } catch (error) {
             console.error('리포트 삭제 실패:', error);
             setError('리포트 삭제에 실패했습니다.');
+        } finally {
+            handleCloseConfirmModal();
         }
+    };
+    
+    // 모달 관련 함수들
+    const showSuccessModal = (title, message) => {
+        setSuccessModal({
+            isOpen: true,
+            title: title,
+            message: message
+        });
+    };
+    
+    const handleCloseSuccessModal = () => {
+        setSuccessModal({
+            isOpen: false,
+            title: '',
+            message: ''
+        });
+    };
+    
+    const handleCloseConfirmModal = () => {
+        setConfirmModal({
+            isOpen: false,
+            targetId: null
+        });
     };
 
 
@@ -375,6 +421,26 @@ const ReportPage = () => {
                     </div>
                 )}
             </section>
+            
+            {/* 성공 모달 */}
+            <SuccessModal
+                isOpen={successModal.isOpen}
+                title={successModal.title}
+                message={successModal.message}
+                onClose={handleCloseSuccessModal}
+            />
+            
+            {/* 삭제 확인 모달 */}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title="리포트 삭제 확인"
+                message="을 정말 삭제하시겠습니까?"
+                targetName="이 리포트"
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCloseConfirmModal}
+                confirmButtonText="삭제하기"
+                type="danger"
+            />
         </div>
     );
 };
