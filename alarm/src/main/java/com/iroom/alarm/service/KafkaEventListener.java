@@ -28,7 +28,7 @@ public class KafkaEventListener {
 			log.info("Received Kafka message: eventType={}, data={}", eventType, dataNode);
 
 			switch (eventType) {
-				case "DANGER_AREA_ACCESS", "HEALTH_ANOMALY" -> alarmEventHandler.handle(eventType, dataNode);
+				case "DANGER_ZONE", "HEALTH_RISK" -> alarmEventHandler.handle(eventType, dataNode);
 				case "WORKER_CREATED", "WORKER_UPDATED", "WORKER_DELETED" ->
 					workerEventHandler.handle(eventType, dataNode);
 				default -> log.warn("Unknown event type: {}", eventType);

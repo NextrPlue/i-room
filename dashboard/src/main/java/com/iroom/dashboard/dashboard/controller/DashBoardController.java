@@ -47,8 +47,8 @@ public class DashBoardController {
 		for (DashBoard dashBoard : dashBoards){
 			switch (dashBoard.getMetricType()){
 				case "PPE_VIOLATION" ->missingPpeCnt=String.valueOf(dashBoard.getMetricValue());
-				case "DANGER_AREA_ACCESS"->dangerZoneAccessCnt=String.valueOf(dashBoard.getMetricValue());
-				case "HEALTH_ANOMALY"->healthAlertCnt=String.valueOf(dashBoard.getMetricValue());
+				case "DANGER_ZONE"->dangerZoneAccessCnt=String.valueOf(dashBoard.getMetricValue());
+				case "HEALTH_RISK"->healthAlertCnt=String.valueOf(dashBoard.getMetricValue());
 			}
 		}
 		// 1. 질의 프롬프트 생성
