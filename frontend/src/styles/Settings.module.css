@@ -712,6 +712,15 @@
     cursor: not-allowed;
 }
 
+/* 성공 알림 모달 전용 스타일 */
+.successIcon {
+    font-size: 48px;
+    text-align: center;
+    margin-bottom: 16px;
+    color: #10B981;
+    font-weight: bold;
+}
+
 @media (max-width: 480px) {
     .modalContent {
         margin: 20px;

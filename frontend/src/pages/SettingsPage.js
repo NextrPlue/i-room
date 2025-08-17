@@ -44,6 +44,13 @@ const SettingsPage = () => {
         adminName: ''
     });
 
+    // 성공 알림 모달 상태
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
@@ -277,7 +284,7 @@ const SettingsPage = () => {
                 };
                 setMyAccount(updatedAccount);
                 setIsEditing(false);
-                alert('정보가 성공적으로 수정되었습니다.');
+                showSuccessModal('정보 수정 완료', '정보가 성공적으로 수정되었습니다.');
             }
         } catch (err) {
             console.error('정보 수정 실패:', err);
@@ -313,7 +320,7 @@ const SettingsPage = () => {
                 newPassword: passwordForm.newPassword
             });
 
-            alert('비밀번호가 성공적으로 변경되었습니다.');
+            showSuccessModal('비밀번호 변경 완료', '비밀번호가 성공적으로 변경되었습니다.');
 
             // 폼 및 검증 상태 초기화
             setPasswordForm({
@@ -423,7 +430,7 @@ const SettingsPage = () => {
                         : a
                 ));
                 
-                alert(`${adminName}의 권한이 ${displayRole}으로 변경되었습니다.`);
+                showSuccessModal('권한 변경 완료', `${adminName}의 권한이 ${displayRole}으로 변경되었습니다.`);
                 handleCloseRoleModal();
             }
         } catch (err) {
@@ -474,7 +481,7 @@ const SettingsPage = () => {
             await userAPI.deleteAdmin(adminId);
 
             setAdmins(prev => prev.filter(a => a.id !== adminId));
-            alert(`${adminName} 관리자가 삭제되었습니다.`);
+            showSuccessModal('관리자 삭제 완료', `${adminName} 관리자가 삭제되었습니다.`);
             handleCloseDeleteModal();
         } catch (err) {
             console.error('관리자 삭제 실패:', err);
@@ -482,6 +489,24 @@ const SettingsPage = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // 성공 모달 표시
+    const showSuccessModal = (title, message) => {
+        setSuccessModal({
+            isOpen: true,
+            title: title,
+            message: message
+        });
+    };
+
+    // 성공 모달 닫기
+    const handleCloseSuccessModal = () => {
+        setSuccessModal({
+            isOpen: false,
+            title: '',
+            message: ''
+        });
     };
 
     return (
@@ -846,6 +871,33 @@ const SettingsPage = () => {
                                 disabled={loading}
                             >
                                 {loading ? '삭제 중...' : '삭제하기'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 성공 알림 모달 */}
+            {successModal.isOpen && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent}>
+                        <h3 className={styles.modalTitle}>{successModal.title}</h3>
+                        
+                        <div className={styles.modalBody}>
+                            <div className={styles.successIcon}>
+                                ✓
+                            </div>
+                            <p className={styles.modalText}>
+                                {successModal.message}
+                            </p>
+                        </div>
+                        
+                        <div className={styles.modalActions}>
+                            <button 
+                                className={styles.modalConfirmButton}
+                                onClick={handleCloseSuccessModal}
+                            >
+                                확인
                             </button>
                         </div>
                     </div>
