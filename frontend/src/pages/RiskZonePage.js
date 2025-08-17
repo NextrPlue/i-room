@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import styles from '../styles/RiskZone.module.css';
 import { riskZoneAPI, blueprintAPI } from '../api/api';
 import SuccessModal from '../components/SuccessModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const RiskZonePage = () => {
     const canvasRef = useRef(null);
@@ -46,6 +47,12 @@ const RiskZonePage = () => {
         isOpen: false,
         title: '',
         message: ''
+    });
+    
+    // 확인 모달 상태
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        targetZoneId: null
     });
 
     // 위험구역 데이터 조회
@@ -422,14 +429,20 @@ const RiskZonePage = () => {
         }
     };
 
-    // 위험구역 삭제
-    const handleDelete = async (zoneId) => {
-        if (!window.confirm('정말로 이 위험구역을 삭제하시겠습니까?')) {
-            return;
-        }
+    // 위험구역 삭제 확인 모달 열기
+    const handleDelete = (zoneId) => {
+        setConfirmModal({
+            isOpen: true,
+            targetZoneId: zoneId
+        });
+    };
+    
+    // 위험구역 삭제 실행
+    const handleConfirmDelete = async () => {
+        if (!confirmModal.targetZoneId) return;
 
         try {
-            await riskZoneAPI.deleteRiskZone(zoneId);
+            await riskZoneAPI.deleteRiskZone(confirmModal.targetZoneId);
             showSuccessModal('삭제 완료', '위험구역이 성공적으로 삭제되었습니다.');
 
             // 목록 새로고침
@@ -437,6 +450,8 @@ const RiskZonePage = () => {
         } catch (error) {
             console.error('위험구역 삭제 실패:', error);
             alert(`삭제에 실패했습니다: ${error.message}`);
+        } finally {
+            handleCloseConfirmModal();
         }
     };
 
@@ -455,6 +470,14 @@ const RiskZonePage = () => {
             isOpen: false,
             title: '',
             message: ''
+        });
+    };
+    
+    // 확인 모달 닫기
+    const handleCloseConfirmModal = () => {
+        setConfirmModal({
+            isOpen: false,
+            targetZoneId: null
         });
     };
 
@@ -904,6 +927,18 @@ const RiskZonePage = () => {
                 title={successModal.title}
                 message={successModal.message}
                 onClose={handleCloseSuccessModal}
+            />
+            
+            {/* 삭제 확인 모달 */}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title="위험구역 삭제 확인"
+                message="을 정말 삭제하시겠습니까?"
+                targetName="이 위험구역"
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCloseConfirmModal}
+                confirmButtonText="삭제하기"
+                type="danger"
             />
         </div>
     );
