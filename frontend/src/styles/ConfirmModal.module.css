@@ -10,6 +10,47 @@
     align-items: center;
     justify-content: center;
     z-index: 1000;
+    animation: fadeIn 0.1s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+@keyframes slideInScale {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -60%) scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes slideOutScale {
+    from {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, -60%) scale(0.8);
+    }
 }
 
 .modalContent {
@@ -19,6 +60,19 @@
     width: 100%;
     max-width: 450px;
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation: slideInScale 0.1s ease-out;
+}
+
+.modalContent.closing {
+    animation: slideOutScale 0.1s ease-in forwards;
+}
+
+.modalOverlay.closing {
+    animation: fadeOut 0.1s ease-in forwards;
 }
 
 .modalTitle {
@@ -121,6 +175,32 @@
         margin: 20px;
         padding: 20px;
         max-width: none;
+        left: 20px;
+        right: 20px;
+        transform: translateY(-50%);
+        width: calc(100% - 40px);
+    }
+    
+    @keyframes slideInScale {
+        from {
+            opacity: 0;
+            transform: translateY(-60%) scale(0.8);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(-50%) scale(1);
+        }
+    }
+    
+    @keyframes slideOutScale {
+        from {
+            opacity: 1;
+            transform: translateY(-50%) scale(1);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-60%) scale(0.8);
+        }
     }
     
     .modalActions {
