@@ -246,6 +246,18 @@ export const userAPI = {
     },
 
     /**
+     * 근로자 삭제
+     * @param {string} workerId - 삭제할 근로자 ID
+     * @returns {Promise} 삭제 응답
+     */
+    deleteWorker: async (workerId) => {
+        const url = `${API_CONFIG.gateway}/api/user/workers/${workerId}`;
+        return await apiRequest(url, {
+            method: 'DELETE'
+        });
+    },
+
+    /**
      * 관리자 로그인
      * @param {object} loginData - 로그인 데이터
      * @param {string} loginData.email - 이메일
