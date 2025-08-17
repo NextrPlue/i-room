@@ -28,11 +28,34 @@ const SettingsPage = () => {
     // 관리자 목록
     const [admins, setAdmins] = useState([]);
 
+    // 권한 변경 모달 상태
+    const [roleChangeModal, setRoleChangeModal] = useState({
+        isOpen: false,
+        adminId: null,
+        adminName: '',
+        currentRole: '',
+        newRole: ''
+    });
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
     const isSuperAdmin = () => {
         return myAccount && (myAccount.role === 'SUPER_ADMIN' || myAccount.role === 'Super Admin');
+    };
+
+    // 권한별 CSS 클래스 이름 매핑
+    const getRoleClass = (role) => {
+        switch(role) {
+            case 'SUPER_ADMIN':
+                return 'superAdmin';
+            case 'ADMIN':
+                return 'admin';
+            case 'READER':
+                return 'reader';
+            default:
+                return 'reader';
+        }
     };
 
     useEffect(() => {
@@ -304,8 +327,8 @@ const SettingsPage = () => {
         }
     };
 
-    // 관리자 수정
-    const handleEditAdmin = async (adminId) => {
+    // 권한 변경 모달 열기
+    const handleEditAdmin = (adminId) => {
         if (!isSuperAdmin()) {
             alert('관리자 권한 변경은 Super Admin만 가능합니다.');
             return;
@@ -329,15 +352,32 @@ const SettingsPage = () => {
                 currentRole = 'READER';
         }
 
-        const newRole = prompt(
-            `${admin.name}의 현재 권한: ${admin.role}\n\n새로운 권한을 입력하세요:\n- SUPER_ADMIN\n- ADMIN\n- READER`,
-            currentRole
-        );
+        setRoleChangeModal({
+            isOpen: true,
+            adminId: adminId,
+            adminName: admin.name,
+            currentRole: currentRole,
+            newRole: currentRole
+        });
+    };
 
-        if (!newRole || newRole === currentRole) return;
+    // 권한 변경 모달 닫기
+    const handleCloseRoleModal = () => {
+        setRoleChangeModal({
+            isOpen: false,
+            adminId: null,
+            adminName: '',
+            currentRole: '',
+            newRole: ''
+        });
+    };
 
-        if (!['SUPER_ADMIN', 'ADMIN', 'READER'].includes(newRole)) {
-            alert('올바른 권한을 입력해주세요 (SUPER_ADMIN, ADMIN, READER)');
+    // 권한 변경 실행
+    const handleConfirmRoleChange = async () => {
+        const { adminId, adminName, currentRole, newRole } = roleChangeModal;
+        
+        if (newRole === currentRole) {
+            handleCloseRoleModal();
             return;
         }
 
@@ -371,7 +411,8 @@ const SettingsPage = () => {
                         : a
                 ));
                 
-                alert(`${admin.name}의 권한이 ${displayRole}으로 변경되었습니다.`);
+                alert(`${adminName}의 권한이 ${displayRole}으로 변경되었습니다.`);
+                handleCloseRoleModal();
             }
         } catch (err) {
             console.error('권한 변경 실패:', err);
@@ -677,6 +718,61 @@ const SettingsPage = () => {
                     )}
                 </section>
             </div>
+
+            {/* 권한 변경 모달 */}
+            {roleChangeModal.isOpen && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent}>
+                        <h3 className={styles.modalTitle}>관리자 권한 변경</h3>
+                        
+                        <div className={styles.modalBody}>
+                            <p className={styles.modalText}>
+                                <strong>{roleChangeModal.adminName}</strong>의 권한을 변경합니다.
+                            </p>
+                            
+                            <div className={styles.roleSelectGroup}>
+                                <label className={styles.roleSelectLabel}>현재 권한:</label>
+                                <div className={styles.currentRoleDisplay}>
+                                    <span className={`${styles.roleBadge} ${styles[getRoleClass(roleChangeModal.currentRole)]}`}>
+                                        {roleChangeModal.currentRole === 'SUPER_ADMIN' ? 'Super Admin' : 
+                                         roleChangeModal.currentRole === 'ADMIN' ? 'Admin' : 'Reader'}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div className={styles.roleSelectGroup}>
+                                <label className={styles.roleSelectLabel}>새로운 권한:</label>
+                                <select 
+                                    className={styles.roleSelect}
+                                    value={roleChangeModal.newRole}
+                                    onChange={(e) => setRoleChangeModal(prev => ({...prev, newRole: e.target.value}))}
+                                >
+                                    <option value="SUPER_ADMIN">Super Admin</option>
+                                    <option value="ADMIN">Admin</option>
+                                    <option value="READER">Reader</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div className={styles.modalActions}>
+                            <button 
+                                className={styles.modalCancelButton}
+                                onClick={handleCloseRoleModal}
+                                disabled={loading}
+                            >
+                                취소
+                            </button>
+                            <button 
+                                className={styles.modalConfirmButton}
+                                onClick={handleConfirmRoleChange}
+                                disabled={loading || roleChangeModal.newRole === roleChangeModal.currentRole}
+                            >
+                                {loading ? '변경 중...' : '변경하기'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
