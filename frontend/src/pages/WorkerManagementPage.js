@@ -4,6 +4,7 @@ import {useNavigate} from 'react-router-dom';
 import styles from '../styles/WorkerManagement.module.css';
 import WorkerEditModal from '../components/WorkerEditModal';
 import WorkerAddModal from '../components/WorkerAddModal';
+import SuccessModal from '../components/SuccessModal';
 
 /** @typedef {{
  *  total: number,
@@ -35,6 +36,13 @@ const WorkerManagementPage = () => {
     const [selectedWorker, setSelectedWorker] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    
+    // 성공 모달 상태
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
 
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize] = useState(10);
@@ -146,7 +154,7 @@ const WorkerManagementPage = () => {
             const response = await userAPI.createWorker(createData);
 
             if (response) {
-                alert('근로자 등록이 완료되었습니다!');
+                showSuccessModal('등록 완료', '근로자 등록이 완료되었습니다!');
                 await refreshWorkersList();
                 handleAddModalClose();
             }
@@ -185,7 +193,7 @@ const WorkerManagementPage = () => {
             const response = await userAPI.updateWorker(selectedWorker.id, updateData);
 
             if (response) {
-                alert('저장이 완료되었습니다!');
+                showSuccessModal('수정 완료', '저장이 완료되었습니다!');
                 // 근로자 목록 새로고침
                 const listResponse = await userAPI.getWorkers();
                 setWorkers(listResponse.data.content || []);
@@ -195,6 +203,24 @@ const WorkerManagementPage = () => {
             console.error('저장 실패:', error);
             alert('저장에 실패했습니다: ' + (error.message || '알 수 없는 오류'));
         }
+    };
+
+    // 성공 모달 표시
+    const showSuccessModal = (title, message) => {
+        setSuccessModal({
+            isOpen: true,
+            title: title,
+            message: message
+        });
+    };
+
+    // 성공 모달 닫기
+    const handleCloseSuccessModal = () => {
+        setSuccessModal({
+            isOpen: false,
+            title: '',
+            message: ''
+        });
     };
 
     return (
@@ -376,6 +402,14 @@ const WorkerManagementPage = () => {
                 isOpen={isAddModalOpen}
                 onClose={handleAddModalClose}
                 onSave={handleAddSave}
+            />
+            
+            {/* 성공 모달 */}
+            <SuccessModal
+                isOpen={successModal.isOpen}
+                title={successModal.title}
+                message={successModal.message}
+                onClose={handleCloseSuccessModal}
             />
         </div>
     );
