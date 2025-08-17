@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.iroom.dashboard.dashboard.dto.request.ReportRequest;
 import com.iroom.dashboard.dashboard.dto.response.DashBoardResponse;
@@ -60,15 +61,27 @@ public class DashBoardService {
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
 	public DashBoardResponse getDashBoard(String metricType) {
-		DashBoard dashBoard = dashBoardRepository.findTopByMetricTypeOrderByIdDesc(metricType);
-
-		DashBoardResponse dashBoardResponse = new DashBoardResponse(
-			dashBoard.getMetricType(),
-			dashBoard.getMetricValue(),
-			dashBoard.getRecordedAt()
-		);
-
-		return dashBoardResponse;
+		LocalDate today = LocalDate.now();
+		
+		// 당일 데이터 조회 시도
+		Optional<DashBoard> todayDashBoard = dashBoardRepository.findByMetricTypeAndRecordedAt(metricType, today);
+		
+		if (todayDashBoard.isPresent()) {
+			// 당일 데이터가 있으면 해당 데이터 반환
+			DashBoard dashBoard = todayDashBoard.get();
+			return new DashBoardResponse(
+				dashBoard.getMetricType(),
+				dashBoard.getMetricValue(),
+				dashBoard.getRecordedAt()
+			);
+		} else {
+			// 당일 데이터가 없으면 0값으로 반환
+			return new DashBoardResponse(
+				metricType,
+				0,
+				today
+			);
+		}
 	}
 	//벡터 디비에 질의
 	public String getContext(String userPrompt) {
