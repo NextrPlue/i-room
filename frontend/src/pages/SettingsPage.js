@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styles from '../styles/Settings.module.css';
 import { userAPI } from '../api/api';
+import SuccessModal from '../components/SuccessModal';
 
 const SettingsPage = () => {
     const [myAccount, setMyAccount] = useState(null);
@@ -878,31 +879,12 @@ const SettingsPage = () => {
             )}
 
             {/* 성공 알림 모달 */}
-            {successModal.isOpen && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modalContent}>
-                        <h3 className={styles.modalTitle}>{successModal.title}</h3>
-                        
-                        <div className={styles.modalBody}>
-                            <div className={styles.successIcon}>
-                                ✓
-                            </div>
-                            <p className={styles.modalText}>
-                                {successModal.message}
-                            </p>
-                        </div>
-                        
-                        <div className={styles.modalActions}>
-                            <button 
-                                className={styles.modalConfirmButton}
-                                onClick={handleCloseSuccessModal}
-                            >
-                                확인
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <SuccessModal
+                isOpen={successModal.isOpen}
+                title={successModal.title}
+                message={successModal.message}
+                onClose={handleCloseSuccessModal}
+            />
         </div>
     );
 };
