@@ -86,7 +86,7 @@ public class LocationEventHandler {
 								null
 							);
 
-							kafkaProducerService.publishMessage("DANGER_AREA_ACCESS", alarmEvent);
+							kafkaProducerService.publishMessage("DANGER_ZONE", alarmEvent);
 						}
 					}
 					if (dataNode.hasNonNull("latitude")) {
@@ -155,7 +155,7 @@ public class LocationEventHandler {
 							null
 						);
 						System.out.println("DANGER_AREA 메시지 발행");
-						kafkaProducerService.publishMessage("DANGER_AREA_ACCESS", alarmEvent);
+						kafkaProducerService.publishMessage("DANGER_ZONE", alarmEvent);
 					}
 				}
 			}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styles from '../styles/Settings.module.css';
 import { userAPI } from '../api/api';
+import SuccessModal from '../components/SuccessModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const SettingsPage = () => {
     const [myAccount, setMyAccount] = useState(null);
@@ -28,11 +30,48 @@ const SettingsPage = () => {
     // 관리자 목록
     const [admins, setAdmins] = useState([]);
 
+    // 권한 변경 모달 상태
+    const [roleChangeModal, setRoleChangeModal] = useState({
+        isOpen: false,
+        adminId: null,
+        adminName: '',
+        currentRole: '',
+        newRole: ''
+    });
+
+    // 삭제 확인 모달 상태
+    const [deleteConfirmModal, setDeleteConfirmModal] = useState({
+        isOpen: false,
+        adminId: null,
+        adminName: ''
+    });
+
+    // 성공 알림 모달 상태
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
     const isSuperAdmin = () => {
         return myAccount && (myAccount.role === 'SUPER_ADMIN' || myAccount.role === 'Super Admin');
+    };
+
+    // 권한별 CSS 클래스 이름 매핑
+    const getRoleClass = (role) => {
+        switch(role) {
+            case 'SUPER_ADMIN':
+                return 'superAdmin';
+            case 'ADMIN':
+                return 'admin';
+            case 'READER':
+                return 'reader';
+            default:
+                return 'reader';
+        }
     };
 
     useEffect(() => {
@@ -91,6 +130,10 @@ const SettingsPage = () => {
                         case 'SUPER_ADMIN':
                             displayRole = 'Super Admin';
                             roleType = 'superAdmin';
+                            break;
+                        case 'ADMIN':
+                            displayRole = 'Admin';
+                            roleType = 'admin';
                             break;
                         case 'READER':
                             displayRole = 'Reader';
@@ -243,7 +286,7 @@ const SettingsPage = () => {
                 };
                 setMyAccount(updatedAccount);
                 setIsEditing(false);
-                alert('정보가 성공적으로 수정되었습니다.');
+                showSuccessModal('정보 수정 완료', '정보가 성공적으로 수정되었습니다.');
             }
         } catch (err) {
             console.error('정보 수정 실패:', err);
@@ -279,7 +322,7 @@ const SettingsPage = () => {
                 newPassword: passwordForm.newPassword
             });
 
-            alert('비밀번호가 성공적으로 변경되었습니다.');
+            showSuccessModal('비밀번호 변경 완료', '비밀번호가 성공적으로 변경되었습니다.');
 
             // 폼 및 검증 상태 초기화
             setPasswordForm({
@@ -300,27 +343,62 @@ const SettingsPage = () => {
         }
     };
 
-    // 관리자 수정
-    const handleEditAdmin = async (adminId) => {
+    // 권한 변경 모달 열기
+    const handleEditAdmin = (adminId) => {
         if (!isSuperAdmin()) {
             alert('관리자 권한 변경은 Super Admin만 가능합니다.');
+            return;
+        }
+
+        if (adminId === myAccount?.id) {
+            alert('본인의 권한은 변경할 수 없습니다.');
             return;
         }
 
         const admin = admins.find(a => a.id === adminId);
         if (!admin) return;
 
-        const currentRole = admin.roleType === 'superAdmin' ? 'SUPER_ADMIN' : 'READER';
+        let currentRole;
+        switch(admin.roleType) {
+            case 'superAdmin':
+                currentRole = 'SUPER_ADMIN';
+                break;
+            case 'admin':
+                currentRole = 'ADMIN';
+                break;
+            case 'reader':
+                currentRole = 'READER';
+                break;
+            default:
+                currentRole = 'READER';
+        }
 
-        const newRole = prompt(
-            `${admin.name}의 현재 권한: ${admin.role}\n\n새로운 권한을 입력하세요:\n- SUPER_ADMIN\n- READER`,
-            currentRole
-        );
+        setRoleChangeModal({
+            isOpen: true,
+            adminId: adminId,
+            adminName: admin.name,
+            currentRole: currentRole,
+            newRole: currentRole
+        });
+    };
 
-        if (!newRole || newRole === currentRole) return;
+    // 권한 변경 모달 닫기
+    const handleCloseRoleModal = () => {
+        setRoleChangeModal({
+            isOpen: false,
+            adminId: null,
+            adminName: '',
+            currentRole: '',
+            newRole: ''
+        });
+    };
 
-        if (!['SUPER_ADMIN', 'READER'].includes(newRole)) {
-            alert('올바른 권한을 입력해주세요 (SUPER_ADMIN, READER)');
+    // 권한 변경 실행
+    const handleConfirmRoleChange = async () => {
+        const { adminId, adminName, currentRole, newRole } = roleChangeModal;
+        
+        if (newRole === currentRole) {
+            handleCloseRoleModal();
             return;
         }
 
@@ -329,8 +407,24 @@ const SettingsPage = () => {
             const response = await userAPI.changeAdminRole(adminId, newRole);
             
             if (response.data) {
-                const displayRole = newRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Reader';
-                const roleType = newRole === 'SUPER_ADMIN' ? 'superAdmin' : 'reader';
+                let displayRole, roleType;
+                switch(newRole) {
+                    case 'SUPER_ADMIN':
+                        displayRole = 'Super Admin';
+                        roleType = 'superAdmin';
+                        break;
+                    case 'ADMIN':
+                        displayRole = 'Admin';
+                        roleType = 'admin';
+                        break;
+                    case 'READER':
+                        displayRole = 'Reader';
+                        roleType = 'reader';
+                        break;
+                    default:
+                        displayRole = newRole;
+                        roleType = newRole.toLowerCase();
+                }
 
                 setAdmins(prev => prev.map(a => 
                     a.id === adminId
@@ -338,7 +432,8 @@ const SettingsPage = () => {
                         : a
                 ));
                 
-                alert(`${admin.name}의 권한이 ${displayRole}으로 변경되었습니다.`);
+                showSuccessModal('권한 변경 완료', `${adminName}의 권한이 ${displayRole}으로 변경되었습니다.`);
+                handleCloseRoleModal();
             }
         } catch (err) {
             console.error('권한 변경 실패:', err);
@@ -348,30 +443,72 @@ const SettingsPage = () => {
         }
     };
 
-    // 관리자 삭제
-    const handleDeleteAdmin = async (adminId) => {
+    // 삭제 확인 모달 열기
+    const handleDeleteAdmin = (adminId) => {
         if (!isSuperAdmin()) {
             alert('관리자 삭제는 Super Admin만 가능합니다.');
+            return;
+        }
+
+        if (adminId === myAccount?.id) {
+            alert('본인 계정은 삭제할 수 없습니다.');
             return;
         }
 
         const admin = admins.find(a => a.id === adminId);
         if (!admin) return;
 
-        if (window.confirm(`정말로 ${admin.name} 관리자를 삭제하시겠습니까?`)) {
-            try {
-                setLoading(true);
-                await userAPI.deleteAdmin(adminId);
+        setDeleteConfirmModal({
+            isOpen: true,
+            adminId: adminId,
+            adminName: admin.name
+        });
+    };
 
-                setAdmins(prev => prev.filter(a => a.id !== adminId));
-                alert(`${admin.name} 관리자가 삭제되었습니다.`);
-            } catch (err) {
-                console.error('관리자 삭제 실패:', err);
-                alert(err.message || '관리자 삭제에 실패했습니다.');
-            } finally {
-                setLoading(false);
-            }
+    // 삭제 확인 모달 닫기
+    const handleCloseDeleteModal = () => {
+        setDeleteConfirmModal({
+            isOpen: false,
+            adminId: null,
+            adminName: ''
+        });
+    };
+
+    // 관리자 삭제 실행
+    const handleConfirmDelete = async () => {
+        const { adminId, adminName } = deleteConfirmModal;
+        
+        try {
+            setLoading(true);
+            await userAPI.deleteAdmin(adminId);
+
+            setAdmins(prev => prev.filter(a => a.id !== adminId));
+            showSuccessModal('관리자 삭제 완료', `${adminName} 관리자가 삭제되었습니다.`);
+            handleCloseDeleteModal();
+        } catch (err) {
+            console.error('관리자 삭제 실패:', err);
+            alert(err.message || '관리자 삭제에 실패했습니다.');
+        } finally {
+            setLoading(false);
         }
+    };
+
+    // 성공 모달 표시
+    const showSuccessModal = (title, message) => {
+        setSuccessModal({
+            isOpen: true,
+            title: title,
+            message: message
+        });
+    };
+
+    // 성공 모달 닫기
+    const handleCloseSuccessModal = () => {
+        setSuccessModal({
+            isOpen: false,
+            title: '',
+            message: ''
+        });
     };
 
     return (
@@ -599,14 +736,18 @@ const SettingsPage = () => {
                                                             <button
                                                                 className={`${styles.actionButton} ${styles.editActionButton}`}
                                                                 onClick={() => handleEditAdmin(admin.id)}
-                                                                disabled={loading}
+                                                                disabled={loading || admin.id === myAccount?.id}
+                                                                style={admin.id === myAccount?.id ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+                                                                title={admin.id === myAccount?.id ? '본인의 권한은 변경할 수 없습니다' : ''}
                                                             >
                                                                 권한변경
                                                             </button>
                                                             <button
                                                                 className={`${styles.actionButton} ${styles.deleteActionButton}`}
                                                                 onClick={() => handleDeleteAdmin(admin.id)}
-                                                                disabled={loading}
+                                                                disabled={loading || admin.id === myAccount?.id}
+                                                                style={admin.id === myAccount?.id ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+                                                                title={admin.id === myAccount?.id ? '본인 계정은 삭제할 수 없습니다' : ''}
                                                             >
                                                                 삭제
                                                             </button>
@@ -644,6 +785,83 @@ const SettingsPage = () => {
                     )}
                 </section>
             </div>
+
+            {/* 권한 변경 모달 */}
+            {roleChangeModal.isOpen && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modalContent}>
+                        <h3 className={styles.modalTitle}>관리자 권한 변경</h3>
+                        
+                        <div className={styles.modalBody}>
+                            <p className={styles.modalText}>
+                                <strong>{roleChangeModal.adminName}</strong>의 권한을 변경합니다.
+                            </p>
+                            
+                            <div className={styles.roleSelectGroup}>
+                                <label className={styles.roleSelectLabel}>현재 권한:</label>
+                                <div className={styles.currentRoleDisplay}>
+                                    <span className={`${styles.roleBadge} ${styles[getRoleClass(roleChangeModal.currentRole)]}`}>
+                                        {roleChangeModal.currentRole === 'SUPER_ADMIN' ? 'Super Admin' : 
+                                         roleChangeModal.currentRole === 'ADMIN' ? 'Admin' : 'Reader'}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div className={styles.roleSelectGroup}>
+                                <label className={styles.roleSelectLabel}>새로운 권한:</label>
+                                <select 
+                                    className={styles.roleSelect}
+                                    value={roleChangeModal.newRole}
+                                    onChange={(e) => setRoleChangeModal(prev => ({...prev, newRole: e.target.value}))}
+                                >
+                                    <option value="SUPER_ADMIN">Super Admin</option>
+                                    <option value="ADMIN">Admin</option>
+                                    <option value="READER">Reader</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div className={styles.modalActions}>
+                            <button 
+                                className={styles.modalCancelButton}
+                                onClick={handleCloseRoleModal}
+                                disabled={loading}
+                            >
+                                취소
+                            </button>
+                            <button 
+                                className={styles.modalConfirmButton}
+                                onClick={handleConfirmRoleChange}
+                                disabled={loading || roleChangeModal.newRole === roleChangeModal.currentRole}
+                            >
+                                {loading ? '변경 중...' : '변경하기'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* 삭제 확인 모달 */}
+            <ConfirmModal
+                isOpen={deleteConfirmModal.isOpen}
+                title="관리자 삭제 확인"
+                message="관리자를 삭제하시겠습니까?"
+                targetName={deleteConfirmModal.adminName}
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCloseDeleteModal}
+                loading={loading}
+                confirmButtonText="삭제하기"
+                loadingText="삭제 중..."
+                type="danger"
+            />
+
+            {/* 성공 알림 모달 */}
+            <SuccessModal
+                isOpen={successModal.isOpen}
+                title={successModal.title}
+                message={successModal.message}
+                onClose={handleCloseSuccessModal}
+            />
         </div>
     );
 };

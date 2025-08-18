@@ -4,6 +4,8 @@ import {useNavigate} from 'react-router-dom';
 import styles from '../styles/WorkerManagement.module.css';
 import WorkerEditModal from '../components/WorkerEditModal';
 import WorkerAddModal from '../components/WorkerAddModal';
+import SuccessModal from '../components/SuccessModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 /** @typedef {{
  *  total: number,
@@ -35,6 +37,19 @@ const WorkerManagementPage = () => {
     const [selectedWorker, setSelectedWorker] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    
+    // 성공 모달 상태
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
+    
+    // 삭제 확인 모달 상태
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        targetWorker: null
+    });
 
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize] = useState(10);
@@ -146,7 +161,7 @@ const WorkerManagementPage = () => {
             const response = await userAPI.createWorker(createData);
 
             if (response) {
-                alert('근로자 등록이 완료되었습니다!');
+                showSuccessModal('등록 완료', '근로자 등록이 완료되었습니다!');
                 await refreshWorkersList();
                 handleAddModalClose();
             }
@@ -185,7 +200,7 @@ const WorkerManagementPage = () => {
             const response = await userAPI.updateWorker(selectedWorker.id, updateData);
 
             if (response) {
-                alert('저장이 완료되었습니다!');
+                showSuccessModal('수정 완료', '저장이 완료되었습니다!');
                 // 근로자 목록 새로고침
                 const listResponse = await userAPI.getWorkers();
                 setWorkers(listResponse.data.content || []);
@@ -195,6 +210,59 @@ const WorkerManagementPage = () => {
             console.error('저장 실패:', error);
             alert('저장에 실패했습니다: ' + (error.message || '알 수 없는 오류'));
         }
+    };
+
+    // 삭제 버튼 클릭 핸들러
+    const handleDeleteClick = (worker) => {
+        setConfirmModal({
+            isOpen: true,
+            targetWorker: worker
+        });
+    };
+    
+    // 삭제 확인 실행
+    const handleConfirmDelete = async () => {
+        if (!confirmModal.targetWorker) return;
+        
+        try {
+            await userAPI.deleteWorker(confirmModal.targetWorker.id);
+            
+            // 목록 새로고침
+            await refreshWorkersList();
+            
+            showSuccessModal('삭제 완료', '근로자가 성공적으로 삭제되었습니다.');
+        } catch (error) {
+            console.error('근로자 삭제 실패:', error);
+            alert('근로자 삭제에 실패했습니다: ' + (error.message || '알 수 없는 오류'));
+        } finally {
+            handleCloseConfirmModal();
+        }
+    };
+
+    // 성공 모달 표시
+    const showSuccessModal = (title, message) => {
+        setSuccessModal({
+            isOpen: true,
+            title: title,
+            message: message
+        });
+    };
+
+    // 성공 모달 닫기
+    const handleCloseSuccessModal = () => {
+        setSuccessModal({
+            isOpen: false,
+            title: '',
+            message: ''
+        });
+    };
+    
+    // 확인 모달 닫기
+    const handleCloseConfirmModal = () => {
+        setConfirmModal({
+            isOpen: false,
+            targetWorker: null
+        });
     };
 
     return (
@@ -321,6 +389,9 @@ const WorkerManagementPage = () => {
                                         <button className={styles.editBtn}
                                                 onClick={() => handleEditClick(worker)}>수정
                                         </button>
+                                        <button className={styles.deleteBtn}
+                                                onClick={() => handleDeleteClick(worker)}>삭제
+                                        </button>
                                     </td>
                                 </tr>
                             ))
@@ -376,6 +447,26 @@ const WorkerManagementPage = () => {
                 isOpen={isAddModalOpen}
                 onClose={handleAddModalClose}
                 onSave={handleAddSave}
+            />
+            
+            {/* 성공 모달 */}
+            <SuccessModal
+                isOpen={successModal.isOpen}
+                title={successModal.title}
+                message={successModal.message}
+                onClose={handleCloseSuccessModal}
+            />
+            
+            {/* 삭제 확인 모달 */}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title="근로자 삭제 확인"
+                message="을 정말 삭제하시겠습니까?"
+                targetName={confirmModal.targetWorker ? confirmModal.targetWorker.name : ''}
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCloseConfirmModal}
+                confirmButtonText="삭제하기"
+                type="danger"
             />
         </div>
     );

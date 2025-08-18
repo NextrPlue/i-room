@@ -2,6 +2,10 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: i-room-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/websocket-services: "alarm-service"
 
 spec:
   ingressClassName: nginx
@@ -27,6 +31,20 @@ spec:
             backend:
               service:
                 name: i-room-kafka-ui
+                port:
+                  number: 80
+          - path: /alarm/ws # Path for alarm websocket
+            pathType: Prefix
+            backend:
+              service:
+                name: alarm-service
+                port:
+                  number: 80
+          - path: /sensor/ws # Path for alarm websocket
+            pathType: Prefix
+            backend:
+              service:
+                name: sensor-service
                 port:
                   number: 80
           - path: /api # Path for gateway

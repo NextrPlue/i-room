@@ -4,6 +4,8 @@ import { blueprintAPI } from '../api/api';
 import { authUtils } from '../utils/auth';
 import BlueprintAddModal from '../components/BlueprintAddModal';
 import BlueprintEditModal from '../components/BlueprintEditModal';
+import SuccessModal from '../components/SuccessModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const BlueprintPage = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -14,9 +16,14 @@ const BlueprintPage = () => {
     const [showUploadForm, setShowUploadForm] = useState(false);
     const [uploadForm, setUploadForm] = useState({
         file: null,
+        name: '',
         floor: 1,
         width: 10.0,
-        height: 10.0
+        height: 10.0,
+        topLeft: { lat: 37.5675, lon: 126.9770 },
+        topRight: { lat: 37.5675, lon: 126.9780 },
+        bottomRight: { lat: 37.5665, lon: 126.9780 },
+        bottomLeft: { lat: 37.5665, lon: 126.9770 }
     });
     const [uploadPreview, setUploadPreview] = useState(null);
     const [uploading, setUploading] = useState(false);
@@ -28,13 +35,31 @@ const BlueprintPage = () => {
     const [imageBlob, setImageBlob] = useState(null);
     const [showEditForm, setShowEditForm] = useState(false);
     
+    // 성공 모달 상태
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
+    
+    // 확인 모달 상태
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        targetBlueprint: null
+    });
+    
     /** @type {[{id: number|null, file: File|null, floor: number, width: number, height: number}, Function]} */
     const [editForm, setEditForm] = useState({
         id: null,
         file: null,
+        name: '',
         floor: 1,
         width: 10.0,
-        height: 10.0
+        height: 10.0,
+        topLeft: { lat: 37.5675, lon: 126.9770 },
+        topRight: { lat: 37.5675, lon: 126.9780 },
+        bottomRight: { lat: 37.5665, lon: 126.9780 },
+        bottomLeft: { lat: 37.5665, lon: 126.9770 }
     });
 
     const [editPreview, setEditPreview] = useState(null);
@@ -42,25 +67,46 @@ const BlueprintPage = () => {
     const pageSize = 7;
 
     // 도면 목록 조회 함수
-    const fetchBlueprints = useCallback(async (page = 0) => {
+    const fetchBlueprints = useCallback(async (page = 0, searchTarget = null, searchKeyword = null) => {
         try {
             setLoading(true);
             setError(null);
 
-            const response = await blueprintAPI.getBlueprints({
+            const params = {
                 page: page,
                 size: pageSize
-            });
+            };
 
-            const data = response.data || response;
-            
-            setBlueprints(data.content || []);
-            setCurrentPage(data.page || 0);
-            setTotalPages(data.totalPages || 0);
+            // 검색 파라미터 추가
+            if (searchTarget && searchKeyword && searchKeyword.trim()) {
+                params.target = searchTarget;
+                params.keyword = searchKeyword.trim();
+            }
 
-            // 첫 번째 도면을 기본 선택
-            if (data.content && data.content.length > 0) {
-                handleBlueprintSelect(data.content[0]);
+            const response = await blueprintAPI.getBlueprints(params);
+
+            // 새로운 API 응답 구조: { status, message, data: {...}, timestamp }
+            if (response.status === 'success' && response.data) {
+                const data = response.data;
+                
+                setBlueprints(data.content || []);
+                setCurrentPage(data.page || 0);
+                setTotalPages(data.totalPages || 0);
+
+                // 첫 번째 도면을 기본 선택
+                if (data.content && data.content.length > 0) {
+                    handleBlueprintSelect(data.content[0]);
+                }
+            } else {
+                // API에서 성공 응답이지만 데이터가 없는 경우
+                console.warn('API 응답에 데이터가 없음:', response);
+                setBlueprints([]);
+                setCurrentPage(0);
+                setTotalPages(0);
+                
+                if (response.message) {
+                    setError(response.message);
+                }
             }
 
         } catch (err) {
@@ -71,6 +117,23 @@ const BlueprintPage = () => {
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [pageSize]);
+
+    // 검색 처리 함수
+    const handleSearch = useCallback(async (searchValue) => {
+        if (!searchValue || !searchValue.trim()) {
+            // 빈 검색어면 전체 목록 조회
+            await fetchBlueprints(0);
+            return;
+        }
+
+        const trimmedSearch = searchValue.trim();
+        
+        // 숫자면 층수로 검색, 아니면 이름으로 검색
+        const isNumber = /^\d+$/.test(trimmedSearch);
+        const target = isNumber ? 'floor' : 'name';
+        
+        await fetchBlueprints(0, target, trimmedSearch);
+    }, [fetchBlueprints]);
 
     // 컴포넌트 마운트 시 도면 목록 조회
     useEffect(() => {
@@ -95,16 +158,8 @@ const BlueprintPage = () => {
         { value: 'urgent', label: '삭제', color: '#EF4444' },
     ];
 
-    // 검색 필터링 (클라이언트 사이드) - 층수로 검색
-    const filteredBlueprints = blueprints.filter(blueprint => {
-        const matchesSearch = !searchTerm ||
-            blueprint.floor.toString().includes(searchTerm) ||
-            `${blueprint.floor}층`.includes(searchTerm);
-
-        // 필터는 층수 기준으로 단순화 (모든 도면 표시)
-        const matchesFilter = selectedFilter === 'all';
-        return matchesSearch && matchesFilter;
-    });
+    // 클라이언트 사이드 필터링 (검색은 서버에서 처리)
+    const filteredBlueprints = blueprints;
 
     // 이미지 로드 함수
     const loadBlueprintImage = async (blueprintId) => {
@@ -187,16 +242,34 @@ const BlueprintPage = () => {
 
     // 업로드 폼 입력 핸들러
     const handleUploadFormChange = (field, value) => {
-        setUploadForm(prev => ({
-            ...prev,
-            [field]: field === 'floor' ? parseInt(value, 10) : parseFloat(value)
-        }));
+        if (field.includes('.')) {
+            // GPS 좌표 필드 처리 (예: topLeft.lat)
+            const [corner, coord] = field.split('.');
+            setUploadForm(prev => ({
+                ...prev,
+                [corner]: {
+                    ...prev[corner],
+                    [coord]: parseFloat(value)
+                }
+            }));
+        } else {
+            setUploadForm(prev => ({
+                ...prev,
+                [field]: field === 'floor' ? parseInt(value, 10) : 
+                        field === 'name' ? value : parseFloat(value)
+            }));
+        }
     };
 
     // 도면 업로드 핸들러
     const handleUploadSubmit = async () => {
         if (!uploadForm.file) {
             setError('도면 파일을 선택해주세요.');
+            return;
+        }
+        
+        if (!uploadForm.name || !uploadForm.name.trim()) {
+            setError('도면 이름을 입력해주세요.');
             return;
         }
 
@@ -212,9 +285,14 @@ const BlueprintPage = () => {
             // 폼 초기화
             setUploadForm({
                 file: null,
+                name: '',
                 floor: 1,
                 width: 10.0,
-                height: 10.0
+                height: 10.0,
+                topLeft: { lat: 37.5675, lon: 126.9770 },
+                topRight: { lat: 37.5675, lon: 126.9780 },
+                bottomRight: { lat: 37.5665, lon: 126.9780 },
+                bottomLeft: { lat: 37.5665, lon: 126.9770 }
             });
             setUploadPreview(null);
             setShowUploadForm(false);
@@ -231,9 +309,14 @@ const BlueprintPage = () => {
     const handleUploadCancel = () => {
         setUploadForm({
             file: null,
+            name: '',
             floor: 1,
             width: 10.0,
-            height: 10.0
+            height: 10.0,
+            topLeft: { lat: 37.5675, lon: 126.9770 },
+            topRight: { lat: 37.5675, lon: 126.9780 },
+            bottomRight: { lat: 37.5665, lon: 126.9780 },
+            bottomLeft: { lat: 37.5665, lon: 126.9770 }
         });
         setUploadPreview(null);
         setShowUploadForm(false);
@@ -257,7 +340,7 @@ const BlueprintPage = () => {
 
         try {
             const imageUrl = blueprintAPI.getBlueprintImage(selectedBlueprint.id);
-            const fileName = `${selectedBlueprint.floor}층_도면.jpg`;
+            const fileName = `${selectedBlueprint.name && selectedBlueprint.name.trim() ? selectedBlueprint.name : `${selectedBlueprint.floor}층`}_도면.jpg`;
             
             // 이미지 다운로드 (JWT 토큰 포함)
             const response = await fetch(imageUrl, {
@@ -293,9 +376,14 @@ const BlueprintPage = () => {
         setEditForm({
             id: selectedBlueprint.id,
             file: null,
+            name: selectedBlueprint.name || '',
             floor: selectedBlueprint.floor,
             width: selectedBlueprint.width,
-            height: selectedBlueprint.height
+            height: selectedBlueprint.height,
+            topLeft: selectedBlueprint.topLeft || { lat: 37.5675, lon: 126.9770 },
+            topRight: selectedBlueprint.topRight || { lat: 37.5675, lon: 126.9780 },
+            bottomRight: selectedBlueprint.bottomRight || { lat: 37.5665, lon: 126.9780 },
+            bottomLeft: selectedBlueprint.bottomLeft || { lat: 37.5665, lon: 126.9770 }
         });
 
         // 기존 이미지를 미리보기로 설정
@@ -338,10 +426,23 @@ const BlueprintPage = () => {
 
     // 수정 폼 입력 핸들러
     const handleEditFormChange = (field, value) => {
-        setEditForm(prev => ({
-            ...prev,
-            [field]: field === 'floor' ? parseInt(value, 10) : parseFloat(value)
-        }));
+        if (field.includes('.')) {
+            // GPS 좌표 필드 처리 (예: topLeft.lat)
+            const [corner, coord] = field.split('.');
+            setEditForm(prev => ({
+                ...prev,
+                [corner]: {
+                    ...prev[corner],
+                    [coord]: parseFloat(value)
+                }
+            }));
+        } else {
+            setEditForm(prev => ({
+                ...prev,
+                [field]: field === 'floor' ? parseInt(value, 10) : 
+                        field === 'name' ? value : parseFloat(value)
+            }));
+        }
     };
 
     // 수정 제출 핸들러
@@ -350,42 +451,53 @@ const BlueprintPage = () => {
             setError('수정할 도면이 선택되지 않았습니다.');
             return;
         }
+        
+        if (!editForm.name || !editForm.name.trim()) {
+            setError('도면 이름을 입력해주세요.');
+            return;
+        }
 
         try {
             setEditing(true);
             setError(null);
 
             // API 호출로 도면 정보 업데이트 (파일 포함 또는 정보만)
+            const updateData = {
+                name: editForm.name,
+                floor: editForm.floor,
+                width: editForm.width,
+                height: editForm.height,
+                topLeft: editForm.topLeft,
+                topRight: editForm.topRight,
+                bottomRight: editForm.bottomRight,
+                bottomLeft: editForm.bottomLeft
+            };
+            
             if (editForm.file) {
                 // 파일이 있으면 새 파일과 함께 수정
-                await blueprintAPI.updateBlueprint(editForm.id, {
-                    file: editForm.file,
-                    floor: editForm.floor,
-                    width: editForm.width,
-                    height: editForm.height
-                });
-            } else {
-                // 파일이 없으면 정보만 수정
-                await blueprintAPI.updateBlueprint(editForm.id, {
-                    floor: editForm.floor,
-                    width: editForm.width,
-                    height: editForm.height
-                });
+                updateData.file = editForm.file;
             }
+            
+            await blueprintAPI.updateBlueprint(editForm.id, updateData);
 
             // 목록 새로고침
             await fetchBlueprints(currentPage);
 
             // 성공 메시지 표시
-            alert('도면이 성공적으로 수정되었습니다!');
+            showSuccessModal('수정 완료', '도면이 성공적으로 수정되었습니다!');
 
             // 수정 폼 초기화 및 닫기
             setEditForm({
                 id: null,
                 file: null,
+                name: '',
                 floor: 1,
                 width: 10.0,
-                height: 10.0
+                height: 10.0,
+                topLeft: { lat: 37.5675, lon: 126.9770 },
+                topRight: { lat: 37.5675, lon: 126.9780 },
+                bottomRight: { lat: 37.5665, lon: 126.9780 },
+                bottomLeft: { lat: 37.5665, lon: 126.9770 }
             });
             setEditPreview(null);
             setShowEditForm(false);
@@ -403,9 +515,14 @@ const BlueprintPage = () => {
         setEditForm({
             id: null,
             file: null,
+            name: '',
             floor: 1,
             width: 10.0,
-            height: 10.0
+            height: 10.0,
+            topLeft: { lat: 37.5675, lon: 126.9770 },
+            topRight: { lat: 37.5675, lon: 126.9780 },
+            bottomRight: { lat: 37.5665, lon: 126.9780 },
+            bottomLeft: { lat: 37.5665, lon: 126.9770 }
         });
         setEditPreview(null);
         setShowEditForm(false);
@@ -413,19 +530,25 @@ const BlueprintPage = () => {
     };
 
     // 삭제 버튼 클릭 핸들러
-    const handleDeleteClick = async () => {
+    const handleDeleteClick = () => {
         if (!selectedBlueprint) {
             setError('삭제할 도면을 선택해주세요.');
             return;
         }
 
-        if (!window.confirm(`${selectedBlueprint.floor}층 도면을 정말 삭제하시겠습니까?`)) {
-            return;
-        }
+        setConfirmModal({
+            isOpen: true,
+            targetBlueprint: selectedBlueprint
+        });
+    };
+    
+    // 삭제 확인 실행
+    const handleConfirmDelete = async () => {
+        if (!confirmModal.targetBlueprint) return;
 
         try {
             setLoading(true);
-            await blueprintAPI.deleteBlueprint(selectedBlueprint.id);
+            await blueprintAPI.deleteBlueprint(confirmModal.targetBlueprint.id);
             
             // 선택 해제
             setSelectedBlueprint(null);
@@ -434,12 +557,42 @@ const BlueprintPage = () => {
             // 목록 새로고침
             await fetchBlueprints(currentPage);
             
+            // 성공 모달 표시
+            showSuccessModal('삭제 완료', '도면이 성공적으로 삭제되었습니다.');
+            
         } catch (err) {
             console.error('삭제 실패:', err);
             setError(err.message || '도면 삭제에 실패했습니다.');
         } finally {
             setLoading(false);
+            handleCloseConfirmModal();
         }
+    };
+
+    // 성공 모달 표시
+    const showSuccessModal = (title, message) => {
+        setSuccessModal({
+            isOpen: true,
+            title: title,
+            message: message
+        });
+    };
+
+    // 성공 모달 닫기
+    const handleCloseSuccessModal = () => {
+        setSuccessModal({
+            isOpen: false,
+            title: '',
+            message: ''
+        });
+    };
+    
+    // 확인 모달 닫기
+    const handleCloseConfirmModal = () => {
+        setConfirmModal({
+            isOpen: false,
+            targetBlueprint: null
+        });
     };
 
     return (
@@ -459,9 +612,15 @@ const BlueprintPage = () => {
             <section className={styles.searchSection}>
                 <input
                     className={styles.searchInput}
-                    placeholder="층수로 검색해보세요 (예: 1, 2층)"
+                    placeholder="이름이나 층수로 검색해보세요 (예: 1구역, 1)"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e) => {
+                        const value = e.target.value;
+                        setSearchTerm(value);
+                        
+                        // 디바운싱 없이 즉시 검색 (또는 디바운싱을 원하면 setTimeout 사용)
+                        handleSearch(value).catch(console.error);
+                    }}
                 />
             </section>
 
@@ -498,9 +657,10 @@ const BlueprintPage = () => {
                                 <div className={styles.blueprintIcon}>📋</div>
                                 <div className={styles.blueprintInfo}>
                                     <h3 className={styles.blueprintTitle}>
-                                        {blueprint.floor}층 도면
+                                        {blueprint.name && blueprint.name.trim() ? blueprint.name : `${blueprint.floor}층 도면`}
                                     </h3>
                                     <div className={styles.blueprintMeta}>
+                                        <span>층수: {blueprint.floor}층</span>
                                         <span>크기: {blueprint.width}m × {blueprint.height}m</span>
                                     </div>
                                 </div>
@@ -518,7 +678,16 @@ const BlueprintPage = () => {
                     <div className={styles.pagination}>
                         <button
                             className={styles.pageBtn}
-                            onClick={() => fetchBlueprints(currentPage - 1).catch(console.error)}
+                            onClick={() => {
+                                const trimmedSearch = searchTerm.trim();
+                                if (trimmedSearch) {
+                                    const isNumber = /^\d+$/.test(trimmedSearch);
+                                    const target = isNumber ? 'floor' : 'name';
+                                    fetchBlueprints(currentPage - 1, target, trimmedSearch).catch(console.error);
+                                } else {
+                                    fetchBlueprints(currentPage - 1).catch(console.error);
+                                }
+                            }}
                             disabled={currentPage === 0}
                         >
                             이전
@@ -528,7 +697,16 @@ const BlueprintPage = () => {
                             <button
                                 key={index}
                                 className={`${styles.pageBtn} ${currentPage === index ? styles.active : ''}`}
-                                onClick={() => fetchBlueprints(index).catch(console.error)}
+                                onClick={() => {
+                                    const trimmedSearch = searchTerm.trim();
+                                    if (trimmedSearch) {
+                                        const isNumber = /^\d+$/.test(trimmedSearch);
+                                        const target = isNumber ? 'floor' : 'name';
+                                        fetchBlueprints(index, target, trimmedSearch).catch(console.error);
+                                    } else {
+                                        fetchBlueprints(index).catch(console.error);
+                                    }
+                                }}
                             >
                                 {index + 1}
                             </button>
@@ -536,7 +714,16 @@ const BlueprintPage = () => {
 
                         <button
                             className={styles.pageBtn}
-                            onClick={() => fetchBlueprints(currentPage + 1).catch(console.error)}
+                            onClick={() => {
+                                const trimmedSearch = searchTerm.trim();
+                                if (trimmedSearch) {
+                                    const isNumber = /^\d+$/.test(trimmedSearch);
+                                    const target = isNumber ? 'floor' : 'name';
+                                    fetchBlueprints(currentPage + 1, target, trimmedSearch).catch(console.error);
+                                } else {
+                                    fetchBlueprints(currentPage + 1).catch(console.error);
+                                }
+                            }}
                             disabled={currentPage >= totalPages - 1}
                         >
                             다음
@@ -548,12 +735,14 @@ const BlueprintPage = () => {
                 <section className={styles.previewSection}>
                     {selectedBlueprint ? (
                         <div className={styles.blueprintPreview}>
-                            <h3 className={styles.previewTitle}>{selectedBlueprint.floor}층 도면</h3>
+                            <h3 className={styles.previewTitle}>
+                                {selectedBlueprint.name && selectedBlueprint.name.trim() ? selectedBlueprint.name : `${selectedBlueprint.floor}층 도면`}
+                            </h3>
 
                             {selectedBlueprint.blueprintUrl && !imageError && imageBlob ? (
                                 <img
                                     src={typeof imageBlob === 'string' ? imageBlob : ''}
-                                    alt={`${selectedBlueprint.floor}층 도면 - 크기: ${selectedBlueprint.width}m × ${selectedBlueprint.height}m`}
+                                    alt={`${selectedBlueprint.name || `${selectedBlueprint.floor}층 도면`} - 크기: ${selectedBlueprint.width}m × ${selectedBlueprint.height}m`}
                                     className={styles.previewImage}
                                     onError={handleImageError}
                                     style={{ transform: `rotate(${blueprintRotation}deg)` }}
@@ -596,7 +785,7 @@ const BlueprintPage = () => {
                                     } else if (option.value === 'maintenance') {
                                         handleEditClick().catch(console.error);
                                     } else if (option.value === 'urgent') {
-                                        handleDeleteClick().catch(console.error);
+                                        handleDeleteClick();
                                     } else {
                                         setSelectedFilter(option.value);
                                     }
@@ -612,6 +801,12 @@ const BlueprintPage = () => {
                         <div className={styles.blueprintDetails}>
                             <h4 className={styles.detailsTitle}>도면 정보</h4>
                             <div className={styles.detailsGrid}>
+                                {selectedBlueprint.name && selectedBlueprint.name.trim() && (
+                                    <div className={styles.detailItem}>
+                                        <span className={styles.detailLabel}>구역명:</span>
+                                        <span className={styles.detailValue}>{selectedBlueprint.name}</span>
+                                    </div>
+                                )}
                                 <div className={styles.detailItem}>
                                     <span className={styles.detailLabel}>층수:</span>
                                     <span className={styles.detailValue}>{selectedBlueprint.floor}층</span>
@@ -630,6 +825,36 @@ const BlueprintPage = () => {
                                         {(selectedBlueprint.width * selectedBlueprint.height).toFixed(2)}㎡
                                     </span>
                                 </div>
+                                
+                                {/* 좌표 정보 */}
+                                {selectedBlueprint.topLeft && (
+                                    <>
+                                        <div className={styles.detailItem}>
+                                            <span className={styles.detailLabel}>좌상단 좌표:</span>
+                                            <span className={styles.detailValue}>
+                                                {selectedBlueprint.topLeft.lat.toFixed(4)}, {selectedBlueprint.topLeft.lon.toFixed(4)}
+                                            </span>
+                                        </div>
+                                        <div className={styles.detailItem}>
+                                            <span className={styles.detailLabel}>우상단 좌표:</span>
+                                            <span className={styles.detailValue}>
+                                                {selectedBlueprint.topRight.lat.toFixed(4)}, {selectedBlueprint.topRight.lon.toFixed(4)}
+                                            </span>
+                                        </div>
+                                        <div className={styles.detailItem}>
+                                            <span className={styles.detailLabel}>우하단 좌표:</span>
+                                            <span className={styles.detailValue}>
+                                                {selectedBlueprint.bottomRight.lat.toFixed(4)}, {selectedBlueprint.bottomRight.lon.toFixed(4)}
+                                            </span>
+                                        </div>
+                                        <div className={styles.detailItem}>
+                                            <span className={styles.detailLabel}>좌하단 좌표:</span>
+                                            <span className={styles.detailValue}>
+                                                {selectedBlueprint.bottomLeft.lat.toFixed(4)}, {selectedBlueprint.bottomLeft.lon.toFixed(4)}
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
                                 {selectedBlueprint.blueprintUrl && (
                                     <div className={styles.detailItem}>
                                         <span className={styles.detailLabel}>도면 URL:</span>
@@ -679,6 +904,33 @@ const BlueprintPage = () => {
                 editPreview={editPreview}
                 editing={editing}
                 error={error}
+            />
+            
+            {/* 성공 모달 */}
+            <SuccessModal
+                isOpen={successModal.isOpen}
+                title={successModal.title}
+                message={successModal.message}
+                onClose={handleCloseSuccessModal}
+            />
+            
+            {/* 삭제 확인 모달 */}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title="도면 삭제 확인"
+                message="을 정말 삭제하시겠습니까?"
+                targetName={confirmModal.targetBlueprint ? 
+                    (confirmModal.targetBlueprint.name && confirmModal.targetBlueprint.name.trim() ? 
+                        confirmModal.targetBlueprint.name : 
+                        `${confirmModal.targetBlueprint.floor}층 도면`) : 
+                    ''
+                }
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCloseConfirmModal}
+                loading={loading}
+                confirmButtonText="삭제하기"
+                loadingText="삭제 중..."
+                type="danger"
             />
         </div>
     );

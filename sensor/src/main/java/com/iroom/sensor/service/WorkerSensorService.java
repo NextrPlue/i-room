@@ -15,6 +15,7 @@ import com.iroom.sensor.util.GpsFilter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,7 +24,9 @@ import org.springframework.web.client.RestTemplate;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -34,7 +37,9 @@ public class WorkerSensorService {
 	private final KafkaProducerService kafkaProducerService;
 	private final WorkerSensorRepository workerSensorRepository;
 	private final WorkerReadModelRepository workerReadModelRepository;
+	private final SimpMessagingTemplate messagingTemplate;
 	private final GpsFilter gpsFilter = new GpsFilter();
+
 	// 근로자 센서 업데이트
 	@PreAuthorize("hasAuthority('ROLE_WORKER')")
 	public WorkerSensorUpdateResponse updateSensor(Long workerId, byte[] binaryData) {
@@ -49,8 +54,8 @@ public class WorkerSensorService {
 
 		WorkerSensorUpdateRequest request = parseBinaryData(binaryData);
 		double[] filtered = gpsFilter.filter(request.latitude(), request.longitude(), request.speed());
-		System.out.println("원본 위도 경도: "+request.latitude()+", "+request.longitude());
-		System.out.println("수정 위도 경도: "+filtered[0]+", "+filtered[1]);
+		System.out.println("원본 위도 경도: " + request.latitude() + ", " + request.longitude());
+		System.out.println("수정 위도 경도: " + filtered[0] + ", " + filtered[1]);
 		workerSensor.updateSensor(filtered[0], filtered[1], request.heartRate(),
 			request.steps(), request.speed(), request.pace(), request.stepPerMinute());
 
@@ -67,6 +72,9 @@ public class WorkerSensorService {
 
 		kafkaProducerService.publishMessage("WORKER_SENSOR_UPDATED", workerSensorEvent);
 
+		// WebSocket으로 실시간 센서 데이터 전송
+		sendSensorDataViaWebSocket(workerSensor);
+
 		sendGpsToPythonServer(request.latitude(), request.longitude(), workerId);
 
 		return new WorkerSensorUpdateResponse(workerSensor);
@@ -79,6 +87,19 @@ public class WorkerSensorService {
 			.orElseThrow(() -> new CustomException(ErrorCode.SENSOR_WORKER_NOT_FOUND));
 
 		return new WorkerLocationResponse(workerSensor);
+	}
+
+	//다중 근로자 위치 조회 기능
+	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
+	public List<WorkerLocationResponse> getWorkersLocation(List<Long> workerIds) {
+		if (workerIds == null || workerIds.isEmpty()) {
+			return List.of();
+		}
+
+		List<WorkerSensor> sensors = workerSensorRepository.findByWorkerIdIn(workerIds);
+		return sensors.stream()
+			.map(WorkerLocationResponse::new)
+			.collect(Collectors.toList());
 	}
 
 	private WorkerSensorUpdateRequest parseBinaryData(byte[] binaryData) {
@@ -142,5 +163,19 @@ public class WorkerSensorService {
 		} catch (Exception e) {
 			log.error("Python 서버 GPS 전송 실패", e);
 		}
+	}
+
+	private void sendSensorDataViaWebSocket(WorkerSensor workerSensor) {
+		String adminMessage = String.format(
+			"[센서 업데이트] 작업자 ID: %d, 위치: (%.6f, %.6f), 심박수: %.1f, 걸음수: %d",
+			workerSensor.getWorkerId(),
+			workerSensor.getLatitude(),
+			workerSensor.getLongitude(),
+			workerSensor.getHeartRate(),
+			workerSensor.getSteps()
+		);
+
+		// 관리자에게 센서 데이터 전송
+		messagingTemplate.convertAndSend("/sensor/topic/sensors/admin", adminMessage);
 	}
 }

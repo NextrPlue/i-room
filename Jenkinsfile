@@ -1,3 +1,11 @@
+def GATEWAY_BUILT = false
+def USER_BUILT = false
+def MANAGEMENT_BUILT = false
+def ALARM_BUILT = false
+def SENSOR_BUILT = false
+def DASHBOARD_BUILT = false
+def FRONTEND_BUILT = false
+
 pipeline {
     agent {
         kubernetes {
@@ -61,6 +69,7 @@ spec:
         booleanParam(name: 'DEPLOY_ALARM', defaultValue: true, description: 'Deploy Alarm service')
         booleanParam(name: 'DEPLOY_SENSOR', defaultValue: true, description: 'Deploy Sensor service')
         booleanParam(name: 'DEPLOY_DASHBOARD', defaultValue: true, description: 'Deploy Dashboard service')
+        booleanParam(name: 'DEPLOY_FRONTEND', defaultValue: true, description: 'Deploy Frontend service')
     }
 
     environment {
@@ -80,6 +89,8 @@ spec:
         ALARM_IMAGE = "${ACR_REGISTRY}/alarm:${BUILD_VERSION}"
         SENSOR_IMAGE = "${ACR_REGISTRY}/sensor:${BUILD_VERSION}"
         DASHBOARD_IMAGE = "${ACR_REGISTRY}/dashboard:${BUILD_VERSION}"
+        FRONTEND_IMAGE = "${ACR_REGISTRY}/frontend:${BUILD_VERSION}"
+        FRONTEND_WORKER_IMAGE = "${ACR_REGISTRY}/frontend-worker:${BUILD_VERSION}"
     }
 
     stages {
@@ -108,12 +119,15 @@ spec:
                 }
             }
             steps {
-                echo 'Building Gateway service...'
-                dir('gateway') {
-                    sh '''
-                        chmod +x ../gradlew
-                        ../gradlew clean build -x test
-                    '''
+                script {
+                    GATEWAY_BUILT = true
+                    echo 'Building Gateway service...'
+                    dir('gateway') {
+                        sh '''
+                            chmod +x ../gradlew
+                            ../gradlew clean build -x test
+                        '''
+                    }
                 }
             }
         }
@@ -132,12 +146,15 @@ spec:
                 }
             }
             steps {
-                echo 'Building User service...'
-                dir('user') {
-                    sh '''
-                        chmod +x ../gradlew
-                        ../gradlew clean build -x test
-                    '''
+                script {
+                    USER_BUILT = true
+                    echo 'Building User service...'
+                    dir('user') {
+                        sh '''
+                            chmod +x ../gradlew
+                            ../gradlew clean build -x test
+                        '''
+                    }
                 }
             }
         }
@@ -156,12 +173,15 @@ spec:
                 }
             }
             steps {
-                echo 'Building Management service...'
-                dir('management') {
-                    sh '''
-                        chmod +x ../gradlew
-                        ../gradlew clean build -x test
-                    '''
+                script {
+                    MANAGEMENT_BUILT = true
+                    echo 'Building Management service...'
+                    dir('management') {
+                        sh '''
+                            chmod +x ../gradlew
+                            ../gradlew clean build -x test
+                        '''
+                    }
                 }
             }
         }
@@ -180,12 +200,15 @@ spec:
                 }
             }
             steps {
-                echo 'Building Alarm service...'
-                dir('alarm') {
-                    sh '''
-                        chmod +x ../gradlew
-                        ../gradlew clean build -x test
-                    '''
+                script {
+                    ALARM_BUILT = true
+                    echo 'Building Alarm service...'
+                    dir('alarm') {
+                        sh '''
+                            chmod +x ../gradlew
+                            ../gradlew clean build -x test
+                        '''
+                    }
                 }
             }
         }
@@ -204,12 +227,15 @@ spec:
                 }
             }
             steps {
-                echo 'Building Sensor service...'
-                dir('sensor') {
-                    sh '''
-                        chmod +x ../gradlew
-                        ../gradlew clean build -x test
-                    '''
+                script {
+                    SENSOR_BUILT = true
+                    echo 'Building Sensor service...'
+                    dir('sensor') {
+                        sh '''
+                            chmod +x ../gradlew
+                            ../gradlew clean build -x test
+                        '''
+                    }
                 }
             }
         }
@@ -228,15 +254,19 @@ spec:
                 }
             }
             steps {
-                echo 'Building Dashboard service...'
-                dir('dashboard') {
-                    sh '''
-                        chmod +x ../gradlew
-                        ../gradlew clean build -x test
-                    '''
+                script {
+                    DASHBOARD_BUILT = true
+                    echo 'Building Dashboard service...'
+                    dir('dashboard') {
+                        sh '''
+                            chmod +x ../gradlew
+                            ../gradlew clean build -x test
+                        '''
+                    }
                 }
             }
         }
+
 
         stage('Docker Login') {
             steps {
@@ -251,16 +281,7 @@ spec:
 
         stage('Build Gateway Docker Image') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_GATEWAY == true }
-                    anyOf {
-                        changeset "gateway/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
-                }
+                expression { return GATEWAY_BUILT }
             }
             steps {
                 echo 'Building Gateway Docker image...'
@@ -277,16 +298,7 @@ spec:
 
         stage('Build User Docker Image') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_USER == true }
-                    anyOf {
-                        changeset "user/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
-                }
+                expression { return USER_BUILT }
             }
             steps {
                 echo 'Building User Docker image...'
@@ -303,16 +315,7 @@ spec:
 
         stage('Build Management Docker Image') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_MANAGEMENT == true }
-                    anyOf {
-                        changeset "management/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
-                }
+                expression { return MANAGEMENT_BUILT }
             }
             steps {
                 echo 'Building Management Docker image...'
@@ -329,16 +332,7 @@ spec:
 
         stage('Build Alarm Docker Image') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_ALARM == true }
-                    anyOf {
-                        changeset "alarm/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
-                }
+                expression { return ALARM_BUILT }
             }
             steps {
                 echo 'Building Alarm Docker image...'
@@ -355,16 +349,7 @@ spec:
 
         stage('Build Sensor Docker Image') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_SENSOR == true }
-                    anyOf {
-                        changeset "sensor/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
-                }
+                expression { return SENSOR_BUILT }
             }
             steps {
                 echo 'Building Sensor Docker image...'
@@ -381,16 +366,7 @@ spec:
 
         stage('Build Dashboard Docker Image') {
             when {
-                allOf {
-                    expression { return params.DEPLOY_DASHBOARD == true }
-                    anyOf {
-                        changeset "dashboard/**"
-                        changeset "gradlew*"
-                        changeset "build.gradle*"
-                        changeset "settings.gradle*"
-                        expression { return params.FORCE_BUILD_ALL == true }
-                    }
-                }
+                expression { return DASHBOARD_BUILT }
             }
             steps {
                 echo 'Building Dashboard Docker image...'
@@ -405,31 +381,75 @@ spec:
             }
         }
 
+        stage('Build Frontend Admin Docker Image') {
+            when {
+                allOf {
+                    expression { return params.DEPLOY_FRONTEND == true }
+                    anyOf {
+                        changeset "frontend/**"
+                        expression { return params.FORCE_BUILD_ALL == true }
+                    }
+                }
+            }
+            steps {
+                script {
+                    FRONTEND_BUILT = true
+                    echo 'Building Frontend Admin Docker image...'
+                    dir('frontend') {
+                        container('docker-client') {
+                            sh '''
+                                docker build -t ${FRONTEND_IMAGE} .
+                                echo "Built Frontend Admin image: ${FRONTEND_IMAGE}"
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Build Frontend Worker Docker Image') {
+            when {
+                expression { return FRONTEND_BUILT }
+            }
+            steps {
+                echo 'Building Frontend Worker Docker image...'
+                dir('frontend') {
+                    container('docker-client') {
+                        sh '''
+                            docker build -f Dockerfile.worker -t ${FRONTEND_WORKER_IMAGE} .
+                            echo "Built Frontend Worker image: ${FRONTEND_WORKER_IMAGE}"
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Push to ACR') {
             steps {
                 echo 'Pushing images to Azure Container Registry...'
                 container('docker-client') {
                     script {
-                        def changes = env.GIT_DIFF ?: ""
-                        echo "Changes detected for push: ${changes}"
-
-                        if (params.DEPLOY_GATEWAY && (changes.contains('gateway/') || changes.contains('gradlew') || changes.contains('build.gradle') || changes.contains('settings.gradle') || params.FORCE_BUILD_ALL)) {
+                        if (params.DEPLOY_GATEWAY == true && GATEWAY_BUILT) {
                             sh "docker push ${GATEWAY_IMAGE}"
                         }
-                        if (params.DEPLOY_USER && (changes.contains('user/') || changes.contains('gradlew') || changes.contains('build.gradle') || changes.contains('settings.gradle') || params.FORCE_BUILD_ALL)) {
+                        if (params.DEPLOY_USER == true && USER_BUILT) {
                             sh "docker push ${USER_IMAGE}"
                         }
-                        if (params.DEPLOY_MANAGEMENT && (changes.contains('management/') || changes.contains('gradlew') || changes.contains('build.gradle') || changes.contains('settings.gradle') || params.FORCE_BUILD_ALL)) {
+                        if (params.DEPLOY_MANAGEMENT == true && MANAGEMENT_BUILT) {
                             sh "docker push ${MANAGEMENT_IMAGE}"
                         }
-                        if (params.DEPLOY_ALARM && (changes.contains('alarm/') || changes.contains('gradlew') || changes.contains('build.gradle') || changes.contains('settings.gradle') || params.FORCE_BUILD_ALL)) {
+                        if (params.DEPLOY_ALARM == true && ALARM_BUILT) {
                             sh "docker push ${ALARM_IMAGE}"
                         }
-                        if (params.DEPLOY_SENSOR && (changes.contains('sensor/') || changes.contains('gradlew') || changes.contains('build.gradle') || changes.contains('settings.gradle') || params.FORCE_BUILD_ALL)) {
+                        if (params.DEPLOY_SENSOR == true && SENSOR_BUILT) {
                             sh "docker push ${SENSOR_IMAGE}"
                         }
-                        if (params.DEPLOY_DASHBOARD && (changes.contains('dashboard/') || changes.contains('gradlew') || changes.contains('build.gradle') || changes.contains('settings.gradle') || params.FORCE_BUILD_ALL)) {
+                        if (params.DEPLOY_DASHBOARD == true && DASHBOARD_BUILT) {
                             sh "docker push ${DASHBOARD_IMAGE}"
+                        }
+                        if (params.DEPLOY_FRONTEND == true && FRONTEND_BUILT) {
+                            sh "docker push ${FRONTEND_IMAGE}"
+                            sh "docker push ${FRONTEND_WORKER_IMAGE}"
                         }
                     }
                 }
@@ -442,11 +462,8 @@ spec:
                 container('kubectl') {
                     withKubeConfig([credentialsId: 'kubeconfig']) {
                         script {
-                            def changes = env.GIT_DIFF ?: ""
-                            echo "Changes detected for deployment: ${changes}"
-
                             // Gateway 배포
-                            if (params.DEPLOY_GATEWAY && (changes.contains('gateway/') || changes.contains('gradlew') || changes.contains('build.gradle') || changes.contains('settings.gradle') || params.FORCE_BUILD_ALL)) {
+                            if (params.DEPLOY_GATEWAY == true && GATEWAY_BUILT) {
                                 sh """
                                     kubectl set image deployment/gateway-deployment gateway=${GATEWAY_IMAGE} --namespace=default
                                     kubectl rollout status deployment/gateway-deployment --namespace=default --timeout=300s
@@ -454,7 +471,7 @@ spec:
                             }
 
                             // User 서비스 배포
-                            if (params.DEPLOY_USER && (changes.contains('user/') || changes.contains('gradlew') || changes.contains('build.gradle') || changes.contains('settings.gradle') || params.FORCE_BUILD_ALL)) {
+                            if (params.DEPLOY_USER == true && USER_BUILT) {
                                 sh """
                                     kubectl set image deployment/user-deployment user=${USER_IMAGE} --namespace=default
                                     kubectl rollout status deployment/user-deployment --namespace=default --timeout=300s
@@ -462,7 +479,7 @@ spec:
                             }
 
                             // Management 서비스 배포
-                            if (params.DEPLOY_MANAGEMENT && (changes.contains('management/') || changes.contains('gradlew') || changes.contains('build.gradle') || changes.contains('settings.gradle') || params.FORCE_BUILD_ALL)) {
+                            if (params.DEPLOY_MANAGEMENT == true && MANAGEMENT_BUILT) {
                                 sh """
                                     kubectl set image deployment/management-deployment management=${MANAGEMENT_IMAGE} --namespace=default
                                     kubectl rollout status deployment/management-deployment --namespace=default --timeout=300s
@@ -470,7 +487,7 @@ spec:
                             }
 
                             // Alarm 서비스 배포
-                            if (params.DEPLOY_ALARM && (changes.contains('alarm/') || changes.contains('gradlew') || changes.contains('build.gradle') || changes.contains('settings.gradle') || params.FORCE_BUILD_ALL)) {
+                            if (params.DEPLOY_ALARM == true && ALARM_BUILT) {
                                 sh """
                                     kubectl set image deployment/alarm-deployment alarm=${ALARM_IMAGE} --namespace=default
                                     kubectl rollout status deployment/alarm-deployment --namespace=default --timeout=300s
@@ -478,7 +495,7 @@ spec:
                             }
 
                             // Sensor 서비스 배포
-                            if (params.DEPLOY_SENSOR && (changes.contains('sensor/') || changes.contains('gradlew') || changes.contains('build.gradle') || changes.contains('settings.gradle') || params.FORCE_BUILD_ALL)) {
+                            if (params.DEPLOY_SENSOR == true && SENSOR_BUILT) {
                                 sh """
                                     kubectl set image deployment/sensor-deployment sensor=${SENSOR_IMAGE} --namespace=default
                                     kubectl rollout status deployment/sensor-deployment --namespace=default --timeout=300s
@@ -486,10 +503,20 @@ spec:
                             }
 
                             // Dashboard 서비스 배포
-                            if (params.DEPLOY_DASHBOARD && (changes.contains('dashboard/') || changes.contains('gradlew') || changes.contains('build.gradle') || changes.contains('settings.gradle') || params.FORCE_BUILD_ALL)) {
+                            if (params.DEPLOY_DASHBOARD == true && DASHBOARD_BUILT) {
                                 sh """
                                     kubectl set image deployment/dashboard-deployment dashboard=${DASHBOARD_IMAGE} --namespace=default
                                     kubectl rollout status deployment/dashboard-deployment --namespace=default --timeout=300s
+                                """
+                            }
+
+                            // Frontend 서비스 배포
+                            if (params.DEPLOY_FRONTEND == true && FRONTEND_BUILT) {
+                                sh """
+                                    kubectl set image deployment/frontend-deployment frontend=${FRONTEND_IMAGE} --namespace=default
+                                    kubectl rollout status deployment/frontend-deployment --namespace=default --timeout=300s
+                                    kubectl set image deployment/frontend-worker-deployment frontend-worker=${FRONTEND_WORKER_IMAGE} --namespace=default
+                                    kubectl rollout status deployment/frontend-worker-deployment --namespace=default --timeout=300s
                                 """
                             }
                         }
@@ -521,6 +548,8 @@ spec:
             echo "Alarm: ${ALARM_IMAGE}"
             echo "Sensor: ${SENSOR_IMAGE}"
             echo "Dashboard: ${DASHBOARD_IMAGE}"
+            echo "Frontend: ${FRONTEND_IMAGE}"
+            echo "Frontend Worker: ${FRONTEND_WORKER_IMAGE}"
         }
 
         failure {

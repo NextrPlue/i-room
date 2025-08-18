@@ -83,7 +83,7 @@
     background: #F3F4F6;
     border-radius: 8px;
     overflow: hidden;
-    min-height: 400px;
+    min-height: 600px;
     border: 2px dashed #D1D5DB;
     cursor: crosshair;
 }
@@ -530,11 +530,11 @@ select.formInput {
     }
 
     .riskZoneSection {
-        min-height: 350px;
+        min-height: 525px;
     }
 
     .canvasContainer {
-        min-height: 300px;
+        min-height: 450px;
     }
 }
 
@@ -617,7 +617,7 @@ select.formInput {
     }
 
     .canvasContainer {
-        min-height: 250px;
+        min-height: 375px;
     }
 
     .actionButtons {

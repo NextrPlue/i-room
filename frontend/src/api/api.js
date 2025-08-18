@@ -38,19 +38,29 @@ const handleFetchError = async (response) => {
  * 도면 데이터로 FormData를 생성하는 함수
  * @param {object} blueprintData - 도면 데이터
  * @param {File} [blueprintData.file] - 이미지 파일 (선택사항)
+ * @param {string} blueprintData.name - 도면 이름
  * @param {number} blueprintData.floor - 층수
  * @param {number} blueprintData.width - 가로 크기
  * @param {number} blueprintData.height - 세로 크기
+ * @param {object} blueprintData.topLeft - 좌상단 GPS 좌표
+ * @param {object} blueprintData.topRight - 우상단 GPS 좌표
+ * @param {object} blueprintData.bottomRight - 우하단 GPS 좌표
+ * @param {object} blueprintData.bottomLeft - 좌하단 GPS 좌표
  * @returns {FormData} 생성된 FormData
  */
 const createBlueprintFormData = (blueprintData) => {
     const formData = new FormData();
     const dataBlob = new Blob(
         [JSON.stringify({
+            name: blueprintData.name,
             blueprintUrl: "",
             floor: blueprintData.floor,
             width: blueprintData.width,
-            height: blueprintData.height
+            height: blueprintData.height,
+            topLeft: blueprintData.topLeft,
+            topRight: blueprintData.topRight,
+            bottomRight: blueprintData.bottomRight,
+            bottomLeft: blueprintData.bottomLeft
         })],
         {type: "application/json"}
     );
@@ -236,6 +246,18 @@ export const userAPI = {
     },
 
     /**
+     * 근로자 삭제
+     * @param {string} workerId - 삭제할 근로자 ID
+     * @returns {Promise} 삭제 응답
+     */
+    deleteWorker: async (workerId) => {
+        const url = `${API_CONFIG.gateway}/api/user/workers/${workerId}`;
+        return await apiRequest(url, {
+            method: 'DELETE'
+        });
+    },
+
+    /**
      * 관리자 로그인
      * @param {object} loginData - 로그인 데이터
      * @param {string} loginData.email - 이메일
@@ -349,7 +371,7 @@ export const userAPI = {
     /**
      * 관리자 권한 변경
      * @param {string} adminId - 관리자 ID
-     * @param {string} role - 새로운 권한 (SUPER_ADMIN, READER)
+     * @param {string} role - 새로운 권한 (SUPER_ADMIN, ADMIN, READER)
      * @returns {Promise} 변경된 관리자 정보
      */
     changeAdminRole: async (adminId, role) => {
@@ -427,6 +449,15 @@ export const managementAPI = {
      */
     getWorkerStats: async () => {
         const url = `${API_CONFIG.gateway}/api/management/entries/statistics`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 근무중인 근로자 목록 조회
+     * @returns {Promise} 근무중인 근로자 목록
+     */
+    getWorkingWorkers: async () => {
+        const url = `${API_CONFIG.gateway}/api/management/entries/working-workers`;
         return await apiRequest(url);
     },
 };
@@ -552,6 +583,63 @@ export const blueprintAPI = {
 };
 
 /**
+ * Alarm API 서비스
+ */
+export const alarmAPI = {
+    /**
+     * 관리자용 알람 목록 조회
+     * @param {object} options
+     * @param {number} options.page - 페이지 번호 (기본값: 0)
+     * @param {number} options.size - 페이지당 개수 (기본값: 10)
+     * @param {number} [options.hours] - 최근 N시간 내 알람 (선택사항)
+     * @returns {Promise} 알람 목록 데이터
+     */
+    getAlarmsForAdmin: async ({page = 0, size = 10, hours} = {}) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+        });
+
+        if (hours !== undefined) {
+            queryParams.append('hours', hours.toString());
+        }
+
+        const url = `${API_CONFIG.gateway}/api/alarm/alarms/admins?${queryParams.toString()}`;
+        return await apiRequest(url);
+    }
+};
+
+/**
+ * Sensor API 서비스
+ */
+export const sensorAPI = {
+    /**
+     * 다중 근로자 위치 정보 조회
+     * @param {Array<number>} workerIds - 근로자 ID 배열
+     * @returns {Promise} 근로자 위치 정보 배열
+     */
+    getWorkersLocation: async (workerIds) => {
+        const url = `${API_CONFIG.gateway}/api/sensor/worker-sensor/locations`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authUtils.getToken()}`
+            },
+            body: JSON.stringify(workerIds)
+        });
+
+        if (!response.ok) {
+            const errorMessage = await handleFetchError(response);
+            throw new Error(errorMessage);
+        }
+
+        return await response.json();
+    },
+};
+
+/**
  * Risk Zone (Danger Area) API 서비스
  */
 export const riskZoneAPI = {
@@ -621,5 +709,168 @@ export const riskZoneAPI = {
         return await apiRequest(url, {
             method: 'DELETE'
         });
+    }
+};
+
+/**
+ * Dashboard API 서비스
+ */
+export const dashboardAPI = {
+    /**
+     * 메트릭 점수 조회 (안전 점수 변동 추이용)
+     * @param {string} interval - 조회 간격 (day, week, month)
+     * @returns {Promise} 메트릭 데이터 배열
+     */
+    getMetrics: async (interval) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/dashboards/metrics/${interval}`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 특정 메트릭 타입 대시보드 조회
+     * @param {string} metricType - 메트릭 타입 (PPE_VIOLATION, DANGER_ZONE, HEALTH_RISK)
+     * @returns {Promise} 대시보드 데이터
+     */
+    getDashboard: async (metricType) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/dashboards/${metricType}`;
+        return await apiRequest(url);
+    }
+};
+
+/**
+ * Report API 서비스
+ */
+export const reportAPI = {
+    /**
+     * 일일 리포트 생성 및 다운로드
+     * @param {string} date - 조회할 날짜 (YYYY-MM-DD 형식)
+     * @returns {Promise<Blob>} PDF 파일 Blob
+     */
+    generateDailyReport: async (date) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/dashboards/report/${date}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': authUtils.getAuthHeader()
+            }
+        });
+
+        if (!response.ok) {
+            const errorMessage = await handleFetchError(response);
+            throw new Error(errorMessage);
+        }
+
+        return await response.blob();
+    },
+
+    /**
+     * 개선안 리포트 생성 및 다운로드
+     * @param {string} interval - 조회 간격 (day, week, month)
+     * @returns {Promise<Blob>} PDF 파일 Blob
+     */
+    generateImprovementReport: async (interval) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/dashboards/improvement-report/${interval}`;
+        
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Authorization': authUtils.getAuthHeader()
+            }
+        });
+
+        if (!response.ok) {
+            const errorMessage = await handleFetchError(response);
+            throw new Error(errorMessage);
+        }
+
+        return await response.blob();
+    },
+
+    /**
+     * 저장된 리포트 목록 조회
+     * @param {object} options
+     * @param {number} options.page - 페이지 번호 (기본값: 0)
+     * @param {number} options.size - 페이지당 개수 (기본값: 10)
+     * @param {string} [options.reportType] - 리포트 타입 필터 (DAILY_REPORT, IMPROVEMENT_REPORT)
+     * @param {string} [options.sortBy] - 정렬 기준 (createdAt, reportName)
+     * @param {string} [options.sortDir] - 정렬 방향 (asc, desc)
+     * @returns {Promise} 리포트 목록 데이터
+     */
+    getReports: async ({page = 0, size = 10, reportType = '', sortBy = 'createdAt', sortDir = 'desc'} = {}) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+            sortBy,
+            sortDir
+        });
+
+        if (reportType) {
+            queryParams.append('reportType', reportType);
+        }
+
+        const url = `${API_CONFIG.gateway}/api/dashboard/reports?${queryParams.toString()}`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 리포트 상세 정보 조회
+     * @param {number} reportId - 리포트 ID
+     * @returns {Promise} 리포트 상세 정보
+     */
+    getReportDetail: async (reportId) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/reports/${reportId}`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 저장된 리포트 파일 다운로드
+     * @param {number} reportId - 리포트 ID
+     * @returns {Promise<Blob>} PDF 파일 Blob
+     */
+    downloadStoredReport: async (reportId) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/reports/${reportId}/download`;
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': authUtils.getAuthHeader()
+            }
+        });
+
+        if (!response.ok) {
+            const errorMessage = await handleFetchError(response);
+            throw new Error(errorMessage);
+        }
+
+        return await response.blob();
+    },
+
+    /**
+     * 리포트 삭제
+     * @param {number} reportId - 삭제할 리포트 ID
+     * @returns {Promise} 삭제 응답
+     */
+    deleteReport: async (reportId) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/reports/${reportId}`;
+        return await apiRequest(url, {
+            method: 'DELETE'
+        });
+    },
+
+    /**
+     * 파일 다운로드 헬퍼 함수
+     * @param {Blob} blob - 다운로드할 파일 Blob
+     * @param {string} filename - 저장할 파일명
+     */
+    downloadFile: (blob, filename) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
     }
 };

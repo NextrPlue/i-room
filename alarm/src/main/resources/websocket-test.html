@@ -91,7 +91,7 @@
             return;
         }
 
-        var socket = new SockJS('http://localhost:8084/ws'); // Alarm service endpoint
+        var socket = new SockJS('http://localhost:8084/alarm/ws'); // Alarm service endpoint
         stompClient = Stomp.over(socket);
 
         var headers = {
@@ -108,13 +108,13 @@
 
             if (userType === 'admin') {
                 // 관리자: 모든 알람 수신
-                stompClient.subscribe('/topic/alarms/admin', function (message) {
+                stompClient.subscribe('/alarm/topic/alarms/admin', function (message) {
                     showMessage("🔴 [관리자] " + message.body, "admin");
                 });
                 showMessage("🔴 관리자 모드 활성화", "system");
             } else {
                 // 근로자: 세션 기반 개별 알람 수신
-                var workerDestination = '/queue/alarms-' + sessionId;
+                var workerDestination = '/alarm/queue/alarms-' + sessionId;
                 stompClient.subscribe(workerDestination, function (message) {
                     showMessage("🟢 [근로자] " + message.body, "worker");
                 });

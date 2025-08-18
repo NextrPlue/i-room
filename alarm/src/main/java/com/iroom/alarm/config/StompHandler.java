@@ -78,7 +78,7 @@ public class StompHandler implements ChannelInterceptor {
 		}
 
 		// 관리자 전용 토픽 접근 제한
-		if (destination.equals("/topic/alarms/admin")) {
+		if (destination.equals("/alarm/topic/alarms/admin")) {
 			if (!"ROLE_SUPER_ADMIN".equals(userRole) &&
 				!"ROLE_ADMIN".equals(userRole) &&
 				!"ROLE_READER".equals(userRole)) {
@@ -87,7 +87,7 @@ public class StompHandler implements ChannelInterceptor {
 		}
 
 		// 근로자 개별 큐 접근 제한
-		if (destination.startsWith("/queue/alarms-")) {
+		if (destination.startsWith("/alarm/queue/alarms-")) {
 			if (!"ROLE_WORKER".equals(userRole)) {
 				throw new SecurityException("근로자 권한이 필요합니다.");
 			}

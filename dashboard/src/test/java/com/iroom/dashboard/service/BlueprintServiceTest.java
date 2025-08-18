@@ -29,8 +29,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.iroom.dashboard.blueprint.service.BlueprintService;
 import com.iroom.dashboard.blueprint.dto.request.BlueprintRequest;
+import com.iroom.dashboard.blueprint.dto.request.BlueprintRequest.GeoPointDto;
 import com.iroom.dashboard.blueprint.dto.response.BlueprintResponse;
 import com.iroom.dashboard.blueprint.entity.Blueprint;
+import com.iroom.dashboard.blueprint.entity.GeoPoint;
 import com.iroom.dashboard.blueprint.repository.BlueprintRepository;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 import com.iroom.modulecommon.exception.CustomException;
@@ -67,17 +69,27 @@ class BlueprintServiceTest {
 		System.setProperty("user.dir", tempDir.toString());
 
 		blueprint = Blueprint.builder()
+			.name("Test Blueprint")
 			.blueprintUrl("/uploads/blueprints/test-uuid.png")
 			.floor(1)
 			.width(100.0)
 			.height(200.0)
+			.topLeft(new GeoPoint(37.5665, 126.9780))
+			.topRight(new GeoPoint(37.5665, 126.9790))
+			.bottomRight(new GeoPoint(37.5655, 126.9790))
+			.bottomLeft(new GeoPoint(37.5655, 126.9780))
 			.build();
 
 		Blueprint blueprint2 = Blueprint.builder()
+			.name("Test Blueprint 2")
 			.blueprintUrl("/uploads/blueprints/test-uuid2.png")
 			.floor(2)
 			.width(150.0)
 			.height(250.0)
+			.topLeft(new GeoPoint(37.5665, 126.9780))
+			.topRight(new GeoPoint(37.5665, 126.9790))
+			.bottomRight(new GeoPoint(37.5655, 126.9790))
+			.bottomLeft(new GeoPoint(37.5655, 126.9780))
 			.build();
 
 		pageable = PageRequest.of(0, 10);
@@ -135,18 +147,29 @@ class BlueprintServiceTest {
 	@DisplayName("도면 생성 성공")
 	void createBlueprintTest() {
 		// given
-		BlueprintRequest request = new BlueprintRequest(null, 1, 100.0, 200.0);
+		GeoPointDto topLeft = new GeoPointDto(37.5665, 126.9780);
+		GeoPointDto topRight = new GeoPointDto(37.5665, 126.9790);
+		GeoPointDto bottomRight = new GeoPointDto(37.5655, 126.9790);
+		GeoPointDto bottomLeft = new GeoPointDto(37.5655, 126.9780);
+		
+		BlueprintRequest request = new BlueprintRequest(
+			"Test Blueprint", null, 1, 100.0, 200.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
 		given(blueprintRepository.save(any(Blueprint.class))).willReturn(blueprint);
 
 		// when
 		BlueprintResponse response = blueprintService.createBlueprint(validFile, request);
 
 		// then
+		assertThat(response.name()).isEqualTo("Test Blueprint");
 		assertThat(response.blueprintUrl()).contains("/uploads/blueprints/");
 		assertThat(response.blueprintUrl()).contains(".png");
 		assertThat(response.floor()).isEqualTo(1);
 		assertThat(response.width()).isEqualTo(100.0);
 		assertThat(response.height()).isEqualTo(200.0);
+		assertThat(response.topLeft().lat()).isEqualTo(37.5665);
+		assertThat(response.topLeft().lon()).isEqualTo(126.9780);
 		verify(blueprintRepository).save(any(Blueprint.class));
 	}
 	
@@ -154,7 +177,15 @@ class BlueprintServiceTest {
 	@DisplayName("도면 생성 실패 - 파일명이 null")
 	void createBlueprintFailNullFilename() {
 		// given
-		BlueprintRequest request = new BlueprintRequest(null, 1, 100.0, 200.0);
+		GeoPointDto topLeft = new GeoPointDto(37.5665, 126.9780);
+		GeoPointDto topRight = new GeoPointDto(37.5665, 126.9790);
+		GeoPointDto bottomRight = new GeoPointDto(37.5655, 126.9790);
+		GeoPointDto bottomLeft = new GeoPointDto(37.5655, 126.9780);
+		
+		BlueprintRequest request = new BlueprintRequest(
+			"Test Blueprint", null, 1, 100.0, 200.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
 
 		// when & then
 		assertThatThrownBy(() -> blueprintService.createBlueprint(nullNameFile, request))
@@ -167,7 +198,15 @@ class BlueprintServiceTest {
 	@DisplayName("도면 생성 실패 - 잘못된 MIME 타입")
 	void createBlueprintFailInvalidMimeType() {
 		// given
-		BlueprintRequest request = new BlueprintRequest(null, 1, 100.0, 200.0);
+		GeoPointDto topLeft = new GeoPointDto(37.5665, 126.9780);
+		GeoPointDto topRight = new GeoPointDto(37.5665, 126.9790);
+		GeoPointDto bottomRight = new GeoPointDto(37.5655, 126.9790);
+		GeoPointDto bottomLeft = new GeoPointDto(37.5655, 126.9780);
+		
+		BlueprintRequest request = new BlueprintRequest(
+			"Test Blueprint", null, 1, 100.0, 200.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
 
 		// when & then
 		assertThatThrownBy(() -> blueprintService.createBlueprint(invalidMimeTypeFile, request))
@@ -180,7 +219,15 @@ class BlueprintServiceTest {
 	@DisplayName("도면 생성 실패 - 잘못된 파일 확장자")
 	void createBlueprintFailInvalidExtension() {
 		// given
-		BlueprintRequest request = new BlueprintRequest(null, 1, 100.0, 200.0);
+		GeoPointDto topLeft = new GeoPointDto(37.5665, 126.9780);
+		GeoPointDto topRight = new GeoPointDto(37.5665, 126.9790);
+		GeoPointDto bottomRight = new GeoPointDto(37.5655, 126.9790);
+		GeoPointDto bottomLeft = new GeoPointDto(37.5655, 126.9780);
+		
+		BlueprintRequest request = new BlueprintRequest(
+			"Test Blueprint", null, 1, 100.0, 200.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
 
 		// when & then
 		assertThatThrownBy(() -> blueprintService.createBlueprint(invalidExtensionFile, request))
@@ -193,7 +240,15 @@ class BlueprintServiceTest {
 	@DisplayName("도면 생성 실패 - 파일 크기 초과")
 	void createBlueprintFailFileTooLarge() {
 		// given
-		BlueprintRequest request = new BlueprintRequest(null, 1, 100.0, 200.0);
+		GeoPointDto topLeft = new GeoPointDto(37.5665, 126.9780);
+		GeoPointDto topRight = new GeoPointDto(37.5665, 126.9790);
+		GeoPointDto bottomRight = new GeoPointDto(37.5655, 126.9790);
+		GeoPointDto bottomLeft = new GeoPointDto(37.5655, 126.9780);
+		
+		BlueprintRequest request = new BlueprintRequest(
+			"Test Blueprint", null, 1, 100.0, 200.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
 
 		// when & then
 		assertThatThrownBy(() -> blueprintService.createBlueprint(largeSizeFile, request))
@@ -207,13 +262,22 @@ class BlueprintServiceTest {
 	void updateBlueprintWithoutFileTest() {
 		// given
 		Long id = 1L;
-		BlueprintRequest request = new BlueprintRequest(null, 1, 120.0, 220.0);
+		GeoPointDto topLeft = new GeoPointDto(37.5665, 126.9780);
+		GeoPointDto topRight = new GeoPointDto(37.5665, 126.9790);
+		GeoPointDto bottomRight = new GeoPointDto(37.5655, 126.9790);
+		GeoPointDto bottomLeft = new GeoPointDto(37.5655, 126.9780);
+		
+		BlueprintRequest request = new BlueprintRequest(
+			"Updated Blueprint", null, 1, 120.0, 220.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
 		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprint));
 
 		// when
 		BlueprintResponse response = blueprintService.updateBlueprint(id, request, null);
 
 		// then
+		assertThat(response.name()).isEqualTo("Updated Blueprint");
 		assertThat(response.blueprintUrl()).isEqualTo("/uploads/blueprints/test-uuid.png"); // 기존 URL 유지
 		assertThat(response.width()).isEqualTo(120.0);
 		assertThat(response.height()).isEqualTo(220.0);
@@ -224,7 +288,15 @@ class BlueprintServiceTest {
 	void updateBlueprintWithFileTest() {
 		// given
 		Long id = 1L;
-		BlueprintRequest request = new BlueprintRequest(null, 1, 120.0, 220.0);
+		GeoPointDto topLeft = new GeoPointDto(37.5665, 126.9780);
+		GeoPointDto topRight = new GeoPointDto(37.5665, 126.9790);
+		GeoPointDto bottomRight = new GeoPointDto(37.5655, 126.9790);
+		GeoPointDto bottomLeft = new GeoPointDto(37.5655, 126.9780);
+		
+		BlueprintRequest request = new BlueprintRequest(
+			"Updated Blueprint with File", null, 1, 120.0, 220.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
 		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprint));
 
 		// when
@@ -243,7 +315,15 @@ class BlueprintServiceTest {
 	void updateBlueprintFailNotFound() {
 		// given
 		Long id = 99L;
-		BlueprintRequest request = new BlueprintRequest(null, 2, 50.0, 50.0);
+		GeoPointDto topLeft = new GeoPointDto(37.5665, 126.9780);
+		GeoPointDto topRight = new GeoPointDto(37.5665, 126.9790);
+		GeoPointDto bottomRight = new GeoPointDto(37.5655, 126.9790);
+		GeoPointDto bottomLeft = new GeoPointDto(37.5655, 126.9780);
+		
+		BlueprintRequest request = new BlueprintRequest(
+			"Test Blueprint", null, 2, 50.0, 50.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
 		given(blueprintRepository.findById(id)).willReturn(Optional.empty());
 
 		// when & then
@@ -258,7 +338,15 @@ class BlueprintServiceTest {
 	void updateBlueprintFailInvalidFile() {
 		// given
 		Long id = 1L;
-		BlueprintRequest request = new BlueprintRequest(null, 1, 120.0, 220.0);
+		GeoPointDto topLeft = new GeoPointDto(37.5665, 126.9780);
+		GeoPointDto topRight = new GeoPointDto(37.5665, 126.9790);
+		GeoPointDto bottomRight = new GeoPointDto(37.5655, 126.9790);
+		GeoPointDto bottomLeft = new GeoPointDto(37.5655, 126.9780);
+		
+		BlueprintRequest request = new BlueprintRequest(
+			"Updated Blueprint", null, 1, 120.0, 220.0,
+			topLeft, topRight, bottomRight, bottomLeft
+		);
 		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprint));
 
 		// when & then
@@ -325,10 +413,15 @@ class BlueprintServiceTest {
 		testFile.createNewFile();
 		
 		Blueprint blueprintWithImage = Blueprint.builder()
+			.name("Test Blueprint with Image")
 			.blueprintUrl("/uploads/blueprints/test-image.png")
 			.floor(1)
 			.width(100.0)
 			.height(200.0)
+			.topLeft(new GeoPoint(37.5665, 126.9780))
+			.topRight(new GeoPoint(37.5665, 126.9790))
+			.bottomRight(new GeoPoint(37.5655, 126.9790))
+			.bottomLeft(new GeoPoint(37.5655, 126.9780))
 			.build();
 			
 		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprintWithImage));
@@ -361,10 +454,15 @@ class BlueprintServiceTest {
 		// given
 		Long id = 1L;
 		Blueprint blueprintWithNullUrl = Blueprint.builder()
+			.name("Blueprint with Null URL")
 			.blueprintUrl(null)
 			.floor(1)
 			.width(100.0)
 			.height(200.0)
+			.topLeft(new GeoPoint(37.5665, 126.9780))
+			.topRight(new GeoPoint(37.5665, 126.9790))
+			.bottomRight(new GeoPoint(37.5655, 126.9790))
+			.bottomLeft(new GeoPoint(37.5655, 126.9780))
 			.build();
 			
 		given(blueprintRepository.findById(id)).willReturn(Optional.of(blueprintWithNullUrl));

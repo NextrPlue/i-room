@@ -1,46 +1,34 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import styles from '../styles/RiskZone.module.css';
 import { riskZoneAPI, blueprintAPI } from '../api/api';
-
-/**
- * 위험구역 설정 및 관리 페이지
- * 
- * TODO: 향후 구현 예정
- * - GPS 좌표 매핑 시스템 구현
- * - 실제 좌표 기반 위험구역 표시
- */
+import SuccessModal from '../components/SuccessModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const RiskZonePage = () => {
     const canvasRef = useRef(null);
-    const [selectedFloor, setSelectedFloor] = useState('1F');
-    const [isSelecting, setIsSelecting] = useState(false);
-    const [dragStart, setDragStart] = useState(null);
-    const [dragEnd, setDragEnd] = useState(null);
-    const [selectedZone, setSelectedZone] = useState(null);
 
-    // 선택된 위치 정보
-    const [locationInfo, setLocationInfo] = useState({
-        x: '',
-        y: '',
-        name: '',
-        width: '',
-        height: ''
-    });
-
-    // 현재 페이지 상태
+    // 페이지네이션 상태
     const [currentPage, setCurrentPage] = useState(0);
     const [pageSize] = useState(5);
     const [totalPages, setTotalPages] = useState(1);
 
-    // 위험구역 목록 데이터
+    // 위험구역 관련 상태
     const [riskZones, setRiskZones] = useState([]);
-
-    // 캔버스에 그려진 위험구역들
-    const [canvasZones, setCanvasZones] = useState([]);
+    const [isSelecting, setIsSelecting] = useState(false);
+    const [clickedPoint, setClickedPoint] = useState(null);
+    const [riskZoneForm, setRiskZoneForm] = useState({
+        name: '',
+        width: '3.0',
+        height: '3.0',
+        gpsLat: 0,
+        gpsLon: 0
+    });
 
     // 도면 관련 상태
     const [currentBlueprint, setCurrentBlueprint] = useState(null);
     const [blueprintImage, setBlueprintImage] = useState(null);
+    const [availableBlueprintsForSelection, setAvailableBlueprintsForSelection] = useState([]);
+    const [availableBlueprints, setAvailableBlueprints] = useState([]);
 
     // 수정 모달 상태
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -53,7 +41,19 @@ const RiskZonePage = () => {
         height: '',
         name: ''
     });
-    const [availableBlueprints, setAvailableBlueprints] = useState([]);
+    
+    // 성공 모달 상태
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
+    
+    // 확인 모달 상태
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        targetZoneId: null
+    });
 
     // 위험구역 데이터 조회
     const fetchRiskZones = useCallback(async () => {
@@ -65,47 +65,35 @@ const RiskZonePage = () => {
 
             const data = response.data || response;
             const zones = data.content || [];
-            
+
+            // Helper function to format zone
+            const formatZone = (zone, floorInfo = null) => ({
+                id: zone.id,
+                floor: floorInfo ? `${floorInfo}F` : `${zone.blueprintId}F`,
+                name: zone.name || `위험구역 ${zone.id}`,
+                latitude: zone.latitude,
+                longitude: zone.longitude,
+                width: `${zone.width} m`,
+                height: `${zone.height} m`,
+                blueprintId: zone.blueprintId,
+                originalWidth: zone.width,
+                originalHeight: zone.height
+            });
+
             // Blueprint 정보 조회해서 floor 매핑
             const formattedZones = await Promise.all(
                 zones.map(async (zone) => {
                     try {
-                        // blueprintId로 Blueprint 정보 조회
                         const blueprintResponse = await blueprintAPI.getBlueprint(zone.blueprintId);
                         const blueprint = blueprintResponse.data || blueprintResponse;
-                        
-                        return {
-                            id: zone.id,
-                            floor: `${blueprint.floor}F`,
-                            name: zone.name || `위험구역 ${zone.id}`,
-                            latitude: zone.latitude,
-                            longitude: zone.longitude,
-                            width: `${zone.width} m`,
-                            height: `${zone.height} m`,
-                            // 원본 데이터도 보관
-                            blueprintId: zone.blueprintId,
-                            originalWidth: zone.width,
-                            originalHeight: zone.height
-                        };
+                        return formatZone(zone, blueprint.floor);
                     } catch (error) {
                         console.error(`Blueprint ${zone.blueprintId} 조회 실패:`, error);
-                        // Blueprint 조회 실패 시 기본값 사용
-                        return {
-                            id: zone.id,
-                            floor: `${zone.blueprintId}F`, // fallback
-                            name: zone.name || `위험구역 ${zone.id}`,
-                            latitude: zone.latitude,
-                            longitude: zone.longitude,
-                            width: `${zone.width} m`,
-                            height: `${zone.height} m`,
-                            blueprintId: zone.blueprintId,
-                            originalWidth: zone.width,
-                            originalHeight: zone.height
-                        };
+                        return formatZone(zone);
                     }
                 })
             );
-            
+
             setRiskZones(formattedZones);
             setTotalPages(data.totalPages || 1);
 
@@ -113,43 +101,48 @@ const RiskZonePage = () => {
             console.error('위험구역 데이터 조회 실패:', error);
             setRiskZones([]);
             setTotalPages(1);
+            alert('위험구역 데이터를 불러오는데 실패했습니다.');
         }
     }, [currentPage, pageSize]);
 
-    // 사용 가능한 도면 목록 조회 (수정 모달용)
+    // 사용 가능한 도면 목록 조회
     const fetchAvailableBlueprints = useCallback(async () => {
         try {
             const response = await blueprintAPI.getBlueprints({
                 page: 0,
-                size: 50 // 충분히 많이 가져오기
+                size: 50
             });
 
-            const data = response.data || response;
-            setAvailableBlueprints(data.content || []);
+            if (response.status === 'success' && response.data) {
+                const data = response.data;
+                const blueprints = data.content || [];
+                setAvailableBlueprints(blueprints);
+                setAvailableBlueprintsForSelection(blueprints);
+            } else {
+                setAvailableBlueprints([]);
+                setAvailableBlueprintsForSelection([]);
+            }
         } catch (error) {
             console.error('도면 목록 조회 실패:', error);
             setAvailableBlueprints([]);
+            setAvailableBlueprintsForSelection([]);
         }
     }, []);
 
-    // 도면 데이터 조회
-    const fetchBlueprint = useCallback(async () => {
-        try {
-            const floorNumber = parseInt(selectedFloor.replace('F', '')); // "1F" -> 1
-            const response = await blueprintAPI.getBlueprints({
-                page: 0,
-                size: 1,
-                target: 'floor',
-                keyword: floorNumber.toString()
-            });
+    // 특정 Blueprint 선택 및 로드
+    const selectBlueprint = useCallback(async (blueprintId) => {
+        if (!blueprintId) {
+            setCurrentBlueprint(null);
+            setBlueprintImage(null);
+            return;
+        }
 
-            const data = response.data || response;
-            
-            if (data.content && data.content.length > 0) {
-                const blueprint = data.content[0];
+        try {
+            const parsedId = parseInt(blueprintId, 10);
+            const blueprint = availableBlueprintsForSelection.find(bp => bp.id === parsedId);
+            if (blueprint) {
                 setCurrentBlueprint(blueprint);
-                console.log(`${selectedFloor} 도면 로드됨 - ID: ${blueprint.id}, Floor: ${blueprint.floor}`);
-                
+
                 // 도면 이미지 Blob URL 생성 (인증 헤더 포함)
                 try {
                     const blobUrl = await blueprintAPI.getBlueprintImageBlob(blueprint.id);
@@ -159,173 +152,223 @@ const RiskZonePage = () => {
                     setBlueprintImage(null);
                 }
             } else {
-                // 해당 층의 도면이 없는 경우
-                console.warn(`${selectedFloor} 층의 도면을 찾을 수 없습니다.`);
+                console.warn(`Blueprint ID ${blueprintId}를 찾을 수 없습니다.`);
                 setCurrentBlueprint(null);
                 setBlueprintImage(null);
             }
         } catch (error) {
-            console.error('도면 데이터 조회 실패:', error);
+            console.error('도면 선택 실패:', error);
             setCurrentBlueprint(null);
             setBlueprintImage(null);
+            alert('도면을 선택하는데 실패했습니다.');
         }
-    }, [selectedFloor]);
+    }, [availableBlueprintsForSelection]);
 
-    // 캔버스 마우스 이벤트 핸들러
-    const handleMouseDown = (e) => {
-        if (!isSelecting) return;
 
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
 
-        setDragStart({ x, y });
-        setDragEnd({ x, y });
-    };
+    // Bilinear interpolation 헬퍼 함수
+    const bilinearInterpolation = useCallback((u, v, corners) => {
+        const { topLeft, topRight, bottomLeft, bottomRight } = corners;
+        
+        const lat = (1-u)*(1-v)*topLeft.lat + u*(1-v)*topRight.lat +
+                   (1-u)*v*bottomLeft.lat + u*v*bottomRight.lat;
+        const lon = (1-u)*(1-v)*topLeft.lon + u*(1-v)*topRight.lon +
+                   (1-u)*v*bottomLeft.lon + u*v*bottomRight.lon;
+        
+        return { lat, lon };
+    }, []);
 
-    const handleMouseMove = (e) => {
-        if (!isSelecting || !dragStart) return;
-
-        const rect = canvasRef.current.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-        setDragEnd({ x, y });
-    };
-
-    const handleMouseUp = (e) => {
-        if (!isSelecting || !dragStart || !dragEnd) return;
-
-        const width = Math.abs(dragEnd.x - dragStart.x);
-        const height = Math.abs(dragEnd.y - dragStart.y);
-
-        if (width > 2 && height > 2) { // 최소 크기 체크
-            const newZone = {
-                id: Date.now(),
-                x: Math.min(dragStart.x, dragEnd.x),
-                y: Math.min(dragStart.y, dragEnd.y),
-                width: width,
-                height: height
-            };
-
-            setCanvasZones(prev => [...prev, newZone]);
-            setSelectedZone(newZone);
-
-            // 위치 정보 업데이트 (GPS 좌표 매핑 구현 후 수정 필요)
-            setLocationInfo({
-                x: newZone.x.toFixed(2),
-                y: newZone.y.toFixed(2),
-                name: '',
-                width: newZone.width.toFixed(1),
-                height: newZone.height.toFixed(1)
-            });
+    // 캔버스 좌표를 GPS 좌표로 변환
+    const convertCanvasToGPS = useCallback((canvasX, canvasY) => {
+        if (!currentBlueprint?.topLeft || !currentBlueprint?.topRight ||
+            !currentBlueprint?.bottomLeft || !currentBlueprint?.bottomRight) {
+            console.warn('Blueprint 좌표 정보가 없습니다');
+            return { lat: 0, lon: 0 };
         }
 
-        setDragStart(null);
-        setDragEnd(null);
+        const u = canvasX / 100;
+        const v = canvasY / 100;
+        
+        return bilinearInterpolation(u, v, currentBlueprint);
+    }, [currentBlueprint, bilinearInterpolation]);
+
+
+    // 도면 이미지 영역 내부인지 확인
+    const isInsideBlueprint = useCallback((canvasX, canvasY) => {
+        const margin = 10;
+        return canvasX >= margin && canvasX <= (100 - margin) &&
+               canvasY >= margin && canvasY <= (100 - margin);
+    }, []);
+
+    // 캔버스 클릭 이벤트 핸들러
+    const handleCanvasClick = useCallback((e) => {
+        if (!isSelecting || !currentBlueprint) {
+            return;
+        }
+
+        const rect = canvasRef.current.getBoundingClientRect();
+        const canvasX = ((e.clientX - rect.left) / rect.width) * 100;
+        const canvasY = ((e.clientY - rect.top) / rect.height) * 100;
+
+        if (!isInsideBlueprint(canvasX, canvasY)) {
+            alert('도면 영역 내에서만 위치를 선택할 수 있습니다.');
+            return;
+        }
+
+        const gpsCoord = convertCanvasToGPS(canvasX, canvasY);
+
+        setClickedPoint({ x: canvasX, y: canvasY });
+        setRiskZoneForm(prevForm => ({
+            ...prevForm,
+            gpsLat: gpsCoord.lat,
+            gpsLon: gpsCoord.lon
+        }));
+
         setIsSelecting(false);
-    };
+    }, [isSelecting, currentBlueprint, isInsideBlueprint, convertCanvasToGPS]);
 
     // Select Location 버튼 클릭
-    const handleSelectLocation = () => {
+    const handleSelectLocation = useCallback(() => {
         setIsSelecting(!isSelecting);
-        setDragStart(null);
-        setDragEnd(null);
-    };
+        setClickedPoint(null);
+    }, [isSelecting]);
 
-    // 위험구역 클릭
-    const handleZoneClick = (zone) => {
-        setSelectedZone(zone);
-        setLocationInfo({
-            x: zone.x.toFixed(2),
-            y: zone.y.toFixed(2),
-            name: zone.name || '',
-            width: zone.width.toFixed(1),
-            height: zone.height.toFixed(1)
-        });
-    };
+    // 미터를 캔버스 크기로 변환 (미리보기용)
+    const convertMetersToCanvas = useCallback((widthMeters, heightMeters) => {
+        if (!currentBlueprint?.width || !currentBlueprint?.height) {
+            return { width: 0, height: 0 };
+        }
 
-    // 위치 정보 저장 (위험구역 등록)
-    const handleSaveLocation = async () => {
-        if (!selectedZone) {
-            alert('구역을 선택해주세요.');
+        let realBuildingWidth, realBuildingHeight;
+        
+        if (currentBlueprint.width > 100) {
+            realBuildingWidth = currentBlueprint.width * 0.05;
+            realBuildingHeight = currentBlueprint.height * 0.05;
+        } else {
+            realBuildingWidth = currentBlueprint.width;
+            realBuildingHeight = currentBlueprint.height;
+        }
+
+        const widthRatio = (widthMeters / realBuildingWidth);
+        const heightRatio = (heightMeters / realBuildingHeight);
+        
+        const canvasWidth = Math.min(widthRatio * 80, 30); // 최대 30%로 제한
+        const canvasHeight = Math.min(heightRatio * 80, 30); // 최대 30%로 제한
+        
+        return { width: canvasWidth, height: canvasHeight };
+    }, [currentBlueprint]);
+
+    // 위험구역 미리보기 박스 계산
+    const getPreviewBox = useMemo(() => {
+        if (!clickedPoint || !riskZoneForm.width || !riskZoneForm.height) {
+            return null;
+        }
+
+        const widthNum = parseFloat(riskZoneForm.width);
+        const heightNum = parseFloat(riskZoneForm.height);
+        
+        if (isNaN(widthNum) || isNaN(heightNum) || widthNum <= 0 || heightNum <= 0) {
+            return null;
+        }
+
+        const boxSize = convertMetersToCanvas(widthNum, heightNum);
+        
+        return {
+            left: `${clickedPoint.x - boxSize.width / 2}%`,
+            top: `${clickedPoint.y - boxSize.height / 2}%`,
+            width: `${boxSize.width}%`,
+            height: `${boxSize.height}%`
+        };
+    }, [clickedPoint, riskZoneForm.width, riskZoneForm.height, convertMetersToCanvas]);
+
+
+    // 위험구역 등록
+    const handleCreateRiskZone = async () => {
+        if (!clickedPoint) {
+            alert('위치를 먼저 클릭해주세요.');
             return;
         }
 
         if (!currentBlueprint || !currentBlueprint.id) {
-            alert('도면 정보가 없습니다. 층수를 선택해주세요.');
+            alert('도면을 선택해주세요.');
+            return;
+        }
+
+        if (!riskZoneForm.name.trim()) {
+            alert('위험구역 이름을 입력해주세요.');
+            return;
+        }
+
+        if (!riskZoneForm.width || !riskZoneForm.height ||
+            parseFloat(riskZoneForm.width) <= 0 || parseFloat(riskZoneForm.height) <= 0) {
+            alert('유효한 크기를 입력해주세요.');
             return;
         }
 
         try {
-            console.log('locationInfo:', locationInfo);
-            console.log('locationInfo.name:', locationInfo.name);
-            
-            // 캔버스 좌표를 실제 GPS 좌표로 변환 (여기서는 임시로 그대로 사용)
             const riskZoneData = {
                 blueprintId: currentBlueprint.id,
-                latitude: parseFloat(locationInfo.x) || selectedZone.x,
-                longitude: parseFloat(locationInfo.y) || selectedZone.y,
-                width: parseFloat(locationInfo.width) || selectedZone.width,
-                height: parseFloat(locationInfo.height) || selectedZone.height,
-                name: locationInfo.name.trim() || `위험구역 ${Date.now()}`
+                latitude: riskZoneForm.gpsLat,
+                longitude: riskZoneForm.gpsLon,
+                width: parseFloat(riskZoneForm.width),
+                height: parseFloat(riskZoneForm.height),
+                name: riskZoneForm.name.trim()
             };
 
             console.log('위험구역 등록 데이터:', riskZoneData);
             const response = await riskZoneAPI.createRiskZone(riskZoneData);
             console.log('위험구역 등록 완료:', response);
-            
-            alert('위험구역이 성공적으로 등록되었습니다.');
-            
-            // 캔버스에서 임시 구역 제거
-            setCanvasZones(prev => prev.filter(zone => zone.id !== selectedZone.id));
-            setSelectedZone(null);
-            setLocationInfo({
-                x: '',
-                y: '',
+
+            showSuccessModal('등록 완료', '위험구역이 성공적으로 등록되었습니다.');
+
+            // 폼 초기화
+            setClickedPoint(null);
+            setRiskZoneForm({
                 name: '',
-                width: '',
-                height: ''
+                width: '3.0',
+                height: '3.0',
+                gpsLat: 0,
+                gpsLon: 0
             });
-            
+
             // 목록 새로고침
             await fetchRiskZones();
 
         } catch (error) {
-            console.error('위험구역 저장 실패:', error);
-            alert(`저장에 실패했습니다: ${error.message}`);
+            console.error('위험구역 등록 실패:', error);
+            alert(`등록에 실패했습니다: ${error.message}`);
         }
     };
 
     // 위험구역 수정 모달 열기
     const handleEdit = async (zone) => {
         setEditingZone(zone);
-        
+
         // blueprintId로 해당 도면 정보 조회해서 floor 가져오기
         try {
             const blueprintResponse = await blueprintAPI.getBlueprint(zone.blueprintId);
             const blueprint = blueprintResponse.data || blueprintResponse;
-            
+
             setEditFormData({
                 floor: blueprint.floor || 1,
-                latitude: zone.latitude || 0,
-                longitude: zone.longitude || 0,
-                width: zone.originalWidth || parseFloat(zone.width) || 0,
-                height: zone.originalHeight || parseFloat(zone.height) || 0,
+                latitude: String(zone.latitude || 0),
+                longitude: String(zone.longitude || 0),
+                width: String(zone.originalWidth || parseFloat(zone.width) || 0),
+                height: String(zone.originalHeight || parseFloat(zone.height) || 0),
                 name: zone.name || ''
             });
         } catch (error) {
             console.error('도면 정보 조회 실패:', error);
             setEditFormData({
                 floor: 1,
-                latitude: zone.latitude || 0,
-                longitude: zone.longitude || 0,
-                width: zone.originalWidth || parseFloat(zone.width) || 0,
-                height: zone.originalHeight || parseFloat(zone.height) || 0,
+                latitude: String(zone.latitude || 0),
+                longitude: String(zone.longitude || 0),
+                width: String(zone.originalWidth || parseFloat(zone.width) || 0),
+                height: String(zone.originalHeight || parseFloat(zone.height) || 0),
                 name: zone.name || ''
             });
         }
-        
+
         setIsEditModalOpen(true);
     };
 
@@ -344,12 +387,12 @@ const RiskZonePage = () => {
     };
 
     // 수정 폼 데이터 변경
-    const handleEditFormChange = (field, value) => {
-        setEditFormData(prev => ({
-            ...prev,
+    const handleEditFormChange = useCallback((field, value) => {
+        setEditFormData(prevData => ({
+            ...prevData,
             [field]: value
         }));
-    };
+    }, []);
 
     // 위험구역 수정 저장
     const handleSaveEdit = async () => {
@@ -373,71 +416,119 @@ const RiskZonePage = () => {
             };
 
             await riskZoneAPI.updateRiskZone(editingZone.id, updateData);
-            
-            alert('위험구역이 성공적으로 수정되었습니다.');
+
+            showSuccessModal('수정 완료', '위험구역이 성공적으로 수정되었습니다.');
             handleCloseEditModal();
-            
+
             // 목록 새로고침
             await fetchRiskZones();
-            
+
         } catch (error) {
             console.error('위험구역 수정 실패:', error);
             alert(`수정에 실패했습니다: ${error.message}`);
         }
     };
 
-    // 위험구역 삭제
-    const handleDelete = async (zoneId) => {
-        if (!window.confirm('정말로 이 위험구역을 삭제하시겠습니까?')) {
-            return;
-        }
+    // 위험구역 삭제 확인 모달 열기
+    const handleDelete = (zoneId) => {
+        setConfirmModal({
+            isOpen: true,
+            targetZoneId: zoneId
+        });
+    };
+    
+    // 위험구역 삭제 실행
+    const handleConfirmDelete = async () => {
+        if (!confirmModal.targetZoneId) return;
 
         try {
-            await riskZoneAPI.deleteRiskZone(zoneId);
-            alert('위험구역이 성공적으로 삭제되었습니다.');
-            
+            await riskZoneAPI.deleteRiskZone(confirmModal.targetZoneId);
+            showSuccessModal('삭제 완료', '위험구역이 성공적으로 삭제되었습니다.');
+
             // 목록 새로고침
             await fetchRiskZones();
         } catch (error) {
             console.error('위험구역 삭제 실패:', error);
             alert(`삭제에 실패했습니다: ${error.message}`);
+        } finally {
+            handleCloseConfirmModal();
         }
     };
 
-    // 드래그 영역 계산
-    const getDragArea = () => {
-        if (!dragStart || !dragEnd) return null;
-
-        return {
-            left: `${Math.min(dragStart.x, dragEnd.x)}%`,
-            top: `${Math.min(dragStart.y, dragEnd.y)}%`,
-            width: `${Math.abs(dragEnd.x - dragStart.x)}%`,
-            height: `${Math.abs(dragEnd.y - dragStart.y)}%`
-        };
+    // 성공 모달 표시
+    const showSuccessModal = (title, message) => {
+        setSuccessModal({
+            isOpen: true,
+            title: title,
+            message: message
+        });
     };
+
+    // 성공 모달 닫기
+    const handleCloseSuccessModal = () => {
+        setSuccessModal({
+            isOpen: false,
+            title: '',
+            message: ''
+        });
+    };
+    
+    // 확인 모달 닫기
+    const handleCloseConfirmModal = () => {
+        setConfirmModal({
+            isOpen: false,
+            targetZoneId: null
+        });
+    };
+
 
     // 컴포넌트 마운트 시 위험구역 목록과 도면 목록 조회
     useEffect(() => {
-        fetchRiskZones();
-        fetchAvailableBlueprints();
+        const loadData = async () => {
+            try {
+                await Promise.all([
+                    fetchRiskZones(),
+                    fetchAvailableBlueprints()
+                ]);
+            } catch (error) {
+                console.error('데이터 로드 실패:', error);
+            }
+        };
+        loadData().catch(error => {
+            console.error('데이터 로드 실패:', error);
+        });
     }, [currentPage, fetchRiskZones, fetchAvailableBlueprints]);
 
-    // 초기 로드 + 층 변경 시 도면 조회
+    // 초기 도면 자동 선택 (첫 번째 도면)
     useEffect(() => {
-        fetchBlueprint();
-    }, [selectedFloor, fetchBlueprint]);
+        const selectFirstBlueprint = async () => {
+            if (availableBlueprintsForSelection.length > 0 && !currentBlueprint) {
+                const firstBlueprint = availableBlueprintsForSelection[0];
+                if (firstBlueprint && firstBlueprint.id) {
+                    try {
+                        await selectBlueprint(String(firstBlueprint.id));
+                    } catch (error) {
+                        console.error('초기 도면 선택 실패:', error);
+                    }
+                }
+            }
+        };
+        selectFirstBlueprint().catch(error => {
+            console.error('초기 도면 선택 실패:', error);
+        });
+    }, [availableBlueprintsForSelection, currentBlueprint, selectBlueprint]);
 
     // 컴포넌트 언마운트 시 blob URL 정리
     useEffect(() => {
         return () => {
-            if (blueprintImage && blueprintImage.startsWith('blob:')) {
+            if (blueprintImage && typeof blueprintImage === 'string' && blueprintImage.startsWith('blob:')) {
                 URL.revokeObjectURL(blueprintImage);
             }
         };
     }, [blueprintImage]);
 
-    // 현재 페이지 데이터 (API에서 이미 페이지네이션 적용됨)
-    const currentZones = riskZones;
+    // 현재 페이지 데이터
+    const currentZones = useMemo(() => riskZones, [riskZones]);
 
     return (
         <div className={styles.page}>
@@ -454,25 +545,38 @@ const RiskZonePage = () => {
                         <h2 className={styles.sectionTitle}>위험 구역</h2>
                         <select
                             className={styles.floorSelect}
-                            value={selectedFloor}
-                            onChange={(e) => setSelectedFloor(e.target.value)}
+                            value={currentBlueprint?.id ? String(currentBlueprint.id) : ''}
+                            onChange={(e) => {
+                                const value = e.target.value;
+                                if (value && value !== '') {
+                                    selectBlueprint(value).catch(error => {
+                                        console.error('도면 선택 실패:', error);
+                                    });
+                                } else {
+                                    selectBlueprint('').catch(error => {
+                                        console.error('도면 선택 실패:', error);
+                                    });
+                                }
+                            }}
                         >
-                            <option value="1F">1F</option>
-                            <option value="2F">2F</option>
-                            <option value="3F">3F</option>
-                            <option value="4F">4F</option>
-                            <option value="5F">5F</option>
+                            <option value="">도면 선택</option>
+                            {availableBlueprintsForSelection.map(blueprint => (
+                                <option key={String(blueprint.id)} value={String(blueprint.id)}>
+                                    {blueprint.name && blueprint.name.trim() ?
+                                        `${blueprint.name} (${blueprint.floor}층)` :
+                                        `${blueprint.floor}층 도면`
+                                    }
+                                </option>
+                            ))}
                         </select>
                     </div>
 
                     <div
                         className={`${styles.canvasContainer} ${isSelecting ? styles.drawing : ''}`}
                         ref={canvasRef}
-                        onMouseDown={handleMouseDown}
-                        onMouseMove={handleMouseMove}
-                        onMouseUp={handleMouseUp}
+                        onClick={handleCanvasClick}
                     >
-                        <div 
+                        <div
                             className={styles.canvas}
                             style={{
                                 backgroundImage: blueprintImage ? `url(${blueprintImage})` : 'none',
@@ -484,47 +588,71 @@ const RiskZonePage = () => {
                             {/* 도면이 없는 경우 안내 메시지 */}
                             {!blueprintImage && (
                                 <div className={styles.noBlueprintMessage}>
-                                    {selectedFloor} 층의 도면이 없습니다
+                                    {currentBlueprint ?
+                                        `${currentBlueprint.name || `${currentBlueprint.floor}층`} 도면을 로드하는 중...` :
+                                        '도면을 선택해주세요'
+                                    }
                                 </div>
                             )}
-                            
-                            {/* 기존 위험구역들 */}
-                            {canvasZones.map(zone => (
-                                <div
-                                    key={zone.id}
-                                    className={`${styles.riskZone} ${selectedZone?.id === zone.id ? styles.selected : ''}`}
-                                    style={{
-                                        left: `${zone.x}%`,
-                                        top: `${zone.y}%`,
-                                        width: `${zone.width}%`,
-                                        height: `${zone.height}%`
-                                    }}
-                                    onClick={() => handleZoneClick(zone)}
-                                    title={zone.name || '위험구역'}
-                                />
-                            ))}
 
-                            {/* 드래그 중인 영역 */}
-                            {dragStart && dragEnd && (
+                            {/* 위험구역 미리보기 박스 */}
+                            {getPreviewBox && (
                                 <div
-                                    className={styles.dragArea}
-                                    style={getDragArea()}
+                                    className={styles.previewBox}
+                                    style={{
+                                        position: 'absolute',
+                                        left: getPreviewBox.left,
+                                        top: getPreviewBox.top,
+                                        width: getPreviewBox.width,
+                                        height: getPreviewBox.height,
+                                        border: '2px solid #ff4444',
+                                        backgroundColor: 'rgba(255, 68, 68, 0.3)',
+                                        pointerEvents: 'none',
+                                        borderRadius: '4px'
+                                    }}
                                 />
                             )}
+
+                            {/* 클릭한 지점 표시 */}
+                            {clickedPoint && (
+                                <div
+                                    className={styles.clickedPoint}
+                                    style={{
+                                        position: 'absolute',
+                                        left: `${clickedPoint.x}%`,
+                                        top: `${clickedPoint.y}%`,
+                                        width: '8px',
+                                        height: '8px',
+                                        backgroundColor: '#ff4444',
+                                        borderRadius: '50%',
+                                        transform: 'translate(-50%, -50%)',
+                                        pointerEvents: 'none',
+                                        border: '2px solid white',
+                                        boxShadow: '0 0 4px rgba(0,0,0,0.5)'
+                                    }}
+                                />
+                            )}
+
                         </div>
                     </div>
                 </div>
 
-                {/* 우측: Selected Location 정보 */}
+                {/* 우측: 위험구역 생성 폼 */}
                 <div className={styles.locationPanel}>
-                    <h3 className={styles.panelTitle}>Selected Location</h3>
+                    <h3 className={styles.panelTitle}>위험구역 생성</h3>
 
                     <div className={styles.coordinateInfo}>
                         <p className={styles.coordinateText}>
-                            위치: {locationInfo.x ? `X: ${locationInfo.x}, Y: ${locationInfo.y}` : '영역을 선택해주세요'}
+                            GPS 좌표: {clickedPoint ?
+                                `위도: ${riskZoneForm.gpsLat.toFixed(6)}, 경도: ${riskZoneForm.gpsLon.toFixed(6)}` :
+                                '위치를 클릭해주세요'
+                            }
                         </p>
                         <p className={styles.coordinateText}>
-                            층수: {selectedFloor} {currentBlueprint ? '' : '(도면 없음)'}
+                            도면: {currentBlueprint ?
+                                (currentBlueprint.name || `${currentBlueprint.floor}층 도면`) :
+                                '도면을 선택해주세요'
+                            }
                         </p>
                     </div>
 
@@ -533,8 +661,13 @@ const RiskZonePage = () => {
                         <input
                             type="text"
                             className={styles.formInput}
-                            value={locationInfo.name}
-                            onChange={(e) => setLocationInfo(prev => ({ ...prev, name: e.target.value }))}
+                            value={riskZoneForm.name}
+                            onChange={(e) => {
+                                setRiskZoneForm(prevForm => ({
+                                    ...prevForm,
+                                    name: e.target.value
+                                }));
+                            }}
                             placeholder="위험구역 이름을 입력하세요"
                         />
                     </div>
@@ -544,11 +677,16 @@ const RiskZonePage = () => {
                         <input
                             type="number"
                             step="0.1"
+                            min="0.1"
                             className={styles.formInput}
-                            value={locationInfo.width}
-                            onChange={(e) => setLocationInfo(prev => ({ ...prev, width: e.target.value }))}
+                            value={riskZoneForm.width}
+                            onChange={(e) => {
+                                setRiskZoneForm(prevForm => ({
+                                    ...prevForm,
+                                    width: e.target.value
+                                }));
+                            }}
                             placeholder="너비 (m)"
-                            disabled={!selectedZone}
                         />
                     </div>
 
@@ -557,11 +695,16 @@ const RiskZonePage = () => {
                         <input
                             type="number"
                             step="0.1"
+                            min="0.1"
                             className={styles.formInput}
-                            value={locationInfo.height}
-                            onChange={(e) => setLocationInfo(prev => ({ ...prev, height: e.target.value }))}
+                            value={riskZoneForm.height}
+                            onChange={(e) => {
+                                setRiskZoneForm(prevForm => ({
+                                    ...prevForm,
+                                    height: e.target.value
+                                }));
+                            }}
                             placeholder="높이 (m)"
-                            disabled={!selectedZone}
                         />
                     </div>
 
@@ -569,13 +712,14 @@ const RiskZonePage = () => {
                         <button
                             className={`${styles.selectLocationBtn} ${isSelecting ? styles.active : ''}`}
                             onClick={handleSelectLocation}
+                            disabled={!currentBlueprint}
                         >
-                            Select Location
+                            {isSelecting ? '위치 선택 중...' : '위치 선택'}
                         </button>
                         <button
                             className={styles.saveLocationBtn}
-                            onClick={handleSaveLocation}
-                            disabled={!selectedZone}
+                            onClick={handleCreateRiskZone}
+                            disabled={!clickedPoint || !riskZoneForm.name.trim() || !riskZoneForm.width || !riskZoneForm.height}
                         >
                             위험구역 등록
                         </button>
@@ -675,21 +819,21 @@ const RiskZonePage = () => {
                     <div className={styles.modal}>
                         <div className={styles.modalHeader}>
                             <h3 className={styles.modalTitle}>위험구역 수정</h3>
-                            <button 
+                            <button
                                 className={styles.modalCloseBtn}
                                 onClick={handleCloseEditModal}
                             >
                                 ×
                             </button>
                         </div>
-                        
+
                         <div className={styles.modalBody}>
                             <div className={styles.formGroup}>
                                 <label className={styles.formLabel}>층수</label>
                                 <select
                                     className={styles.formInput}
                                     value={editFormData.floor}
-                                    onChange={(e) => handleEditFormChange('floor', parseInt(e.target.value))}
+                                    onChange={(e) => handleEditFormChange('floor', parseInt(e.target.value, 10))}
                                 >
                                     {availableBlueprints.map(blueprint => (
                                         <option key={blueprint.id} value={blueprint.floor}>
@@ -760,13 +904,13 @@ const RiskZonePage = () => {
                         </div>
 
                         <div className={styles.modalFooter}>
-                            <button 
+                            <button
                                 className={styles.modalCancelBtn}
                                 onClick={handleCloseEditModal}
                             >
                                 취소
                             </button>
-                            <button 
+                            <button
                                 className={styles.modalSaveBtn}
                                 onClick={handleSaveEdit}
                             >
@@ -776,6 +920,26 @@ const RiskZonePage = () => {
                     </div>
                 </div>
             )}
+            
+            {/* 성공 모달 */}
+            <SuccessModal
+                isOpen={successModal.isOpen}
+                title={successModal.title}
+                message={successModal.message}
+                onClose={handleCloseSuccessModal}
+            />
+            
+            {/* 삭제 확인 모달 */}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title="위험구역 삭제 확인"
+                message="을 정말 삭제하시겠습니까?"
+                targetName="이 위험구역"
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCloseConfirmModal}
+                confirmButtonText="삭제하기"
+                type="danger"
+            />
         </div>
     );
 };

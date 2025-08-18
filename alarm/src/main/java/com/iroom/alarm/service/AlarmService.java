@@ -1,6 +1,8 @@
 package com.iroom.alarm.service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -12,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.iroom.alarm.config.StompHandler;
 import com.iroom.alarm.entity.Alarm;
+import com.iroom.alarm.entity.WorkerReadModel;
 import com.iroom.alarm.repository.AlarmRepository;
 import com.iroom.alarm.repository.WorkerReadModelRepository;
 import com.iroom.modulecommon.dto.event.AlarmEvent;
@@ -37,7 +40,10 @@ public class AlarmService {
 	// 외부 API 호출용
 	@PreAuthorize("hasAuthority('ROLE_PPE_SYSTEM')")
 	public SimpleResponse handleAlarmEventFromApi(AlarmEvent alarmEvent) {
-		processAlarmEvent(alarmEvent);
+		WorkerReadModel worker = workerReadModelRepository.findById(alarmEvent.workerId())
+			.orElseThrow(() -> new CustomException(ErrorCode.ALARM_WORKER_NOT_FOUND));
+
+		processAlarmEvent(alarmEvent, worker);
 		kafkaProducerService.publishMessage("PPE_VIOLATION", alarmEvent);
 
 		return new SimpleResponse("알람이 발행되었습니다.");
@@ -45,13 +51,13 @@ public class AlarmService {
 
 	// 내부 Kafka 이벤트 수신용
 	public void handleAlarmEvent(AlarmEvent alarmEvent) {
-		processAlarmEvent(alarmEvent);
+		WorkerReadModel worker = workerReadModelRepository.findById(alarmEvent.workerId())
+			.orElseThrow(() -> new CustomException(ErrorCode.ALARM_WORKER_NOT_FOUND));
+		processAlarmEvent(alarmEvent, worker);
 	}
 
 	// 실제 알림 처리 로직
-	private void processAlarmEvent(AlarmEvent alarmEvent) {
-		workerReadModelRepository.findById(alarmEvent.workerId())
-			.orElseThrow(() -> new CustomException(ErrorCode.ALARM_WORKER_NOT_FOUND));
+	private void processAlarmEvent(AlarmEvent alarmEvent, WorkerReadModel worker) {
 
 		Alarm alarm = Alarm.builder()
 			.workerId(alarmEvent.workerId())
@@ -67,20 +73,20 @@ public class AlarmService {
 		alarmRepository.save(alarm);
 
 		// WebSocket 실시간 전송
-		String adminMessage = String.format("[%s] %s (작업자 ID: %d)", alarmEvent.incidentType(),
-			alarmEvent.incidentDescription(), alarmEvent.workerId());
+		String adminMessage = String.format("[%s] %s (%s) (작업자 ID: %d)", alarmEvent.incidentType(),
+			alarmEvent.incidentDescription(), worker.getName(), alarmEvent.workerId());
 		if (alarmEvent.workerImageUrl() != null) {
 			adminMessage += " (" + alarmEvent.workerImageUrl() + ")";
 		}
 		String workerMessage = String.format("[%s] %s", alarmEvent.incidentType(), alarmEvent.incidentDescription());
 
 		// 관리자에게 모든 알람 전송
-		messagingTemplate.convertAndSend("/topic/alarms/admin", adminMessage);
+		messagingTemplate.convertAndSend("/alarm/topic/alarms/admin", adminMessage);
 
 		// 해당 근로자에게만 개별 알람 전송
 		String sessionId = stompHandler.getSessionIdByUserId(alarmEvent.workerId().toString());
 		if (sessionId != null) {
-			String workerDestination = "/queue/alarms-" + sessionId;
+			String workerDestination = "/alarm/queue/alarms-" + sessionId;
 			messagingTemplate.convertAndSend(workerDestination, workerMessage);
 		}
 	}
@@ -99,11 +105,29 @@ public class AlarmService {
 
 	// 관리자용 전체 알림 목록을 조회
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
-	public PagedResponse<Alarm> getAlarmsForAdmin(int page, int size, int hours) {
+	public PagedResponse<Map<String, Object>> getAlarmsForAdmin(int page, int size, int hours) {
 		Pageable pageable = PageRequest.of(page, size);
 		LocalDateTime time = LocalDateTime.now().minusHours(hours);
 		Page<Alarm> alarmPage = alarmRepository.findByOccurredAtAfterOrderByOccurredAtDesc(time, pageable);
 
-		return PagedResponse.of(alarmPage);
+		Page<Map<String, Object>> alarmWithWorkerPage = alarmPage.map(alarm -> {
+			WorkerReadModel worker = workerReadModelRepository.findById(alarm.getWorkerId()).orElse(null);
+			
+			Map<String, Object> alarmMap = new HashMap<>();
+			alarmMap.put("id", alarm.getId());
+			alarmMap.put("workerId", alarm.getWorkerId());
+			alarmMap.put("workerName", worker != null ? worker.getName() : "알 수 없음");
+			alarmMap.put("occurredAt", alarm.getOccurredAt());
+			alarmMap.put("incidentType", alarm.getIncidentType());
+			alarmMap.put("incidentId", alarm.getIncidentId());
+			alarmMap.put("latitude", alarm.getLatitude());
+			alarmMap.put("longitude", alarm.getLongitude());
+			alarmMap.put("incidentDescription", alarm.getIncidentDescription());
+			alarmMap.put("imageUrl", alarm.getImageUrl());
+			alarmMap.put("createdAt", alarm.getCreatedAt());
+			return alarmMap;
+		});
+
+		return PagedResponse.of(alarmWithWorkerPage);
 	}
 }

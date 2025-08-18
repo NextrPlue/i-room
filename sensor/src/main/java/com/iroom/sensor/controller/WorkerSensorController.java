@@ -7,6 +7,8 @@ import com.iroom.sensor.service.WorkerSensorService;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,6 +34,15 @@ public class WorkerSensorController {
 		@PathVariable Long workerId
 	) {
 		WorkerLocationResponse response = workerSensorService.getWorkerLocation(workerId);
+		return ResponseEntity.ok(ApiResponse.success(response));
+	}
+
+	//다중 근로자 위치 정보 조회
+	@PostMapping("/locations")
+	public ResponseEntity<ApiResponse<List<WorkerLocationResponse>>> getWorkersLocation(
+		@RequestBody List<Long> workerIds
+	) {
+		List<WorkerLocationResponse> response = workerSensorService.getWorkersLocation(workerIds);
 		return ResponseEntity.ok(ApiResponse.success(response));
 	}
 }

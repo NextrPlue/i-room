@@ -3,11 +3,14 @@ package com.iroom.dashboard.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iroom.dashboard.dashboard.controller.DashBoardController;
 import com.iroom.dashboard.dashboard.dto.request.ReportRequest;
+import com.iroom.dashboard.dashboard.entity.DashBoard;
+import com.iroom.dashboard.report.entity.Report;
 import com.iroom.dashboard.dashboard.dto.response.DashBoardResponse;
 import com.iroom.dashboard.pdf.service.ChatService;
 import com.iroom.dashboard.dashboard.service.DashBoardService;
 import com.iroom.dashboard.pdf.service.EmbeddingService;
 import com.iroom.dashboard.pdf.service.PdfService;
+import com.iroom.dashboard.report.service.ReportService;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -60,6 +63,9 @@ class DashBoardControllerTest {
 	@Autowired
 	private RestTemplate restTemplate;
 
+	@Autowired
+	private ReportService reportService;
+
 	@TestConfiguration
 	static class MockConfig {
 		@Bean
@@ -86,6 +92,11 @@ class DashBoardControllerTest {
 		public RestTemplate restTemplate() {
 			return Mockito.mock(RestTemplate.class);
 		}
+
+		@Bean
+		public ReportService reportService() {
+			return Mockito.mock(ReportService.class);
+		}
 	}
 
 	@Test
@@ -105,16 +116,33 @@ class DashBoardControllerTest {
 	}
 
 	@Test
-	@DisplayName("POST /dashboards/report - 리포트 생성 성공")
+	@DisplayName("POST /dashboards/report/{date} - 리포트 생성 성공")
 	void exportReport_Success() throws Exception {
 		// given
-		ReportRequest request = new ReportRequest(1, 2, 3);
+		String testDate = "2024-01-15";
+		List<DashBoard> dashBoards = List.of(
+			DashBoard.builder()
+				.metricType("PPE_VIOLATION")
+				.metricValue(5)
+				.build(),
+			DashBoard.builder()
+				.metricType("DANGER_ZONE")
+				.metricValue(3)
+				.build(),
+			DashBoard.builder()
+				.metricType("HEALTH_RISK")
+				.metricValue(2)
+				.build()
+		);
+		
 		float[] dummyVector = new float[1536];
 		for (int i = 0; i < 1536; i++) {
 			dummyVector[i] = 0.0f;
 		}
 		byte[] pdfBytes = "PDF CONTENT".getBytes();
 
+		when(dashBoardService.getDailyScore(testDate)).thenReturn(dashBoards);
+		when(dashBoardService.getContext(anyString())).thenReturn("context");
 		when(embeddingService.embed(anyString())).thenReturn(dummyVector);
 
 		Map<String, Object> payload = Map.of("content", "위험 내용입니다.");
@@ -126,11 +154,17 @@ class DashBoardControllerTest {
 
 		when(chatService.questionReport(anyString())).thenReturn("GPT 응답입니다.");
 		when(pdfService.generateDashboardPdf(anyString(), anyString())).thenReturn(pdfBytes);
+		
+		Report mockReport = Report.builder()
+			.reportName("daily_safety_report_" + testDate)
+			.reportType(Report.ReportType.DAILY_REPORT)
+			.reportUrl("/uploads/reports/test.pdf")
+			.period(testDate)
+			.build();
+		when(reportService.saveReport(any(), anyString(), any(), anyString())).thenReturn(mockReport);
 
 		// when & then
-		mockMvc.perform(post("/dashboards/report")
-				.contentType(MediaType.APPLICATION_JSON)
-				.content(objectMapper.writeValueAsString(request)))
+		mockMvc.perform(post("/dashboards/report/" + testDate))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_PDF))
 			.andExpect(header().string("Content-Disposition",
@@ -139,14 +173,27 @@ class DashBoardControllerTest {
 	}
 
 	@Test
-	@DisplayName("POST /dashboards/improvement-report - 개선안 생성 성공")
+	@DisplayName("POST /dashboards/improvement-report/{interval} - 개선안 생성 성공")
 	void createImprovement_Success() throws Exception {
 		// given
+		String interval = "week";
+		String testPeriod = "2024-01-01 ~ 2024-01-31";
 		byte[] pdfBytes = "개선안 PDF".getBytes();
+		
+		when(dashBoardService.createImprovement(interval)).thenReturn("개선안 내용");
+		when(dashBoardService.getImprovementPeriod(interval)).thenReturn(testPeriod);
 		when(pdfService.generateDashboardPdf(anyString(), anyString())).thenReturn(pdfBytes);
+		
+		Report mockReport = Report.builder()
+			.reportName(interval + "ly_improvement_report_" + LocalDate.now())
+			.reportType(Report.ReportType.IMPROVEMENT_REPORT)
+			.reportUrl("/uploads/reports/test.pdf")
+			.period(testPeriod)
+			.build();
+		when(reportService.saveReport(any(), anyString(), any(), anyString())).thenReturn(mockReport);
 
 		// when & then
-		mockMvc.perform(post("/dashboards/improvement-report"))
+		mockMvc.perform(post("/dashboards/improvement-report/" + interval))
 			.andExpect(status().isOk())
 			.andExpect(content().contentType(MediaType.APPLICATION_PDF))
 			.andExpect(header().string("Content-Disposition",

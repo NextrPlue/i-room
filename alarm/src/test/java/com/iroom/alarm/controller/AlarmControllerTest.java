@@ -6,7 +6,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -113,20 +115,22 @@ class AlarmControllerTest {
 	@DisplayName("관리자용 최근 3시간 알림 조회 성공")
 	void getAlarmsForAdminTest() throws Exception {
 		// given
-		List<Alarm> alarms = List.of(
-			Alarm.builder()
-				.workerId(2L)
-				.occurredAt(LocalDateTime.now())
-				.incidentType("HEALTH_EMERGENCY")
-				.incidentId(200L)
-				.incidentDescription("심박수 비정상 증가")
-				.latitude(37.5651)
-				.longitude(126.9895)
-				.build()
-		);
+		Map<String, Object> alarmMap = new HashMap<>();
+		alarmMap.put("id", 1L);
+		alarmMap.put("workerId", 2L);
+		alarmMap.put("workerName", "홍길동");
+		alarmMap.put("occurredAt", LocalDateTime.now());
+		alarmMap.put("incidentType", "HEALTH_EMERGENCY");
+		alarmMap.put("incidentId", 200L);
+		alarmMap.put("incidentDescription", "심박수 비정상 증가");
+		alarmMap.put("latitude", 37.5651);
+		alarmMap.put("longitude", 126.9895);
+		alarmMap.put("imageUrl", null);
+		alarmMap.put("createdAt", LocalDateTime.now());
 
-		Page<Alarm> alarmPage = new PageImpl<>(alarms, PageRequest.of(0, 10), 1);
-		PagedResponse<Alarm> pagedResponse = PagedResponse.of(alarmPage);
+		List<Map<String, Object>> alarmMaps = List.of(alarmMap);
+		Page<Map<String, Object>> alarmPage = new PageImpl<>(alarmMaps, PageRequest.of(0, 10), 1);
+		PagedResponse<Map<String, Object>> pagedResponse = PagedResponse.of(alarmPage);
 		Mockito.when(alarmService.getAlarmsForAdmin(eq(0), eq(10), eq(3))).thenReturn(pagedResponse);
 
 		// when & then
@@ -138,6 +142,7 @@ class AlarmControllerTest {
 			.andExpect(jsonPath("$.status").value("success"))
 			.andExpect(jsonPath("$.data.content").isArray())
 			.andExpect(jsonPath("$.data.content[0].workerId").value(2L))
+			.andExpect(jsonPath("$.data.content[0].workerName").value("홍길동"))
 			.andExpect(jsonPath("$.data.content[0].incidentType").value("HEALTH_EMERGENCY"))
 			.andExpect(jsonPath("$.data.totalElements").value(1));
 
@@ -207,7 +212,7 @@ class AlarmControllerTest {
 	@DisplayName("관리자 API - hours 파라미터 범위 테스트")
 	void adminHoursParameterTest() throws Exception {
 		// given
-		PagedResponse<Alarm> mockResponse = PagedResponse.of(
+		PagedResponse<Map<String, Object>> mockResponse = PagedResponse.of(
 			new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
 		when(alarmService.getAlarmsForAdmin(eq(0), eq(10), eq(168))).thenReturn(mockResponse);
 

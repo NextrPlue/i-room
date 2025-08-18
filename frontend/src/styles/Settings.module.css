@@ -63,7 +63,6 @@
     border-radius: 12px;
     padding: 24px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    height: fit-content;
 }
 
 .sectionTitle {
@@ -390,9 +389,9 @@
     color: #2563EB;
 }
 
-.roleBadge.manager {
-    background: #FEF3C7;
-    color: #D97706;
+.roleBadge.reader {
+    background: #D1FAE5;
+    color: #059669;
 }
 
 /* 액션 버튼들 */
@@ -557,5 +556,184 @@
     .actionButton {
         width: 100%;
         text-align: center;
+    }
+}
+
+/* 권한 변경 모달 */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modalContent {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+    max-width: 450px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.modalTitle {
+    font-size: 18px;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0 0 20px 0;
+    text-align: center;
+}
+
+.modalBody {
+    margin-bottom: 24px;
+}
+
+.modalText {
+    font-size: 14px;
+    color: #374151;
+    margin: 0 0 20px 0;
+    text-align: center;
+}
+
+.roleSelectGroup {
+    margin-bottom: 16px;
+}
+
+.roleSelectLabel {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 8px;
+}
+
+.currentRoleDisplay {
+    display: flex;
+    align-items: center;
+}
+
+.roleSelect {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #D1D5DB;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    color: #1F2937;
+    transition: border-color 0.2s ease;
+}
+
+.roleSelect:focus {
+    outline: none;
+    border-color: #3B82F6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.modalActions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.modalCancelButton,
+.modalConfirmButton {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.modalCancelButton {
+    background: #F3F4F6;
+    color: #374151;
+}
+
+.modalCancelButton:hover:not(:disabled) {
+    background: #E5E7EB;
+}
+
+.modalConfirmButton {
+    background: #3B82F6;
+    color: white;
+}
+
+.modalConfirmButton:hover:not(:disabled) {
+    background: #2563EB;
+}
+
+.modalCancelButton:disabled,
+.modalConfirmButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 삭제 확인 모달 전용 스타일 */
+.deleteWarningIcon {
+    font-size: 48px;
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.deleteWarningText {
+    font-size: 12px;
+    color: #6B7280;
+    text-align: center;
+    margin: 8px 0 0 0;
+    font-style: italic;
+}
+
+.modalDeleteButton {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    background: #EF4444;
+    color: white;
+}
+
+.modalDeleteButton:hover:not(:disabled) {
+    background: #DC2626;
+}
+
+.modalDeleteButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* 성공 알림 모달 전용 스타일 */
+.successIcon {
+    font-size: 48px;
+    text-align: center;
+    margin-bottom: 16px;
+    color: #10B981;
+    font-weight: bold;
+}
+
+@media (max-width: 480px) {
+    .modalContent {
+        margin: 20px;
+        padding: 20px;
+        max-width: none;
+    }
+    
+    .modalActions {
+        flex-direction: column;
+    }
+    
+    .modalCancelButton,
+    .modalConfirmButton {
+        width: 100%;
     }
 }

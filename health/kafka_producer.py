@@ -12,7 +12,7 @@ producer = KafkaProducer(
 
 def send_alert_event(incident: Incident):
     event = {
-        "eventType": "HEALTH_ANOMALY",
+        "eventType": "HEALTH_RISK",
         "incidentId": incident.incidentId,  # DB에서 생성된 값을 사용
         "workerId": incident.workerId,
         "workerLatitude": incident.workerLatitude,

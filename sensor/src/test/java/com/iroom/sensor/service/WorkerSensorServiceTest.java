@@ -6,6 +6,9 @@ import static org.mockito.BDDMockito.*;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.DisplayName;
@@ -14,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateRequest;
@@ -38,6 +42,9 @@ public class WorkerSensorServiceTest {
 
 	@Mock
 	private KafkaProducerService kafkaProducerService;
+
+	@Mock
+	private SimpMessagingTemplate messagingTemplate;
 
 	@InjectMocks
 	private WorkerSensorService workerSensorService;
@@ -83,6 +90,7 @@ public class WorkerSensorServiceTest {
 		assertThat(response.stepPerMinute()).isEqualTo(stepPerMinute);
 		
 		verify(kafkaProducerService).publishMessage(eq("WORKER_SENSOR_UPDATED"), any());
+		verify(messagingTemplate).convertAndSend(eq("/sensor/topic/sensors/admin"), anyString());
 	}
 
 	@Test
@@ -122,6 +130,7 @@ public class WorkerSensorServiceTest {
 		assertThat(response.heartRate()).isEqualTo(heartRate);
 		
 		verify(kafkaProducerService).publishMessage(eq("WORKER_SENSOR_UPDATED"), any());
+		verify(messagingTemplate).convertAndSend(eq("/sensor/topic/sensors/admin"), anyString());
 	}
 
 	@Test
@@ -161,6 +170,7 @@ public class WorkerSensorServiceTest {
 		assertThat(response.heartRate()).isEqualTo(heartRate);
 		
 		verify(kafkaProducerService).publishMessage(eq("WORKER_SENSOR_UPDATED"), any());
+		verify(messagingTemplate).convertAndSend(eq("/sensor/topic/sensors/admin"), anyString());
 	}
 
 	@Test
@@ -198,6 +208,7 @@ public class WorkerSensorServiceTest {
 		assertThat(response.workerId()).isEqualTo(workerId);
 		verify(workerSensorRepository).save(any(WorkerSensor.class));
 		verify(kafkaProducerService).publishMessage(eq("WORKER_SENSOR_UPDATED"), any());
+		verify(messagingTemplate).convertAndSend(eq("/sensor/topic/sensors/admin"), anyString());
 	}
 
 	@Test
@@ -258,6 +269,101 @@ public class WorkerSensorServiceTest {
 			.isInstanceOf(CustomException.class)
 			.extracting(e -> ((CustomException) e).getErrorCode())
 			.isEqualTo(ErrorCode.SENSOR_WORKER_NOT_FOUND);
+	}
+
+	@Test
+	@DisplayName("다중 근로자 위치 정보 조회 성공")
+	void getWorkersLocationTest() {
+		// given
+		List<Long> workerIds = Arrays.asList(1L, 2L, 3L);
+		
+		WorkerSensor sensor1 = WorkerSensor.builder()
+			.workerId(1L)
+			.build();
+		sensor1.updateSensor(37.5665, 126.9780, 80.0, 1000L, 5.5, 10.9, 120L);
+		
+		WorkerSensor sensor2 = WorkerSensor.builder()
+			.workerId(2L)
+			.build();
+		sensor2.updateSensor(37.5666, 126.9781, 75.0, 800L, 4.2, 14.3, 100L);
+		
+		WorkerSensor sensor3 = WorkerSensor.builder()
+			.workerId(3L)
+			.build();
+		sensor3.updateSensor(37.5667, 126.9782, 90.0, 1200L, 6.1, 9.8, 140L);
+		
+		List<WorkerSensor> sensors = Arrays.asList(sensor1, sensor2, sensor3);
+		
+		given(workerSensorRepository.findByWorkerIdIn(workerIds)).willReturn(sensors);
+
+		// when
+		List<WorkerLocationResponse> response = workerSensorService.getWorkersLocation(workerIds);
+
+		// then
+		assertThat(response).hasSize(3);
+		
+		assertThat(response.get(0).workerId()).isEqualTo(1L);
+		assertThat(response.get(0).latitude()).isEqualTo(37.5665);
+		assertThat(response.get(0).longitude()).isEqualTo(126.9780);
+		
+		assertThat(response.get(1).workerId()).isEqualTo(2L);
+		assertThat(response.get(1).latitude()).isEqualTo(37.5666);
+		assertThat(response.get(1).longitude()).isEqualTo(126.9781);
+		
+		assertThat(response.get(2).workerId()).isEqualTo(3L);
+		assertThat(response.get(2).latitude()).isEqualTo(37.5667);
+		assertThat(response.get(2).longitude()).isEqualTo(126.9782);
+	}
+
+	@Test
+	@DisplayName("다중 근로자 위치 정보 조회 - 빈 리스트")
+	void getWorkersLocation_emptyListTest() {
+		// given
+		List<Long> emptyWorkerIds = Collections.emptyList();
+
+		// when
+		List<WorkerLocationResponse> response = workerSensorService.getWorkersLocation(emptyWorkerIds);
+
+		// then
+		assertThat(response).isEmpty();
+		verify(workerSensorRepository, never()).findByWorkerIdIn(any());
+	}
+
+	@Test
+	@DisplayName("다중 근로자 위치 정보 조회 - null 리스트")
+	void getWorkersLocation_nullListTest() {
+		// when
+		List<WorkerLocationResponse> response = workerSensorService.getWorkersLocation(null);
+
+		// then
+		assertThat(response).isEmpty();
+		verify(workerSensorRepository, never()).findByWorkerIdIn(any());
+	}
+
+	@Test
+	@DisplayName("다중 근로자 위치 정보 조회 - 일부 근로자만 센서 데이터 존재")
+	void getWorkersLocation_partialDataTest() {
+		// given
+		List<Long> workerIds = Arrays.asList(1L, 2L, 3L);
+		
+		WorkerSensor sensor1 = WorkerSensor.builder()
+			.workerId(1L)
+			.build();
+		sensor1.updateSensor(37.5665, 126.9780, 80.0, 1000L, 5.5, 10.9, 120L);
+		
+		// workerId 2L, 3L은 센서 데이터가 없음 (DB에 데이터가 없는 상황)
+		List<WorkerSensor> sensors = Arrays.asList(sensor1); // 1개만 있음
+		
+		given(workerSensorRepository.findByWorkerIdIn(workerIds)).willReturn(sensors);
+
+		// when
+		List<WorkerLocationResponse> response = workerSensorService.getWorkersLocation(workerIds);
+
+		// then
+		assertThat(response).hasSize(1); // 센서 데이터가 있는 1명만 반환
+		assertThat(response.get(0).workerId()).isEqualTo(1L);
+		assertThat(response.get(0).latitude()).isEqualTo(37.5665);
+		assertThat(response.get(0).longitude()).isEqualTo(126.9780);
 	}
 
 	private byte[] createBinaryData(Double latitude, Double longitude, Double heartRate, 

@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.iroom.management.dto.response.WorkerManagementResponse;
 import com.iroom.management.dto.response.WorkerStatsResponse;
+import com.iroom.management.dto.response.WorkingWorkerResponse;
 import com.iroom.management.service.WorkerManagementService;
 import com.iroom.modulecommon.dto.response.PagedResponse;
 import org.springframework.data.domain.PageImpl;
@@ -207,5 +209,56 @@ class WorkerManagementControllerTest {
 			.andExpect(jsonPath("$.data.workerId").value(workerId))
 			.andExpect(jsonPath("$.data.enterDate").value("2025-07-28T08:30:00"))
 			.andExpect(jsonPath("$.data.outDate").value("2025-07-28T17:30:00"));
+	}
+
+	@Test
+	@DisplayName("근무중인 근로자 목록 조회 성공")
+	void getWorkingWorkersTest() throws Exception {
+		// given
+		WorkingWorkerResponse worker1 = new WorkingWorkerResponse(
+			1L, "김철수", "건설부", "철근공", 
+			LocalDateTime.of(2025, 7, 28, 8, 30)
+		);
+		WorkingWorkerResponse worker2 = new WorkingWorkerResponse(
+			2L, "이영희", "안전관리부", "안전관리자", 
+			LocalDateTime.of(2025, 7, 28, 9, 0)
+		);
+
+		List<WorkingWorkerResponse> workingWorkers = Arrays.asList(worker1, worker2);
+
+		Mockito.when(workerManagementService.getWorkingWorkers())
+			.thenReturn(workingWorkers);
+
+		// when & then
+		mockMvc.perform(get("/entries/working-workers")
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.length()").value(2))
+			.andExpect(jsonPath("$.data[0].workerId").value(1L))
+			.andExpect(jsonPath("$.data[0].workerName").value("김철수"))
+			.andExpect(jsonPath("$.data[0].department").value("건설부"))
+			.andExpect(jsonPath("$.data[0].occupation").value("철근공"))
+			.andExpect(jsonPath("$.data[0].enterDate").value("2025-07-28T08:30:00"))
+			.andExpect(jsonPath("$.data[1].workerId").value(2L))
+			.andExpect(jsonPath("$.data[1].workerName").value("이영희"))
+			.andExpect(jsonPath("$.data[1].department").value("안전관리부"))
+			.andExpect(jsonPath("$.data[1].occupation").value("안전관리자"))
+			.andExpect(jsonPath("$.data[1].enterDate").value("2025-07-28T09:00:00"));
+	}
+
+	@Test
+	@DisplayName("근무중인 근로자 목록 조회 - 근로자 없음")
+	void getWorkingWorkers_emptyTest() throws Exception {
+		// given
+		Mockito.when(workerManagementService.getWorkingWorkers())
+			.thenReturn(Arrays.asList());
+
+		// when & then
+		mockMvc.perform(get("/entries/working-workers")
+				.contentType(MediaType.APPLICATION_JSON))
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("success"))
+			.andExpect(jsonPath("$.data.length()").value(0));
 	}
 }

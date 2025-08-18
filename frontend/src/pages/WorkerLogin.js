@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { workerAPI } from '../api/workerAPI';
+import React, {useState} from 'react';
+import {useNavigate} from 'react-router-dom';
+import {workerAPI} from '../api/workerAPI';
 import styles from '../styles/WorkerLogin.module.css';
 
-const WorkerLogin = ({ onLogin }) => {
+const WorkerLogin = ({onLogin}) => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        email: '',
-        password: ''
+        email: 'test@example.com',
+        password: '!test123'
     });
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const {name, value} = e.target;
         setFormData(prev => ({
             ...prev,
             [name]: value
@@ -61,7 +61,7 @@ const WorkerLogin = ({ onLogin }) => {
                 {/* 프로필 아이콘 */}
                 <div className={styles.profileIcon}>
                     <svg width="60" height="60" viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" fill="#e0e0e0" />
+                        <circle cx="12" cy="12" r="10" fill="#e0e0e0"/>
                     </svg>
                 </div>
 

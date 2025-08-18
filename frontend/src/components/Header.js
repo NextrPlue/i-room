@@ -1,14 +1,41 @@
 import { User } from "lucide-react";
 import React, { useState, useEffect } from "react";
 import { NotificationBell, NotificationDropdown, createNotificationFromWebSocket } from './notifications';
-import stompService from '../services/stompService';
+import alarmStompService from '../services/alarmStompService';
 import { authUtils } from '../utils/auth';
+import { userAPI } from '../api/api';
 
 const Header = () => {
     // 알림 상태 관리
     const [notifications, setNotifications] = useState([]);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
+    // 관리자 정보 상태 관리
+    const [adminInfo, setAdminInfo] = useState(null);
+    const [loadingAdmin, setLoadingAdmin] = useState(true);
+
+    // 관리자 정보 조회
+    useEffect(() => {
+        const fetchAdminInfo = async () => {
+            try {
+                const token = authUtils.getToken();
+                if (!token) {
+                    setLoadingAdmin(false);
+                    return;
+                }
+
+                const response = await userAPI.getMyInfo();
+                if (response.status === 'success' && response.data) {
+                    setAdminInfo(response.data);
+                }
+            } catch (error) {
+                console.error('관리자 정보 조회 실패:', error);
+            } finally {
+                setLoadingAdmin(false);
+            }
+        };
+
+        fetchAdminInfo();
+    }, []);
 
     // 웹소켓 연결 및 이벤트 처리
     useEffect(() => {
@@ -18,43 +45,33 @@ const Header = () => {
         // 웹소켓 연결
         const connectWebSocket = async () => {
             try {
-                await stompService.connect(token, 'admin');
-                setIsWebSocketConnected(true);
-                console.log('✅ Header: 웹소켓 연결 성공');
+                await alarmStompService.connect(token, 'admin');
             } catch (error) {
-                console.error('❌ Header: 웹소켓 연결 실패:', error);
-                setIsWebSocketConnected(false);
             }
         };
 
         // 알림 이벤트 리스너 등록
         const handleNewAlarm = (data) => {
-            console.log('🔔 Header: 새로운 알림 수신:', data);
             const newNotification = createNotificationFromWebSocket(data);
             
-            setNotifications(prev => [newNotification, ...prev.slice(0, 49)]); // 최대 50개 유지
+            setNotifications(prev => [newNotification, ...prev.slice(0, 7)]); // 최대 8개 유지
             
-            // 토스트 알림 표시 (App.js에서 처리할 예정)
+            // 토스트 알림 표시
             window.dispatchEvent(new CustomEvent('showNotificationToast', { 
                 detail: newNotification 
             }));
         };
 
         // 이벤트 리스너 등록
-        stompService.on('alarm', handleNewAlarm);
-        stompService.on('connected', () => setIsWebSocketConnected(true));
-        stompService.on('disconnected', () => setIsWebSocketConnected(false));
+        alarmStompService.on('alarm', handleNewAlarm);
 
         // 웹소켓 연결
-        if (!stompService.isConnected()) {
-            connectWebSocket();
-        } else {
-            setIsWebSocketConnected(true);
+        if (!alarmStompService.isConnected()) {
+            connectWebSocket().catch(console.error);
         }
 
-        // 클린업
         return () => {
-            stompService.off('alarm', handleNewAlarm);
+            alarmStompService.off('alarm', handleNewAlarm);
         };
     }, []);
 
@@ -148,7 +165,10 @@ const Header = () => {
                     <div style={avatarStyle}>
                         <User size={16} color="white" />
                     </div>
-                    <span style={usernameStyle}>관리자님</span>
+                    <span style={usernameStyle}>
+                        {loadingAdmin ? '로딩 중...' : 
+                         adminInfo ? `${adminInfo.name}님` : '관리자님'}
+                    </span>
                 </div>
             </div>
         </header>
