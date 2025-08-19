@@ -99,7 +99,7 @@ const PrivacyPolicy = () => {
                     </section>
 
 
-                    {/* 6. 정보주체의 권리·의무 */}
+                    {/* 4. 정보주체의 권리·의무 */}
                     <section className={styles.section}>
                         <h2 className={styles.sectionTitle}>6. 정보주체의 권리·의무 및 행사방법</h2>
                         <div className={styles.sectionContent}>
@@ -114,7 +114,7 @@ const PrivacyPolicy = () => {
                         </div>
                     </section>
 
-                    {/* 7. 개인정보의 파기 */}
+                    {/* 5. 개인정보의 파기 */}
                     <section className={styles.section}>
                         <h2 className={styles.sectionTitle}>7. 개인정보의 파기</h2>
                         <div className={styles.sectionContent}>
@@ -131,7 +131,7 @@ const PrivacyPolicy = () => {
                         </div>
                     </section>
 
-                    {/* 8. 개인정보 보호책임자 */}
+                    {/* 6. 개인정보 보호책임자 */}
                     <section className={styles.section}>
                         <h2 className={styles.sectionTitle}>8. 개인정보 보호책임자</h2>
                         <div className={styles.sectionContent}>
@@ -148,7 +148,7 @@ const PrivacyPolicy = () => {
                         </div>
                     </section>
 
-                    {/* 10. 개인정보의 안전성 확보조치 */}
+                    {/* 7. 개인정보의 안전성 확보조치 */}
                     <section className={styles.section}>
                         <h2 className={styles.sectionTitle}>10. 개인정보의 안전성 확보조치</h2>
                         <div className={styles.sectionContent}>
