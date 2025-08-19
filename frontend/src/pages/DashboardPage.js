@@ -106,8 +106,51 @@ const DashboardPage = () => {
             return acc;
         }, {});
 
+        // 날짜 범위를 생성하여 누락된 날짜에 0 값 추가
+        const fillMissingDates = (data, interval) => {
+            if (Object.keys(data).length === 0) return [];
+
+            // 기존 데이터에서 최소 날짜 찾기, 최대 날짜는 오늘로 설정
+            const existingDates = Object.keys(data).sort();
+            const startDate = new Date(existingDates[0]);
+            const endDate = new Date(); // 오늘 날짜로 설정
+
+            const filledData = [];
+            const currentDate = new Date(startDate);
+
+            while (currentDate <= endDate) {
+                const dateKey = currentDate.toISOString().split('T')[0];
+                
+                if (data[dateKey]) {
+                    filledData.push(data[dateKey]);
+                } else {
+                    // 누락된 날짜에 0 값 추가
+                    filledData.push({
+                        date: dateKey,
+                        PPE_VIOLATION: 0,
+                        DANGER_ZONE: 0,
+                        HEALTH_RISK: 0
+                    });
+                }
+
+                // 간격에 따라 날짜 증가
+                if (interval === 'day') {
+                    currentDate.setDate(currentDate.getDate() + 1);
+                } else if (interval === 'week') {
+                    currentDate.setDate(currentDate.getDate() + 7);
+                } else { // month
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                }
+            }
+
+            return filledData;
+        };
+
+        // 누락된 날짜 채우기
+        const filledData = fillMissingDates(groupedData, interval);
+
         // 날짜순으로 정렬하고 최근 데이터 제한
-        const sortedData = Object.values(groupedData)
+        const sortedData = filledData
             .sort((a, b) => new Date(a.date) - new Date(b.date))
             .slice(-10); // 최근 10개
 
