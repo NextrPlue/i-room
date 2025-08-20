@@ -116,7 +116,7 @@ def process_message(data: dict, db: Session):
     occurred_at = datetime.now(KST)
 
     # incidentType, description 정의
-    incident_type = "이상" if is_risk else "정상"
+    incident_type = "HEALTH_RISK" if is_risk else "정상"
     description = (
         "건강 이상 상태가 감지되었습니다." if is_risk else "건강 상태는 정상입니다."
     )
@@ -151,26 +151,46 @@ def process_message(data: dict, db: Session):
 
 def consume_worker_data():
     def run():
-        # KafkaConsumer 정의
-        consumer = KafkaConsumer(
-            "iroom",                                # 센서 이벤트가 발행되는 토픽
-            bootstrap_servers=['i-room-kafka:9092'], # Kafka 브로커 주소
-            auto_offset_reset="latest",             # 최신 메시지부터 소비
-            enable_auto_commit=True,                
-            group_id="health-service"               # Cousumer 그룹 ID
-        )
+        print("[INFO] Kafka Consumer 스레드 시작")
+        try:
+            # KafkaConsumer 정의
+            consumer = KafkaConsumer(
+                "iroom",                                # 센서 이벤트가 발행되는 토픽
+                bootstrap_servers=['i-room-kafka:9092'], # Kafka 브로커 주소
+                auto_offset_reset="latest",             # 최신 메시지부터 소비
+                enable_auto_commit=True,                
+                group_id="health-service"               # Cousumer 그룹 ID
+            )
+            print("[INFO] Kafka Consumer 연결 성공")
 
-        db = SessionLocal()
-
-        for message in consumer:
-            try:
-                raw = message.value.decode("utf-8") # JSON 파싱
-                data = json.loads(raw)  # JSON 변환
-                process_message(data, db)
-            except Exception as e:
-                print("Kafka 메시지 처리 중 오류:", e)
+            for message in consumer:
+                print(f"[INFO] Kafka 메시지 수신: {len(message.value)} bytes")
+                db = None
+                try:
+                    # 메시지마다 새로운 DB 세션 생성
+                    db = SessionLocal()
+                    
+                    raw = message.value.decode("utf-8") # JSON 파싱
+                    data = json.loads(raw)  # JSON 변환
+                    print(f"[DEBUG] 파싱된 데이터: eventType={data.get('eventType')}")
+                    
+                    process_message(data, db)
+                except Exception as e:
+                    print(f"[ERROR] Kafka 메시지 처리 중 오류: {e}")
+                    import traceback
+                    traceback.print_exc()
+                finally:
+                    # DB 세션 정리
+                    if db:
+                        db.close()
+                        
+        except Exception as e:
+            print(f"[ERROR] Kafka Consumer 실행 중 치명적 오류: {e}")
+            import traceback
+            traceback.print_exc()
 
     # 백그라운드 스레드 실행
     # FastAPI가 실행되면 자동으로 Kafka를 소비하기 시작
     thread = threading.Thread(target=run, daemon=True)
     thread.start()
+    print("[INFO] Kafka Consumer 백그라운드 스레드 시작됨")
