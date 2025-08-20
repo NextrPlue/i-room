@@ -120,10 +120,7 @@ def process_message(data: dict, db: Session):
     description = (
         "건강 이상 상태가 감지되었습니다." if is_risk else "건강 상태는 정상입니다."
     )
-    description += (
-        f" (proba={proba:.3f}, th={threshold:.3f}, model={model_type}, reason={reason})"
-        f" | {reason_text}"
-    )
+    description += f" | {reason_text}"
 
     # DB 저장 (스키마에 따라 선택적으로 확장)
     incident_kwargs = dict(
