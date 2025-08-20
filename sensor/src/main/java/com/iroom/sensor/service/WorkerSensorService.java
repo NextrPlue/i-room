@@ -7,6 +7,7 @@ import com.iroom.modulecommon.service.KafkaProducerService;
 import com.iroom.sensor.dto.WorkerSensor.WorkerLocationResponse;
 import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateRequest;
 import com.iroom.sensor.dto.WorkerSensor.WorkerSensorUpdateResponse;
+import com.iroom.sensor.entity.WorkerReadModel;
 import com.iroom.sensor.entity.WorkerSensor;
 import com.iroom.sensor.repository.WorkerSensorRepository;
 import com.iroom.sensor.repository.WorkerReadModelRepository;
@@ -43,7 +44,7 @@ public class WorkerSensorService {
 	// 근로자 센서 업데이트
 	@PreAuthorize("hasAuthority('ROLE_WORKER')")
 	public WorkerSensorUpdateResponse updateSensor(Long workerId, byte[] binaryData) {
-		workerReadModelRepository.findById(workerId)
+		WorkerReadModel workerReadModel = workerReadModelRepository.findById(workerId)
 			.orElseThrow(() -> new CustomException(ErrorCode.SENSOR_WORKER_NOT_FOUND));
 
 		WorkerSensor workerSensor = workerSensorRepository.findByWorkerId(workerId)
@@ -63,6 +64,7 @@ public class WorkerSensorService {
 			workerSensor.getWorkerId(),
 			workerSensor.getLatitude(),
 			workerSensor.getLongitude(),
+			workerReadModel.getAge(),
 			workerSensor.getHeartRate(),
 			workerSensor.getSteps(),
 			workerSensor.getSpeed(),
