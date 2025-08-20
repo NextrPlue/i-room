@@ -128,8 +128,8 @@ def process_message(data: dict, db: Session):
     # DB 저장 (스키마에 따라 선택적으로 확장)
     incident_kwargs = dict(
         workerId=worker_id,
-        latitude=latitude,
-        longitude=longitude,
+        workerLatitude=latitude,
+        workerLongitude=longitude,
         incidentType=incident_type,
         incidentDescription=description,
         occurredAt=occurred_at

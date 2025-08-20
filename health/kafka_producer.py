@@ -13,13 +13,16 @@ producer = KafkaProducer(
 def send_alert_event(incident: Incident):
     event = {
         "eventType": "HEALTH_RISK",
-        "incidentId": incident.incidentId,  # DB에서 생성된 값을 사용
-        "workerId": incident.workerId,
-        "latitude": incident.latitude,
-        "longitude": incident.longitude,
-        "incidentType": incident.incidentType,
-        "incidentDescription": incident.incidentDescription,
-        "occurredAt": incident.occurredAt.strftime("%Y-%m-%d %H:%M:%S")
+        "data": {
+            "incidentId": incident.incidentId,  # DB에서 생성된 값을 사용
+            "workerId": incident.workerId,
+            "workerLatitude": incident.workerLatitude,
+            "workerLongitude": incident.workerLongitude,
+            "incidentType": incident.incidentType,
+            "incidentDescription": incident.incidentDescription,
+            "occurredAt": incident.occurredAt.strftime("%Y-%m-%dT%H:%M:%S"),  # LocalDateTime 형식
+            "workerImageUrl": None
+        }
     }
 
     producer.send("iroom", event)   # iroom 토픽으로 이벤트 발행
