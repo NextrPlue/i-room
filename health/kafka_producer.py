@@ -15,8 +15,8 @@ def send_alert_event(incident: Incident):
         "eventType": "HEALTH_RISK",
         "incidentId": incident.incidentId,  # DB에서 생성된 값을 사용
         "workerId": incident.workerId,
-        "workerLatitude": incident.workerLatitude,
-        "workerLongitude": incident.workerLongitude,
+        "latitude": incident.latitude,
+        "longitude": incident.longitude,
         "incidentType": incident.incidentType,
         "incidentDescription": incident.incidentDescription,
         "occurredAt": incident.occurredAt.strftime("%Y-%m-%d %H:%M:%S")
