@@ -4,16 +4,16 @@
 import json
 from kafka import KafkaConsumer
 
-from health.utils.model_utils import predict_worker_risk
-from health.utils.db import SessionLocal
-from health.db.orm_models import Incident
-from health.kafka_producer import send_alert_event
+from utils.model_utils import predict_worker_risk
+from utils.db import SessionLocal
+from db.orm_models import Incident
+from kafka_producer import send_alert_event
 
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone, timedelta
 import threading
 
-from health.utils.rules import apply_rules, CFG, _hrmax, _intensity_score
+from utils.rules import apply_rules, CFG, _hrmax, _intensity_score
 
 KST = timezone(timedelta(hours=9))  # 대한민국 시간 설정
 
@@ -139,7 +139,7 @@ def consume_worker_data():
         # KafkaConsumer 정의
         consumer = KafkaConsumer(
             "iroom",                                # 센서 이벤트가 발행되는 토픽
-            bootstrap_servers=['localhost:9092'],   # Kafka 브로커 주소
+            bootstrap_servers=['i-room-kafka:9092'], # Kafka 브로커 주소
             auto_offset_reset="latest",             # 최신 메시지부터 소비
             enable_auto_commit=True,                
             group_id="health-service"               # Cousumer 그룹 ID

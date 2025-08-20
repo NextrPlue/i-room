@@ -2,7 +2,7 @@
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from health.db.orm_models import Base
+from db.orm_models import Base
 import os
 from dotenv import load_dotenv
 from typing import Iterator
