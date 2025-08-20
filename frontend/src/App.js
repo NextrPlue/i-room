@@ -15,6 +15,7 @@ import './App.css';
 import RiskZonePage from "./pages/RiskZonePage";
 import ReportPage from "./pages/ReportPage";
 import {NotificationToastContainer} from './components/notifications';
+import PrivacyPolicy from "./components/PrivacyPolicy";
 
 // 공통 레이아웃 컴포넌트
 const CommonLayout = ({children, currentPage}) => {
@@ -160,6 +161,8 @@ const App = () => {
                         <SettingsPage/>
                     </CommonLayout>
                 }/>
+
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             </Routes>
         </Router>
     );
