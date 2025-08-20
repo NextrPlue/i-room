@@ -50,24 +50,36 @@ def _reason_text(age, hr, spm, speed_kmh, pace_minpkm, reason: str, cfg=CFG) -> 
 
 # Kafka 메시지를 받아 건강 이상 여부를 판단하고 DB에 기록 및 결과 발행 함수
 def process_message(data: dict, db: Session):
-    if data.get("eventType") != "WORKER_VITAL_SIGNS_UPDATED":   # 해당 메시지만 처리
+    if data.get("eventType") != "WORKER_SENSOR_UPDATED":   # 해당 메시지만 처리
         return
     
+    payload = data.get("data") or {}   # None 방어
+    
     # 센서 데이터 추출
-    worker_id = data.get("workerId")
-    latitude = data.get("workerLatitude")
-    longitude = data.get("workerLongitude")
-    age = data.get("age")
-    heart_rate = data.get("heartRate")
+    worker_id = payload.get("workerId")
+    latitude = payload.get("latitude")
+    longitude = payload.get("longitude")
+    age = payload.get("age")
+    heart_rate = payload.get("heartRate")
 
     # 운동 데이터도 추출
-    spm = data.get("stepsPerMinute")
-    speed = data.get("speed")
-    pace = data.get("pace")
+    steps = payload.get("steps")
+    speed = payload.get("speed")
+    pace = payload.get("pace")
+    spm = payload.get("stepPerMinute")
+
+    # 필수 값 체크
+    missing = []
+    if worker_id is None: 
+        missing.append("workerId")
+    if age is None: 
+        missing.append("age")
+    if heart_rate is None: 
+        missing.append("heartRate")
 
     # 값이 누락된 경우 종료
-    if worker_id is None or age is None or heart_rate is None:
-        print(f"[WARN] 필수 값 누락(workerId/age/heartRate): {data}")
+    if missing:
+        print(f"[WARN] 필수 값 누락({', '.join(missing)}): payload={payload}")
         return
 
     # 건강 이상 예측
@@ -116,8 +128,8 @@ def process_message(data: dict, db: Session):
     # DB 저장 (스키마에 따라 선택적으로 확장)
     incident_kwargs = dict(
         workerId=worker_id,
-        workerLatitude=latitude,
-        workerLongitude=longitude,
+        latitude=latitude,
+        longitude=longitude,
         incidentType=incident_type,
         incidentDescription=description,
         occurredAt=occurred_at
