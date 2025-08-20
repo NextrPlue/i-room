@@ -140,11 +140,14 @@ def process_message(data: dict, db: Session):
     db.commit()
     db.refresh(new_incident)    # 자동 생성된 incidentId를 다시 불러옴
 
-    # 결과 Kafka 전송
-    try:
-        send_alert_event(new_incident)
-    except Exception as e:
-        print("[WARN] 경보 이벤트 송신 실패:", e)
+    # 결과 Kafka 전송 ("이상"일 때만)
+    if is_risk:
+        try:
+            send_alert_event(new_incident)
+        except Exception as e:
+            print("[WARN] 경보 이벤트 송신 실패:", e)
+    else:
+        print("[INFO] 정상 상태는 메시지를 전송하지 않습니다.")
 
 def consume_worker_data():
     def run():
