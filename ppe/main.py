@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from ppe.routers import gps_router, detect_router, monitor_router
 from ppe.database import Base, engine
+from ppe.orm.watch import Watch
 
 import threading
 import webbrowser
@@ -17,7 +18,6 @@ async def lifespan(app: FastAPI):
     # DB 생성
     Base.metadata.create_all(bind=engine)
 
-    # 서버 시작 후 브라우저 열기, 테스트시 주석처리하세요
     def open_browser():
         time.sleep(1)
         webbrowser.open("http://127.0.0.1:8000/monitor")

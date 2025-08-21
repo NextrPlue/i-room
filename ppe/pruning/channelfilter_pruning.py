@@ -11,7 +11,7 @@ SPARSITY = 0.3  # 희소성 비율 (30%)
 model = YOLO(MODEL_PATH)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model.to(device)
-print(f"📌 Using device: {device}")
+print(f" Using device: {device}")
 
 # PyTorch 모델 객체
 nn_model = model.model
