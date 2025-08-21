@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.iroom.dashboard.dashboard.dto.request.ReportRequest;
 import com.iroom.dashboard.dashboard.dto.response.DashBoardResponse;
@@ -14,6 +15,8 @@ import com.iroom.dashboard.dashboard.repository.DashBoardRepository;
 import com.iroom.dashboard.pdf.service.ChatService;
 import com.iroom.dashboard.pdf.service.EmbeddingService;
 import com.iroom.dashboard.pdf.service.PdfService;
+import com.iroom.dashboard.report.entity.Report;
+import com.iroom.dashboard.report.service.ReportService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -35,6 +38,7 @@ public class DashBoardService {
 	private final EmbeddingService embeddingService;
 	private final DashBoardRepository dashBoardRepository;
 	private final ChatService chatService;
+	private final ReportService reportService;
 	@Value("${qdrant.url}")
 	private String qdrantUrl;
 
@@ -57,15 +61,27 @@ public class DashBoardService {
 
 	@PreAuthorize("hasAnyAuthority('ROLE_SUPER_ADMIN', 'ROLE_ADMIN', 'ROLE_READER')")
 	public DashBoardResponse getDashBoard(String metricType) {
-		DashBoard dashBoard = dashBoardRepository.findTopByMetricTypeOrderByIdDesc(metricType);
-
-		DashBoardResponse dashBoardResponse = new DashBoardResponse(
-			dashBoard.getMetricType(),
-			dashBoard.getMetricValue(),
-			dashBoard.getRecordedAt()
-		);
-
-		return dashBoardResponse;
+		LocalDate today = LocalDate.now();
+		
+		// 당일 데이터 조회 시도
+		Optional<DashBoard> todayDashBoard = dashBoardRepository.findByMetricTypeAndRecordedAt(metricType, today);
+		
+		if (todayDashBoard.isPresent()) {
+			// 당일 데이터가 있으면 해당 데이터 반환
+			DashBoard dashBoard = todayDashBoard.get();
+			return new DashBoardResponse(
+				dashBoard.getMetricType(),
+				dashBoard.getMetricValue(),
+				dashBoard.getRecordedAt()
+			);
+		} else {
+			// 당일 데이터가 없으면 0값으로 반환
+			return new DashBoardResponse(
+				metricType,
+				0,
+				today
+			);
+		}
 	}
 	//벡터 디비에 질의
 	public String getContext(String userPrompt) {
@@ -133,5 +149,23 @@ public class DashBoardService {
 		String gptResponse = chatService.questionReport(finalPrompt);
 
 		return gptResponse;
+	}
+
+	public String getImprovementPeriod(String interval) {
+		List<Object[]> rows = switch (interval.toLowerCase()) {
+			case "day" -> dashBoardRepository.getDailyMetricSummaryRaw();
+			case "week" -> dashBoardRepository.getWeeklyMetricSummaryRaw();
+			case "month" -> dashBoardRepository.getMonthlyMetricSummaryRaw();
+			default -> throw new IllegalArgumentException("Invalid interval: " + interval);
+		};
+		
+		if (rows.isEmpty()) {
+			return LocalDate.now().toString();
+		}
+		
+		String startDate = rows.get(rows.size() - 1)[0].toString();
+		String endDate = rows.get(0)[0].toString();
+		
+		return startDate + " ~ " + endDate;
 	}
 }

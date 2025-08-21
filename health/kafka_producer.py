@@ -3,23 +3,26 @@
 
 from kafka import KafkaProducer
 import json
-from health.db.orm_models import Incident
+from db.orm_models import Incident
 
 producer = KafkaProducer(
-    bootstrap_servers=["localhost:9092"],
+    bootstrap_servers=["i-room-kafka:9092"],
     value_serializer=lambda v: json.dumps(v).encode("utf-8")
 )
 
 def send_alert_event(incident: Incident):
     event = {
-        "eventType": "HEALTH_ANOMALY",
-        "incidentId": incident.incidentId,  # DB에서 생성된 값을 사용
-        "workerId": incident.workerId,
-        "workerLatitude": incident.workerLatitude,
-        "workerLongitude": incident.workerLongitude,
-        "incidentType": incident.incidentType,
-        "incidentDescription": incident.incidentDescription,
-        "occurredAt": incident.occurredAt.strftime("%Y-%m-%d %H:%M:%S")
+        "eventType": "HEALTH_RISK",
+        "data": {
+            "incidentId": incident.incidentId,  # DB에서 생성된 값을 사용
+            "workerId": incident.workerId,
+            "workerLatitude": incident.workerLatitude,
+            "workerLongitude": incident.workerLongitude,
+            "incidentType": incident.incidentType,
+            "incidentDescription": incident.incidentDescription,
+            "occurredAt": incident.occurredAt.strftime("%Y-%m-%dT%H:%M:%S"),  # LocalDateTime 형식
+            "workerImageUrl": None
+        }
     }
 
     producer.send("iroom", event)   # iroom 토픽으로 이벤트 발행

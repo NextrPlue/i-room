@@ -2,7 +2,7 @@ import React, {useEffect, useState, useCallback} from 'react';
 import styles from '../styles/Dashboard.module.css';
 import alarmStompService from '../services/alarmStompService';
 import {authUtils} from '../utils/auth';
-import {alarmAPI, managementAPI, dashboardAPI} from '../api/api';
+import {alarmAPI, managementAPI, dashboardAPI, sensorAPI} from '../api/api';
 import AlarmModal from '../components/AlarmModal';
 import {useAlarmData} from '../hooks/useAlarmData';
 
@@ -48,6 +48,9 @@ const DashboardPage = () => {
         absent: 0,
         loading: false
     });
+
+    // 근무중인 근로자 상태 (실시간 현장 현황용)
+    const [workingWorkers, setWorkingWorkers] = useState([]);
 
     // 실시간 위험 알림 데이터 (API + 웹소켓)
     const [alerts, setAlerts] = useState([]);
@@ -103,8 +106,51 @@ const DashboardPage = () => {
             return acc;
         }, {});
 
+        // 날짜 범위를 생성하여 누락된 날짜에 0 값 추가
+        const fillMissingDates = (data, interval) => {
+            if (Object.keys(data).length === 0) return [];
+
+            // 기존 데이터에서 최소 날짜 찾기, 최대 날짜는 오늘로 설정
+            const existingDates = Object.keys(data).sort();
+            const startDate = new Date(existingDates[0]);
+            const endDate = new Date(); // 오늘 날짜로 설정
+
+            const filledData = [];
+            const currentDate = new Date(startDate);
+
+            while (currentDate <= endDate) {
+                const dateKey = currentDate.toISOString().split('T')[0];
+                
+                if (data[dateKey]) {
+                    filledData.push(data[dateKey]);
+                } else {
+                    // 누락된 날짜에 0 값 추가
+                    filledData.push({
+                        date: dateKey,
+                        PPE_VIOLATION: 0,
+                        DANGER_ZONE: 0,
+                        HEALTH_RISK: 0
+                    });
+                }
+
+                // 간격에 따라 날짜 증가
+                if (interval === 'day') {
+                    currentDate.setDate(currentDate.getDate() + 1);
+                } else if (interval === 'week') {
+                    currentDate.setDate(currentDate.getDate() + 7);
+                } else { // month
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                }
+            }
+
+            return filledData;
+        };
+
+        // 누락된 날짜 채우기
+        const filledData = fillMissingDates(groupedData, interval);
+
         // 날짜순으로 정렬하고 최근 데이터 제한
-        const sortedData = Object.values(groupedData)
+        const sortedData = filledData
             .sort((a, b) => new Date(a.date) - new Date(b.date))
             .slice(-10); // 최근 10개
 
@@ -361,6 +407,70 @@ const DashboardPage = () => {
         }
     }, []);
 
+    // 근무중인 근로자와 위치 정보를 통합 조회
+    const fetchWorkingWorkersWithLocation = useCallback(async () => {
+        try {
+            // 1. 근무중인 근로자 목록 조회
+            const workingResponse = await managementAPI.getWorkingWorkers();
+            const workingWorkers = workingResponse.data || [];
+
+            if (workingWorkers.length === 0) {
+                setWorkingWorkers([]);
+                return;
+            }
+
+            // 2. 해당 근로자들의 위치 정보 조회
+            const workerIds = workingWorkers.map(w => w.workerId);
+            let workersWithLocation = [];
+
+            try {
+                const locationResponse = await sensorAPI.getWorkersLocation(workerIds);
+                const locations = locationResponse.data || [];
+
+                // 3. 데이터 통합
+                workersWithLocation = workingWorkers.map((worker, index) => {
+                    const location = locations.find(loc => loc.workerId === worker.workerId);
+                    return {
+                        ...worker,
+                        id: worker.workerId,
+                        name: worker.workerName,
+                        department: worker.department,
+                        occupation: worker.occupation,
+                        enterDate: worker.enterDate,
+                        latitude: location?.latitude || (37.5665 + (index * 0.0001)),
+                        longitude: location?.longitude || (126.9780 + (index * 0.0001)),
+                        status: 'safe', // 기본 상태
+                        isWorking: true,
+                        workStartTime: worker.enterDate
+                    };
+                });
+            } catch (locationError) {
+                console.error('위치 정보 조회 실패:', locationError);
+
+                // 위치 정보 조회 실패 시 기본 위치로 설정
+                workersWithLocation = workingWorkers.map((worker, index) => ({
+                    ...worker,
+                    id: worker.workerId,
+                    name: worker.workerName,
+                    department: worker.department,
+                    occupation: worker.occupation,
+                    enterDate: worker.enterDate,
+                    latitude: 37.5665 + (index * 0.0001),
+                    longitude: 126.9780 + (index * 0.0001),
+                    status: 'safe', // 기본 상태
+                    isWorking: true,
+                    workStartTime: worker.enterDate
+                }));
+            }
+
+            setWorkingWorkers(workersWithLocation);
+
+        } catch (error) {
+            console.error('근무중인 근로자 조회 실패:', error);
+            setWorkingWorkers([]);
+        }
+    }, []);
+
     // API로부터 알람 목록 로드
     const loadAlarms = useCallback(async () => {
         setAlertsLoading(true);
@@ -480,6 +590,38 @@ const DashboardPage = () => {
             if (data.incidentType) {
                 loadSafetyMetrics().catch(console.error);
             }
+
+            // 알림 유형에 따른 근로자 상태 업데이트
+            if (data.workerId) {
+                setWorkingWorkers(prevWorkers => {
+                    return prevWorkers.map(worker => {
+                        if (worker.workerId.toString() === data.workerId.toString()) {
+                            let newStatus = worker.status;
+
+                            switch (data.incidentType) {
+                                case 'PPE_VIOLATION':
+                                    newStatus = 'warning'; // 보호구 미착용 -> 주의
+                                    break;
+                                case 'DANGER_ZONE':
+                                case 'HEALTH_RISK':
+                                    newStatus = 'danger'; // 위험구역 접근, 건강 위험 -> 위험
+                                    break;
+                                default:
+                                    // 기타 알림은 상태 변경 없음
+                                    break;
+                            }
+
+                            return {
+                                ...worker,
+                                status: newStatus,
+                                lastAlarmType: data.incidentType,
+                                lastAlarmTime: new Date().toISOString()
+                            };
+                        }
+                        return worker;
+                    });
+                });
+            }
         };
 
         // 이벤트 리스너 등록
@@ -514,9 +656,18 @@ const DashboardPage = () => {
     useEffect(() => {
         loadAlarms().catch(console.error);
         fetchWorkerStats().catch(console.error);
+        fetchWorkingWorkersWithLocation().catch(console.error);
         loadAllMetrics().catch(console.error);
         loadSafetyMetrics().catch(console.error);
-    }, [loadAlarms, fetchWorkerStats, loadAllMetrics, loadSafetyMetrics]);
+    }, [loadAlarms, fetchWorkerStats, fetchWorkingWorkersWithLocation, loadAllMetrics, loadSafetyMetrics]);
+
+    // 현장 현황 계산 (실시간 업데이트)
+    const fieldStatus = {
+        totalWorkers: workerStats.working || 0,
+        safeWorkers: workingWorkers.filter(w => w.status === 'safe').length,
+        warningWorkers: workingWorkers.filter(w => w.status === 'warning').length,
+        dangerWorkers: workingWorkers.filter(w => w.status === 'danger').length
+    };
 
     return (
         <div className={styles.page}>
@@ -686,13 +837,13 @@ const DashboardPage = () => {
                             <div className={styles.statusText}>
                                 <p className={styles.statusLabel}>현재 인원</p>
                                 <p className={styles.statusValue}>
-                                    {workerStats.loading ? '...' : workerStats.working}명
+                                    {workerStats.loading ? '...' : fieldStatus.totalWorkers}명
                                 </p>
                             </div>
                         </div>
 
                         <p className={styles.statusDetails}>
-                            안전: {workerStats.working - workerStats.absent}명 | 주의: 0명 | 위험: 0명
+                            안전: {fieldStatus.safeWorkers}명 | 주의: {fieldStatus.warningWorkers}명 | 위험: {fieldStatus.dangerWorkers}명
                         </p>
 
                         <button className={styles.statusBtn}>

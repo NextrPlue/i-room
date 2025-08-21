@@ -3,6 +3,7 @@ def USER_BUILT = false
 def MANAGEMENT_BUILT = false
 def ALARM_BUILT = false
 def SENSOR_BUILT = false
+def HEALTH_BUILT = false
 def DASHBOARD_BUILT = false
 def FRONTEND_BUILT = false
 
@@ -69,6 +70,7 @@ spec:
         booleanParam(name: 'DEPLOY_ALARM', defaultValue: true, description: 'Deploy Alarm service')
         booleanParam(name: 'DEPLOY_SENSOR', defaultValue: true, description: 'Deploy Sensor service')
         booleanParam(name: 'DEPLOY_DASHBOARD', defaultValue: true, description: 'Deploy Dashboard service')
+        booleanParam(name: 'DEPLOY_HEALTH', defaultValue: true, description: 'Deploy Health service')
         booleanParam(name: 'DEPLOY_FRONTEND', defaultValue: true, description: 'Deploy Frontend service')
     }
 
@@ -89,6 +91,7 @@ spec:
         ALARM_IMAGE = "${ACR_REGISTRY}/alarm:${BUILD_VERSION}"
         SENSOR_IMAGE = "${ACR_REGISTRY}/sensor:${BUILD_VERSION}"
         DASHBOARD_IMAGE = "${ACR_REGISTRY}/dashboard:${BUILD_VERSION}"
+        HEALTH_IMAGE = "${ACR_REGISTRY}/health:${BUILD_VERSION}"
         FRONTEND_IMAGE = "${ACR_REGISTRY}/frontend:${BUILD_VERSION}"
         FRONTEND_WORKER_IMAGE = "${ACR_REGISTRY}/frontend-worker:${BUILD_VERSION}"
     }
@@ -267,6 +270,24 @@ spec:
             }
         }
 
+        stage('Build Health Service') {
+            when {
+                allOf {
+                    expression { return params.DEPLOY_HEALTH == true }
+                    anyOf {
+                        changeset "health/**"
+                        expression { return params.FORCE_BUILD_ALL == true }
+                    }
+                }
+            }
+            steps {
+                script {
+                    HEALTH_BUILT = true
+                    echo 'Building Health service...'
+                }
+            }
+        }
+
 
         stage('Docker Login') {
             steps {
@@ -381,6 +402,23 @@ spec:
             }
         }
 
+        stage('Build Health Docker Image') {
+            when {
+                expression { return HEALTH_BUILT }
+            }
+            steps {
+                echo 'Building Health Docker image...'
+                dir('health') {
+                    container('docker-client') {
+                        sh '''
+                            docker build -t ${HEALTH_IMAGE} .
+                            echo "Built Health image: ${HEALTH_IMAGE}"
+                        '''
+                    }
+                }
+            }
+        }
+
         stage('Build Frontend Admin Docker Image') {
             when {
                 allOf {
@@ -447,6 +485,9 @@ spec:
                         if (params.DEPLOY_DASHBOARD == true && DASHBOARD_BUILT) {
                             sh "docker push ${DASHBOARD_IMAGE}"
                         }
+                        if (params.DEPLOY_HEALTH == true && HEALTH_BUILT) {
+                            sh "docker push ${HEALTH_IMAGE}"
+                        }
                         if (params.DEPLOY_FRONTEND == true && FRONTEND_BUILT) {
                             sh "docker push ${FRONTEND_IMAGE}"
                             sh "docker push ${FRONTEND_WORKER_IMAGE}"
@@ -510,6 +551,14 @@ spec:
                                 """
                             }
 
+                            // Health 서비스 배포
+                            if (params.DEPLOY_HEALTH == true && HEALTH_BUILT) {
+                                sh """
+                                    kubectl set image deployment/health-deployment health=${HEALTH_IMAGE} --namespace=default
+                                    kubectl rollout status deployment/health-deployment --namespace=default --timeout=300s
+                                """
+                            }
+
                             // Frontend 서비스 배포
                             if (params.DEPLOY_FRONTEND == true && FRONTEND_BUILT) {
                                 sh """
@@ -548,6 +597,7 @@ spec:
             echo "Alarm: ${ALARM_IMAGE}"
             echo "Sensor: ${SENSOR_IMAGE}"
             echo "Dashboard: ${DASHBOARD_IMAGE}"
+            echo "Health: ${HEALTH_IMAGE}"
             echo "Frontend: ${FRONTEND_IMAGE}"
             echo "Frontend Worker: ${FRONTEND_WORKER_IMAGE}"
         }

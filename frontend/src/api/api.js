@@ -246,6 +246,18 @@ export const userAPI = {
     },
 
     /**
+     * 근로자 삭제
+     * @param {string} workerId - 삭제할 근로자 ID
+     * @returns {Promise} 삭제 응답
+     */
+    deleteWorker: async (workerId) => {
+        const url = `${API_CONFIG.gateway}/api/user/workers/${workerId}`;
+        return await apiRequest(url, {
+            method: 'DELETE'
+        });
+    },
+
+    /**
      * 관리자 로그인
      * @param {object} loginData - 로그인 데이터
      * @param {string} loginData.email - 이메일
@@ -359,7 +371,7 @@ export const userAPI = {
     /**
      * 관리자 권한 변경
      * @param {string} adminId - 관리자 ID
-     * @param {string} role - 새로운 권한 (SUPER_ADMIN, READER)
+     * @param {string} role - 새로운 권한 (SUPER_ADMIN, ADMIN, READER)
      * @returns {Promise} 변경된 관리자 정보
      */
     changeAdminRole: async (adminId, role) => {
@@ -716,7 +728,7 @@ export const dashboardAPI = {
 
     /**
      * 특정 메트릭 타입 대시보드 조회
-     * @param {string} metricType - 메트릭 타입 (PPE_VIOLATION, DANGER_AREA_ACCESS, HEALTH_ANOMALY)
+     * @param {string} metricType - 메트릭 타입 (PPE_VIOLATION, DANGER_ZONE, HEALTH_RISK)
      * @returns {Promise} 대시보드 데이터
      */
     getDashboard: async (metricType) => {
@@ -773,6 +785,77 @@ export const reportAPI = {
         }
 
         return await response.blob();
+    },
+
+    /**
+     * 저장된 리포트 목록 조회
+     * @param {object} options
+     * @param {number} options.page - 페이지 번호 (기본값: 0)
+     * @param {number} options.size - 페이지당 개수 (기본값: 10)
+     * @param {string} [options.reportType] - 리포트 타입 필터 (DAILY_REPORT, IMPROVEMENT_REPORT)
+     * @param {string} [options.sortBy] - 정렬 기준 (createdAt, reportName)
+     * @param {string} [options.sortDir] - 정렬 방향 (asc, desc)
+     * @returns {Promise} 리포트 목록 데이터
+     */
+    getReports: async ({page = 0, size = 10, reportType = '', sortBy = 'createdAt', sortDir = 'desc'} = {}) => {
+        const queryParams = new URLSearchParams({
+            page: page.toString(),
+            size: size.toString(),
+            sortBy,
+            sortDir
+        });
+
+        if (reportType) {
+            queryParams.append('reportType', reportType);
+        }
+
+        const url = `${API_CONFIG.gateway}/api/dashboard/reports?${queryParams.toString()}`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 리포트 상세 정보 조회
+     * @param {number} reportId - 리포트 ID
+     * @returns {Promise} 리포트 상세 정보
+     */
+    getReportDetail: async (reportId) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/reports/${reportId}`;
+        return await apiRequest(url);
+    },
+
+    /**
+     * 저장된 리포트 파일 다운로드
+     * @param {number} reportId - 리포트 ID
+     * @returns {Promise<Blob>} PDF 파일 Blob
+     */
+    downloadStoredReport: async (reportId) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/reports/${reportId}/download`;
+        
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': authUtils.getAuthHeader()
+            }
+        });
+
+        if (!response.ok) {
+            const errorMessage = await handleFetchError(response);
+            throw new Error(errorMessage);
+        }
+
+        return await response.blob();
+    },
+
+    /**
+     * 리포트 삭제
+     * @param {number} reportId - 삭제할 리포트 ID
+     * @returns {Promise} 삭제 응답
+     */
+    deleteReport: async (reportId) => {
+        const url = `${API_CONFIG.gateway}/api/dashboard/reports/${reportId}`;
+        return await apiRequest(url, {
+            method: 'DELETE'
+        });
     },
 
     /**

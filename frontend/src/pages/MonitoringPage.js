@@ -783,11 +783,7 @@ const MonitoringPage = () => {
                         <div className={styles.legendGroup}>
                             <div className={styles.legendItem}>
                                 <div className={`${styles.legendZone} ${styles.high}`}></div>
-                                <span>중점관리 위험구역</span>
-                            </div>
-                            <div className={styles.legendItem}>
-                                <div className={`${styles.legendZone} ${styles.medium}`}></div>
-                                <span>고요 위험구역</span>
+                                <span>위험구역</span>
                             </div>
                         </div>
                     </div>

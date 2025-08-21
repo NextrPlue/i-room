@@ -3,11 +3,11 @@
 
 from fastapi import Depends, FastAPI, HTTPException
 from pydantic import BaseModel
-from health.utils.db import init_db, get_session
-from health.kafka_consumer import consume_worker_data
+from utils.db import init_db, get_session
+from kafka_consumer import consume_worker_data
 from contextlib import asynccontextmanager
-from health.utils.schemas import IncidentResponse
-from health.db.orm_models import Incident
+from utils.schemas import IncidentResponse
+from db.orm_models import Incident
 from sqlalchemy.orm import Session
 
 @asynccontextmanager

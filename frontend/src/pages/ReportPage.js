@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from '../styles/Report.module.css';
 import { reportAPI } from '../api/api';
+import SuccessModal from '../components/SuccessModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const ReportPage = () => {
     // 일일 리포트 폼 데이터
@@ -27,8 +29,21 @@ const ReportPage = () => {
     const [pageSize] = useState(5);
     const [totalPages, setTotalPages] = useState(1);
 
-    // 리포트 생성 이력 데이터
-    const [reportHistory, setReportHistory] = useState([]);
+    // 리포트 데이터 상태
+    const [reports, setReports] = useState([]);
+    const [loading, setLoading] = useState(false);
+    
+    // 모달 상태
+    const [successModal, setSuccessModal] = useState({
+        isOpen: false,
+        title: '',
+        message: ''
+    });
+    
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false,
+        targetId: null
+    });
 
     // 각 기간별 설명
     const INTERVAL_DESCRIPTIONS = {
@@ -37,10 +52,36 @@ const ReportPage = () => {
         month: '최근 1개월 데이터 분석'
     };
 
-    // 에러 컨럤 초기화
+    // 에러 컨트롤 초기화
     const clearError = () => {
         setError('');
     };
+
+    // 리포트 목록 조회
+    const fetchReports = async () => {
+        setLoading(true);
+        try {
+            const response = await reportAPI.getReports({
+                page: currentPage,
+                size: pageSize,
+                sortBy: 'createdAt',
+                sortDir: 'desc'
+            });
+            
+            setReports(response.data.content || []);
+            setTotalPages(response.data.totalPages || 1);
+        } catch (error) {
+            console.error('리포트 목록 조회 실패:', error);
+            setError('리포트 목록을 불러오는데 실패했습니다.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 컴포넌트 마운트 시 및 페이지 변경 시 리포트 목록 조회
+    useEffect(() => {
+        fetchReports();
+    }, [currentPage]);
 
     // 오늘 날짜 가져오기
     const getTodayDate = () => {
@@ -80,18 +121,10 @@ const ReportPage = () => {
             const blob = await reportAPI.generateDailyReport(dailyReportForm.date);
             reportAPI.downloadFile(blob, `daily_report_${dailyReportForm.date}.pdf`);
             
-            // 생성 이력에 추가
-            const newReport = {
-                id: Date.now(),
-                title: `일일 안전 리포트`,
-                type: '일일 리포트',
-                period: dailyReportForm.date,
-                createdDate: new Date().toISOString().split('T')[0],
-                status: 'completed'
-            };
-            setReportHistory(prev => [newReport, ...prev]);
+            // 리포트 목록 새로고침
+            await fetchReports();
             
-            alert('리포트 다운로드가 시작되었습니다.');
+            showSuccessModal('다운로드 시작', '리포트 다운로드가 시작되었습니다.');
             
         } catch (error) {
             console.error('일일 리포트 생성 실패:', error);
@@ -111,18 +144,10 @@ const ReportPage = () => {
             const intervalLabels = { day: '일간', week: '주간', month: '월간' };
             reportAPI.downloadFile(blob, `${improvementReportForm.interval}_improvement_report.pdf`);
             
-            // 생성 이력에 추가
-            const newReport = {
-                id: Date.now(),
-                title: `${intervalLabels[improvementReportForm.interval]} AI 개선안 리포트`,
-                type: 'AI 개선안 리포트',
-                period: `${intervalLabels[improvementReportForm.interval]} 분석`,
-                createdDate: new Date().toISOString().split('T')[0],
-                status: 'completed'
-            };
-            setReportHistory(prev => [newReport, ...prev]);
+            // 리포트 목록 새로고침
+            await fetchReports();
             
-            alert('개선안 리포트 다운로드가 시작되었습니다.');
+            showSuccessModal('다운로드 시작', '개선안 리포트 다운로드가 시작되었습니다.');
             
         } catch (error) {
             console.error('개선안 리포트 생성 실패:', error);
@@ -132,48 +157,86 @@ const ReportPage = () => {
         }
     };
 
-    // 간격 라벨 변환
-    const getIntervalLabel = (interval) => {
-        switch (interval) {
-            case 'day': return '일간';
-            case 'week': return '주간';
-            case 'month': return '월간';
-            default: return '기간';
+    // 리포트 타입 라벨 변환
+    const getReportTypeLabel = (reportType) => {
+        switch (reportType) {
+            case 'DAILY_REPORT': return '일일 리포트';
+            case 'IMPROVEMENT_REPORT': return 'AI 개선안 리포트';
+            default: return '기타';
         }
     };
 
-    // 상태 라벨 변환
-    const getStatusLabel = (status) => {
-        switch (status) {
-            case 'completed': return '완료';
-            case 'processing': return '진행중';
-            case 'pending': return '대기중';
-            default: return '알 수 없음';
-        }
+    // 날짜 포맷팅
+    const formatDate = (dateString) => {
+        if (!dateString) return '-';
+        return new Date(dateString).toLocaleDateString('ko-KR');
     };
 
 
     // 리포트 다운로드
-    const handleDownload = (reportId) => {
-        console.log('리포트 다운로드:', reportId);
-        alert('리포트 다운로드가 시작됩니다.');
+    const handleDownload = async (reportId, reportName) => {
+        try {
+            const blob = await reportAPI.downloadStoredReport(reportId);
+            reportAPI.downloadFile(blob, `${reportName}.pdf`);
+        } catch (error) {
+            console.error('리포트 다운로드 실패:', error);
+            setError('리포트 다운로드에 실패했습니다.');
+        }
     };
 
-    // 리포트 공유
-    const handleShare = (reportId) => {
-        console.log('리포트 공유:', reportId);
-        alert('공유 링크가 클립보드에 복사되었습니다.');
+    // 리포트 삭제 확인 모달 열기
+    const handleDelete = (reportId) => {
+        setConfirmModal({
+            isOpen: true,
+            targetId: reportId
+        });
+    };
+    
+    // 리포트 삭제 실행
+    const handleConfirmDelete = async () => {
+        if (!confirmModal.targetId) return;
+        
+        try {
+            await reportAPI.deleteReport(confirmModal.targetId);
+            await fetchReports(); // 목록 새로고침
+            showSuccessModal('삭제 완료', '리포트가 삭제되었습니다.');
+        } catch (error) {
+            console.error('리포트 삭제 실패:', error);
+            setError('리포트 삭제에 실패했습니다.');
+        } finally {
+            handleCloseConfirmModal();
+        }
+    };
+    
+    // 모달 관련 함수들
+    const showSuccessModal = (title, message) => {
+        setSuccessModal({
+            isOpen: true,
+            title: title,
+            message: message
+        });
+    };
+    
+    const handleCloseSuccessModal = () => {
+        setSuccessModal({
+            isOpen: false,
+            title: '',
+            message: ''
+        });
+    };
+    
+    const handleCloseConfirmModal = () => {
+        setConfirmModal({
+            isOpen: false,
+            targetId: null
+        });
     };
 
 
-    // 현재 페이지 데이터
-    const currentReports = reportHistory.slice(
-        currentPage * pageSize,
-        (currentPage + 1) * pageSize
-    );
-
-    // 전체 페이지 수 계산
-    const totalPagesCalculated = Math.ceil(reportHistory.length / pageSize) || 1;
+    // 페이지 변경 핸들러
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
+    };
 
     return (
         <div className={styles.page}>
@@ -281,33 +344,37 @@ const ReportPage = () => {
                     </tr>
                     </thead>
                     <tbody>
-                    {currentReports.length > 0 ? (
-                        currentReports.map(report => (
+                    {loading ? (
+                        <tr>
+                            <td colSpan="6" className={styles.emptyState}>
+                                로딩 중...
+                            </td>
+                        </tr>
+                    ) : reports.length > 0 ? (
+                        reports.map(report => (
                             <tr key={report.id}>
-                                <td data-label="리포트명">{report.title}</td>
-                                <td data-label="타입">{report.type}</td>
+                                <td data-label="리포트명">{report.reportName}</td>
+                                <td data-label="타입">{getReportTypeLabel(report.reportType)}</td>
                                 <td data-label="기간">{report.period}</td>
-                                <td data-label="생성일">{report.createdDate}</td>
+                                <td data-label="생성일">{formatDate(report.createdAt)}</td>
                                 <td data-label="상태">
-                                        <span className={`${styles.statusBadge} ${styles[report.status]}`}>
-                                            {getStatusLabel(report.status)}
-                                        </span>
+                                    <span className={`${styles.statusBadge} ${styles.completed}`}>
+                                        완료
+                                    </span>
                                 </td>
                                 <td data-label="액션">
                                     <div className={styles.actionButtons}>
                                         <button
                                             className={`${styles.actionButton} ${styles.downloadButton}`}
-                                            onClick={() => handleDownload(report.id)}
-                                            disabled={report.status !== 'completed'}
+                                            onClick={() => handleDownload(report.id, report.reportName)}
                                         >
                                             다운로드
                                         </button>
                                         <button
                                             className={`${styles.actionButton} ${styles.shareButton}`}
-                                            onClick={() => handleShare(report.id)}
-                                            disabled={report.status !== 'completed'}
+                                            onClick={() => handleDelete(report.id)}
                                         >
-                                            공유
+                                            삭제
                                         </button>
                                     </div>
                                 </td>
@@ -324,21 +391,21 @@ const ReportPage = () => {
                 </table>
 
                 {/* 페이지네이션 */}
-                {totalPagesCalculated > 1 && (
+                {totalPages > 1 && (
                     <div className={styles.pagination}>
                         <button
                             className={styles.pageBtn}
-                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 0))}
+                            onClick={() => handlePageChange(Math.max(currentPage - 1, 0))}
                             disabled={currentPage === 0}
                         >
                             ‹
                         </button>
 
-                        {Array.from({ length: totalPagesCalculated }, (_, index) => (
+                        {Array.from({ length: totalPages }, (_, index) => (
                             <button
                                 key={index}
                                 className={`${styles.pageBtn} ${currentPage === index ? styles.active : ''}`}
-                                onClick={() => setCurrentPage(index)}
+                                onClick={() => handlePageChange(index)}
                             >
                                 {index + 1}
                             </button>
@@ -346,14 +413,34 @@ const ReportPage = () => {
 
                         <button
                             className={styles.pageBtn}
-                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPagesCalculated - 1))}
-                            disabled={currentPage >= totalPagesCalculated - 1}
+                            onClick={() => handlePageChange(Math.min(currentPage + 1, totalPages - 1))}
+                            disabled={currentPage >= totalPages - 1}
                         >
                             ›
                         </button>
                     </div>
                 )}
             </section>
+            
+            {/* 성공 모달 */}
+            <SuccessModal
+                isOpen={successModal.isOpen}
+                title={successModal.title}
+                message={successModal.message}
+                onClose={handleCloseSuccessModal}
+            />
+            
+            {/* 삭제 확인 모달 */}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title="리포트 삭제 확인"
+                message="을 정말 삭제하시겠습니까?"
+                targetName="이 리포트"
+                onConfirm={handleConfirmDelete}
+                onCancel={handleCloseConfirmModal}
+                confirmButtonText="삭제하기"
+                type="danger"
+            />
         </div>
     );
 };
