@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from aiortc import RTCPeerConnection, VideoStreamTrack, RTCSessionDescription
 from pydantic import BaseModel
-from model_utils import detect_and_draw
+from ppe.others.model_utils import detect_and_draw
 import time
 from dotenv import load_dotenv
 import os
