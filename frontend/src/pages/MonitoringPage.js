@@ -808,8 +808,10 @@ const MonitoringPage = () => {
                             위험: {fieldStatus.dangerWorkers}명
                         </p>
 
-                        <button className={styles.statusButton}>
-                            정상 운영
+                        <button className={styles.statusButton}
+                            onClick={() => window.open('https://fcff8db546c8.ngrok-free.app/monitor', '_blank')}
+                        >
+                            모니터링
                         </button>
                     </div>
 
