@@ -571,6 +571,20 @@ const DashboardPage = () => {
             const alertType = getAlertTypeFromData(data.incidentType, data.incidentDescription);
             const dashboardType = convertToDashboardType(alertType);
 
+            // PPE_VIOLATION이 아닌 경우에만 작업자 정보 포함
+            let workerName = null;
+            let workerId = null;
+            if (alertType !== 'PPE_VIOLATION') {
+                workerId = data.workerId;
+                // 웹소켓에서 온 workerName을 우선 사용, 없으면 workingWorkers에서 찾기
+                if (data.workerName) {
+                    workerName = data.workerName;
+                } else if (data.workerId) {
+                    const worker = workingWorkers.find(w => w.workerId.toString() === data.workerId.toString());
+                    workerName = worker?.name || worker?.workerName;
+                }
+            }
+
             const newAlert = {
                 id: data.id || Date.now(), // 웹소켓에서 ID가 오면 사용, 없으면 임시 ID
                 type: dashboardType,
@@ -578,7 +592,8 @@ const DashboardPage = () => {
                 description: data.incidentDescription || '알림 내용',
                 time: '방금 전',
                 timestamp: new Date().toISOString(),
-                workerId: data.workerId,
+                workerId: workerId,
+                workerName: workerName,
                 originalData: data
             };
 
@@ -746,7 +761,9 @@ const DashboardPage = () => {
                                         </div>
                                         <div className={styles.alertContent}>
                                             <p className={styles.alertTitle}>{alert.title}</p>
-                                            <p className={styles.alertWorker}>작업자: {alert.workerName || "알 수 없음"}</p>
+                                            {alert.type !== 'warning' && (
+                                                <p className={styles.alertWorker}>작업자: {alert.workerName || "알 수 없음"}</p>
+                                            )}
                                             <p className={styles.alertDesc}>{alert.description}</p>
                                         </div>
                                         <span className={styles.alertTime}>{alert.time}</span>

@@ -23,7 +23,8 @@ export const createNotificationFromWebSocket = (data) => {
         type: data.incidentType || 'INFO',
         title: getTitle(data.incidentType),
         message: data.incidentDescription || '새로운 알림이 도착했습니다.',
-        workerId: data.workerId,
+        workerId: data.incidentType === 'PPE_VIOLATION' ? null : data.workerId,
+        workerName: data.incidentType === 'PPE_VIOLATION' ? null : data.workerName,
         timestamp: data.occurredAt || new Date().toISOString(),
         isRead: false
     };
