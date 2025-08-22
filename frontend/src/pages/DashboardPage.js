@@ -863,8 +863,11 @@ const DashboardPage = () => {
                             안전: {fieldStatus.safeWorkers}명 | 주의: {fieldStatus.warningWorkers}명 | 위험: {fieldStatus.dangerWorkers}명
                         </p>
 
-                        <button className={styles.statusBtn}>
-                            정상 운영
+                        <button 
+                            className={styles.statusBtn}
+                            onClick={() => window.open('https://fcff8db546c8.ngrok-free.app/monitor', '_blank')}
+                        >
+                            모니터링
                         </button>
                     </div>
                 </div>

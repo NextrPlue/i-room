@@ -4,3 +4,15 @@ envs:
     KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "i-room-kafka:9092"
     DYNAMIC_CONFIG_ENABLED: "true"
     SERVER_SERVLET_CONTEXT_PATH: "/kafka-ui"
+
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 100m
+  limits:
+    memory: 512Mi
+    cpu: 200m
+
+env:
+  - name: JAVA_OPTS
+    value: "-Xms128m -Xmx384m"

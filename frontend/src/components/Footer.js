@@ -1,6 +1,9 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const Footer = () => {
+    const navigate = useNavigate();
+
     const footerStyle = {
         backgroundColor: '#ffffff',
         borderTop: '1px solid #e5e7eb',
@@ -18,6 +21,25 @@ const Footer = () => {
         boxSizing: 'border-box'
     };
 
+    // 개인정보 버튼 클릭 핸들러
+    const handlePrivacyClick = () => {
+        navigate('/privacy-policy');
+    };
+
+    // 가이드 버튼 클릭 핸들러
+    const handleGuideClick = () => {
+        // 가이드 페이지로 이동 (추후 구현)
+        alert('가이드 페이지는 준비 중입니다.');
+        // navigate('/guide');
+    };
+
+    // 문의 버튼 클릭 핸들러
+    const handleContactClick = () => {
+        // 문의 페이지로 이동 또는 모달 열기 (추후 구현)
+        alert('문의: privacy@iroom.com\n전화: 02-1234-5678');
+        // navigate('/contact');
+    };
+
     return (
         <footer style={footerStyle}>
             <div style={containerStyle}>
@@ -30,10 +52,11 @@ const Footer = () => {
 
                     {/* 가운데: 링크들 */}
                     <div style={{display: 'flex', alignItems: 'center', gap: '20px', fontSize: '14px'}}>
-                        <button 
+                        <button
                             type="button"
+                            onClick={handleGuideClick}
                             style={{
-                                color: '#6b7280', 
+                                color: '#6b7280',
                                 textDecoration: 'none',
                                 background: 'none',
                                 border: 'none',
@@ -45,10 +68,11 @@ const Footer = () => {
                         >
                             가이드
                         </button>
-                        <button 
+                        <button
                             type="button"
+                            onClick={handlePrivacyClick}
                             style={{
-                                color: '#6b7280', 
+                                color: '#6b7280',
                                 textDecoration: 'none',
                                 background: 'none',
                                 border: 'none',
@@ -60,10 +84,11 @@ const Footer = () => {
                         >
                             개인정보
                         </button>
-                        <button 
+                        <button
                             type="button"
+                            onClick={handleContactClick}
                             style={{
-                                color: '#6b7280', 
+                                color: '#6b7280',
                                 textDecoration: 'none',
                                 background: 'none',
                                 border: 'none',

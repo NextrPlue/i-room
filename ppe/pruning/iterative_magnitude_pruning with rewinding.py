@@ -14,7 +14,7 @@ EPOCHS_PER_STEP = 3    # 단계별 재학습 epoch (예시)
 model = YOLO(MODEL_PATH)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model.to(device)
-print(f"📌 Using device: {device}")
+print(f" Using device: {device}")
 
 # PyTorch 모델 객체
 nn_model = model.model
@@ -57,7 +57,7 @@ for step in range(IMP_STEPS):
 
     # 가중치 리와인딩
     nn_model.load_state_dict(initial_state)
-    print("🔄 가중치 리와인딩 완료")
+    print(" 가중치 리와인딩 완료")
 
     # 재훈련 (데이터셋 필요)
     # 실제 학습할 땐 data.yaml 경로 수정 필수
@@ -70,4 +70,4 @@ ckpt = {
     "train_args": {},
 }
 torch.save(ckpt, SAVE_PATH)
-print(f"\n💾 최종 IMP + Rewinding 모델 저장 완료: {SAVE_PATH}")
+print(f"\n 최종 IMP + Rewinding 모델 저장 완료: {SAVE_PATH}")
