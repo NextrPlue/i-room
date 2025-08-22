@@ -642,16 +642,6 @@ const MonitoringPage = () => {
             {/* 페이지 헤더 */}
             <header className={styles.pageHeader}>
                 <h1 className={styles.pageTitle}>실시간 모니터링</h1>
-                <div className={styles.connectionStatus}>
-                    <span
-                        className={`${styles.connectionIndicator} ${alarmStompService.isConnected() ? styles.connected : styles.disconnected}`}>
-                        알림 {alarmStompService.isConnected() ? '연결됨' : '연결 안됨'}
-                    </span>
-                    <span
-                        className={`${styles.connectionIndicator} ${sensorStompService.isConnected() ? styles.connected : styles.disconnected}`}>
-                        센서 {sensorStompService.isConnected() ? '연결됨' : '연결 안됨'}
-                    </span>
-                </div>
             </header>
 
             {/* 필터 섹션 */}
@@ -808,8 +798,10 @@ const MonitoringPage = () => {
                             위험: {fieldStatus.dangerWorkers}명
                         </p>
 
-                        <button className={styles.statusButton}>
-                            정상 운영
+                        <button className={styles.statusButton}
+                            onClick={() => window.open('https://fcff8db546c8.ngrok-free.app/monitor', '_blank')}
+                        >
+                            모니터링
                         </button>
                     </div>
 
