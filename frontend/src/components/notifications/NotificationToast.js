@@ -218,7 +218,8 @@ const NotificationToast = ({
                 </div>
                 <div style={metaStyle}>
                     <span>
-                        {notification.workerId && `작업자: ${notification.workerId}`}
+                        {notification.type !== 'PPE_VIOLATION' && (notification.workerName || notification.workerId) && 
+                         `작업자: ${notification.workerName || notification.workerId}`}
                     </span>
                     <span>
                         {formatTime(notification.timestamp)}
