@@ -30,7 +30,7 @@ public class DashBoardEventListener {
 			// switch로 이벤트 구분
 			switch (eventType) {
 				case "WORKER_CREATED" -> workerEventHandler.handle(eventType,dataNode);
-				case "PPE_VIOLATION" -> alarmEventHandler.handle(eventType,dataNode);
+				case "PPE_VIOLATION", "HEALTH_RISK" -> alarmEventHandler.handle(eventType,dataNode);
 				case "WORKER_SENSOR_UPDATED", "HEAVY_EQUIPMENT_LOCATION_UPDATED"-> locationEventHandler.handle(eventType,dataNode);
 				default -> log.warn("Unknown eventType: {}", eventType);
 			}

@@ -25,7 +25,7 @@ public class AlarmEventHandler {
 	public void handle(String eventType, JsonNode dataNode) {
 		try {
 				switch (eventType) {
-					case "PPE_VIOLATION" -> { //알람 메시지 수신
+					case "PPE_VIOLATION", "HEALTH_RISK" -> { //알람 메시지 수신
 						LocalDate today = LocalDate.now();  // 오늘 날짜
 
 						AlarmEvent alarmEvent = objectMapper.treeToValue(dataNode, AlarmEvent.class);

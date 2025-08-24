@@ -8,6 +8,7 @@ from ppe.orm.violation import Violation
 
 # Spring Boot API endpoint
 SPRING_BOOT_API = "http://localhost:8080/api/alerts"
+# SPRING_BOOT_API = "http://localhost:8080/api/alerts/alarms/ppe"
 
 # 이미지 저장 경로
 STATIC_DIR = os.path.join(os.path.dirname(__file__), "static", "alerts")
@@ -26,17 +27,19 @@ def send_alert_if_violation(violation_id: int, frame):
             print(f"[WARN] Violation record not found (id={violation_id})")
             return
 
-        # 2. 전송 데이터 구성 (테이블 전체 필드 그대로)
+        # 2. 엔드포인트 전송 데이터 구성 
         data = {
-            "id": violation.id,
             "worker_id": violation.worker_id,
             # "ppe_id": violation.ppe_id,
-            "image_url": violation.image_url,
+            "occuredAt": violation.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "incidentType" : violation.incident_type,
+            "incidnetId" : violation.id,
+            # "helmet_on_count": violation.helmet_on_count,
+            # "seatbelt_on_count": violation.seatbelt_on_count,
             "latitude": violation.latitude,
             "longitude": violation.longitude,
-            "timestamp": violation.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-            "helmet_on_count": violation.helmet_on_count,
-            "seatbelt_on_count": violation.seatbelt_on_count
+            "incidentDescription" : violation.incident_description,
+            "image_url": violation.image_url,
         }
 
         # 3. POST 요청 전송

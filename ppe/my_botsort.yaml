@@ -8,22 +8,22 @@ tracker_type: botsort # tracker type, ['botsort', 'bytetrack']
 
 #- 값 ↑ → 확신 높은 detection만 트래킹 (정확도 ↑, 놓침 ↑)
 #- 값 ↓ → 불확실한 detection도 연결 (연속성 ↑, 오탐 ↑)
-track_high_thresh: 0.25 # threshold for the first association
+track_high_thresh: 0.4 # threshold for the first association
 
 # - bbox가 끊기는 경우 ↑ (더 많은 detection을 연결)
 # - 잘못된 객체를 붙잡는 경우 ↓
 track_low_thresh: 0.15 # threshold for the second association
 
 # - 값 ↓ → 가려졌다가 다시 나타날 때 빠르게 새로운 트랙 생성 (하지만 잘못된 트랙도 생길 수 있음)
-new_track_thresh: 0.25 # threshold for init new track if the detection does not match any tracks
+new_track_thresh: 0.5 # threshold for init new track if the detection does not match any tracks
 
 # - 객체가 잠깐 가려지는 경우 ↑ (끊김 방지)
 # - 너무 오래 유지하면 유령 트랙(ghost track) ↑
-track_buffer: 120 # buffer to calculate the time when to remove tracks
+track_buffer: 150 # buffer to calculate the time when to remove tracks
 
 # - 값 ↑ → 박스가 비슷해야 연결 (정확도 ↑, 놓침 ↑)
 # - 값 ↓ → 약간 다른 위치의 박스도 연결 (연속성 ↑, 잘못된 연결 ↑)
-match_thresh: 0.9 # threshold for matching tracks
+match_thresh: 0.8 # threshold for matching tracks
 
 # True 유지 추천 (정확도 ↑).
 fuse_score: True # Whether to fuse confidence scores with the iou distances before matching

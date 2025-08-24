@@ -144,13 +144,22 @@ class AlarmStompService {
                 const imageUrlMatch = body.match(/\((https?:\/\/[^)]+)\)/);
                 const imageUrl = imageUrlMatch ? imageUrlMatch[1] : null;
 
+                // 작업자 이름 추출 (첫 번째 괄호에서)
+                const workerNameMatch = description.match(/\(([^)]+)\)/);
+                const workerName = workerNameMatch ? workerNameMatch[1] : null;
+
+                let cleanedDescription = description
+                    .replace(/\s*\(작업자 ID: \d+\)/, '')
+                    .replace(/\s*\(https?:\/\/[^)]+\)/, '')
+                    .replace(/\s*\([^)]*\)/g, '') // 모든 괄호 내용 제거
+                    .replace(/\s+/g, ' ') // 여러 공백을 하나로
+                    .trim();
+
                 data = {
                     incidentType,
-                    incidentDescription: description
-                        .replace(/\s*\(작업자 ID: \d+\)/, '')
-                        .replace(/\s*\(https?:\/\/[^)]+\)/, '')
-                        .trim(),
-                    workerId,
+                    incidentDescription: cleanedDescription,
+                    workerId: incidentType === 'PPE_VIOLATION' ? null : workerId,
+                    workerName: incidentType === 'PPE_VIOLATION' ? null : workerName,
                     workerImageUrl: imageUrl,
                     occurredAt: new Date().toISOString(),
                 };

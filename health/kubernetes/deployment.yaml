@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: health-deployment
+  labels:
+    app: health
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  selector:
+    matchLabels:
+      app: health
+  template:
+    metadata:
+      labels:
+        app: health
+    spec:
+      containers:
+        - name: health
+          image: iroomregistry.azurecr.io/health:2025082003
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_USER
+              value: "root"
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: i-room-secrets
+                  key: MYSQL_PASSWORD
+            - name: DB_HOST
+              value: "i-room-mysql"
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_NAME
+              value: "iroom_health"
