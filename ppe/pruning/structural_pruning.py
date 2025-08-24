@@ -11,7 +11,7 @@ SPARSITY = 0.3  # 희소성 비율 (30%)
 model = YOLO(MODEL_PATH)
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model.to(device)
-print(f"📌 Using device: {device}")
+print(f" Using device: {device}")
 
 # PyTorch 모델 객체
 nn_model = model.model
@@ -45,7 +45,7 @@ def check_sparsity(model):
             total_params += total
             total_zeros += zeros
     global_sparsity = total_zeros / total_params
-    print(f"\n📊 Global sparsity: {global_sparsity*100:.2f}%")
+    print(f"\n Global sparsity: {global_sparsity*100:.2f}%")
     return global_sparsity
 
 global_sparsity = check_sparsity(nn_model)
