@@ -5,13 +5,13 @@ from ultralytics import YOLO
 from ppe.services.ppe_check import check_violation
 from ppe.services.violation_handler import handle_violation
 from ppe.services.webrtc_service import frame_queue
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 
-load_dotenv()
+# load_dotenv()
 
 MODEL_PATH = os.getenv("MODEL_PATH", "ppe/model/best.pt")
-# VIDEO_SRC  = os.getenv("RTSP_URL", "ppe/test2.mp4")
-VIDEO_SRC = os.getenv("RTSP_URL")
+VIDEO_SRC  = os.getenv("RTSP_URL", "ppe/helmet_off.mp4")
+# VIDEO_SRC = os.getenv("RTSP_URL")
 device     = "cuda" if torch.cuda.is_available() else "cpu"
 model      = YOLO(MODEL_PATH).to(device)
 
@@ -45,7 +45,7 @@ def _draw_label(img, x1: int, y1: int, text: str):
     cv2.putText(img, text, (x1 + 3, y1 - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.7,
                 (255, 255, 255), 2, cv2.LINE_AA)                               # 글자
 
-async def run_detection_loop(interval_sec: int = 10, loop_file: bool = False):
+async def run_detection_loop(interval_sec: int = 5, loop_file: bool = False):
     global _stop_flag
     _stop_flag = False
 
