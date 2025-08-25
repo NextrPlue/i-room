@@ -6,11 +6,11 @@ class Violation(Base):
     __tablename__ = "violation"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)
-    worker_id = Column(Integer, ForeignKey("watch.worker_id", ondelete="CASCADE"), nullable=False)
-    timestamp = Column(DateTime, default=datetime.datetime.utcnow, nullable=False)
-    incident_type = Column(Text, default = '보호구 미착용', nullable=False)
-    incident_id = Column(Integer)
+    worker_id = Column(BigInteger, ForeignKey("watch.worker_id", ondelete="CASCADE"), nullable=False)
+    timestamp = Column(DateTime)
+    incident_type = Column(String(255), default = 'PPE_VIOLATION', nullable=False)
+    incident_id = Column(BigInteger)
     latitude = Column(Double)
     longitude = Column(Double) 
-    incident_description = Column(Text)
-    image_url = Column(Text, nullable=False)
+    incident_description = Column(String(1000))
+    image_url = Column(String(1000))

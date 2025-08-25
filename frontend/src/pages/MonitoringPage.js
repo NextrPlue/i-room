@@ -168,8 +168,8 @@ const MonitoringPage = () => {
 
         try {
             const blueprint = availableBlueprints.find(bp => bp.id === parseInt(blueprintId));
-            
             if (blueprint) {
+                console.log('🔧 setCurrentBlueprint 호출 전');
                 setCurrentBlueprint(blueprint);
 
                 // 도면 이미지 Blob URL 생성
@@ -833,7 +833,7 @@ const MonitoringPage = () => {
                         </p>
 
                         <button className={styles.statusButton}
-                            onClick={() => window.open('https://fcff8db546c8.ngrok-free.app/monitor', '_blank')}
+                            onClick={() => window.open('https://6ceab3674c02.ngrok-free.app/monitor', '_blank')}
                         >
                             모니터링
                         </button>

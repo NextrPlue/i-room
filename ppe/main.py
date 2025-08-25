@@ -18,10 +18,10 @@ async def lifespan(app: FastAPI):
     # DB 생성
     Base.metadata.create_all(bind=engine)
 
-    def open_browser():
-        time.sleep(1)
-        webbrowser.open("http://127.0.0.1:8000/monitor")
-    threading.Thread(target=open_browser).start()
+    # def open_browser():
+    #     time.sleep(1)
+    #     webbrowser.open("http://127.0.0.1:8000/monitor")
+    # threading.Thread(target=open_browser).start()
 
     yield
     print("PPE Fin")
