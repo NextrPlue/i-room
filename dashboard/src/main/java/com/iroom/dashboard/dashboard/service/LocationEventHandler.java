@@ -31,13 +31,14 @@ import lombok.extern.slf4j.Slf4j;
 @Transactional
 @Slf4j
 public class LocationEventHandler {
-	private final Map<String, Map<String, String>>  workerCache =new HashMap<>();
-	private final Map<String, Map<String, String>>  equipmentCache = new HashMap<>();
+	private final Map<String, Map<String, String>> workerCache = new HashMap<>();
+	private final Map<String, Map<String, String>> equipmentCache = new HashMap<>();
 	private final DangerAreaRepository dangerAreaRepository;
 	private final WorkerInfoReadModelRepository workerInfoReadModelRepository;
 	private final KafkaProducerService kafkaProducerService;
 	private final IncidentRepository incidentRepository;
 	private final ObjectMapper objectMapper;
+
 	public void handle(String eventType, JsonNode dataNode) {
 		try {
 			switch (eventType) {
@@ -46,10 +47,9 @@ public class LocationEventHandler {
 					updateWorkerInfoReadModel(workerSensorEvent);
 					Map<String, String> info = new HashMap<>();
 					System.out.println("Worker_Location 발행");
-					double radius = 2.0;
+					double radius = 50.0;
 					Long workerId = dataNode.get("workerId").asLong();
 					LocalDateTime occurredAt = LocalDateTime.now();
-
 
 					String workerLatitude = dataNode.get("latitude").asText();
 					String workerLongitude = dataNode.get("longitude").asText();
@@ -60,9 +60,9 @@ public class LocationEventHandler {
 							Double.parseDouble(workerLongitude),
 							area.getLatitude(),
 							area.getLongitude());
-						System.out.println("위험구역 접근 거리: "+ distance+"사용자 ID: "+workerId);
+						System.out.println("위험구역 접근 거리: " + distance + "사용자 ID: " + workerId);
 						if (distance < radius) {
-							String incidentDescription =  "위험구역 접근 발생으로 인한 오류";
+							String incidentDescription = "위험구역 접근 발생으로 인한 오류";
 							String incidentType = "DANGER_ZONE";
 							Incident incident = Incident.builder().
 								workerId(workerId).
@@ -94,7 +94,7 @@ public class LocationEventHandler {
 					if (dataNode.hasNonNull("longitude")) {
 						info.put("workerLongitude", dataNode.get("longitude").asText());
 					}
-					workerCache.put(dataNode.get("workerId").asText(),info);
+					workerCache.put(dataNode.get("workerId").asText(), info);
 					// workerCache.put("workerReceived", true);
 				}
 				case "HEAVY_EQUIPMENT_LOCATION_UPDATED" -> {
@@ -110,21 +110,21 @@ public class LocationEventHandler {
 					if (dataNode.hasNonNull("radius")) {
 						info.put("equipmentRadius", dataNode.get("radius").asText());
 					}
-					equipmentCache.put(dataNode.get("equipmentId").asText(),info);
+					equipmentCache.put(dataNode.get("equipmentId").asText(), info);
 				}
 			}
 
 			//건설 장비 접근 검사
 			for (Map.Entry<String, Map<String, String>> workerEntry : workerCache.entrySet()) {
 				for (Map.Entry<String, Map<String, String>> equipmentEntry : equipmentCache.entrySet()) {
-					double distance = DistanceUtil.calculateDistance(Double.parseDouble(workerEntry.getValue().get("workerLatitude")),
+					double distance = DistanceUtil.calculateDistance(
+						Double.parseDouble(workerEntry.getValue().get("workerLatitude")),
 						Double.parseDouble(workerEntry.getValue().get("workerLongitude")),
 						Double.parseDouble(equipmentEntry.getValue().get("equipmentLatitude")),
-						Double.parseDouble( equipmentEntry.getValue().get("equipmentLongitude")));
-					System.out.println("거리:  "+ distance);
+						Double.parseDouble(equipmentEntry.getValue().get("equipmentLongitude")));
+					System.out.println("거리:  " + distance);
 					//위험거리 접근시 알람 서비스에 메시지 발행
-					if(distance<Double.valueOf(equipmentEntry.getValue().get("equipmentRadius"))){
-
+					if (distance < Double.valueOf(equipmentEntry.getValue().get("equipmentRadius"))) {
 
 						Long workerId = Long.valueOf(workerEntry.getKey());
 						LocalDateTime occurredAt = LocalDateTime.now();
@@ -132,7 +132,7 @@ public class LocationEventHandler {
 
 						Double latitude = Double.valueOf(workerEntry.getValue().get("workerLatitude"));
 						Double longitude = Double.valueOf(workerEntry.getValue().get("workerLongitude"));
-						String incidentDescription ="건설장비 접근 발생으로 인한 오류";
+						String incidentDescription = "건설장비 접근 발생으로 인한 오류";
 						Incident incident = Incident.builder().
 							workerId(workerId).
 							occurredAt(occurredAt).
@@ -163,7 +163,8 @@ public class LocationEventHandler {
 			log.error("Failed to process location event: {}", eventType, e);
 		}
 	}
-	public void updateWorkerInfoReadModel (WorkerSensorEvent event){
+
+	public void updateWorkerInfoReadModel(WorkerSensorEvent event) {
 		WorkerInfoReadModel readModel = workerInfoReadModelRepository.findById(event.workerId())
 			.orElseThrow(() -> new CustomException(ErrorCode.MANAGEMENT_WORKER_NOT_FOUND));
 		readModel.updateFromEvent(event);
