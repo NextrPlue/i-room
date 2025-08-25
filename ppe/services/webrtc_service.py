@@ -20,8 +20,8 @@ from ppe.utils.turn_auth import make_turn_credential
 from ppe.config import settings
 
 # 송출 품질(부하) 파라미터
-TARGET_WIDTH = 640      # 스트림 가로 해상도 상한(원본이 더 크면 다운스케일)
-TARGET_FPS   = 15       # 송출 FPS 상한
+TARGET_WIDTH = 680     # 스트림 가로 해상도 상한(원본이 더 크면 다운스케일)
+TARGET_FPS   = 20      # 송출 FPS 상한
 
 # 최신 프레임만 유지
 frame_queue: asyncio.Queue = asyncio.Queue(maxsize=1)
