@@ -171,9 +171,14 @@ const MonitoringPage = () => {
         }
 
         try {
+            console.log('🔍 selectBlueprint 호출됨:', {blueprintId, availableBlueprints: availableBlueprints.length});
             const blueprint = availableBlueprints.find(bp => bp.id === parseInt(blueprintId));
+            console.log('🔍 찾은 blueprint:', blueprint);
+            
             if (blueprint) {
+                console.log('🔧 setCurrentBlueprint 호출 전');
                 setCurrentBlueprint(blueprint);
+                console.log('🔧 setCurrentBlueprint 호출 후');
                 console.log(`도면 선택됨 - ID: ${blueprint.id}, Name: ${blueprint.name || `${blueprint.floor}층`}`);
                 console.log('4개 꼭짓점 좌표:', {
                     topLeft: blueprint.topLeft,
@@ -191,8 +196,8 @@ const MonitoringPage = () => {
                     setBlueprintImage(null);
                 }
 
-                // 해당 도면의 위험구역 데이터 조회
-                await fetchRiskZonesForBlueprint(blueprint.id);
+                // 해당 도면의 위험구역 데이터 조회 (blueprint 직접 전달)
+                await fetchRiskZonesForBlueprint(blueprint.id, blueprint);
             } else {
                 console.warn(`Blueprint ID ${blueprintId}를 찾을 수 없습니다.`);
                 setCurrentBlueprint(null);
@@ -208,7 +213,16 @@ const MonitoringPage = () => {
     }, [availableBlueprints]);
 
     // 특정 도면의 위험구역 데이터 조회
-    const fetchRiskZonesForBlueprint = useCallback(async (blueprintId) => {
+    const fetchRiskZonesForBlueprint = useCallback(async (blueprintId, blueprint) => {
+        console.log('🔄 fetchRiskZonesForBlueprint 호출됨, blueprint 전달됨:', !!blueprint);
+        
+        // blueprint가 없으면 위험구역 목록 초기화
+        if (!blueprint) {
+            console.log('❌ blueprint 없음, 위험구역 목록 초기화');
+            setDangerZones([]);
+            return;
+        }
+        
         try {
             const response = await riskZoneAPI.getRiskZones({
                 page: 0,
@@ -218,13 +232,15 @@ const MonitoringPage = () => {
 
             const data = response.data || response;
             const zones = data.content || [];
+            
+            console.log('📍 위험구역 데이터 조회됨:', zones.length + '개');
 
             // 위험구역을 화면에 표시하기 위한 형태로 변환
             const formattedZones = zones
                 .map(zone => {
-                    // GPS 좌표를 캔버스 좌표로 변환
-                    const canvasPosition = convertGPSToCanvas(zone.latitude, zone.longitude);
-                    const canvasSize = convertMetersToCanvas(zone.width, zone.height);
+                    // GPS 좌표를 캔버스 좌표로 변환 (blueprint 직접 전달)
+                    const canvasPosition = convertGPSToCanvasWithBlueprint(zone.latitude, zone.longitude, blueprint);
+                    const canvasSize = convertMetersToCanvasWithBlueprint(zone.width, zone.height, blueprint);
 
                     // 중심점 기준으로 박스 위치 계산
                     const boxX = canvasPosition.x - canvasSize.width / 2;
@@ -260,67 +276,144 @@ const MonitoringPage = () => {
         }
     }, []);
 
-    // GPS 좌표를 캔버스 좌표로 변환 (RiskZonePage convertCanvasToGPS의 역변환)
+    // Blueprint를 매개변수로 받는 GPS → Canvas 변환 함수
+    const convertGPSToCanvasWithBlueprint = (lat, lon, blueprint) => {
+        console.log('🚨 convertGPSToCanvasWithBlueprint 호출됨:', {lat, lon, blueprint: !!blueprint});
+        
+        if (!blueprint || !blueprint.topLeft || !blueprint.topRight ||
+            !blueprint.bottomLeft || !blueprint.bottomRight) {
+            console.log('🚨 Blueprint 정보 없어서 기본값 반환');
+            return {x: 50, y: 50};
+        }
+
+        const {topLeft, topRight, bottomLeft, bottomRight} = blueprint;
+        
+        // 🔍 디버그: 도면 좌표 확인
+        console.log('=== 도면 좌표 디버그 ===');
+        console.log('도면 이름:', blueprint.name || `${blueprint.floor}층`);
+        console.log('topLeft:', topLeft);
+        console.log('topRight:', topRight);
+        console.log('bottomLeft:', bottomLeft);
+        console.log('bottomRight:', bottomRight);
+        
+        // 도면의 GPS 경계 계산
+        const minLat = Math.min(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
+        const maxLat = Math.max(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
+        const minLon = Math.min(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
+        const maxLon = Math.max(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
+        
+        console.log('도면 GPS 범위:');
+        console.log(`  위도 범위: ${minLat} ~ ${maxLat}`);
+        console.log(`  경도 범위: ${minLon} ~ ${maxLon}`);
+        console.log(`위험구역 GPS: 위도 ${lat}, 경도 ${lon}`);
+        
+        // 범위 체크
+        const inLatRange = lat >= minLat && lat <= maxLat;
+        const inLonRange = lon >= minLon && lon <= maxLon;
+        console.log(`범위 내 여부: 위도 ${inLatRange}, 경도 ${inLonRange}`);
+        
+        // 단순 선형 변환 (경계 기반)
+        const x = ((lon - minLon) / (maxLon - minLon)) * 100;
+        const y = ((maxLat - lat) / (maxLat - minLat)) * 100; // Y축 반전
+        
+        console.log(`변환 결과: x=${x.toFixed(2)}%, y=${y.toFixed(2)}%`);
+        console.log('======================');
+        
+        return { x, y };
+    };
+
+    // Blueprint를 매개변수로 받는 미터 → 캔버스 크기 변환 함수
+    const convertMetersToCanvasWithBlueprint = (widthMeters, heightMeters, blueprint) => {
+        if (!blueprint || !blueprint.width || !blueprint.height) {
+            console.log('🚨 Blueprint 크기 정보 없어서 기본값 반환');
+            return {width: 5, height: 5}; // 기본값
+        }
+
+        console.log('📏 크기 변환:', {widthMeters, heightMeters, blueprintSize: {width: blueprint.width, height: blueprint.height}});
+
+        // Blueprint의 width, height가 픽셀이면 실제 건물 크기로 가정
+        let realBuildingWidth, realBuildingHeight;
+
+        if (blueprint.width > 100) {
+            // 픽셀로 추정 (1920 같은 큰 값)
+            realBuildingWidth = blueprint.width * 0.05; // 1픽셀 = 5cm로 가정
+            realBuildingHeight = blueprint.height * 0.05;
+        } else {
+            // 이미 미터 단위로 추정
+            realBuildingWidth = blueprint.width;
+            realBuildingHeight = blueprint.height;
+        }
+
+        console.log('실제 건물 크기 (추정):', {width: realBuildingWidth, height: realBuildingHeight});
+
+        // 박스 크기를 각각 독립적으로 계산
+        let widthRatio = (widthMeters / realBuildingWidth);
+        let heightRatio = (heightMeters / realBuildingHeight);
+
+        // 박스가 너무 크면 (30% 이상) 스케일 다운
+        if (widthRatio > 0.3) {
+            widthRatio = widthRatio * 0.3; // 30% 이하로 제한
+        }
+        if (heightRatio > 0.3) {
+            heightRatio = heightRatio * 0.3; // 30% 이하로 제한
+        }
+
+        const canvasWidth = widthRatio * 80; // 80% 영역 사용
+        const canvasHeight = heightRatio * 80; // 80% 영역 사용
+
+        const result = {width: canvasWidth, height: canvasHeight};
+        console.log('캔버스 크기 (%):', result);
+
+        return result;
+    };
+
+    // GPS 좌표를 캔버스 좌표로 변환 (단순하고 확실한 방법)
     const convertGPSToCanvas = (lat, lon) => {
+        console.log('🚨 convertGPSToCanvas 함수 호출됨:', {lat, lon});
+        
         if (!currentBlueprint || !currentBlueprint.topLeft || !currentBlueprint.topRight ||
             !currentBlueprint.bottomLeft || !currentBlueprint.bottomRight) {
+            console.log('🚨 Blueprint 정보 없어서 기본값 반환');
             return {x: 50, y: 50}; // 기본값
         }
 
         const {topLeft, topRight, bottomLeft, bottomRight} = currentBlueprint;
-
-        // 더 정확한 그리드 서치로 최적의 u, v 찾기 (정밀도 향상: 0.01 → 0.005)
-        let bestU = 0.5, bestV = 0.5;
-        let minError = Infinity;
-
-        // 1차: 거친 그리드 서치 (0.05 간격)
-        for (let u = 0; u <= 1; u += 0.05) {
-            for (let v = 0; v <= 1; v += 0.05) {
-                const expectedLat = (1 - u) * (1 - v) * topLeft.lat + u * (1 - v) * topRight.lat +
-                    (1 - u) * v * bottomLeft.lat + u * v * bottomRight.lat;
-                const expectedLon = (1 - u) * (1 - v) * topLeft.lon + u * (1 - v) * topRight.lon +
-                    (1 - u) * v * bottomLeft.lon + u * v * bottomRight.lon;
-
-                const error = Math.abs(expectedLat - lat) + Math.abs(expectedLon - lon);
-
-                if (error < minError) {
-                    minError = error;
-                    bestU = u;
-                    bestV = v;
-                }
-            }
-        }
-
-        // 2차: 세밀한 그리드 서치 (bestU, bestV 주변 0.002 간격)
-        const searchRange = 0.05;
-        const step = 0.002;
-        const minU = Math.max(0, bestU - searchRange);
-        const maxU = Math.min(1, bestU + searchRange);
-        const minV = Math.max(0, bestV - searchRange);
-        const maxV = Math.min(1, bestV + searchRange);
-
-        for (let u = minU; u <= maxU; u += step) {
-            for (let v = minV; v <= maxV; v += step) {
-                const expectedLat = (1 - u) * (1 - v) * topLeft.lat + u * (1 - v) * topRight.lat +
-                    (1 - u) * v * bottomLeft.lat + u * v * bottomRight.lat;
-                const expectedLon = (1 - u) * (1 - v) * topLeft.lon + u * (1 - v) * topRight.lon +
-                    (1 - u) * v * bottomLeft.lon + u * v * bottomRight.lon;
-
-                const error = Math.abs(expectedLat - lat) + Math.abs(expectedLon - lon);
-
-                if (error < minError) {
-                    minError = error;
-                    bestU = u;
-                    bestV = v;
-                }
-            }
-        }
-
-        // 정규화된 좌표를 캔버스 좌표(%)로 변환
-        const x = bestU * 100;
-        const y = bestV * 100;
-
-        return {x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y))};
+        
+        // 🔍 디버그: 도면 좌표 확인
+        console.log('=== 도면 좌표 디버그 ===');
+        console.log('도면 이름:', currentBlueprint.name || `${currentBlueprint.floor}층`);
+        console.log('topLeft:', topLeft);
+        console.log('topRight:', topRight);
+        console.log('bottomLeft:', bottomLeft);
+        console.log('bottomRight:', bottomRight);
+        
+        // 도면의 GPS 경계 계산
+        const minLat = Math.min(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
+        const maxLat = Math.max(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
+        const minLon = Math.min(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
+        const maxLon = Math.max(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
+        
+        console.log('도면 GPS 범위:');
+        console.log(`  위도 범위: ${minLat} ~ ${maxLat}`);
+        console.log(`  경도 범위: ${minLon} ~ ${maxLon}`);
+        console.log(`위험구역 GPS: 위도 ${lat}, 경도 ${lon}`);
+        
+        // 범위 체크
+        const inLatRange = lat >= minLat && lat <= maxLat;
+        const inLonRange = lon >= minLon && lon <= maxLon;
+        console.log(`범위 내 여부: 위도 ${inLatRange}, 경도 ${inLonRange}`);
+        
+        // 단순 선형 변환 (경계 기반)
+        const x = ((lon - minLon) / (maxLon - minLon)) * 100;
+        const y = ((maxLat - lat) / (maxLat - minLat)) * 100; // Y축 반전
+        
+        console.log(`변환 결과: x=${x.toFixed(2)}%, y=${y.toFixed(2)}%`);
+        console.log('======================');
+        
+        return {
+            x: Math.max(0, Math.min(100, x)),
+            y: Math.max(0, Math.min(100, y))
+        };
     };
 
     // 미터를 캔버스 크기로 변환 (RiskZonePage와 동일한 로직)
