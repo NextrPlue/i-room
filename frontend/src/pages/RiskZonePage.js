@@ -18,8 +18,8 @@ const RiskZonePage = () => {
     const [clickedPoint, setClickedPoint] = useState(null);
     const [riskZoneForm, setRiskZoneForm] = useState({
         name: '',
-        width: '3.0',
-        height: '3.0',
+        width: '1.0',
+        height: '1.5',
         gpsLat: 0,
         gpsLon: 0
     });
@@ -186,11 +186,30 @@ const RiskZonePage = () => {
             return { lat: 0, lon: 0 };
         }
 
-        const u = canvasX / 100;
-        const v = canvasY / 100;
+        const {topLeft, topRight, bottomLeft, bottomRight} = currentBlueprint;
         
-        return bilinearInterpolation(u, v, currentBlueprint);
-    }, [currentBlueprint, bilinearInterpolation]);
+        // 🔍 RiskZone 디버그 로그
+        console.log('=== RiskZone 좌표 변환 디버그 ===');
+        console.log(`클릭 위치: ${canvasX.toFixed(2)}%, ${canvasY.toFixed(2)}%`);
+        console.log('도면 좌표:', {topLeft, topRight, bottomLeft, bottomRight});
+        
+        // 도면의 GPS 경계 계산
+        const minLat = Math.min(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
+        const maxLat = Math.max(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
+        const minLon = Math.min(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
+        const maxLon = Math.max(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
+        
+        console.log(`도면 범위: 위도 ${minLat}~${maxLat}, 경도 ${minLon}~${maxLon}`);
+        
+        // 단순 선형 변환 (MonitoringPage와 동일한 방식)
+        const lon = minLon + (canvasX / 100) * (maxLon - minLon);
+        const lat = maxLat - (canvasY / 100) * (maxLat - minLat); // Y축 반전
+        
+        console.log(`변환 결과: 위도 ${lat}, 경도 ${lon}`);
+        console.log('===================================');
+        
+        return { lat, lon };
+    }, [currentBlueprint]);
 
 
     // 도면 이미지 영역 내부인지 확인
@@ -325,8 +344,8 @@ const RiskZonePage = () => {
             setClickedPoint(null);
             setRiskZoneForm({
                 name: '',
-                width: '3.0',
-                height: '3.0',
+                width: '1.0',
+                height: '1.5',
                 gpsLat: 0,
                 gpsLon: 0
             });
