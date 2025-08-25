@@ -47,7 +47,6 @@ public class LocationEventHandler {
 					updateWorkerInfoReadModel(workerSensorEvent);
 					Map<String, String> info = new HashMap<>();
 					System.out.println("Worker_Location 발행");
-					double radius = 50.0;
 					Long workerId = dataNode.get("workerId").asLong();
 					LocalDateTime occurredAt = LocalDateTime.now();
 
@@ -56,12 +55,27 @@ public class LocationEventHandler {
 
 					List<DangerArea> areas = dangerAreaRepository.findAll();
 					for (DangerArea area : areas) {
+						// 디버깅용 중심점까지의 거리 계산
 						double distance = DistanceUtil.calculateDistance(Double.parseDouble(workerLatitude),
 							Double.parseDouble(workerLongitude),
 							area.getLatitude(),
 							area.getLongitude());
-						System.out.println("위험구역 접근 거리: " + distance + "사용자 ID: " + workerId);
-						if (distance < radius) {
+
+						// 사각형 위험구역 내부에 있는지 판정
+						boolean isInsideDangerArea = DistanceUtil.isPointInsideRectangleArea(
+							Double.parseDouble(workerLatitude),
+							Double.parseDouble(workerLongitude),
+							area.getLatitude(),
+							area.getLongitude(),
+							area.getWidth(),
+							area.getHeight()
+						);
+
+						System.out.println("위험구역 '" + area.getName() + "' 중심거리: " + distance + "m, " +
+							"크기: " + area.getWidth() + "×" + area.getHeight() + "m, " +
+							"영역내부: " + isInsideDangerArea + ", 사용자 ID: " + workerId);
+
+						if (isInsideDangerArea) {
 							String incidentDescription = "위험구역 접근 발생으로 인한 오류";
 							String incidentType = "DANGER_ZONE";
 							Incident incident = Incident.builder().
