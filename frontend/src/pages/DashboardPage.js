@@ -90,10 +90,28 @@ const DashboardPage = () => {
 
     // 차트 데이터 처리 함수
     const processChartData = useCallback((rawData, interval) => {
+        console.log(`Processing ${interval} data:`, rawData);
+        
         // 날짜별로 데이터 그룹화
         const groupedData = rawData.reduce((acc, item) => {
-            const date = new Date(item.getWeekStart);
-            const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD 형식
+            // 월별 데이터의 경우 getMonthStart 필드를 사용하고, 없으면 getWeekStart 사용
+            let dateField;
+            if (interval === 'month' && item.getMonthStart) {
+                dateField = item.getMonthStart;
+            } else {
+                dateField = item.getWeekStart || item.getMonthStart || item.date;
+            }
+            
+            const date = new Date(dateField);
+            let dateKey;
+            
+            // 월별 데이터의 경우 월의 첫째 날로 정규화
+            if (interval === 'month') {
+                dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-01`;
+            } else {
+                dateKey = date.toISOString().split('T')[0];
+            }
+            
             if (!acc[dateKey]) {
                 acc[dateKey] = {
                     date: dateKey,
@@ -102,13 +120,18 @@ const DashboardPage = () => {
                     HEALTH_RISK: 0
                 };
             }
-            acc[dateKey][item.getMetricType] = item.getTotalValue;
+            acc[dateKey][item.getMetricType] = item.getTotalValue || 0;
             return acc;
         }, {});
 
+        console.log(`Grouped ${interval} data:`, groupedData);
+
         // 날짜 범위를 생성하여 누락된 날짜에 0 값 추가
         const fillMissingDates = (data, interval) => {
-            if (Object.keys(data).length === 0) return [];
+            if (Object.keys(data).length === 0) {
+                console.log(`No ${interval} data to fill`);
+                return [];
+            }
 
             // 기존 데이터에서 최소 날짜 찾기, 최대 날짜는 오늘로 설정
             const existingDates = Object.keys(data).sort();
@@ -119,7 +142,14 @@ const DashboardPage = () => {
             const currentDate = new Date(startDate);
 
             while (currentDate <= endDate) {
-                const dateKey = currentDate.toISOString().split('T')[0];
+                let dateKey;
+                
+                if (interval === 'month') {
+                    // 월별 데이터의 경우 해당 월의 첫째 날로 설정
+                    dateKey = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-01`;
+                } else {
+                    dateKey = currentDate.toISOString().split('T')[0];
+                }
                 
                 if (data[dateKey]) {
                     filledData.push(data[dateKey]);
@@ -139,7 +169,9 @@ const DashboardPage = () => {
                 } else if (interval === 'week') {
                     currentDate.setDate(currentDate.getDate() + 7);
                 } else { // month
+                    // 월별의 경우 정확히 한 달 증가
                     currentDate.setMonth(currentDate.getMonth() + 1);
+                    currentDate.setDate(1); // 매월 1일로 설정
                 }
             }
 
@@ -154,6 +186,7 @@ const DashboardPage = () => {
             .sort((a, b) => new Date(a.date) - new Date(b.date))
             .slice(-10); // 최근 10개
 
+        console.log(`Final ${interval} processed data:`, sortedData);
         return sortedData;
     }, []);
 
@@ -195,11 +228,15 @@ const DashboardPage = () => {
             const x = data.length === 1 
                 ? padding + innerWidth / 2 
                 : padding + (i / (data.length - 1)) * innerWidth;
-            const label = interval === 'day' 
-                ? `${date.getMonth() + 1}/${date.getDate()}`
-                : interval === 'week'
-                ? `${date.getMonth() + 1}/${date.getDate()}`
-                : `${date.getMonth() + 1}월`;
+            
+            let label;
+            if (interval === 'day') {
+                label = `${date.getMonth() + 1}/${date.getDate()}`;
+            } else if (interval === 'week') {
+                label = `${date.getMonth() + 1}/${date.getDate()}`;
+            } else { // month
+                label = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}`;
+            }
             
             return (
                 <text
@@ -571,6 +608,20 @@ const DashboardPage = () => {
             const alertType = getAlertTypeFromData(data.incidentType, data.incidentDescription);
             const dashboardType = convertToDashboardType(alertType);
 
+            // PPE_VIOLATION이 아닌 경우에만 작업자 정보 포함
+            let workerName = null;
+            let workerId = null;
+            if (alertType !== 'PPE_VIOLATION') {
+                workerId = data.workerId;
+                // 웹소켓에서 온 workerName을 우선 사용, 없으면 workingWorkers에서 찾기
+                if (data.workerName) {
+                    workerName = data.workerName;
+                } else if (data.workerId) {
+                    const worker = workingWorkers.find(w => w.workerId.toString() === data.workerId.toString());
+                    workerName = worker?.name || worker?.workerName;
+                }
+            }
+
             const newAlert = {
                 id: data.id || Date.now(), // 웹소켓에서 ID가 오면 사용, 없으면 임시 ID
                 type: dashboardType,
@@ -578,7 +629,8 @@ const DashboardPage = () => {
                 description: data.incidentDescription || '알림 내용',
                 time: '방금 전',
                 timestamp: new Date().toISOString(),
-                workerId: data.workerId,
+                workerId: workerId,
+                workerName: workerName,
                 originalData: data
             };
 
@@ -746,7 +798,9 @@ const DashboardPage = () => {
                                         </div>
                                         <div className={styles.alertContent}>
                                             <p className={styles.alertTitle}>{alert.title}</p>
-                                            <p className={styles.alertWorker}>작업자: {alert.workerName || "알 수 없음"}</p>
+                                            {alert.type !== 'warning' && (
+                                                <p className={styles.alertWorker}>작업자: {alert.workerName || "알 수 없음"}</p>
+                                            )}
                                             <p className={styles.alertDesc}>{alert.description}</p>
                                         </div>
                                         <span className={styles.alertTime}>{alert.time}</span>
