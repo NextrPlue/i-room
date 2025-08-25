@@ -49,7 +49,7 @@ public class LocationEventHandler {
 					double radius = 2.0;
 					Long workerId = dataNode.get("workerId").asLong();
 					LocalDateTime occurredAt = LocalDateTime.now();
-					String incidentType = "위험 구역 접근";
+
 
 					String workerLatitude = dataNode.get("latitude").asText();
 					String workerLongitude = dataNode.get("longitude").asText();
@@ -62,8 +62,8 @@ public class LocationEventHandler {
 							area.getLongitude());
 						System.out.println("위험구역 접근 거리: "+ distance+"사용자 ID: "+workerId);
 						if (distance < radius) {
-							String incidentDescription = "Worker entered restricted hazard zone near latitude: " +
-								area.getLatitude() + " longitude: " + area.getLongitude();
+							String incidentDescription =  "위험구역 접근 발생으로 인한 오류";
+							String incidentType = "DANGER_ZONE";
 							Incident incident = Incident.builder().
 								workerId(workerId).
 								occurredAt(occurredAt).
@@ -114,7 +114,7 @@ public class LocationEventHandler {
 				}
 			}
 
-
+			//건설 장비 접근 검사
 			for (Map.Entry<String, Map<String, String>> workerEntry : workerCache.entrySet()) {
 				for (Map.Entry<String, Map<String, String>> equipmentEntry : equipmentCache.entrySet()) {
 					double distance = DistanceUtil.calculateDistance(Double.parseDouble(workerEntry.getValue().get("workerLatitude")),
@@ -128,11 +128,11 @@ public class LocationEventHandler {
 
 						Long workerId = Long.valueOf(workerEntry.getKey());
 						LocalDateTime occurredAt = LocalDateTime.now();
-						String incidentType = "충돌 위험";
+						String incidentType = "DANGER_ZONE";
 
 						Double latitude = Double.valueOf(workerEntry.getValue().get("workerLatitude"));
 						Double longitude = Double.valueOf(workerEntry.getValue().get("workerLongitude"));
-						String incidentDescription ="Worker entered restricted hazard zone";
+						String incidentDescription ="건설장비 접근 발생으로 인한 오류";
 						Incident incident = Incident.builder().
 							workerId(workerId).
 							occurredAt(occurredAt).
