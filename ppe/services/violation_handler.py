@@ -8,7 +8,6 @@ from ppe.utils.alert_service import send_alert_if_violation
 # 위반 발생 시 DB insert, 캡처 저장, 알림 전송
 def handle_violation(frame, violation_info):
     interval_sec=10
-    type = '보호구 미착용'
     
     db: Session = SessionLocal()
     try:
@@ -41,7 +40,7 @@ def handle_violation(frame, violation_info):
                     worker_id=latest_watch.worker_id,
                     # ppe_id=detection_record.id,            # 감지 기록과 연결               
                     timestamp=latest_watch.timestamp,  
-                    incident_type = type,
+                    incident_type = "PPE_VIOLATION",
                     latitude=latest_watch.latitude,
                     longitude=latest_watch.longitude,  
                     # helmet_on_count=helmet_count,

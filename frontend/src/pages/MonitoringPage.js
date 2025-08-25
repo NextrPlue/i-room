@@ -907,7 +907,7 @@ const MonitoringPage = () => {
                         </p>
 
                         <button className={styles.statusButton}
-                            onClick={() => window.open('https://fcff8db546c8.ngrok-free.app/monitor', '_blank')}
+                            onClick={() => window.open('https://6ceab3674c02.ngrok-free.app/monitor', '_blank')}
                         >
                             모니터링
                         </button>
