@@ -4,21 +4,157 @@ import AlarmModal from '../components/AlarmModal';
 import alarmStompService from '../services/alarmStompService';
 import sensorStompService from '../services/sensorStompService';
 import {authUtils} from '../utils/auth';
-import {alarmAPI, blueprintAPI, riskZoneAPI, managementAPI, userAPI, sensorAPI} from '../api/api';
+import {alarmAPI, blueprintAPI, riskZoneAPI, managementAPI, sensorAPI} from '../api/api';
 import {useAlarmData} from '../hooks/useAlarmData';
 
-const MonitoringPage = () => {
-    const mapRef = useRef(null);
-    const [selectedFilter, setSelectedFilter] = useState({
-        attribute: 'all',
-        riskLevel: 'all',
-        zone: 'all'
-    });
+// 상수 정의
+const CANVAS_CONFIG = {
+    DEFAULT_GPS: {
+        LAT: 37.5665,
+        LON: 126.9780
+    },
+    PIXEL_TO_METER_RATIO: 0.05,
+    MAX_SIZE_PERCENTAGE: 30,
+    MARGIN_PERCENTAGE: 10,
+    BLUEPRINT_SCALE: 80
+};
 
-    const {getAlertIcon, getAlertTypeFromData, convertToDashboardType, getAlertTitle, getTimeAgo} = useAlarmData();
+const UPDATE_INTERVALS = {
+    WORKER_STATS: 5 * 60 * 1000, // 5분
+    TIME_DISPLAY: 60000 // 1분
+};
 
-    // 근로자 관련 상태
-    const [workingWorkers, setWorkingWorkers] = useState([]); // 현재 근무중인 근로자 (위치 정보 포함)
+const PAGINATION_CONFIG = {
+    page: 0,
+    size: 3,
+    hours: 168
+};
+
+// 유틸리티 함수들
+const coordinateUtils = {
+    // GPS 경계 계산을 별도 함수로 추출
+    getBlueprintBounds: (blueprint) => {
+        if (!blueprint?.topLeft || !blueprint?.topRight ||
+            !blueprint?.bottomLeft || !blueprint?.bottomRight) {
+            return null;
+        }
+
+        const {topLeft, topRight, bottomLeft, bottomRight} = blueprint;
+
+        return {
+            minLat: Math.min(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat),
+            maxLat: Math.max(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat),
+            minLon: Math.min(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon),
+            maxLon: Math.max(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon)
+        };
+    },
+
+    convertGPSToCanvas: (lat, lon, blueprint) => {
+        const bounds = coordinateUtils.getBlueprintBounds(blueprint);
+        if (!bounds) {
+            return {x: 50, y: 50};
+        }
+
+        const {minLat, maxLat, minLon, maxLon} = bounds;
+
+        const x = ((lon - minLon) / (maxLon - minLon)) * 100;
+        const y = ((maxLat - lat) / (maxLat - minLat)) * 100;
+
+        return {
+            x: Math.max(0, Math.min(100, x)),
+            y: Math.max(0, Math.min(100, y))
+        };
+    },
+
+    convertMetersToCanvas: (widthMeters, heightMeters, blueprint) => {
+        if (!blueprint?.width || !blueprint?.height) {
+            return {width: 5, height: 5};
+        }
+
+        let realBuildingWidth, realBuildingHeight;
+
+        if (blueprint.width > 100) {
+            realBuildingWidth = blueprint.width * CANVAS_CONFIG.PIXEL_TO_METER_RATIO;
+            realBuildingHeight = blueprint.height * CANVAS_CONFIG.PIXEL_TO_METER_RATIO;
+        } else {
+            realBuildingWidth = blueprint.width;
+            realBuildingHeight = blueprint.height;
+        }
+
+        const widthRatio = widthMeters / realBuildingWidth;
+        const heightRatio = heightMeters / realBuildingHeight;
+
+        const canvasWidth = Math.min(widthRatio * CANVAS_CONFIG.BLUEPRINT_SCALE, CANVAS_CONFIG.MAX_SIZE_PERCENTAGE);
+        const canvasHeight = Math.min(heightRatio * CANVAS_CONFIG.BLUEPRINT_SCALE, CANVAS_CONFIG.MAX_SIZE_PERCENTAGE);
+
+        return {width: canvasWidth, height: canvasHeight};
+    },
+
+    isInsideBlueprint: (canvasX, canvasY) => {
+        return canvasX >= CANVAS_CONFIG.MARGIN_PERCENTAGE &&
+            canvasX <= (100 - CANVAS_CONFIG.MARGIN_PERCENTAGE) &&
+            canvasY >= CANVAS_CONFIG.MARGIN_PERCENTAGE &&
+            canvasY <= (100 - CANVAS_CONFIG.MARGIN_PERCENTAGE);
+    }
+};
+
+// 데이터 변환 유틸리티
+const dataTransformUtils = {
+    transformWorkerData: (workers, locations) => {
+        return workers.map((worker, index) => {
+            const location = locations.find(loc => loc.workerId === worker.workerId);
+            return {
+                ...worker,
+                id: worker.workerId,
+                name: worker.workerName,
+                department: worker.department,
+                occupation: worker.occupation,
+                enterDate: worker.enterDate,
+                latitude: location?.latitude || (CANVAS_CONFIG.DEFAULT_GPS.LAT + (index * 0.0001)),
+                longitude: location?.longitude || (CANVAS_CONFIG.DEFAULT_GPS.LON + (index * 0.0001)),
+                status: 'safe',
+                isWorking: true,
+                workStartTime: worker.enterDate
+            };
+        });
+    },
+
+    transformRiskZoneData: (zones, blueprintId, blueprint) => {
+        return zones
+            .filter(zone => zone.blueprintId === blueprintId)
+            .map(zone => {
+                const canvasPosition = coordinateUtils.convertGPSToCanvas(
+                    zone.latitude,
+                    zone.longitude,
+                    blueprint
+                );
+                const canvasSize = coordinateUtils.convertMetersToCanvas(
+                    zone.width,
+                    zone.height,
+                    blueprint
+                );
+
+                const boxX = canvasPosition.x - canvasSize.width / 2;
+                const boxY = canvasPosition.y - canvasSize.height / 2;
+
+                return {
+                    id: zone.id,
+                    x: boxX,
+                    y: boxY,
+                    width: canvasSize.width,
+                    height: canvasSize.height,
+                    level: 'high',
+                    name: zone.name || `위험구역 ${zone.id}`,
+                    isInside: coordinateUtils.isInsideBlueprint(canvasPosition.x, canvasPosition.y)
+                };
+            })
+            .filter(zone => zone.isInside);
+    }
+};
+
+// 커스텀 훅들
+const useWorkerState = () => {
+    const [workingWorkers, setWorkingWorkers] = useState([]);
     const [workerStats, setWorkerStats] = useState({
         total: 0,
         working: 0,
@@ -27,18 +163,19 @@ const MonitoringPage = () => {
         loading: false
     });
 
-    // 도면 관련 상태
-    const [currentBlueprint, setCurrentBlueprint] = useState(null);
-    const [blueprintImage, setBlueprintImage] = useState(null);
-    const [availableBlueprints, setAvailableBlueprints] = useState([]);
+    const setWorkerStatsLoading = useCallback((loading) => {
+        setWorkerStats(prev => ({
+            total: prev.total,
+            working: prev.working,
+            offWork: prev.offWork,
+            absent: prev.absent,
+            loading
+        }));
+    }, []);
 
-    // 위험구역 데이터 (실제 API에서 가져옴)
-    const [dangerZones, setDangerZones] = useState([]);
-
-    // 근로자 데이터 가져오기 함수들
-    const fetchWorkerStats = async () => {
+    const fetchWorkerStats = useCallback(async () => {
         try {
-            setWorkerStats(prev => ({...prev, loading: true}));
+            setWorkerStatsLoading(true);
             const response = await managementAPI.getWorkerStats();
             setWorkerStats({
                 ...response.data,
@@ -46,97 +183,53 @@ const MonitoringPage = () => {
             });
         } catch (error) {
             console.error('출입 통계 조회 실패:', error);
-            setWorkerStats(prev => ({...prev, loading: false}));
+            setWorkerStatsLoading(false);
         }
-    };
+    }, [setWorkerStatsLoading]);
 
-    // 근무중인 근로자와 위치 정보를 통합 조회
-    const fetchWorkingWorkersWithLocation = async () => {
+    const fetchWorkingWorkersWithLocation = useCallback(async () => {
         try {
-            // 1. 근무중인 근로자 목록 조회
             const workingResponse = await managementAPI.getWorkingWorkers();
-            const workingWorkers = workingResponse.data || [];
+            const workers = workingResponse.data || [];
 
-
-            if (workingWorkers.length === 0) {
+            if (workers.length === 0) {
                 setWorkingWorkers([]);
                 return;
             }
 
-            // 2. 해당 근로자들의 위치 정보 조회
-            const workerIds = workingWorkers.map(w => w.workerId);
-            let workersWithLocation = [];
+            const workerIds = workers.map(w => w.workerId);
+            let workersWithLocation;
 
             try {
                 const locationResponse = await sensorAPI.getWorkersLocation(workerIds);
                 const locations = locationResponse.data || [];
-
-
-                // 3. 데이터 통합
-                workersWithLocation = workingWorkers.map((worker, index) => {
-                    const location = locations.find(loc => loc.workerId === worker.workerId);
-                    return {
-                        ...worker,
-                        id: worker.workerId, // MonitoringPage에서 사용하는 id 필드
-                        name: worker.workerName,
-                        department: worker.department,
-                        occupation: worker.occupation,
-                        enterDate: worker.enterDate,
-                        latitude: location?.latitude || (37.5665 + (index * 0.0001)), // 위치가 없으면 기본값
-                        longitude: location?.longitude || (126.9780 + (index * 0.0001)),
-                        status: 'safe', // 기본 상태
-                        isWorking: true,
-                        workStartTime: worker.enterDate
-                    };
-                });
+                workersWithLocation = dataTransformUtils.transformWorkerData(workers, locations);
             } catch (locationError) {
                 console.error('위치 정보 조회 실패:', locationError);
-
-                // 위치 정보 조회 실패 시 기본 위치로 설정
-                workersWithLocation = workingWorkers.map((worker, index) => ({
-                    ...worker,
-                    id: worker.workerId,
-                    name: worker.workerName,
-                    department: worker.department,
-                    occupation: worker.occupation,
-                    enterDate: worker.enterDate,
-                    latitude: 37.5665 + (index * 0.0001),
-                    longitude: 126.9780 + (index * 0.0001),
-                    status: 'safe', // 기본 상태
-                    isWorking: true,
-                    workStartTime: worker.enterDate
-                }));
+                workersWithLocation = dataTransformUtils.transformWorkerData(workers, []);
             }
 
             setWorkingWorkers(workersWithLocation);
-
         } catch (error) {
             console.error('근무중인 근로자 조회 실패:', error);
             setWorkingWorkers([]);
         }
+    }, []);
+
+    return {
+        workingWorkers,
+        setWorkingWorkers,
+        workerStats,
+        fetchWorkerStats,
+        fetchWorkingWorkersWithLocation
     };
+};
 
-    // 현장 현황 계산 (실시간 업데이트)
-    const fieldStatus = {
-        totalWorkers: workerStats.working || 0,
-        safeWorkers: workingWorkers.filter(w => w.status === 'safe').length,
-        warningWorkers: workingWorkers.filter(w => w.status === 'warning').length,
-        dangerWorkers: workingWorkers.filter(w => w.status === 'danger').length
-    };
+const useBlueprintState = () => {
+    const [currentBlueprint, setCurrentBlueprint] = useState(null);
+    const [blueprintImage, setBlueprintImage] = useState(null);
+    const [availableBlueprints, setAvailableBlueprints] = useState([]);
 
-    // 실시간 경고 알림 데이터 (API + 웹소켓)
-    const [alerts, setAlerts] = useState([]);
-    const [alertsLoading, setAlertsLoading] = useState(true);
-    const [alertsPagination, setAlertsPagination] = useState({
-        page: 0,
-        size: 3, // 모니터링에서는 최근 3개만 표시
-        hours: 168 // 최근 7일
-    });
-
-    // 알림 모달 상태
-    const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
-
-    // 사용 가능한 도면 목록 조회
     const fetchAvailableBlueprints = useCallback(async () => {
         try {
             const response = await blueprintAPI.getBlueprints({
@@ -145,9 +238,7 @@ const MonitoringPage = () => {
             });
 
             if (response.status === 'success' && response.data) {
-                const data = response.data;
-                const blueprints = data.content || [];
-                setAvailableBlueprints(blueprints);
+                setAvailableBlueprints(response.data.content || []);
             } else {
                 setAvailableBlueprints([]);
             }
@@ -157,22 +248,18 @@ const MonitoringPage = () => {
         }
     }, []);
 
-    // 특정 도면 선택 및 로드
     const selectBlueprint = useCallback(async (blueprintId) => {
         if (!blueprintId) {
             setCurrentBlueprint(null);
             setBlueprintImage(null);
-            setDangerZones([]);
-            return;
+            return null;
         }
 
         try {
             const blueprint = availableBlueprints.find(bp => bp.id === parseInt(blueprintId));
             if (blueprint) {
-                console.log('🔧 setCurrentBlueprint 호출 전');
                 setCurrentBlueprint(blueprint);
 
-                // 도면 이미지 Blob URL 생성
                 try {
                     const blobUrl = await blueprintAPI.getBlueprintImageBlob(blueprint.id);
                     setBlueprintImage(blobUrl);
@@ -181,80 +268,59 @@ const MonitoringPage = () => {
                     setBlueprintImage(null);
                 }
 
-                // 해당 도면의 위험구역 데이터 조회 (blueprint 직접 전달)
-                await fetchRiskZonesForBlueprint(blueprint.id, blueprint);
+                return blueprint;
             } else {
                 console.warn(`Blueprint ID ${blueprintId}를 찾을 수 없습니다.`);
                 setCurrentBlueprint(null);
                 setBlueprintImage(null);
-                setDangerZones([]);
+                return null;
             }
         } catch (error) {
             console.error('도면 선택 실패:', error);
             setCurrentBlueprint(null);
             setBlueprintImage(null);
-            setDangerZones([]);
+            return null;
         }
     }, [availableBlueprints]);
 
-    // 특정 도면의 위험구역 데이터 조회
+    // Cleanup effect
+    useEffect(() => {
+        return () => {
+            if (blueprintImage?.startsWith('blob:')) {
+                URL.revokeObjectURL(blueprintImage);
+            }
+        };
+    }, [blueprintImage]);
+
+    return {
+        currentBlueprint,
+        blueprintImage,
+        availableBlueprints,
+        fetchAvailableBlueprints,
+        selectBlueprint
+    };
+};
+
+const useRiskZoneState = () => {
+    const [dangerZones, setDangerZones] = useState([]);
+
     const fetchRiskZonesForBlueprint = useCallback(async (blueprintId, blueprint) => {
-        
-        // blueprint가 없으면 위험구역 목록 초기화
         if (!blueprint) {
             setDangerZones([]);
             return;
         }
-        
+
         try {
-            const requestParams = {
+            const response = await riskZoneAPI.getRiskZones({
                 page: 0,
-                size: 100, // 모든 위험구역 가져오기
-                blueprintId: blueprintId // 특정 도면의 위험구역만
-            };
-            
-            
-            const response = await riskZoneAPI.getRiskZones(requestParams);
+                size: 100,
+                blueprintId: blueprintId
+            });
 
             const data = response.data || response;
             const zones = data.content || [];
-            
 
-            // 위험구역을 화면에 표시하기 위한 형태로 변환 (현재 선택된 도면의 위험구역만)
-            const formattedZones = zones
-                .filter(zone => zone.blueprintId === blueprintId) // 클라이언트 사이드 필터링
-                .map(zone => {
-                    // GPS 좌표를 캔버스 좌표로 변환 (blueprint 직접 전달)
-                    const canvasPosition = convertGPSToCanvasWithBlueprint(zone.latitude, zone.longitude, blueprint);
-                    const canvasSize = convertMetersToCanvasWithBlueprint(zone.width, zone.height, blueprint);
-
-                    // 중심점 기준으로 박스 위치 계산
-                    const boxX = canvasPosition.x - canvasSize.width / 2;
-                    const boxY = canvasPosition.y - canvasSize.height / 2;
-
-                    return {
-                        id: zone.id,
-                        x: boxX,
-                        y: boxY,
-                        width: canvasSize.width,
-                        height: canvasSize.height,
-                        level: 'high', // 기본값, 필요시 API에서 레벨 정보 추가
-                        name: zone.name || `위험구역 ${zone.id}`,
-                        isInside: isInsideBlueprint(canvasPosition.x, canvasPosition.y), // 도면 영역 내부 여부
-                        centerX: canvasPosition.x, // 디버깅용
-                        centerY: canvasPosition.y  // 디버깅용
-                    };
-                })
-                .filter(zone => {
-                    // 도면 영역 밖의 위험구역은 필터링 (옵션)
-                    if (!zone.isInside) {
-                        console.warn(`위험구역 ${zone.id}(${zone.name})이 도면 영역을 벗어났습니다.`,
-                            {center: {x: zone.centerX, y: zone.centerY}});
-                        return false; // 도면 밖 위험구역 제외
-                    }
-                    return true;
-                });
-
+            const formattedZones = dataTransformUtils.transformRiskZoneData(zones, blueprintId, blueprint);
             setDangerZones(formattedZones);
         } catch (error) {
             console.error('위험구역 데이터 조회 실패:', error);
@@ -262,148 +328,21 @@ const MonitoringPage = () => {
         }
     }, []);
 
-    // Blueprint를 매개변수로 받는 GPS → Canvas 변환 함수
-    const convertGPSToCanvasWithBlueprint = (lat, lon, blueprint) => {
-        
-        if (!blueprint || !blueprint.topLeft || !blueprint.topRight ||
-            !blueprint.bottomLeft || !blueprint.bottomRight) {
-            return {x: 50, y: 50};
-        }
-
-        const {topLeft, topRight, bottomLeft, bottomRight} = blueprint;
-        
-        
-        // 도면의 GPS 경계 계산
-        const minLat = Math.min(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
-        const maxLat = Math.max(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
-        const minLon = Math.min(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
-        const maxLon = Math.max(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
-        
-        // 단순 선형 변환 (경계 기반)
-        const x = ((lon - minLon) / (maxLon - minLon)) * 100;
-        const y = ((maxLat - lat) / (maxLat - minLat)) * 100; // Y축 반전
-        
-        return { x, y };
+    return {
+        dangerZones,
+        fetchRiskZonesForBlueprint
     };
+};
 
-    // Blueprint를 매개변수로 받는 미터 → 캔버스 크기 변환 함수 (RiskZonePage와 동일한 로직)
-    const convertMetersToCanvasWithBlueprint = (widthMeters, heightMeters, blueprint) => {
-        if (!blueprint || !blueprint.width || !blueprint.height) {
-            console.log('🚨 Blueprint 크기 정보 없어서 기본값 반환');
-            return {width: 5, height: 5}; // 기본값
-        }
+const useAlertState = () => {
+    const [alerts, setAlerts] = useState([]);
+    const [alertsLoading, setAlertsLoading] = useState(true);
+    const {getAlertIcon, getAlertTypeFromData, convertToDashboardType, getAlertTitle, getTimeAgo} = useAlarmData();
 
-
-        // Blueprint의 width, height가 픽셀이면 실제 건물 크기로 가정
-        let realBuildingWidth, realBuildingHeight;
-
-        if (blueprint.width > 100) {
-            // 픽셀로 추정 (1920 같은 큰 값)
-            realBuildingWidth = blueprint.width * 0.05; // 1픽셀 = 5cm로 가정
-            realBuildingHeight = blueprint.height * 0.05;
-        } else {
-            // 이미 미터 단위로 추정
-            realBuildingWidth = blueprint.width;
-            realBuildingHeight = blueprint.height;
-        }
-
-
-        const widthRatio = (widthMeters / realBuildingWidth);
-        const heightRatio = (heightMeters / realBuildingHeight);
-        
-        const canvasWidth = Math.min(widthRatio * 80, 30); // 최대 30%로 제한
-        const canvasHeight = Math.min(heightRatio * 80, 30); // 최대 30%로 제한
-
-        const result = {width: canvasWidth, height: canvasHeight};
-
-        return result;
-    };
-
-    // GPS 좌표를 캔버스 좌표로 변환 (단순하고 확실한 방법)
-    const convertGPSToCanvas = (lat, lon) => {
-        console.log('🚨 convertGPSToCanvas 함수 호출됨:', {lat, lon});
-        
-        if (!currentBlueprint || !currentBlueprint.topLeft || !currentBlueprint.topRight ||
-            !currentBlueprint.bottomLeft || !currentBlueprint.bottomRight) {
-            return {x: 50, y: 50}; // 기본값
-        }
-
-        const {topLeft, topRight, bottomLeft, bottomRight} = currentBlueprint;
-        
-        // 🔍 디버그: 도면 좌표 확인
-        console.log('=== 도면 좌표 디버그 ===');
-        console.log('도면 이름:', currentBlueprint.name || `${currentBlueprint.floor}층`);
-        console.log('topLeft:', topLeft);
-        console.log('topRight:', topRight);
-        console.log('bottomLeft:', bottomLeft);
-        console.log('bottomRight:', bottomRight);
-        
-        // 도면의 GPS 경계 계산
-        const minLat = Math.min(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
-        const maxLat = Math.max(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
-        const minLon = Math.min(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
-        const maxLon = Math.max(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
-        
-        // 단순 선형 변환 (경계 기반)
-        const x = ((lon - minLon) / (maxLon - minLon)) * 100;
-        const y = ((maxLat - lat) / (maxLat - minLat)) * 100; // Y축 반전
-        
-        return {
-            x: Math.max(0, Math.min(100, x)),
-            y: Math.max(0, Math.min(100, y))
-        };
-    };
-
-    // 미터를 캔버스 크기로 변환 (RiskZonePage와 동일한 로직)
-    const convertMetersToCanvas = (widthMeters, heightMeters) => {
-        if (!currentBlueprint || !currentBlueprint.width || !currentBlueprint.height) {
-            return {width: 5, height: 5}; // 기본값
-        }
-
-        // Blueprint의 width, height가 픽셀이면 실제 건물 크기로 가정
-        let realBuildingWidth, realBuildingHeight;
-
-        if (currentBlueprint.width > 100) {
-            // 픽셀로 추정 (1920 같은 큰 값)
-            realBuildingWidth = currentBlueprint.width * 0.05; // 1픽셀 = 5cm로 가정
-            realBuildingHeight = currentBlueprint.height * 0.05;
-        } else {
-            // 이미 미터 단위로 추정
-            realBuildingWidth = currentBlueprint.width;
-            realBuildingHeight = currentBlueprint.height;
-        }
-
-
-        const widthRatio = (widthMeters / realBuildingWidth);
-        const heightRatio = (heightMeters / realBuildingHeight);
-        
-        const canvasWidth = Math.min(widthRatio * 80, 30); // 최대 30%로 제한
-        const canvasHeight = Math.min(heightRatio * 80, 30); // 최대 30%로 제한
-
-        const result = {width: canvasWidth, height: canvasHeight};
-
-        return result;
-    };
-
-    // 도면 이미지 영역 내부인지 확인 (RiskZonePage와 동일)
-    const isInsideBlueprint = (canvasX, canvasY) => {
-        // 도면 이미지는 contain으로 center에 위치하므로 실제 이미지 영역 계산 필요
-        // 간단히 캔버스 중앙 80% 영역으로 제한 (실제로는 이미지 크기에 따라 달라짐)
-        const margin = 10; // 10% 여백
-        return canvasX >= margin && canvasX <= (100 - margin) &&
-            canvasY >= margin && canvasY <= (100 - margin);
-    };
-
-
-    // API로부터 알람 목록 로드
     const loadAlarms = useCallback(async () => {
         setAlertsLoading(true);
         try {
-            const response = await alarmAPI.getAlarmsForAdmin({
-                page: alertsPagination.page,
-                size: alertsPagination.size,
-                hours: alertsPagination.hours
-            });
+            const response = await alarmAPI.getAlarmsForAdmin(PAGINATION_CONFIG);
 
             const apiAlerts = response.data?.content?.map(alarm => {
                 const alertType = getAlertTypeFromData(alarm.incidentType, alarm.incidentDescription);
@@ -414,8 +353,8 @@ const MonitoringPage = () => {
                     type: dashboardType,
                     title: getAlertTitle(alertType, alarm.incidentDescription),
                     description: alarm.incidentDescription || '알림 내용',
-                    time: getTimeAgo(alarm.createdAt),
-                    timestamp: alarm.createdAt,
+                    time: getTimeAgo(alarm.createdAt || alarm.timestamp || new Date().toISOString()),
+                    timestamp: alarm.createdAt || alarm.timestamp || new Date().toISOString(),
                     workerId: alarm.workerId,
                     workerName: alarm.workerName,
                     originalData: alarm
@@ -424,192 +363,230 @@ const MonitoringPage = () => {
 
             setAlerts(apiAlerts);
         } catch (error) {
-            console.error(' Monitoring: 알람 목록 로드 실패:', error);
+            console.error('알람 목록 로드 실패:', error);
         } finally {
             setAlertsLoading(false);
         }
-    }, [alertsPagination, getAlertTypeFromData, convertToDashboardType, getAlertTitle, getTimeAgo]);
+    }, [getAlertTypeFromData, convertToDashboardType, getAlertTitle, getTimeAgo]);
+
+    return {
+        alerts,
+        setAlerts,
+        alertsLoading,
+        loadAlarms,
+        getAlertIcon,
+        getAlertTypeFromData,
+        convertToDashboardType,
+        getAlertTitle,
+        getTimeAgo
+    };
+};
+
+// 메인 컴포넌트
+const MonitoringPage = () => {
+    const mapRef = useRef(null);
+    const [selectedFilter, setSelectedFilter] = useState({
+        attribute: 'all',
+        riskLevel: 'all',
+        zone: 'all'
+    });
+    const [isAlarmModalOpen, setIsAlarmModalOpen] = useState(false);
+
+    // 커스텀 훅 사용
+    const {
+        workingWorkers,
+        setWorkingWorkers,
+        workerStats,
+        fetchWorkerStats,
+        fetchWorkingWorkersWithLocation
+    } = useWorkerState();
+
+    const {
+        currentBlueprint,
+        blueprintImage,
+        availableBlueprints,
+        fetchAvailableBlueprints,
+        selectBlueprint
+    } = useBlueprintState();
+
+    const {
+        dangerZones,
+        fetchRiskZonesForBlueprint
+    } = useRiskZoneState();
+
+    const {
+        alerts,
+        setAlerts,
+        alertsLoading,
+        loadAlarms,
+        getAlertIcon,
+        getAlertTypeFromData,
+        convertToDashboardType,
+        getAlertTitle,
+        getTimeAgo
+    } = useAlertState();
+
+    // 현장 현황 계산
+    const fieldStatus = {
+        totalWorkers: workerStats.working || 0,
+        safeWorkers: workingWorkers.filter(w => w.status === 'safe').length,
+        warningWorkers: workingWorkers.filter(w => w.status === 'warning').length,
+        dangerWorkers: workingWorkers.filter(w => w.status === 'danger').length
+    };
+
+    // 근로자 상태 업데이트 공통 함수
+    const updateWorkerStatus = useCallback((workerId, incidentType, additionalData = {}) => {
+        setWorkingWorkers(prevWorkers => {
+            return prevWorkers.map(worker => {
+                if (worker.workerId.toString() === workerId.toString()) {
+                    let newStatus = worker.status;
+
+                    switch (incidentType) {
+                        case 'PPE_VIOLATION':
+                            newStatus = 'warning';
+                            break;
+                        case 'DANGER_ZONE':
+                        case 'HEALTH_RISK':
+                            newStatus = 'danger';
+                            break;
+                        case 'sensor_update':
+                            // 센서 업데이트는 상태 변경 없음
+                            break;
+                        default:
+                            break;
+                    }
+
+                    return {
+                        ...worker,
+                        ...additionalData,
+                        status: newStatus,
+                        ...(incidentType !== 'sensor_update' && {
+                            lastAlarmType: incidentType,
+                            lastAlarmTime: new Date().toISOString()
+                        })
+                    };
+                }
+                return worker;
+            });
+        });
+    }, [setWorkingWorkers]);
 
     // 실시간 센서 데이터 처리
     const handleSensorUpdate = useCallback((data) => {
         if (data.type === 'sensor_update') {
-            setWorkingWorkers(prevWorkers => {
-                return prevWorkers.map(worker => {
-                    if (worker.workerId === data.workerId) {
-                        return {
-                            ...worker,
-                            latitude: data.latitude,
-                            longitude: data.longitude,
-                            heartRate: data.heartRate,
-                            steps: data.steps,
-                            lastUpdate: new Date().toISOString()
-                        };
-                    }
-                    return worker;
-                });
+            updateWorkerStatus(data.workerId, 'sensor_update', {
+                latitude: data.latitude,
+                longitude: data.longitude,
+                heartRate: data.heartRate,
+                steps: data.steps,
+                lastUpdate: new Date().toISOString()
             });
         }
-    }, []);
+    }, [updateWorkerStatus]);
 
-    // 웹소켓 연결 및 실시간 데이터 처리
+    // 새로운 알림 처리
+    const handleNewAlarm = useCallback((data) => {
+        const alertType = getAlertTypeFromData(data.incidentType, data.incidentDescription);
+        const dashboardType = convertToDashboardType(alertType);
+
+        let workerName = null;
+        let workerId = null;
+        if (alertType !== 'PPE_VIOLATION') {
+            workerId = data.workerId;
+            if (data.workerName) {
+                workerName = data.workerName;
+            } else if (data.workerId) {
+                const worker = workingWorkers.find(w => w.workerId.toString() === data.workerId.toString());
+                workerName = worker?.name || worker?.workerName;
+            }
+        }
+
+        const newAlert = {
+            id: data.id || Date.now(),
+            type: dashboardType,
+            title: getAlertTitle(alertType, data.incidentDescription),
+            description: data.incidentDescription || '알림 내용',
+            time: '방금 전',
+            timestamp: new Date().toISOString(),
+            workerId: workerId,
+            workerName: workerName,
+            originalData: data
+        };
+
+        setAlerts(prevAlerts => [newAlert, ...prevAlerts.slice(0, 2)]);
+
+        // 근로자 상태 업데이트
+        if (data.workerId) {
+            updateWorkerStatus(data.workerId, data.incidentType);
+        }
+    }, [getAlertTypeFromData, convertToDashboardType, getAlertTitle, workingWorkers, setAlerts, updateWorkerStatus]);
+
+    // 웹소켓 연결 및 이벤트 처리
     useEffect(() => {
         const token = authUtils.getToken();
         if (!token) return;
 
-        // 알림 웹소켓 연결
-        const connectAlarmWebSocket = async () => {
+        const connectWebSockets = async () => {
             try {
-                await alarmStompService.connect(token, 'admin');
-            } catch (error) {
-                console.error('Monitoring: 알림 웹소켓 연결 실패:', error);
-            }
-        };
-
-        // 센서 웹소켓 연결
-        const connectSensorWebSocket = async () => {
-            try {
-                await sensorStompService.connect(token, 'admin');
-            } catch (error) {
-                console.error('Monitoring: 센서 웹소켓 연결 실패:', error);
-            }
-        };
-
-        // 새로운 알림 처리
-        const handleNewAlarm = (data) => {
-            const alertType = getAlertTypeFromData(data.incidentType, data.incidentDescription);
-            const dashboardType = convertToDashboardType(alertType);
-
-            // PPE_VIOLATION이 아닌 경우에만 작업자 정보 포함
-            let workerName = null;
-            let workerId = null;
-            if (alertType !== 'PPE_VIOLATION') {
-                workerId = data.workerId;
-                // 웹소켓에서 온 workerName을 우선 사용, 없으면 workingWorkers에서 찾기
-                if (data.workerName) {
-                    workerName = data.workerName;
-                } else if (data.workerId) {
-                    const worker = workingWorkers.find(w => w.workerId.toString() === data.workerId.toString());
-                    workerName = worker?.name || worker?.workerName;
+                if (!alarmStompService.isConnected()) {
+                    await alarmStompService.connect(token, 'admin');
                 }
-            }
-
-            const newAlert = {
-                id: data.id || Date.now(),
-                type: dashboardType,
-                title: getAlertTitle(alertType, data.incidentDescription),
-                description: data.incidentDescription || '알림 내용',
-                time: '방금 전',
-                timestamp: new Date().toISOString(),
-                workerId: workerId,
-                workerName: workerName,
-                originalData: data
-            };
-
-            // 기존 알림 목록에 추가 (최신 알림을 맨 위에, 최대 3개 유지)
-            setAlerts(prevAlerts => [newAlert, ...prevAlerts.slice(0, 2)]);
-
-            // 알림 유형에 따른 근로자 상태 업데이트
-            if (data.workerId) {
-                setWorkingWorkers(prevWorkers => {
-                    return prevWorkers.map(worker => {
-                        if (worker.workerId.toString() === data.workerId.toString()) {
-                            let newStatus = worker.status;
-
-                            switch (data.incidentType) {
-                                case 'PPE_VIOLATION':
-                                    newStatus = 'warning'; // 보호구 미착용 -> 주의
-                                    break;
-                                case 'DANGER_ZONE':
-                                case 'HEALTH_RISK':
-                                    newStatus = 'danger'; // 위험구역 접근, 건강 위험 -> 위험
-                                    break;
-                                default:
-                                    // 기타 알림은 상태 변경 없음
-                                    break;
-                            }
-
-                            return {
-                                ...worker,
-                                status: newStatus,
-                                lastAlarmType: data.incidentType,
-                                lastAlarmTime: new Date().toISOString()
-                            };
-                        }
-                        return worker;
-                    });
-                });
+                if (!sensorStompService.isConnected()) {
+                    await sensorStompService.connect(token, 'admin');
+                }
+            } catch (error) {
+                console.error('웹소켓 연결 실패:', error);
             }
         };
 
-        // 이벤트 리스너 등록
         alarmStompService.on('alarm', handleNewAlarm);
         sensorStompService.on('sensor-update', handleSensorUpdate);
 
-        // 웹소켓 연결
-        if (!alarmStompService.isConnected()) {
-            connectAlarmWebSocket().catch(error => {
-                console.error('알림 웹소켓 연결 실패:', error);
-            });
-        }
+        connectWebSockets().catch(error => {
+            console.error('웹소켓 초기 연결 실패:', error);
+        });
 
-        if (!sensorStompService.isConnected()) {
-            connectSensorWebSocket().catch(error => {
-                console.error('센서 웹소켓 연결 실패:', error);
-            });
-        }
-
-        // 클린업
         return () => {
             alarmStompService.off('alarm', handleNewAlarm);
             sensorStompService.off('sensor-update', handleSensorUpdate);
         };
-    }, [handleSensorUpdate]);
+    }, [handleNewAlarm, handleSensorUpdate]);
 
-    // 근로자 데이터 초기화
+    // 데이터 초기 로드
     useEffect(() => {
-        const initializeWorkerData = async () => {
-            await fetchWorkerStats();
-            await fetchWorkingWorkersWithLocation();
+        const initializeData = async () => {
+            await Promise.all([
+                fetchWorkerStats(),
+                fetchWorkingWorkersWithLocation(),
+                loadAlarms(),
+                fetchAvailableBlueprints()
+            ]);
         };
 
-        initializeWorkerData();
-    }, []);
+        initializeData().catch(error => {
+            console.error('데이터 초기화 실패:', error);
+        });
+    }, [fetchWorkerStats, fetchWorkingWorkersWithLocation, loadAlarms, fetchAvailableBlueprints]);
 
-    // 근로자 통계 주기적 업데이트 (30분마다)
+    // 주기적 업데이트
     useEffect(() => {
-        const interval = setInterval(() => {
-            // 근로자 통계만 주기적으로 조회 (웹소켓에서 제공하지 않음)
-            fetchWorkerStats();
-        }, 5 * 60 * 1000); // 5분
-
-        return () => clearInterval(interval);
-    }, []);
-
-    // 시간 업데이트 (1분마다 상대시간 갱신)
-    useEffect(() => {
-        const timer = setInterval(() => {
+        const workerStatsInterval = setInterval(fetchWorkerStats, UPDATE_INTERVALS.WORKER_STATS);
+        const timeUpdateInterval = setInterval(() => {
             setAlerts(prevAlerts =>
                 prevAlerts.map(alert => ({
                     ...alert,
                     time: getTimeAgo(alert.timestamp)
                 }))
             );
-        }, 60000); // 1분마다 업데이트
+        }, UPDATE_INTERVALS.TIME_DISPLAY);
 
-        return () => clearInterval(timer);
-    }, []);
+        return () => {
+            clearInterval(workerStatsInterval);
+            clearInterval(timeUpdateInterval);
+        };
+    }, [fetchWorkerStats, getTimeAgo, setAlerts]);
 
-    // 컴포넌트 마운트 시 데이터 로드
-    useEffect(() => {
-        loadAlarms().catch(error => {
-            console.error('알람 로드 실패:', error);
-        });
-        fetchAvailableBlueprints().catch(error => {
-            console.error('도면 목록 로드 실패:', error);
-        });
-    }, [loadAlarms, fetchAvailableBlueprints]);
-
-    // 초기 도면 자동 선택 (첫 번째 도면)
+    // 초기 도면 자동 선택
     useEffect(() => {
         if (availableBlueprints.length > 0 && !currentBlueprint) {
             const firstBlueprint = availableBlueprints[0];
@@ -619,16 +596,16 @@ const MonitoringPage = () => {
         }
     }, [availableBlueprints, currentBlueprint, selectBlueprint]);
 
-    // 컴포넌트 언마운트 시 blob URL 정리
+    // 도면 변경 시 위험구역 로드
     useEffect(() => {
-        return () => {
-            if (blueprintImage && blueprintImage.startsWith('blob:')) {
-                URL.revokeObjectURL(blueprintImage);
-            }
-        };
-    }, [blueprintImage]);
+        if (currentBlueprint) {
+            fetchRiskZonesForBlueprint(currentBlueprint.id, currentBlueprint).catch(error => {
+                console.error('위험구역 로드 실패:', error);
+            });
+        }
+    }, [currentBlueprint, fetchRiskZonesForBlueprint]);
 
-    // 필터 변경 핸들러
+    // 이벤트 핸들러들
     const handleFilterChange = (filterType, value) => {
         setSelectedFilter(prev => ({
             ...prev,
@@ -636,34 +613,35 @@ const MonitoringPage = () => {
         }));
     };
 
-    // 작업자 클릭 핸들러
     const handleWorkerClick = (worker) => {
-        alert(`작업자: ${worker.name}\n상태: ${getStatusText(worker.status)}`);
+        const statusText = {
+            safe: '정상',
+            warning: '주의',
+            danger: '위험'
+        }[worker.status] || '알 수 없음';
+
+        alert(`작업자: ${worker.name}\n상태: ${statusText}`);
     };
 
-    // 상태 텍스트 변환
-    const getStatusText = (status) => {
-        switch (status) {
-            case 'safe':
-                return '정상';
-            case 'warning':
-                return '주의';
-            case 'danger':
-                return '위험';
-            default:
-                return '알 수 없음';
+    const handleBlueprintChange = async (e) => {
+        const blueprint = await selectBlueprint(e.target.value);
+        if (blueprint) {
+            await fetchRiskZonesForBlueprint(blueprint.id, blueprint);
         }
     };
 
-    // 필터된 작업자 목록 (실제 근무중인 근로자만, GPS 좌표를 캔버스 좌표로 변환)
+    // 필터된 작업자 목록
     const filteredWorkers = workingWorkers
         .filter(worker => {
             if (selectedFilter.attribute === 'all') return true;
             return worker.status === selectedFilter.attribute;
         })
         .map(worker => {
-            // GPS 좌표를 캔버스 좌표로 변환
-            const canvasPosition = convertGPSToCanvas(worker.latitude, worker.longitude);
+            const canvasPosition = coordinateUtils.convertGPSToCanvas(
+                worker.latitude,
+                worker.longitude,
+                currentBlueprint
+            );
             return {
                 ...worker,
                 x: canvasPosition.x,
@@ -673,12 +651,10 @@ const MonitoringPage = () => {
 
     return (
         <div className={styles.page}>
-            {/* 페이지 헤더 */}
             <header className={styles.pageHeader}>
                 <h1 className={styles.pageTitle}>실시간 모니터링</h1>
             </header>
 
-            {/* 필터 섹션 */}
             <section className={styles.filterSection}>
                 <select
                     className={styles.filterDropdown}
@@ -714,16 +690,14 @@ const MonitoringPage = () => {
                 </select>
             </section>
 
-            {/* 메인 콘텐츠 */}
             <div className={styles.contentSection}>
-                {/* 좌측: 도면 섹션 */}
                 <section className={styles.mapSection}>
                     <div className={styles.mapHeader}>
                         <h2 className={styles.mapTitle}>현장 도면 - 실시간 위치</h2>
                         <select
                             className={styles.blueprintSelect}
                             value={currentBlueprint?.id || ''}
-                            onChange={(e) => selectBlueprint(e.target.value)}
+                            onChange={handleBlueprintChange}
                         >
                             <option value="">도면 선택</option>
                             {availableBlueprints.map(blueprint => (
@@ -747,7 +721,6 @@ const MonitoringPage = () => {
                                 backgroundPosition: 'center'
                             }}
                         >
-                            {/* 도면이 없는 경우 안내 메시지 */}
                             {!blueprintImage && (
                                 <div className={styles.noBlueprintMessage}>
                                     {currentBlueprint ?
@@ -756,7 +729,7 @@ const MonitoringPage = () => {
                                     }
                                 </div>
                             )}
-                            {/* 위험구역 렌더링 */}
+
                             {dangerZones.map(zone => (
                                 <div
                                     key={zone.id}
@@ -771,7 +744,6 @@ const MonitoringPage = () => {
                                 />
                             ))}
 
-                            {/* 작업자 위치 렌더링 */}
                             {filteredWorkers.map(worker => (
                                 <div
                                     key={worker.id}
@@ -781,13 +753,12 @@ const MonitoringPage = () => {
                                         top: `${worker.y}%`
                                     }}
                                     onClick={() => handleWorkerClick(worker)}
-                                    title={`${worker.name} - ${getStatusText(worker.status)}`}
+                                    title={`${worker.name} - ${worker.status === 'safe' ? '정상' : worker.status === 'warning' ? '주의' : '위험'}`}
                                 />
                             ))}
                         </div>
                     </div>
 
-                    {/* 범례 */}
                     <div className={styles.mapLegend}>
                         <div className={styles.legendGroup}>
                             <div className={styles.legendItem}>
@@ -813,9 +784,7 @@ const MonitoringPage = () => {
                     </div>
                 </section>
 
-                {/* 우측: 정보 패널 */}
                 <aside className={styles.infoPanel}>
-                    {/* 실시간 현장 현황 */}
                     <div className={styles.statusWidget}>
                         <h3 className={styles.widgetTitle}>실시간 현장 현황</h3>
 
@@ -833,13 +802,12 @@ const MonitoringPage = () => {
                         </p>
 
                         <button className={styles.statusButton}
-                            onClick={() => window.open('https://e5f9364d318d.ngrok-free.app/monitor', '_blank')}
+                                onClick={() => window.open('https://e5f9364d318d.ngrok-free.app/monitor', '_blank')}
                         >
                             모니터링
                         </button>
                     </div>
 
-                    {/* 실시간 경고 알림 */}
                     <div className={styles.alertWidget}>
                         <div className={styles.widgetHeader}>
                             <h3 className={styles.widgetTitle}>실시간 경고 알림</h3>
@@ -885,14 +853,13 @@ const MonitoringPage = () => {
                                 color: '#9CA3AF',
                                 fontSize: '14px'
                             }}>
-                                📋 최근 {alertsPagination.hours}시간 내 알림이 없습니다.
+                                📋 최근 {PAGINATION_CONFIG.hours}시간 내 알림이 없습니다.
                             </div>
                         )}
                     </div>
                 </aside>
             </div>
 
-            {/* 알림 모달 */}
             <AlarmModal
                 isOpen={isAlarmModalOpen}
                 onClose={() => setIsAlarmModalOpen(false)}
