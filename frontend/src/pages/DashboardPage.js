@@ -902,7 +902,7 @@ const DashboardPage = () => {
 
                         <button 
                             className={styles.statusBtn}
-                            onClick={() => window.open('https://6ceab3674c02.ngrok-free.app/monitor', '_blank')}
+                            onClick={() => window.open('https://e5f9364d318d.ngrok-free.app/monitor', '_blank')}
                         >
                             모니터링
                         </button>
