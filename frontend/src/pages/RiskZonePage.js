@@ -14,6 +14,7 @@ const RiskZonePage = () => {
 
     // 위험구역 관련 상태
     const [riskZones, setRiskZones] = useState([]);
+    const [displayRiskZones, setDisplayRiskZones] = useState([]); // 현재 도면에 표시할 위험구역들
     const [isSelecting, setIsSelecting] = useState(false);
     const [clickedPoint, setClickedPoint] = useState(null);
     const [riskZoneForm, setRiskZoneForm] = useState({
@@ -134,6 +135,7 @@ const RiskZonePage = () => {
         if (!blueprintId) {
             setCurrentBlueprint(null);
             setBlueprintImage(null);
+            setDisplayRiskZones([]);
             return;
         }
 
@@ -151,20 +153,141 @@ const RiskZonePage = () => {
                     console.error('도면 이미지 로드 실패:', imageError);
                     setBlueprintImage(null);
                 }
+
+                // 해당 도면의 위험구역 데이터 조회 및 표시
+                await fetchDisplayRiskZonesForBlueprint(blueprint.id, blueprint);
             } else {
                 console.warn(`Blueprint ID ${blueprintId}를 찾을 수 없습니다.`);
                 setCurrentBlueprint(null);
                 setBlueprintImage(null);
+                setDisplayRiskZones([]);
             }
         } catch (error) {
             console.error('도면 선택 실패:', error);
             setCurrentBlueprint(null);
             setBlueprintImage(null);
+            setDisplayRiskZones([]);
             alert('도면을 선택하는데 실패했습니다.');
         }
     }, [availableBlueprintsForSelection]);
 
+    // 특정 도면의 위험구역 데이터를 조회하여 표시용으로 변환
+    const fetchDisplayRiskZonesForBlueprint = useCallback(async (blueprintId, blueprint) => {
+        // blueprint가 없으면 위험구역 목록 초기화
+        if (!blueprint) {
+            setDisplayRiskZones([]);
+            return;
+        }
+        
+        try {
+            const requestParams = {
+                page: 0,
+                size: 100, // 모든 위험구역 가져오기
+                blueprintId: blueprintId // 특정 도면의 위험구역만
+            };
+            
+            const response = await riskZoneAPI.getRiskZones(requestParams);
+            const data = response.data || response;
+            const zones = data.content || [];
+            
+            // 위험구역을 화면에 표시하기 위한 형태로 변환 (현재 선택된 도면의 위험구역만)
+            const formattedZones = zones
+                .filter(zone => zone.blueprintId === blueprintId) // 클라이언트 사이드 필터링
+                .map(zone => {
+                    // GPS 좌표를 캔버스 좌표로 변환 (blueprint 직접 전달)
+                    const canvasPosition = convertGPSToCanvasWithBlueprint(zone.latitude, zone.longitude, blueprint);
+                    const canvasSize = convertMetersToCanvasWithBlueprint(zone.width, zone.height, blueprint);
 
+                    // 중심점 기준으로 박스 위치 계산
+                    const boxX = canvasPosition.x - canvasSize.width / 2;
+                    const boxY = canvasPosition.y - canvasSize.height / 2;
+
+                    return {
+                        id: zone.id,
+                        x: boxX,
+                        y: boxY,
+                        width: canvasSize.width,
+                        height: canvasSize.height,
+                        level: 'high', // 기본값, 필요시 API에서 레벨 정보 추가
+                        name: zone.name || `위험구역 ${zone.id}`,
+                        isInside: isInsideBlueprintArea(canvasPosition.x, canvasPosition.y), // 도면 영역 내부 여부
+                        centerX: canvasPosition.x, // 디버깅용
+                        centerY: canvasPosition.y  // 디버깅용
+                    };
+                })
+                .filter(zone => {
+                    // 도면 영역 밖의 위험구역은 필터링 (옵션)
+                    if (!zone.isInside) {
+                        console.warn(`위험구역 ${zone.id}(${zone.name})이 도면 영역을 벗어났습니다.`,
+                            {center: {x: zone.centerX, y: zone.centerY}});
+                        return false; // 도면 밖 위험구역 제외
+                    }
+                    return true;
+                });
+
+            setDisplayRiskZones(formattedZones);
+        } catch (error) {
+            console.error('위험구역 데이터 조회 실패:', error);
+            setDisplayRiskZones([]);
+        }
+    }, []);
+
+    // Blueprint를 매개변수로 받는 GPS → Canvas 변환 함수
+    const convertGPSToCanvasWithBlueprint = useCallback((lat, lon, blueprint) => {
+        if (!blueprint || !blueprint.topLeft || !blueprint.topRight ||
+            !blueprint.bottomLeft || !blueprint.bottomRight) {
+            return {x: 50, y: 50};
+        }
+
+        const {topLeft, topRight, bottomLeft, bottomRight} = blueprint;
+        
+        // 도면의 GPS 경계 계산
+        const minLat = Math.min(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
+        const maxLat = Math.max(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
+        const minLon = Math.min(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
+        const maxLon = Math.max(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
+        
+        // 단순 선형 변환 (경계 기반)
+        const x = ((lon - minLon) / (maxLon - minLon)) * 100;
+        const y = ((maxLat - lat) / (maxLat - minLat)) * 100; // Y축 반전
+        
+        return { x, y };
+    }, []);
+
+    // Blueprint를 매개변수로 받는 미터 → 캔버스 크기 변환 함수
+    const convertMetersToCanvasWithBlueprint = useCallback((widthMeters, heightMeters, blueprint) => {
+        if (!blueprint || !blueprint.width || !blueprint.height) {
+            return {width: 5, height: 5}; // 기본값
+        }
+
+        // Blueprint의 width, height가 픽셀이면 실제 건물 크기로 가정
+        let realBuildingWidth, realBuildingHeight;
+
+        if (blueprint.width > 100) {
+            // 픽셀로 추정 (1920 같은 큰 값)
+            realBuildingWidth = blueprint.width * 0.05; // 1픽셀 = 5cm로 가정
+            realBuildingHeight = blueprint.height * 0.05;
+        } else {
+            // 이미 미터 단위로 추정
+            realBuildingWidth = blueprint.width;
+            realBuildingHeight = blueprint.height;
+        }
+
+        const widthRatio = (widthMeters / realBuildingWidth);
+        const heightRatio = (heightMeters / realBuildingHeight);
+        
+        const canvasWidth = Math.min(widthRatio * 80, 30); // 최대 30%로 제한
+        const canvasHeight = Math.min(heightRatio * 80, 30); // 최대 30%로 제한
+
+        return {width: canvasWidth, height: canvasHeight};
+    }, []);
+
+    // 도면 영역 내부인지 확인 (표시용)
+    const isInsideBlueprintArea = useCallback((canvasX, canvasY) => {
+        const margin = 10; // 10% 여백
+        return canvasX >= margin && canvasX <= (100 - margin) &&
+               canvasY >= margin && canvasY <= (100 - margin);
+    }, []);
 
     // Bilinear interpolation 헬퍼 함수
     const bilinearInterpolation = useCallback((u, v, corners) => {
@@ -353,6 +476,11 @@ const RiskZonePage = () => {
             // 목록 새로고침
             await fetchRiskZones();
 
+            // 현재 도면의 위험구역 표시 새로고침
+            if (currentBlueprint) {
+                await fetchDisplayRiskZonesForBlueprint(currentBlueprint.id, currentBlueprint);
+            }
+
         } catch (error) {
             console.error('위험구역 등록 실패:', error);
             alert(`등록에 실패했습니다: ${error.message}`);
@@ -442,6 +570,11 @@ const RiskZonePage = () => {
             // 목록 새로고침
             await fetchRiskZones();
 
+            // 현재 도면의 위험구역 표시 새로고침
+            if (currentBlueprint) {
+                await fetchDisplayRiskZonesForBlueprint(currentBlueprint.id, currentBlueprint);
+            }
+
         } catch (error) {
             console.error('위험구역 수정 실패:', error);
             alert(`수정에 실패했습니다: ${error.message}`);
@@ -466,6 +599,11 @@ const RiskZonePage = () => {
 
             // 목록 새로고침
             await fetchRiskZones();
+
+            // 현재 도면의 위험구역 표시 새로고침
+            if (currentBlueprint) {
+                await fetchDisplayRiskZonesForBlueprint(currentBlueprint.id, currentBlueprint);
+            }
         } catch (error) {
             console.error('위험구역 삭제 실패:', error);
             alert(`삭제에 실패했습니다: ${error.message}`);
@@ -613,6 +751,27 @@ const RiskZonePage = () => {
                                     }
                                 </div>
                             )}
+
+                            {/* 기존 위험구역 박스 렌더링 */}
+                            {displayRiskZones.map(zone => (
+                                <div
+                                    key={`existing-${zone.id}`}
+                                    className={styles.existingRiskZone}
+                                    style={{
+                                        position: 'absolute',
+                                        left: `${zone.x}%`,
+                                        top: `${zone.y}%`,
+                                        width: `${zone.width}%`,
+                                        height: `${zone.height}%`,
+                                        border: '2px solid #ff8800',
+                                        backgroundColor: 'rgba(255, 136, 0, 0.2)',
+                                        pointerEvents: 'none',
+                                        borderRadius: '4px',
+                                        boxSizing: 'border-box'
+                                    }}
+                                    title={zone.name}
+                                />
+                            ))}
 
                             {/* 위험구역 미리보기 박스 */}
                             {getPreviewBox && (
