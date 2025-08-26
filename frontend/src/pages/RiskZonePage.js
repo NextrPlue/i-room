@@ -232,27 +232,38 @@ const RiskZonePage = () => {
         }
     }, []);
 
-    // Blueprint를 매개변수로 받는 GPS → Canvas 변환 함수
-    const convertGPSToCanvasWithBlueprint = useCallback((lat, lon, blueprint) => {
-        if (!blueprint || !blueprint.topLeft || !blueprint.topRight ||
-            !blueprint.bottomLeft || !blueprint.bottomRight) {
-            return {x: 50, y: 50};
+    // GPS 경계 계산을 별도 함수로 추출
+    const getBlueprintBounds = useCallback((blueprint) => {
+        if (!blueprint?.topLeft || !blueprint?.topRight ||
+            !blueprint?.bottomLeft || !blueprint?.bottomRight) {
+            return null;
         }
 
         const {topLeft, topRight, bottomLeft, bottomRight} = blueprint;
-        
-        // 도면의 GPS 경계 계산
-        const minLat = Math.min(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
-        const maxLat = Math.max(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
-        const minLon = Math.min(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
-        const maxLon = Math.max(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
+
+        return {
+            minLat: Math.min(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat),
+            maxLat: Math.max(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat),
+            minLon: Math.min(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon),
+            maxLon: Math.max(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon)
+        };
+    }, []);
+
+    // Blueprint를 매개변수로 받는 GPS → Canvas 변환 함수
+    const convertGPSToCanvasWithBlueprint = useCallback((lat, lon, blueprint) => {
+        const bounds = getBlueprintBounds(blueprint);
+        if (!bounds) {
+            return {x: 50, y: 50};
+        }
+
+        const {minLat, maxLat, minLon, maxLon} = bounds;
         
         // 단순 선형 변환 (경계 기반)
         const x = ((lon - minLon) / (maxLon - minLon)) * 100;
         const y = ((maxLat - lat) / (maxLat - minLat)) * 100; // Y축 반전
         
         return { x, y };
-    }, []);
+    }, [getBlueprintBounds]);
 
     // Blueprint를 매개변수로 받는 미터 → 캔버스 크기 변환 함수
     const convertMetersToCanvasWithBlueprint = useCallback((widthMeters, heightMeters, blueprint) => {
@@ -289,39 +300,20 @@ const RiskZonePage = () => {
                canvasY >= margin && canvasY <= (100 - margin);
     }, []);
 
-    // Bilinear interpolation 헬퍼 함수
-    const bilinearInterpolation = useCallback((u, v, corners) => {
-        const { topLeft, topRight, bottomLeft, bottomRight } = corners;
-        
-        const lat = (1-u)*(1-v)*topLeft.lat + u*(1-v)*topRight.lat +
-                   (1-u)*v*bottomLeft.lat + u*v*bottomRight.lat;
-        const lon = (1-u)*(1-v)*topLeft.lon + u*(1-v)*topRight.lon +
-                   (1-u)*v*bottomLeft.lon + u*v*bottomRight.lon;
-        
-        return { lat, lon };
-    }, []);
 
     // 캔버스 좌표를 GPS 좌표로 변환
     const convertCanvasToGPS = useCallback((canvasX, canvasY) => {
-        if (!currentBlueprint?.topLeft || !currentBlueprint?.topRight ||
-            !currentBlueprint?.bottomLeft || !currentBlueprint?.bottomRight) {
+        const bounds = getBlueprintBounds(currentBlueprint);
+        if (!bounds) {
             console.warn('Blueprint 좌표 정보가 없습니다');
             return { lat: 0, lon: 0 };
         }
 
-        const {topLeft, topRight, bottomLeft, bottomRight} = currentBlueprint;
+        const {minLat, maxLat, minLon, maxLon} = bounds;
         
         // 🔍 RiskZone 디버그 로그
         console.log('=== RiskZone 좌표 변환 디버그 ===');
         console.log(`클릭 위치: ${canvasX.toFixed(2)}%, ${canvasY.toFixed(2)}%`);
-        console.log('도면 좌표:', {topLeft, topRight, bottomLeft, bottomRight});
-        
-        // 도면의 GPS 경계 계산
-        const minLat = Math.min(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
-        const maxLat = Math.max(topLeft.lat, topRight.lat, bottomLeft.lat, bottomRight.lat);
-        const minLon = Math.min(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
-        const maxLon = Math.max(topLeft.lon, topRight.lon, bottomLeft.lon, bottomRight.lon);
-        
         console.log(`도면 범위: 위도 ${minLat}~${maxLat}, 경도 ${minLon}~${maxLon}`);
         
         // 단순 선형 변환 (MonitoringPage와 동일한 방식)
@@ -332,7 +324,7 @@ const RiskZonePage = () => {
         console.log('===================================');
         
         return { lat, lon };
-    }, [currentBlueprint]);
+    }, [currentBlueprint, getBlueprintBounds]);
 
 
     // 도면 이미지 영역 내부인지 확인
@@ -361,7 +353,9 @@ const RiskZonePage = () => {
 
         setClickedPoint({ x: canvasX, y: canvasY });
         setRiskZoneForm(prevForm => ({
-            ...prevForm,
+            name: prevForm.name,
+            width: prevForm.width,
+            height: prevForm.height,
             gpsLat: gpsCoord.lat,
             gpsLon: gpsCoord.lon
         }));
@@ -842,8 +836,11 @@ const RiskZonePage = () => {
                             value={riskZoneForm.name}
                             onChange={(e) => {
                                 setRiskZoneForm(prevForm => ({
-                                    ...prevForm,
-                                    name: e.target.value
+                                    name: e.target.value,
+                                    width: prevForm.width,
+                                    height: prevForm.height,
+                                    gpsLat: prevForm.gpsLat,
+                                    gpsLon: prevForm.gpsLon
                                 }));
                             }}
                             placeholder="위험구역 이름을 입력하세요"
@@ -860,8 +857,11 @@ const RiskZonePage = () => {
                             value={riskZoneForm.width}
                             onChange={(e) => {
                                 setRiskZoneForm(prevForm => ({
-                                    ...prevForm,
-                                    width: e.target.value
+                                    name: prevForm.name,
+                                    width: e.target.value,
+                                    height: prevForm.height,
+                                    gpsLat: prevForm.gpsLat,
+                                    gpsLon: prevForm.gpsLon
                                 }));
                             }}
                             placeholder="너비 (m)"
@@ -878,8 +878,11 @@ const RiskZonePage = () => {
                             value={riskZoneForm.height}
                             onChange={(e) => {
                                 setRiskZoneForm(prevForm => ({
-                                    ...prevForm,
-                                    height: e.target.value
+                                    name: prevForm.name,
+                                    width: prevForm.width,
+                                    height: e.target.value,
+                                    gpsLat: prevForm.gpsLat,
+                                    gpsLon: prevForm.gpsLon
                                 }));
                             }}
                             placeholder="높이 (m)"
