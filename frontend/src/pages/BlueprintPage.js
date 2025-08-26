@@ -20,10 +20,10 @@ const BlueprintPage = () => {
         floor: 1,
         width: 10.0,
         height: 10.0,
-        topLeft: { lat: 37.5675, lon: 126.9770 },
-        topRight: { lat: 37.5675, lon: 126.9780 },
-        bottomRight: { lat: 37.5665, lon: 126.9780 },
-        bottomLeft: { lat: 37.5665, lon: 126.9770 }
+        topLeft:     { lat: 35.8884232, lon: 128.6061528 },
+        topRight:    { lat: 35.8885215, lon: 128.6069266 },
+        bottomRight: { lat: 35.8876077, lon: 128.6071047 },
+        bottomLeft:  { lat: 35.8875018, lon: 128.6063232 }
     });
     const [uploadPreview, setUploadPreview] = useState(null);
     const [uploading, setUploading] = useState(false);
