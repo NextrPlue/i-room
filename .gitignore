@@ -9,3 +9,5 @@
 /infra/api-secrets.yaml
 /infra/mysql-values.yaml
 /infra/jenkins-values.yaml
+/payload.bin
+/payload.py

@@ -64,20 +64,19 @@ i-room 프로젝트의 건설 현장 내 중장비 위치를 실시간으로 추
    'Run' 버튼을 클릭하여 앱을 빌드하고 기기에 설치합니다.
 
 4. **권한 설정**
-   앱 실행 시 위치 정보 접근 권한을 허용해야 합니다.
+   앱 실행 시 위치 정보 접근 권한을 허용해야 합니다. (또한, 필요시 백그라운드 실행을 위해, 설정에서 항상 허용으로 변경합니다.)
 
 5. **서버 설정**
-   데이터를 전송할 `Sensor` 서비스의 주소를 네트워크 관련 설정 파일에서 수정해야 합니다.
+   데이터를 전송할 `Sensor` 서비스의 주소를 네트워크 관련 설정 파일(`ip_config.properties`)에서 수정해야 합니다.
 
 <a id="기술-스택"></a>
 
 ## ⚙️ 기술 스택
 
 - **Language**: Kotlin
-- **Platform**: Android Wear OS
+- **Platform**: Android Studio (Wear OS)
 - **Key Libraries**:
-    - `androidx.wear.watchface`: 웨어러블 UI 및 서비스
-    - `com.google.android.gms:play-services-location`: GPS 위치 정보 수집
+    - `com.google.android.gms.location`: GPS 위치 정보 수집(`fusedLocationClient`, `locationCallback`)
     - `com.squareup.retrofit2:retrofit`: HTTP API 통신
 
 <a id="아키텍처"></a>
@@ -99,7 +98,8 @@ i-room 프로젝트의 건설 현장 내 중장비 위치를 실시간으로 추
 
 ### 1. GPS 위치 데이터 수집
 
-- **GPS**: `FusedLocationProviderClient`를 사용하여 위치 정보 수집
+- `FusedLocationProviderClient`를 활용하여 주기적 GPS 위치(위도, 경도) 수집
+- Foreground Service로 구현하여 앱 백그라운드에서도 위치 지속 추적 가능
 
 ### 2. 데이터 인코딩 및 전송
 
