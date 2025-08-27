@@ -56,7 +56,7 @@ i-room 프로젝트의 AI 기반 실시간 개인보호장비(PPE) 착용 감지
 
 - Python 3.9 이상
 - pip
-
+- 출근한 근로자가 있는지 확인(watch DB의 데이터 유무 확인)
 ### 서비스 실행
 
 1. **가상환경 생성/활성화**
@@ -110,6 +110,7 @@ i-room 프로젝트의 AI 기반 실시간 개인보호장비(PPE) 착용 감지
 - **SQLAlchemy**: ORM (데이터베이스 연동)
 - **PyMySQL**: MySQL 데이터베이스 연결
 - **Deep Sort Realtime**: 실시간 객체 추적
+- **AWS**: TURN 서버 및 ICE 사용을 위한 인스턴스 사용
 
 <a id="아키텍처"></a>
 
@@ -212,7 +213,7 @@ EXPIRE_S = 30             # 위반 상태 만료 시간
 ### 프로덕션 환경
 
 - **비디오 소스**: RTSP 스트림 URL
-- **WebRTC**: TURN 서버 포함 ICE 설정
+- **WebRTC**: AWS의 EC2를 통해 TURN 서버 포함 ICE 설정
 - **GPU**: CUDA 가속 활성화
 
 ### Docker 환경
