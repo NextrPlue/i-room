@@ -1,70 +1,101 @@
-# Getting Started with Create React App
+# Frontend Service
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+> i-room 프로젝트의 사용자 인터페이스(UI) 서비스
 
-## Available Scripts
+> 목차
+> - [📄 서비스 소개](#서비스-소개)
+> - [🧑‍💻 개발자](#개발자)
+> - [💻 서비스 개발 주안점](#서비스-개발-주안점)
+> - [🚀 시작 가이드](#시작-가이드)
+> - [⚙️ 기술 스택](#기술-스택)
+> - [📡 API 명세](#api-명세)
 
-In the project directory, you can run:
+<a id="서비스-소개"></a>
+## 📄 서비스 소개
 
-### `npm start`
+i-room 플랫폼의 사용자 인터페이스(UI)를 제공하는 React 기반의 웹 애플리케이션입니다. 본 서비스는 **관리자용 페이지**와 **근로자용 페이지**, 두 개의 독립적인 애플리케이션으로 구성되어 있습니다.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+### 주요 기능
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+#### 🏢 관리자 페이지 (`/admin`)
+- **실시간 대시보드**: 현장 전체 상황, 근로자 상태, 위험 알림 등을 실시간으로 시각화합니다.
+- **CCTV 모니터링**: 현장의 CCTV 영상을 스트리밍하여 대시보드에 표시합니다.
+- **근로자 및 장비 관리**: 관리자가 근로자와 IoT 장비 정보를 조회하고 관리하는 기능을 제공합니다.
+- **실시간 알림**: SSE를 통해 수신된 위험 알림을 사용자에게 즉시 표시합니다.
 
-### `npm test`
+#### 👷 근로자 페이지 (`/worker`)
+- **간편 로그인**: 근로자 계정으로 로그인하여 개인화된 정보를 확인합니다.
+- **실시간 안전 알림 수신**: 자신에게 발생한 안전장비 미착용, 위험구역 접근, 건강 위험 등의 알림을 실시간으로 수신합니다.
+- **안전 정보 확인**: 개인 안전교육 이력, 출입 현황 등을 조회합니다.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+<a id="개발자"></a>
+## 🧑‍💻 개발자
 
-### `npm run build`
+|          | 이성훈                                                      | 배소정                                                     | 박소연                                                     |
+|----------|-------------------------------------------------------------|------------------------------------------------------------|------------------------------------------------------------|
+| **E-Mail** | p.plue1881@gmail.com                                        | bsj9278@gmail.com                                          | gumza9go@gmail.com                                         |
+| **GitHub** | [NextrPlue](https://github.com/NextrPlue)                   | [BaeSJ1](https://github.com/BaeSJ1)                        | [sorasol9](https://github.com/sorasol9)                    |
+| **Profile**  | <img src="https://github.com/NextrPlue.png" width=100px>    | <img src="https://github.com/BaeSJ1.png" width=100px>      | <img src="https://github.com/sorasol9.png" width=100px>    |
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+<a id="서비스-개발-주안점"></a>
+## 💻 서비스 개발 주안점
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+### 📌 단일 코드베이스, 다중 빌드
+> `REACT_APP_MODE` 환경 변수를 사용하여 관리자용과 근로자용 두 개의 별도 애플리케이션을 단일 코드베이스에서 빌드합니다. 이를 통해 코드 재사용성을 극대화하고 두 애플리케이션 간의 일관성을 유지합니다.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 📌 컴포넌트 기반 아키텍처 및 상태 관리
+> UI를 재사용 가능한 독립적인 컴포넌트로 분리하여 개발하는 컴포넌트 기반 아키텍처(CBA)를 채택하여 생산성과 유지보수성을 높였습니다. 또한, React Query와 Recoil을 사용하여 서버 상태와 클라이언트 상태를 효율적으로 관리하여 데이터 동기화 및 전역 상태 관리를 단순화했습니다.
 
-### `npm run eject`
+<a id="시작-가이드"></a>
+## 🚀 시작 가이드
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### 사전 준비 사항
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+- Node.js (v16 이상)
+- npm
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+### 서비스 실행 (개발 모드)
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+1.  **프로젝트 클론 및 디렉토리 이동**
+    ```bash
+    git clone {저장소 URL}
+    cd i-room/frontend
+    ```
 
-## Learn More
+2.  **필요 패키지 설치**
+    ```bash
+    npm install
+    ```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+3.  **개발 서버 실행**
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+    - **관리자 페이지 실행:**
+      ```bash
+      npm start
+      ```
+      (서버가 실행되면 `http://localhost:3000` 에서 확인)
 
-### Code Splitting
+    - **근로자 페이지 실행:**
+      ```bash
+      npm run start:worker
+      ```
+      (서버가 실행되면 `http://localhost:3001` 에서 확인)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+<a id="기술-스택"></a>
+## ⚙️ 기술 스택
 
-### Analyzing the Bundle Size
+- **React**: UI 라이브러리
+- **JavaScript (ES6+)**: 프로그래밍 언어
+- **React Router**: 클라이언트 사이드 라우팅
+- **Axios**: HTTP 클라이언트
+- **React Query**: 서버 상태 관리
+- **Recoil**: 클라이언트 상태 관리
+- **Styled-components**: CSS-in-JS 스타일링
+- **Nginx**: 웹 서버 (프로덕션 환경)
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+<a id="api-명세"></a>
+## 📡 API 명세
 
-### Making a Progressive Web App
+프론트엔드 서비스는 API 게이트웨이를 통해 백엔드 마이크로서비스들의 API를 호출합니다. 전체 API 명세는 아래 링크에서 확인할 수 있습니다.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- [i-room API 명세서 (Notion)](https://disco-mitten-e75.notion.site/API-238f6cd45c7380209227f1f66bddebdd?pvs=73)
