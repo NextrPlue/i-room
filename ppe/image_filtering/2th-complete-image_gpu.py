@@ -38,7 +38,7 @@ RELAXED_THRESHOLD = {
 }
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"🔥 디바이스: {device}")
+print(f"디바이스: {device}")
 # ==========================================
 
 def is_high_quality(image_path, threshold):
@@ -67,7 +67,7 @@ def is_high_quality(image_path, threshold):
 
         return True
     except Exception as e:
-        print(f"❌ 품질검사 실패: {image_path} → {e}")
+        print(f"품질검사 실패: {image_path} → {e}")
         return False
 
 def remove_corrupted_images(images_dir):
@@ -82,14 +82,14 @@ def remove_corrupted_images(images_dir):
         except:
             os.remove(path)
             removed += 1
-            print(f"❌ 삭제된 손상 이미지: {fname}")
+            print(f"삭제된 손상 이미지: {fname}")
     return removed
 
 # 전체 결과 카운터
 class_counts = defaultdict(int)
 
 for split in split_set:
-    print(f"\n🔄 {split.upper()} 데이터 처리 시작")
+    print(f"\n{split.upper()} 데이터 처리 시작")
     per_class_target = per_class_target_map[split]
 
     in_labels_dir = os.path.join(input_root, split, "labels_json")
@@ -120,7 +120,7 @@ for split in split_set:
 
         candidates.append((json_file, filename, valid))
 
-    print(f"✅ 후보 수: {len(candidates)}")
+    print(f"후보 수: {len(candidates)}")
     random.shuffle(candidates)
 
     def filter_candidates(threshold):
@@ -136,7 +136,7 @@ for split in split_set:
     filter_candidates(QUALITY_THRESHOLD)
     for cls in target_classes:
         if len(selected[cls]) < per_class_target:
-            print(f"⚠️ 클래스 {cls} 부족 → 기준 완화 시도")
+            print(f" 클래스 {cls} 부족 → 기준 완화 시도")
             filter_candidates(RELAXED_THRESHOLD)
 
     # 복사 및 저장 (클래스별로 폴더 분리)
@@ -156,7 +156,7 @@ for split in split_set:
             class_counts[f"{split}_{cls}"] += 1
 
 # 최종 통계 출력
-print("\n📊 최종 결과")
+print("\n최종 결과")
 for cls in sorted(class_counts):
     print(f"클래스 {cls}: {class_counts[cls]}장")
 print(f"총 저장 이미지 수: {sum(class_counts.values())}장")

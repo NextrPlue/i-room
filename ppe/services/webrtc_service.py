@@ -31,9 +31,8 @@ pcs: set[RTCPeerConnection] = set()
 lock = asyncio.Lock()
 clients_count = 0
 
-
+# frame_queue에 들어오는 최신 프레임을 브라우저로 전송
 class SharedCameraStreamTrack(VideoStreamTrack):
-    """frame_queue에 들어오는 최신 프레임을 브라우저로 전송"""
     def __init__(self) -> None:
         super().__init__()
         self._last_ts = 0.0
@@ -60,13 +59,8 @@ class SharedCameraStreamTrack(VideoStreamTrack):
         av_frame.time_base = time_base
         return av_frame
 
-
+# TURN 사용 및 자격증명 생성
 def _build_ice_servers() -> List[RTCIceServer]:
-    """
-    .env 설정을 바탕으로 ICE 서버 목록 구성.
-    - ICE_FORCE_RELAY=true 이면 STUN 제외 → 사실상 항상 TURN 사용
-    - TURN(HMAC 일회성) 자격증명 생성
-    """
     servers: List[RTCIceServer] = []
 
     if not settings.ICE_FORCE_RELAY:
@@ -85,9 +79,8 @@ def _build_ice_servers() -> List[RTCIceServer]:
     )
     return servers
 
-
+# 가능하면 H.264 코덱 사용
 def _prefer_h264(pc: RTCPeerConnection) -> None:
-    """가능하면 H.264 코덱을 우선 사용(없으면 조용히 스킵)."""
     try:
         from aiortc.rtcrtpsender import RTCRtpSender
         h264 = [c for c in RTCRtpSender.getCapabilities("video").codecs if c.mimeType == "video/H264"]
@@ -106,9 +99,8 @@ def _make_pc() -> RTCPeerConnection:
     pc = RTCPeerConnection(configuration=cfg)
     return pc
 
-
+# 트리클 ICE를 쓰지 않으니, 후보가 SDP에 포함되도록 잠시 대기.
 async def _wait_ice_gathering_complete(pc: RTCPeerConnection, timeout: float = 5.0):
-    """트리클 ICE를 쓰지 않으니, 후보가 SDP에 포함되도록 잠시 대기."""
     if pc.iceGatheringState == "complete":
         return
 
@@ -125,11 +117,8 @@ async def _wait_ice_gathering_complete(pc: RTCPeerConnection, timeout: float = 5
         # 오래 걸리면 그냥 진행
         pass
 
-
+# 브라우저 Offer 수신 → 서버 PC 생성 → 비디오 트랙 추가 → Answer 반환.
 async def handle_offer(request: Request):
-    """
-    브라우저 Offer 수신 → 서버 PC 생성 → 비디오 트랙 추가 → Answer 반환.
-    """
     global clients_count
     data = await request.json()
 

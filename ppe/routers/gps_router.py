@@ -8,13 +8,9 @@ from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/gps", tags=["GPS"])
 
+# 스냅샷 반영 -> 들어온 workerId 는 업서트 Update 하거나 Insert 하거나 , 스냅샷에 없는 workerId는 삭제 하는 식으로 갱신
 @router.post("/")
 def receive_gps(data: List[WatchCreate], db: Session = Depends(get_db)):
-    """
-    스냅샷 반영:
-    - 들어온 workerId는 업서트(UPDATE or INSERT)
-    - 이번 스냅샷에 없는 workerId는 삭제
-    """
     # 스냅샷 시각(KST)
     now_kst = datetime.utcnow() + timedelta(hours=9)
 

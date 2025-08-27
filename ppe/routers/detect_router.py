@@ -46,20 +46,20 @@ from ppe.services.yolo_service import start_detection, stop_detection
 
 control = APIRouter(prefix="/detect", tags=["Detection Control"])
 
+# YOLO 추론 시작
 @control.post("/start")
 async def detect_start(loop_file: bool = False):
-    """YOLO 추론 시작 (이미 실행 중이면 started=false 반환)"""
     started = await start_detection(loop_file=loop_file)
     return {"started": started}
 
+# YOLO 추론 정지 플래그
 @control.post("/stop")
 def detect_stop():
-    """YOLO 추론 정지 플래그 설정"""
     stopped = stop_detection()
     return {"stopped": stopped}
 
+# 상태 확인용
 @control.get("/status")
 def detect_status():
-    """간단한 상태 확인용 (원하면 yolo_service에 상태값 노출해서 고도화 가능)"""
     # (필요하면) yolo_service에 현재 실행 여부/소스 등을 저장해 반환하도록 확장
     return {"ok": True}
