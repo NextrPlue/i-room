@@ -144,16 +144,16 @@ async def run_detection_loop(interval_sec: int = 5, loop_file: bool = False):
             return
         await asyncio.sleep(0.3)  # 재시도 텀
 
+# 이미 돌고 있지 않으면 백그라운드 태스크 시작
 async def start_detection(loop_file: bool = False) -> bool:
-    """이미 돌고 있지 않으면 백그라운드 태스크 시작"""
     global _runner_task
     if _runner_task and not _runner_task.done():
         return False
     _runner_task = asyncio.create_task(run_detection_loop(loop_file=loop_file))
     return True
 
+# 루프 정지 플래그만 올림
 def stop_detection() -> bool:
-    """루프 정지 플래그만 올림"""
     global _stop_flag
     _stop_flag = True
     return True

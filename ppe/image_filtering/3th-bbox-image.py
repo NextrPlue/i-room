@@ -13,7 +13,7 @@ target_classes = ['01', '03', '07']  # 시각화 대상 클래스
 def draw_box_and_polygon_bbox(image_path, annotations):
     img = cv2.imread(image_path)
     if img is None:
-        print(f"❌ 이미지 파일을 찾을 수 없습니다: {image_path}")
+        print(f"이미지 파일을 찾을 수 없습니다: {image_path}")
         return None
 
     for ann in annotations:
@@ -40,7 +40,7 @@ def draw_box_and_polygon_bbox(image_path, annotations):
             cv2.putText(img, label, (x1, y1 - 5),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
         except Exception as e:
-            print(f"⚠️ 오류 발생 (annotation 처리 중): {e}")
+            print(f"오류 발생 (annotation 처리 중): {e}")
             continue
 
     return img
@@ -54,7 +54,7 @@ for split in splits:
         os.makedirs(save_dir, exist_ok=True)
 
         if not os.path.exists(json_dir):
-            print(f"⚠️ JSON 경로 없음: {json_dir}")
+            print(f"JSON 경로 없음: {json_dir}")
             continue
 
         for json_file in os.listdir(json_dir):
@@ -76,5 +76,5 @@ for split in splits:
                     save_path = os.path.join(save_dir, image_filename)
                     cv2.imwrite(save_path, result_img)
             except Exception as e:
-                print(f"❗ JSON 처리 중 오류 발생: {json_path}")
+                print(f"JSON 처리 중 오류 발생: {json_path}")
                 print(e)

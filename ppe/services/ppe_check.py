@@ -38,7 +38,6 @@ _off_hold: Dict[Tuple[str,int], Dict[str,Any]] = {}
 # 'helmet' | 'harness'  (name에서 공통으로 추출)
 _recent_strong_on: Dict[Tuple[str,int], Dict[str,Any]] = {}
 ON_KEEP_S = 10.0  # 강한 ON 기록 유지 시간(메모리 정리용)
-# =============================================================================
 
 # 기본 임계값
 BASE_CONF = {
@@ -60,14 +59,14 @@ def bbox_height(xyxy: Tuple[float,float,float,float]) -> float:
     return max(0.0, y2 - y1)
 
 # 상태, OFF 오탐 방지
+# 이벤트 name에서 ppe_base('helmet'|'harness') 추출
 def _ppe_base(name: str) -> str:
-    """[추가] 이벤트 name에서 ppe_base('helmet'|'harness') 추출"""
     if "helmet" in name: return "helmet"
     if "harness" in name: return "harness"
     return ""
 
+# 오래 안 보인 ACTIVE incident 자동 해제 + 홀드/ON 기록 청소
 def _gc(now_t: float) -> None:
-    """오래 안 보인 ACTIVE incident 자동 해제 + 홀드/ON 기록 청소"""
     with _active_lock:
         # incident 만료
         dead = [k for k, v in _active_off.items() if now_t - v["last_seen"] > EXPIRE_S]
@@ -82,8 +81,8 @@ def _gc(now_t: float) -> None:
         for k in on_dead:
             _recent_strong_on.pop(k, None)
 
+# 신뢰도가 높은 ON 기록이 찍힌 기록이 있으면 OFF 로그가 찍혀도 무시 가능(억제)
 def _note_strong_on(nm: str, tid: int, t: float, conf: float) -> None:
-    """[추가] 강한 ON 관측 기록(해제 X, 억제용으로만 사용)"""
     if tid == -1: return
     if conf < STRONG_ON_CONF: return
     base = _ppe_base(nm)
@@ -91,12 +90,8 @@ def _note_strong_on(nm: str, tid: int, t: float, conf: float) -> None:
     with _active_lock:
         _recent_strong_on[(base, tid)] = {"t": t, "conf": conf}
 
+# OFF-홀드 누적/판정 return True  -> 홀드 조건 충족(알람 허용), return False -> 아직 홀드 중(알람 억제)
 def _off_hold_update(ppe_type: str, tid: int, t: float, conf: float) -> bool:
-    """
-    [추가] OFF-홀드 누적/판정.
-    return True  -> 홀드 조건 충족(알람 허용)
-    return False -> 아직 홀드 중(알람 억제)
-    """
     key = (ppe_type, tid)
     with _active_lock:
         rec = _off_hold.get(key)
@@ -116,6 +111,7 @@ def _off_hold_update(ppe_type: str, tid: int, t: float, conf: float) -> bool:
 # def _resolve_on(ppe_type: str, tid: int, t: float) -> None:
 #     return
 
+# OFF 관측을 incident에 반영. 없으면 새 incident 생성 -> 이때만 알림이 발생함 
 def _upsert_off(
     ppe_type: str,
     tid: int,
@@ -124,7 +120,6 @@ def _upsert_off(
     uv: Tuple[float, float],
     bbox_h: float,
 ) -> Tuple[bool, Dict[str, Any]]:
-    """OFF 관측을 incident에 반영. 없으면 새 incident 생성(이때만 알림)."""
     with _active_lock:
         key = (ppe_type, tid)
         rec = _active_off.get(key)
@@ -151,8 +146,9 @@ def _upsert_off(
             rec["last_bbox_h"] = bbox_h
             return False, rec
 
+# tid 바뀌어도 같은 사람으로 간주되면 기존 incident로 병합(알람 없음)
 def _try_merge_off(ppe_type: str, ev: Dict[str, Any]) -> Tuple[Dict[str, Any], bool]:
-    """tid 바뀌어도 같은 사람으로 간주되면 기존 incident로 병합(알람 없음)."""
+
     t   = float(ev.get("t", 0.0))
     uv  = ev.get("uvb", None)
     if not uv:
@@ -192,7 +188,7 @@ def _try_merge_off(ppe_type: str, ev: Dict[str, Any]) -> Tuple[Dict[str, Any], b
         rec["last_bbox_h"] = hb
         rec["max_conf"]    = max(rec["max_conf"], float(ev.get("conf", 0.0)))
         return rec, True
-# ============================================================================
+    
 
 # 커버리지 기반 동적 임계
 def dynamic_thrs(
@@ -234,16 +230,12 @@ def dynamic_thrs(
         "dynamic_off_thr": dyn_thr,
     }
 
+# on/off 이벤트 리스트를 받아 10초 윈도우 위반 판단 수행.
 def check_violation(
     on_events: List[Dict[str, Any]],
     off_events: List[Dict[str, Any]],
 ) -> Dict[str, Any]:
-    """
-    on/off 이벤트 리스트를 받아 10초 윈도우 위반 판단 수행.
-    이벤트 예:
-      {'t': float, 'name': 'harness_on|harness_off|helmet_on|helmet_off',
-       'conf': float, 'xyxy': (x1,y1,x2,y2), 'uvb': (u,v), 'tid': int}
-    """
+    
     # (1) 통계 집계(표시용)
     helm_on_tids   = {e["tid"] for e in on_events  if e.get("name")=="helmet_on"  and e.get("tid",-1)!=-1}
     helm_off_tids  = {e["tid"] for e in off_events if e.get("name")=="helmet_off" and e.get("tid",-1)!=-1}
@@ -358,13 +350,13 @@ def check_violation(
 
     if new_alerts:
         reason = (
-            f'❗미착용자 발생'
+            f'미착용자 발생'
             f'(helmet_off {off_helmet_distinct}건, harness_off {off_harness_distinct}건, '
             f'등록된 총 근로자 수={total_workers},'
         )
         return {"violation": True, "reason": reason, "new_alerts": new_alerts, "coverage": cov}
 
     reason = (
-        '📌 이번 윈도우에서 새롭게 확정된 미착용자가 없습니다. '
+        '이번 윈도우에서 새롭게 확정된 미착용자가 없습니다. '
     )
     return {"violation": False, "reason": reason, "new_alerts": [], "coverage": cov}

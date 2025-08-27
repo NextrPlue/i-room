@@ -53,7 +53,7 @@ def remove_corrupted_images(images_dir):
         except Exception:
             os.remove(path)
             removed += 1
-            print(f"❌ 삭제된 손상 이미지: {fname}")
+            print(f"삭제된 손상 이미지: {fname}")
     return removed
 
 def is_high_quality(image_path, threshold):
@@ -127,7 +127,7 @@ for split in split_set:
 
         candidates.append((json_file, filename, valid))
 
-    print(f"✅ 후보 수: {len(candidates)}")
+    print(f"후보 수: {len(candidates)}")
     random.shuffle(candidates)
 
     def parallel_filter(threshold):
@@ -152,7 +152,7 @@ for split in split_set:
     # 부족 시 완화 기준 적용
     for cls in target_classes:
         if len(selected[cls]) < per_class_target:
-            print(f"⚠️ 클래스 {cls} 부족 → 기준 완화")
+            print(f"클래스 {cls} 부족 → 기준 완화")
             parallel_filter(RELAXED_THRESHOLD)
 
     # 최종 복사 (클래스별 폴더 포함)
@@ -162,7 +162,7 @@ for split in split_set:
             src_img = os.path.join(in_images_dir, fname)
             src_json = os.path.join(in_labels_dir, json_file)
 
-            # ✅ 클래스별 서브디렉토리 경로
+            # 클래스별 서브디렉토리 경로
             dst_img = os.path.join(out_images_dir, cls, fname)
             dst_json = os.path.join(out_labels_dir, cls, json_file)
 
@@ -176,7 +176,7 @@ for split in split_set:
             class_counts[f"{split}_{cls}"] += 1
 
 # 결과 출력
-print("\n📊 최종 결과")
+print("\n최종 결과")
 for key in sorted(class_counts.keys()):
     print(f"{key}: {class_counts[key]}장")
 print(f"총 저장 이미지 수: {sum(class_counts.values())}장")
