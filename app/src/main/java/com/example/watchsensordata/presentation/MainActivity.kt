@@ -82,8 +82,8 @@ class MainActivity : ComponentActivity() {
         // 1. 처음에는 로그인 화면을 보여줌
         setContentView(R.layout.activity_login)
 
-        findViewById<EditText>(R.id.emailEdit).setText("test@test.com")
-        findViewById<EditText>(R.id.passwordEdit).setText("!test123")
+        findViewById<EditText>(R.id.emailEdit).setText("test@example.com")
+        findViewById<EditText>(R.id.passwordEdit).setText("password123!")
 
         // 2. 로그인 버튼 클릭 시
         findViewById<Button>(R.id.loginButton).setOnClickListener {

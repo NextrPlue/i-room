@@ -17,7 +17,7 @@ object IpConfig {
     }
 
     fun getBaseUrl(): String {
-        val port = "8080"
+        val port = ""
         return "http://$baseIp:$port"
     }
 }
