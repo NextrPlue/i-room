@@ -17,6 +17,8 @@ import com.example.watchgps2.R
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -103,7 +105,7 @@ class ForegroundLocationService : Service() {
                 val url = URL("${IpConfig.getBaseUrl()}/api/sensor/heavy-equipments/location")
                 val connection = url.openConnection() as HttpURLConnection
                 connection.requestMethod = "PUT"
-                connection.setRequestProperty("Content-Type", "application/json")
+                connection.setRequestProperty("Content-Type", "application/octet-stream")
 
                 //토큰 추가
                 token?.let {
@@ -112,15 +114,14 @@ class ForegroundLocationService : Service() {
 
                 connection.doOutput = true
 
-                val json = """
-                {
-                    "id": $equipmentId,
-                    "latitude": $latitude,
-                    "longitude": $longitude
-                }
-            """.trimIndent()
+                val bos = ByteArrayOutputStream()
+                val dos = DataOutputStream(bos)
 
-                connection.outputStream.use { it.write(json.toByteArray()) }
+                dos.writeLong(equipmentId)
+                dos.writeDouble(latitude)
+                dos.writeDouble(longitude)
+
+                connection.outputStream.use { it.write(bos.toByteArray()) }
 
                 val responseCode = connection.responseCode
                 Log.d("Server", "서버 응답 코드: $responseCode")

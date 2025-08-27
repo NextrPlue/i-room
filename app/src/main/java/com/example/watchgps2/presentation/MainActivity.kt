@@ -65,7 +65,7 @@ class MainActivity : ComponentActivity() {
         IpConfig.initialize(this)
 
         // 토큰 요청
-        val apiKey = "equipment-system-api-key-a52d7775-bf12-4f06-bfc9-6fdfc1f8f108"
+        val apiKey = "equipment-system-api-key-87848ca1-76c1-4bf7-8fec-8280347aad4a"
         val apiService = RetrofitClient.getApiService(this)  // Context 전달
 
         apiService.authenticate(ApiKeyRequest(apiKey))
