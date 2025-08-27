@@ -39,7 +39,7 @@ def check_sparsity(model):
             total_params += total
             total_zeros += zeros
     global_sparsity = total_zeros / total_params
-    print(f"\n📊 Global sparsity: {global_sparsity*100:.2f}%")
+    print(f"\nGlobal sparsity: {global_sparsity*100:.2f}%")
     return global_sparsity
 
 global_sparsity = check_sparsity(nn_model)
