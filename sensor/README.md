@@ -1,6 +1,6 @@
 # Sensor Service
 
-> i-room 프로젝트의 IoT 센서 데이터 처리 서비스
+> i-room 프로젝트의 센서 데이터 및 위치 추적 서비스
 
 > 목차
 > - [📄 서비스 소개](#서비스-소개)
@@ -8,19 +8,23 @@
 > - [💻 서비스 개발 주안점](#서비스-개발-주안점)
 > - [🚀 시작 가이드](#시작-가이드)
 > - [⚙️ 기술 스택](#기술-스택)
+> - [🏗️ 아키텍처](#아키텍처)
+> - [📋 주요 기능](#주요-기능)
+> - [🌐 환경별 설정](#환경별-설정)
 > - [📡 API 명세](#api-명세)
 
 <a id="서비스-소개"></a>
 
 ## 📄 서비스 소개
 
-건설 현장의 다양한 IoT 장비로부터 센서 데이터를 수신하여 처리하고, Kafka 토픽으로 전송하는 역할을 담당하는 마이크로서비스입니다.
+i-room 서비스의 근로자 센서 데이터와 중장비 위치 추적을 담당하는 마이크로서비스입니다. 웨어러블 디바이스의 바이너리 데이터 처리와 WebSocket을 통한 실시간 위치 정보 전송을 지원합니다.
 
-### 주요 기능
+### 핵심 기능
 
-- **센서 데이터 수신**: Netty 기반의 TCP 소켓 통신을 통해 비동기적으로 센서 데이터를 수신합니다.
-- **데이터 파싱 및 처리**: 수신된 바이너리 데이터를 정형화된 데이터로 파싱하고 가공합니다.
-- **Kafka 이벤트 발행**: 처리된 데이터를 실시간 분석 및 모니터링을 위해 Kafka 토픽으로 발행합니다.
+- **근로자 센서 데이터**: 웨어러블 디바이스의 생체 및 위치 정보 처리
+- **중장비 관리**: 건설 현장 중장비 등록 및 위치 추적
+- **실시간 전송**: WebSocket을 통한 실시간 위치 데이터 전송
+- **이벤트 처리**: Kafka를 통한 위치 및 센서 이벤트 발행
 
 <a id="개발자"></a>
 
@@ -36,10 +40,10 @@
 
 ## 💻 서비스 개발 주안점
 
-### 📌 Netty 기반 소켓 통신 및 비동기 처리
+### 📌 바이너리 데이터 처리 및 실시간 통신
 
-> Netty 프레임워크를 사용하여 비동기 이벤트 기반의 TCP/IP 소켓 통신을 구현하여, 다수의 IoT 장비로부터 안정적으로 대량의 센서 데이터를 수신합니다. 또한, 수신한 데이터를 Kafka에 발행함으로써,
-후속 데이터 처리 서비스(Health, Dashboard 등)와의 결합도를 낮추고 시스템 전체의 확장성과 탄력성을 확보했습니다.
+> 웨어러블 디바이스에서 전송되는 바이너리 데이터를 처리하고, WebSocket을 통해 실시간으로 위치 정보를 전송하는 시스템을 구축했습니다. GPS 필터링과 Kafka 이벤트 발행을 통해 정확하고 신뢰성 있는 위치
+> 추적 서비스를 제공합니다.
 
 <a id="시작-가이드"></a>
 
@@ -67,23 +71,109 @@
    gradlew.bat bootRun
    ```
 
-3. **애플리케이션 접속**
-   서비스가 정상적으로 실행되면 `application.yml` 에 설정된 TCP 포트에서 센서 데이터 수신을 시작합니다.
+3. **데이터베이스 설정** (필수)
+   MySQL 데이터베이스가 실행 중이어야 하며, `iroom_sensor` 데이터베이스가 생성되어 있어야 합니다.
+   ```sql
+   CREATE DATABASE iroom_sensor;
+   ```
+
+4. **Kafka 설정** (필수)
+   로컬 환경에서 Kafka가 `localhost:9092`에서 실행 중이어야 합니다.
+
+5. **애플리케이션 접속**
+   서비스가 정상적으로 실행되면 `http://localhost:8083`에서 서비스가 활성화되고, WebSocket 엔드포인트를 통해 실시간 위치 데이터를 전송할 수 있습니다.
 
 <a id="기술-스택"></a>
 
 ## ⚙️ 기술 스택
 
 - **Java 17**: 프로그래밍 언어
-- **Spring Boot**: 애플리케이션 프레임워크
-- **Netty**: 비동기 소켓 통신 프레임워크
-- **Spring for Apache Kafka**: Kafka 연동
+- **Spring Boot 3.5.3**: 애플리케이션 프레임워크
+- **Spring WebSocket**: WebSocket 및 STOMP 프로토콜 지원
+- **Spring Data JPA**: 데이터베이스 ORM
+- **Spring Cloud 2025.0.0**: 마이크로서비스 인프라
+- **Spring Cloud Stream**: Kafka 메시징
+- **MySQL 8.0**: 관계형 데이터베이스
+- **Apache Kafka**: 이벤트 스트리밍
 - **Gradle**: 빌드 도구
+- **Micrometer**: 메트릭 및 추적
+
+<a id="아키텍처"></a>
+
+## 🏗️ 아키텍처
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│     Gateway     │    │  Sensor Service │    │    MySQL DB     │
+│                 │◄──►│                 │◄──►│   (iroom_sensor)│
+│  - JWT Auth     │    │  - WebSocket    │    │                 │
+│  - Routing      │    │  - Equipment    │    │ - worker_sensor │
+└─────────────────┘    │  - Worker Data  │    │ - heavy_equip   │
+                       └─────────────────┘    │ - worker_read   │
+                             ▲  ▲             │   _model        │
+         ┌───────────────────┘  │             └─────────────────┘
+         ▼                      ▼
+┌─────────────────┐    ┌─────────────────┐    ┌───────────────────────┐
+│ Wearable Device │    │   Kafka Broker  │    │   WebSocket Clients   │
+│                 │    │                 │◄──►│  - Admin Dashboard    │
+│  - Binary Data  │    │  Topic: iroom   │    │  - Worker Page        │
+│  - GPS/Health   │    │ - WorkerSensor  │    └───────────────────────┘
+└─────────────────┘    │ - EquipmentLoc  │
+                       └─────────────────┘
+                                ▲
+                                │
+                                ▼
+                    ┌────────────────────────┐
+                    │     Other Services     │
+                    └────────────────────────┘
+```
+
+<a id="주요-기능"></a>
+
+## 📋 주요 기능
+
+### 1. 근로자 센서 데이터 (`/worker-sensor/**`)
+
+- **센서 데이터 업데이트**: `PUT /worker-sensor/update` (바이너리 데이터)
+- **위치 조회**: `GET /worker-sensor/location/{workerId}`
+- **전체 위치 조회**: `GET /worker-sensor/locations` (실시간 모니터링)
+
+### 2. 중장비 관리 (`/heavy-equipments/**`)
+
+- **중장비 등록**: `POST /heavy-equipments/register`
+- **위치 업데이트**: `PUT /heavy-equipments/location` (바이너리 데이터)
+- **중장비 조회**: `GET /heavy-equipments/{equipmentId}`
+- **전체 중장비 조회**: `GET /heavy-equipments`
+
+### 3. WebSocket 실시간 전송
+
+- **WebSocket 엔드포인트**: `/sensor/ws`
+- **위치 데이터 스트리밍**: 실시간 근로자 및 중장비 위치 전송
+- **STOMP 프로토콜**: `/topic/locations/{workerId}` 구독
+
+<a id="환경별-설정"></a>
+
+## 🌐 환경별 설정
+
+### 로컬 개발 환경 (기본)
+
+- **Database**: `localhost:3306/iroom_sensor`
+- **Kafka**: `localhost:9092`
+
+### Docker 환경 (`docker` 프로필)
+
+- **Database**: `mysql:3306/iroom_sensor`
+- **Kafka**: `kafka:9093`
+
+### Kubernetes 환경 (`k8s` 프로필)
+
+- **Database**: `i-room-mysql/iroom_sensor`
+- **Kafka**: `i-room-kafka:9092`
 
 <a id="api-명세"></a>
 
 ## 📡 API 명세
 
-센서 서비스는 REST API 대신 TCP 소켓을 통해 통신합니다. 자세한 데이터 프로토콜은 아래 Notion 링크의 'Sensor' 섹션을 참고하십시오.
+센서 서비스는 RESTful API와 WebSocket을 통해 통신하며, 바이너리 데이터 처리를 지원합니다. 자세한 API 명세는 아래 Notion 링크의 'Sensor' 섹션을 참고하십시오.
 
 - [i-room API 명세서 (Notion)](https://disco-mitten-e75.notion.site/API-238f6cd45c7380209227f1f66bddebdd?pvs=73)
