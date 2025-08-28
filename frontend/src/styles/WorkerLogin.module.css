@@ -108,6 +108,31 @@
     text-align: center;
 }
 
+.attemptsWarning {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background-color: #fff3cd;
+    border: 1px solid #ffecb5;
+    border-radius: 6px;
+    color: #856404;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.loginButton:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.loginButton:disabled:hover {
+    background: #cccccc;
+    transform: none;
+    box-shadow: none;
+}
+
 @media (max-width: 480px) {
     .workerLoginBox {
         padding: 30px 20px;

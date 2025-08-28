@@ -1,7 +1,8 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {useNavigate} from 'react-router-dom';
 import styles from '../styles/AdminLogin.module.css';
 import {userAPI} from '../api/api';
+import {loginLimiter} from '../utils/loginLimiter';
 import Footer from '../components/Footer';
 
 const AdminLogin = ({onLogin}) => {
@@ -12,6 +13,43 @@ const AdminLogin = ({onLogin}) => {
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [isLocked, setIsLocked] = useState(false);
+    const [remainingTime, setRemainingTime] = useState(0);
+    const [remainingAttempts, setRemainingAttempts] = useState(loginLimiter.MAX_ATTEMPTS);
+
+    const LOGIN_IDENTIFIER = 'admin_login';
+
+    // 컴포넌트 마운트 시 로그인 제한 상태 확인
+    useEffect(() => {
+        checkLoginStatus();
+        
+        // 1초마다 남은 시간 업데이트
+        const timer = setInterval(() => {
+            if (loginLimiter.isLocked(LOGIN_IDENTIFIER)) {
+                const remaining = loginLimiter.getRemainingLockoutTime(LOGIN_IDENTIFIER);
+                setRemainingTime(remaining);
+                if (remaining <= 0) {
+                    checkLoginStatus();
+                }
+            }
+        }, 1000);
+
+        return () => clearInterval(timer);
+    }, []);
+
+    const checkLoginStatus = () => {
+        const locked = loginLimiter.isLocked(LOGIN_IDENTIFIER);
+        const remaining = loginLimiter.getRemainingLockoutTime(LOGIN_IDENTIFIER);
+        const attempts = loginLimiter.getRemainingAttempts(LOGIN_IDENTIFIER);
+        
+        setIsLocked(locked);
+        setRemainingTime(remaining);
+        setRemainingAttempts(attempts);
+        
+        if (locked) {
+            setError(`로그인이 제한되었습니다. ${loginLimiter.formatRemainingTime(remaining)} 후에 다시 시도해주세요.`);
+        }
+    };
 
     // 폼 검증 상태
     const [validation, setValidation] = useState({
@@ -92,6 +130,12 @@ const AdminLogin = ({onLogin}) => {
     const handleLogin = async (e) => {
         e.preventDefault();
 
+        // 로그인 제한 확인
+        if (isLocked) {
+            setError(`로그인이 제한되었습니다. ${loginLimiter.formatRemainingTime(remainingTime)} 후에 다시 시도해주세요.`);
+            return;
+        }
+
         // 입력값 검증
         if (!formData.email || !formData.password) {
             setError('이메일과 비밀번호를 모두 입력해주세요.');
@@ -103,11 +147,26 @@ const AdminLogin = ({onLogin}) => {
             setError('');
 
             const response = await userAPI.login(formData);
+            
+            // 로그인 성공 시 실패 횟수 초기화
+            loginLimiter.clearFailedAttempts(LOGIN_IDENTIFIER);
             onLogin(response);
 
         } catch (err) {
             console.error('로그인 실패:', err);
-            setError(err.message || '로그인에 실패했습니다.');
+            
+            // 로그인 실패 처리
+            const attempts = loginLimiter.recordFailedAttempt(LOGIN_IDENTIFIER);
+            checkLoginStatus();
+            
+            const msg = err.message || '로그인에 실패했습니다.';
+            
+            if (attempts >= loginLimiter.MAX_ATTEMPTS) {
+                setError(`로그인에 ${loginLimiter.MAX_ATTEMPTS}회 실패했습니다. 5분간 로그인이 제한됩니다.`);
+            } else {
+                const remaining = loginLimiter.MAX_ATTEMPTS - attempts;
+                setError(`${msg} (남은 시도 횟수: ${remaining}회)`);
+            }
         } finally {
             setLoading(false);
         }
@@ -183,11 +242,17 @@ const AdminLogin = ({onLogin}) => {
                         <button
                             type="submit"
                             className={styles.blackBtn}
-                            disabled={loading}
+                            disabled={loading || isLocked}
                         >
                             {loading ? '로그인 중...' : '로그인'}
                         </button>
                     </div>
+                    
+                    {!isLocked && remainingAttempts < loginLimiter.MAX_ATTEMPTS && (
+                        <div className={styles.attemptsWarning}>
+                            남은 시도 횟수: {remainingAttempts}회
+                        </div>
+                    )}
                 </form>
             </div>
             <Footer />
