@@ -175,9 +175,10 @@ i-room 서비스의 AI 기반 근로자 건강 이상 감지 및 예측을 담�
 ### 학습 및 연구
 
 - **연구 노트북**: `training/` 디렉토리
-    - `health_monitoring_AI_1.ipynb`: 기본 모델 개발
-    - `health_monitoring_AI_2.ipynb`: 고도화 모델 개발
+    - `health_monitoring_AI_1.ipynb`: LightGBM 기반 기본 모델 개발
+    - `health_monitoring_AI_2.ipynb`: LightGBM 고도화 모델 개발
     - `XGBoost_Baseline_modeling.ipynb`: XGBoost 베이스라인
+    - `XGBoost_Final_modeling.ipynb`: XGBoost 모델 성능 확인 및 시각화
     - `hyperparameter_tuning.ipynb`: 하이퍼파라미터 최적화
     - `model_performance_comparison.ipynb`: 모델 성능 비교
 
