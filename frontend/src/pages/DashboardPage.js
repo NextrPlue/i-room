@@ -190,8 +190,15 @@ const DashboardPage = () => {
         return sortedData;
     }, []);
 
+    // 툴팁 상태 관리 (각 차트별로 독립)
+    const [tooltips, setTooltips] = useState({
+        day: { visible: false, x: 0, y: 0, content: null },
+        week: { visible: false, x: 0, y: 0, content: null },
+        month: { visible: false, x: 0, y: 0, content: null }
+    });
+
     // 선 그래프 렌더링 함수
-    const renderLineChart = useCallback((data, interval) => {
+    const renderLineChart = useCallback((data, interval, onMouseMove, onMouseLeave) => {
         if (!data || data.length === 0) return null;
 
         const chartWidth = 400;
@@ -277,6 +284,7 @@ const DashboardPage = () => {
                 viewBox={`0 0 ${chartWidth} ${chartHeight}`} 
                 className={styles.chartSvg}
                 preserveAspectRatio="xMidYMid meet"
+                onMouseLeave={() => onMouseLeave && onMouseLeave(interval)}
             >
                 {/* 배경 격자 */}
                 <defs>
@@ -356,8 +364,73 @@ const DashboardPage = () => {
 
                 {/* 날짜 레이블 */}
                 {dateLabels}
+
+                {/* 호버 영역 - 각 x축 라벨별로 투명한 영역 생성 */}
+                {data.map((d, i) => {
+                    const x = data.length === 1 
+                        ? padding + innerWidth / 2 
+                        : padding + (i / (data.length - 1)) * innerWidth;
+                    const rectWidth = data.length === 1 ? innerWidth : innerWidth / (data.length - 1);
+                    const rectX = x - rectWidth / 2;
+                    
+                    return (
+                        <rect
+                            key={`hover-${i}`}
+                            x={rectX}
+                            y={padding}
+                            width={rectWidth}
+                            height={innerHeight}
+                            fill="transparent"
+                            style={{ cursor: 'pointer' }}
+                            onMouseMove={(e) => onMouseMove && onMouseMove(e, i, data, interval)}
+                        />
+                    );
+                })}
             </svg>
         );
+    }, []);
+
+    // 차트 마우스 이벤트 핸들러
+    const handleChartMouseMove = useCallback((event, dataIndex, data, interval) => {
+        const rect = event.currentTarget.closest('svg').getBoundingClientRect();
+        const mouseX = event.clientX - rect.left;
+        const mouseY = event.clientY - rect.top;
+        
+        const dataPoint = data[dataIndex];
+        const date = new Date(dataPoint.date);
+        let dateLabel;
+        
+        if (interval === 'day') {
+            dateLabel = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        } else if (interval === 'week') {
+            dateLabel = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} 주`;
+        } else {
+            dateLabel = `${date.getFullYear()}년 ${date.getMonth() + 1}월`;
+        }
+        
+        setTooltips(prev => ({
+            ...prev,
+            [interval]: {
+                visible: true,
+                x: mouseX,
+                y: mouseY,
+                content: {
+                    date: dateLabel,
+                    metrics: {
+                        PPE_VIOLATION: dataPoint.PPE_VIOLATION,
+                        DANGER_ZONE: dataPoint.DANGER_ZONE,
+                        HEALTH_RISK: dataPoint.HEALTH_RISK
+                    }
+                }
+            }
+        }));
+    }, []);
+
+    const handleChartMouseLeave = useCallback((interval) => {
+        setTooltips(prev => ({
+            ...prev,
+            [interval]: { visible: false, x: 0, y: 0, content: null }
+        }));
     }, []);
 
     // Dashboard API 기반 안전 지표 계산
@@ -942,11 +1015,36 @@ const DashboardPage = () => {
                                     📊 일별 데이터 로딩중...
                                 </div>
                             ) : metricsData.day?.length > 0 ? (
-                                <div className={styles.lineChart}>
+                                <div className={styles.lineChart} style={{ position: 'relative' }}>
                                     {(() => {
                                         const data = processChartData(metricsData.day, 'day');
-                                        return renderLineChart(data, 'day');
+                                        return renderLineChart(data, 'day', handleChartMouseMove, handleChartMouseLeave);
                                     })()}
+                                    {/* 툴팁 */}
+                                    {tooltips.day.visible && tooltips.day.content && (
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                left: tooltips.day.x + 10,
+                                                top: tooltips.day.y - 10,
+                                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                                color: 'white',
+                                                padding: '8px 12px',
+                                                borderRadius: '4px',
+                                                fontSize: '12px',
+                                                pointerEvents: 'none',
+                                                zIndex: 1000,
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                                                {tooltips.day.content.date}
+                                            </div>
+                                            <div>보호구 미착용: {tooltips.day.content.metrics.PPE_VIOLATION}건</div>
+                                            <div>위험지역 접근: {tooltips.day.content.metrics.DANGER_ZONE}건</div>
+                                            <div>건강 이상: {tooltips.day.content.metrics.HEALTH_RISK}건</div>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className={styles.noDataMessage}>일별 데이터 없음</div>
@@ -961,11 +1059,36 @@ const DashboardPage = () => {
                                     📊 주별 데이터 로딩중...
                                 </div>
                             ) : metricsData.week?.length > 0 ? (
-                                <div className={styles.lineChart}>
+                                <div className={styles.lineChart} style={{ position: 'relative' }}>
                                     {(() => {
                                         const data = processChartData(metricsData.week, 'week');
-                                        return renderLineChart(data, 'week');
+                                        return renderLineChart(data, 'week', handleChartMouseMove, handleChartMouseLeave);
                                     })()}
+                                    {/* 툴팁 */}
+                                    {tooltips.week.visible && tooltips.week.content && (
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                left: tooltips.week.x + 10,
+                                                top: tooltips.week.y - 10,
+                                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                                color: 'white',
+                                                padding: '8px 12px',
+                                                borderRadius: '4px',
+                                                fontSize: '12px',
+                                                pointerEvents: 'none',
+                                                zIndex: 1000,
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                                                {tooltips.week.content.date}
+                                            </div>
+                                            <div>보호구 미착용: {tooltips.week.content.metrics.PPE_VIOLATION}건</div>
+                                            <div>위험지역 접근: {tooltips.week.content.metrics.DANGER_ZONE}건</div>
+                                            <div>건강 이상: {tooltips.week.content.metrics.HEALTH_RISK}건</div>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className={styles.noDataMessage}>주별 데이터 없음</div>
@@ -980,11 +1103,36 @@ const DashboardPage = () => {
                                     📊 월별 데이터 로딩중...
                                 </div>
                             ) : metricsData.month?.length > 0 ? (
-                                <div className={styles.lineChart}>
+                                <div className={styles.lineChart} style={{ position: 'relative' }}>
                                     {(() => {
                                         const data = processChartData(metricsData.month, 'month');
-                                        return renderLineChart(data, 'month');
+                                        return renderLineChart(data, 'month', handleChartMouseMove, handleChartMouseLeave);
                                     })()}
+                                    {/* 툴팁 */}
+                                    {tooltips.month.visible && tooltips.month.content && (
+                                        <div
+                                            style={{
+                                                position: 'absolute',
+                                                left: tooltips.month.x + 10,
+                                                top: tooltips.month.y - 10,
+                                                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                                color: 'white',
+                                                padding: '8px 12px',
+                                                borderRadius: '4px',
+                                                fontSize: '12px',
+                                                pointerEvents: 'none',
+                                                zIndex: 1000,
+                                                whiteSpace: 'nowrap'
+                                            }}
+                                        >
+                                            <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>
+                                                {tooltips.month.content.date}
+                                            </div>
+                                            <div>보호구 미착용: {tooltips.month.content.metrics.PPE_VIOLATION}건</div>
+                                            <div>위험지역 접근: {tooltips.month.content.metrics.DANGER_ZONE}건</div>
+                                            <div>건강 이상: {tooltips.month.content.metrics.HEALTH_RISK}건</div>
+                                        </div>
+                                    )}
                                 </div>
                             ) : (
                                 <div className={styles.noDataMessage}>월별 데이터 없음</div>
