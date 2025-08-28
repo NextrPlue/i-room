@@ -3,11 +3,11 @@ import struct
 # 전송할 값들
 data = struct.pack(">dddqddq",  # big-endian 직렬화
 
-    35.889326,   # latitude
-    128.606225,  # longitude
+    35.8893823,   # latitude
+    128.6064844,  # longitude
 
 
-    120,        # heartRate
+    80,        # heartRate
 
     0,        # steps
     0,        # speed
