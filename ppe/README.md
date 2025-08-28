@@ -55,12 +55,18 @@ i-room 프로젝트의 AI 기반 실시간 개인보호장비(PPE) 착용 감지
 **오탐 방지를 위한 홀드 시스템, 동적 임계값 조정, ID 병합 로직** 등을
 적용하여 실제 현장에서 활용 가능한 신뢰성 높은 PPE 모니터링 시스템을 제공합니다.
 
+
 ### 📌 실시간 영상 스트리밍을 위한 TURN 서버 구축 (AWS)
 
 > ngrok는 시그널링만(HTTP/WS) 가능하므로, 미디어 전송 보장을 위해 EC2(coTURN) 를 구축했습니다. <br>
 **REST HMAC 단기 자격증명, Elastic IP, 보안그룹·UFW 최소 포트 개방**으로 보안을 강화했고, 브라우저는 P2P 실패 시 TURN 릴레이로 자동 폴백하여 NAT/방화벽 환경에서도 안정적으로 재생됩니다. 
 
 
+### 📌 실시간 영상 스트리밍을 위한 MediaMTX 중계 서버 구축 (Oracle Cloud)
+
+> ngrok는 시그널링(HTTP/WS)만 사용하고, **실제 미디어 전송/다중 프로토콜 게이트웨이는 MediaMTX가 담당**합니다.<br>
+RTSP 카메라 입력을 WebRTC(WHIP/WHEP)로 변환해 브라우저 호환성을 확보하고, PPE 서비스는 RTSP로 구독하여 지연·대역폭·동시접속을 서버에서 안정적으로 제어합니다.<br>
+Oracle Free Tier + Elastic IP 기반으로, Nginx HTTPS 프록시 및 보안그룹·UFW 최소 포트 오픈, systemd 상시 구동으로 안정성과 보안을 강화했습니다.
 
 <a id="시작-가이드"></a>
 
@@ -125,6 +131,8 @@ i-room 프로젝트의 AI 기반 실시간 개인보호장비(PPE) 착용 감지
 - **PyMySQL**: MySQL 데이터베이스 연결
 - **Deep Sort Realtime**: 실시간 객체 추적
 - **AWS**: TURN 서버 및 ICE 사용을 위한 인스턴스 사용
+- **MediaMTX (Oracle Cloud)**: RTSP ↔ WebRTC(WHIP/WHEP) 중계/게이트웨이
+- **FFmpeg**: RTSP 발행/재스트림, 저지연 인코딩, 포맷/색공간 정규화, 녹화/진단
 
 <a id="아키텍처"></a>
 
@@ -160,6 +168,8 @@ i-room 프로젝트의 AI 기반 실시간 개인보호장비(PPE) 착용 감지
 
 ### 1. 실시간 영상 스트리밍
 
+- **클라우드 중계**: 카메라는 RTSP로 **MediaMTX**에 입력, 브라우저는 WebRTC(WHEP)로 시청, PPE 서비스는 RTSP로 구독
+- **FFmpeg 연동**: 카메라/파일을 MediaMTX로 발행(RTSP), 코덱/해상도/프레임을 실시간 정규화하여 브라우저·AI 파이프라인 안정화
 - **WebRTC 기반 스트리밍**: `/monitor` 웹 인터페이스를 통한 실시간 영상 모니터링
 - **TURN/STUN 서버 지원**: NAT 환경에서의 안정적인 WebRTC 연결
 - **적응적 품질 조정**: 네트워크 상황에 따른 해상도/FPS 동적 조정
