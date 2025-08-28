@@ -439,3 +439,5 @@ PPE 서비스는 특수한 요구사항으로 인해 로컬 환경에서 운영�
 <a id="시연-영상"></a>
 
 ## 🎬 시연 영상
+
+[![시연 영상](https://img.youtube.com/vi/Vdqh2bhZZ84/0.jpg)](https://www.youtube.com/watch?v=Vdqh2bhZZ84)
