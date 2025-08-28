@@ -1,19 +1,66 @@
 # i-room
 
-| 지능형 건설현장 근로자 안전 통합관리 플랫폼 "이룸(I-Room)"
-> 목차
+> 지능형 건설현장 근로자 안전 통합관리 플랫폼 "이룸(I-Room)"
+
+> ## 📋 목차
+> - [⚡ TL;DR](#tldr)
 > - [📌 프로젝트 소개](#프로젝트-소개)
 > - [👩‍👩‍👧‍👧 팀원 소개](#팀원-소개)
+> - [🏗️ 서비스 아키텍처 개요](#서비스-아키텍처-개요)
 > - [✏️ 주요 기능](#주요-기능)
-> - [🔗 링크 모음](#링크-모음)
-> - [📡 API 명세](#api-명세)
-> - [🚩 시작 가이드](#시작-가이드)
-> - [🖥️ 기술 스택](#기술-스택)
+> - [🖼️ 아키텍처](#아키텍처)
 > - [📁 프로젝트 구조](#프로젝트-구조)
+> - [🚀 시작 가이드](#시작-가이드)
+> - [⚙️ 기술 스택](#기술-스택)
+> - [💻 서비스 개발 주안점](#서비스-개발-주안점)
+> - [☁️ 배포 아키텍처](#배포-아키텍처)
+> - [📡 API 명세서](#명세서)
+> - [🎬 시연 영상](#시연-영상)
 
-<br>
+---
 
-## 프로젝트 소개
+<a id="tldr"></a>
+
+## ⚡ TL;DR
+
+> **이룸(i-Room)**: 건설현장 안전사고를 예방하는 AI 기반 통합 안전관리 플랫폼
+
+### 🚀 핵심 특징
+
+- **8개 마이크로서비스** + **2개 웹앱**으로 구성된 MSA 아키텍처
+- **실시간 AI 분석**: YOLOv8 PPE 탐지 + XGBoost 건강 위험 예측
+- **실시간 통신**: WebSocket/STOMP + Kafka 이벤트 스트리밍
+
+### 📊 기대 성과
+
+- **조치 리드타임 90% 단축** (20분 → 2분)
+- **중대재해 발생률 35% 감소**
+- **보호구 미착용 감지 95% 정확도**
+
+### 🛠️ 주요 기술
+
+- **Backend**: Spring Boot 3.5.3, FastAPI, MySQL 8.0, Apache Kafka
+- **Frontend**: React 19.1, WebSocket/STOMP
+- **AI**: YOLOv8, BoT-SORT, XGBoost, LightGBM, WebRTC
+- **Infra**: Azure Kubernetes Service (AKS), Docker, Jenkins
+
+### 🏃‍♂️ 빠른 시작
+
+```bash
+# 전체 서비스 실행
+docker-compose -f build-docker-compose.yml up --build
+
+# PPE 서비스 (별도 실행 필요)
+cd ppe/ && python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8002 --reload
+```
+
+---
+
+<a id="프로젝트-소개"></a>
+
+## 📌 프로젝트 소개
 
 ### 개발 동기 및 목적
 
@@ -68,39 +115,79 @@
 
 2025.07.18 ~ 2025.09.01
 
-<br>
+---
 
-## 팀원 소개
+<a id="팀원-소개"></a>
+
+## 👩‍👩‍👧‍👧 팀원 소개
 
 |        | 이성훈                                                      | 김민수                                                    | 박소연                                                     | 배소정                                                   | 장준혁                                                       | 조승빈                                                         |
 |--------|----------------------------------------------------------|--------------------------------------------------------|---------------------------------------------------------|-------------------------------------------------------|-----------------------------------------------------------|-------------------------------------------------------------|
-| 역할     | Backend (Spring), Frontend                               | AI (FastAPI)                                           | Backend (Spring), Frontend                              | Backend (Spring), Frontend                            | AI (FastAPI)                                              | Backend (Spring)                                            |
+| 역할     | Backend, Frontend, AI, Cloud                             | Backend, Data, AI, Network                             | Backend, Frontend, AI, Wear OS                          | Backend, Frontend, AI                                 | Backend, Data, AI                                         | Backend, Data, AI                                           |
 | E-Mail | p.plue1881@gmail.com                                     | minsue9608@naver.com                                   | gumza9go@gmail.com                                      | bsj9278@gmail.com                                     | kalina01255@naver.com                                     | benscience@naver.com                                        |
-| GitHub | https://github.com/NextrPlue                             | https://github.com/K-Minsu                             | https://github.com/sorasol9                             | https://github.com/BaeSJ1                             | https://github.com/angrynison                             | https://github.com/changeme4585                             |
+| GitHub | [NextrPlue](https://github.com/NextrPlue)                | [K-Minsu](https://github.com/K-Minsu)                  | [sorasol9](https://github.com/sorasol9)                 | [BaeSJ1](https://github.com/BaeSJ1)                   | [angrynison](https://github.com/angrynison)               | [changeme4585](https://github.com/changeme4585)             |
 |        | <img src="https://github.com/NextrPlue.png" width=100px> | <img src="https://github.com/K-Minsu.png" width=100px> | <img src="https://github.com/sorasol9.png" width=100px> | <img src="https://github.com/BaeSJ1.png" width=100px> | <img src="https://github.com/angrynison.png" width=100px> | <img src="https://github.com/changeme4585.png" width=100px> |
 
+---
+
+<a id="서비스-아키텍처-개요"></a>
+
+## 🏗️ 서비스 아키텍처 개요
+
+i-room은 **8개의 마이크로서비스**와 **2개의 이중 웹 애플리케이션**으로 구성된 대규모 마이크로서비스 아키텍처입니다.
+
+### 마이크로서비스 구성
+
+| 서비스            | 기술 스택            | 주요 기능                               | 배포 상태 |
+|----------------|------------------|-------------------------------------|-------|
+| **Gateway**    | Spring Boot 3.x  | JWT 인증 및 API 라우팅                    | ✅ AKS |
+| **User**       | Spring Boot 3.x  | 3가지 사용자 유형 관리 (Admin/Worker/System) | ✅ AKS |
+| **Management** | Spring Boot 3.x  | 근로자 출입 관리 및 안전 교육                   | ✅ AKS |
+| **Alarm**      | Spring Boot 3.x  | 실시간 WebSocket 알림                    | ✅ AKS |
+| **Sensor**     | Spring Boot 3.x  | IoT 센서 데이터 처리 및 WebSocket           | ✅ AKS |
+| **Dashboard**  | Spring Boot 3.x  | BFF패턴 대시보드 + AI 문서 처리               | ✅ AKS |
+| **PPE**        | FastAPI + Python | YOLOv8 + WebRTC 기반 PPE 탐지           | 🟡 로컬 |
+| **Health**     | FastAPI + Python | XGBoost/LightGBM 기반 건강 위험 예측        | ✅ AKS |
+
 <br>
 
-## 주요 기능
+### 웹 애플리케이션
 
-|       구분        |        기능         | 설명                                                                 |         담당 서비스          |
-|:---------------:|:-----------------:|:-------------------------------------------------------------------|:-----------------------:|
-| **실시간 안전 모니터링** |     **대시보드**      | 현장 전체 상황, 근로자 상태, 위험 알림 등을 실시간으로 시각화                               | `Dashboard`, `Frontend` |
-|                 |    **실시간 알림**     | 위험 감지 시 관리자 페이지와 근로자 페이지에 SSE를 통해 실시간 알림 전송                        |   `Alarm`, `Frontend`   |
-|                 | **IoT 센서 데이터 처리** | 현장 IoT 장비로부터 TCP 소켓 통신으로 센서 데이터를 수신하여 Kafka로 전송                    |        `Sensor`         |
-| **AI 기반 위험 예측** |  **안전장비 착용 감지**   | CCTV 영상 프레임을 분석하여 안전모, 안전고리 등 개인보호장비(PPE) 착용 여부를 AI 모델(YOLOv8)로 탐지 |          `PPE`          |
-|                 |   **건강 위험도 예측**   | 센서 데이터(온도, 습도 등)를 기반으로 AI 모델을 사용하여 온열질환 등 건강 위험도를 예측               |        `Health`         |
-|    **통합 관리**    |  **사용자 및 권한 관리**  | 관리자 및 근로자 계정 정보, 역할 기반의 접근 제어(RBAC) 기능 제공                          |         `User`          |
-|                 |   **현장 정보 관리**    | 근로자, 장비, 도면, 안전 가이드라인 등 현장 정보 통합 관리                                |      `Management`       |
-|  **API 게이트웨이**  |   **인증 및 라우팅**    | 모든 마이크로서비스 요청에 대한 단일 진입점(entrypoint) 역할. JWT 기반 인증 및 동적 라우팅 처리     |        `Gateway`        |
+| 애플리케이션    | 사용자 | 배포 주소     | 주요 기능                        |
+|-----------|-----|-----------|------------------------------|
+| **관리자 앱** | 관리자 | `/admin`  | 대시보드, 모니터링, 근로자 관리, AI 문서 처리 |
+| **근로자 앱** | 근로자 | `/worker` | 실시간 안전 알림, 개인 안전 정보, 모바일 최적화 |
 
-<br>
+---
 
-## Architecture
+<a id="주요-기능"></a>
 
-<img width="1352" alt="image" src="https://github.com/user-attachments/assets/15168853-1b93-4b99-9e1a-a58146591843">
+## ✏️ 주요 기능
 
-## 프로젝트 구조
+|       구분        |        기능         | 설명                                                  |         담당 서비스          |
+|:---------------:|:-----------------:|:----------------------------------------------------|:-----------------------:|
+| **실시간 안전 모니터링** |     **대시보드**      | 현장 전체 상황, 근로자 상태, 위험 알림 등을 실시간으로 시각화                | `Dashboard`, `Frontend` |
+|                 |    **실시간 알림**     | 위험 감지 시 관리자와 근로자에게 WebSocket을 통해 실시간 알림 전송          |   `Alarm`, `Frontend`   |
+|                 | **IoT 센서 데이터 처리** | 웨어러블 기기로부터 바이너리 데이터 수신 및 Kafka 이벤트 스트리밍             |        `Sensor`         |
+| **AI 기반 위험 예측** |   **PPE 착용 감지**   | YOLOv8+BoT-SORT 기반 실시간 안전모/안전고리 착용 감지 및 WebRTC 스트리밍 |          `PPE`          |
+|                 |   **건강 위험도 예측**   | XGBoost/LightGBM 하이브리드 모델 + 규칙 엔진으로 온열질환 위험 예측      |        `Health`         |
+|    **통합 관리**    |  **사용자 및 권한 관리**  | 3종류 사용자(Admin/Worker/System) 및 RBAC 기반 접근 제어        |         `User`          |
+|                 |   **현장 정보 관리**    | 근로자 출입 관리, 장비 추적, 안전 교육 이력 관리                       |      `Management`       |
+|  **API 게이트웨이**  |   **인증 및 라우팅**    | 단일 진입점 Spring Cloud Gateway + JWT 인증 및 동적 라우팅 처리    |        `Gateway`        |
+
+---
+
+<a id="아키텍처"></a>
+
+## 🖼️ 아키텍처
+
+<img width="6603" height="3239" alt="아키텍처" src="https://github.com/user-attachments/assets/2f2c6fc3-ea6b-47eb-a885-5b5f159044d6" />
+
+---
+
+<a id="프로젝트-구조"></a>
+
+## 📁 프로젝트 구조
 
 ```
 i-room/
@@ -116,23 +203,11 @@ i-room/
 └── user/          # (Spring) 사용자 관리 서비스
 ```
 
-<br>
+---
 
-## 링크 모음
+<a id="시작-가이드"></a>
 
-| 기획 |                                                          디자인                                                          | 개발 |
-|:--:|:---------------------------------------------------------------------------------------------------------------------:|:--:|
-|    | [와이어프레임](https://www.figma.com/design/YoPKzEsC8NfWVUHoTaZPi0/%EC%9D%B4%EB%A3%B8?node-id=0-1&p=f&t=qhCswsEEfx0Y42VE-0) |    |
-
-<br>
-
-## API 명세
-
-> [i-room API 명세서 (Notion)](https://disco-mitten-e75.notion.site/API-238f6cd45c7380209227f1f66bddebdd?pvs=73)
-
-<br>
-
-## 시작 가이드
+## 🚀 시작 가이드
 
 ### 사전 준비 사항
 
@@ -143,17 +218,58 @@ i-room/
 * Node.js, npm (Frontend 빌드 시)
 * Python 3.9+, pip (FastAPI 서비스 실행 시)
 
-### Docker Compose로 모든 서비스 실행하기
+<br>
 
-모든 마이크로서비스(백엔드, 게이트웨이, 프론트엔드) 및 Kafka를 시작하려면, 프로젝트 루트 디렉토리에서 다음 명령어를 실행합니다.
+### 1. PPE 서비스 로컬 실행
 
 ```bash
-docker-compose -f build-docker-compose.yml up --build
+# PPE 서비스 디렉토리로 이동
+cd ppe/
+
+# Python 가상환경 설정
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# 의존성 설치
+pip install -r requirements.txt
+
+# 환경변수 설정 (선택사항)
+export MODEL_PATH="ppe/model/best.pt"
+export RTSP_URL="ppe/helmet_off.mp4"
+
+# FastAPI 서버 실행
+uvicorn main:app --host 0.0.0.0 --port 8002 --reload
 ```
 
-애플리케이션 접속은 `http://localhost:8088` 에서 가능합니다.
+<br>
 
-### 개별 서비스 실행하기 (개발용)
+### 2. 로컬 개발 환경 구성 (Docker Compose)
+
+#### 전체 서비스 실행
+
+```bash
+# 모든 마이크로서비스 및 인프라 서비스 실행
+docker-compose -f build-docker-compose.yml up --build
+
+# 애플리케이션 접속: http://localhost:8088
+```
+
+#### 인프라만 실행 (개발용)
+
+```bash
+# 인프라 서비스 실행 (MySQL, Kafka, Qdrant)
+docker-compose -f docker-compose.infra.yml up -d
+
+# 전체 서비스 실행
+docker-compose up -d
+
+# 서비스 상태 확인
+docker-compose ps
+```
+
+<br>
+
+### 3. 개별 서비스 실행하기 (개발용)
 
 각 마이크로서비스는 개별적으로 실행할 수 있습니다. 자세한 내용은 각 서비스 디렉토리의 `README.md` 파일을 참고하십시오.
 
@@ -167,7 +283,9 @@ docker-compose -f build-docker-compose.yml up --build
 * `health`: 건강 위험도 예측 서비스 (FastAPI)
 * `frontend`: 관리자 및 근로자 UI (React)
 
-### 유틸리티
+<br>
+
+### 4. 유틸리티
 
 * **httpie** (curl / POSTMAN 대체 도구) 및 네트워크 유틸리티
   ```bash
@@ -183,21 +301,141 @@ docker-compose -f build-docker-compose.yml up --build
   sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
   ```
 
+---
+
+<a id="기술-스택"></a>
+
+## ⚙️ 기술 스택
+
+|         구분         | 기술                                                                                                         | 설명                               |
+|:------------------:|:-----------------------------------------------------------------------------------------------------------|:---------------------------------|
+|    **Backend**     | `Java 17`, `Spring Boot 3.5.3`, `Spring Cloud Gateway`, `Spring Data JPA`, `Spring Security`, `Gradle 8.x` | 6개 마이크로서비스의 안정적이고 확장 가능한 백엔드 시스템 |
+|                    | `Python 3.9+`, `FastAPI`, `Uvicorn`, `PyTorch`, `Scikit-learn`                                             | AI 모델 서빙 및 고성능 비동기 API 개발        |
+|    **Frontend**    | `React 19.1`, `JavaScript (ES6+)`, `React Router DOM 7`, `STOMP.js + SockJS`, `Axios`                      | 이중 애플리케이션 및 실시간 WebSocket 통신     |
+|       **AI**       | `YOLOv8 + BoT-SORT`, `XGBoost + LightGBM`, `WebRTC`, `OpenCV`, `Ultralytics`                               | 실시간 객체 탐지/추적 및 하이브리드 AI 모델       |
+|    **Database**    | `MySQL 8.0` (각 서비스별), `Qdrant Vector DB`                                                                   | 마이크로서비스별 독립 DB + AI 문서 벡터 저장     |
+|   **Messaging**    | `Apache Kafka`, `WebSocket/STOMP`                                                                          | 비동기 이벤트 스트리밍 및 실시간 양방향 통신        |
+| **DevOps & Infra** | `Docker + Docker Compose`, `Kubernetes (AKS)`, `Nginx`, `Jenkins`                                          | 컨테이너화 및 Azure Kubernetes 클러스터 배포 |
+|    **External**    | `OpenAI API`, `TURN/STUN 서버`                                                                               | AI 챗봇 서비스 및 WebRTC 연결 지원         |
+
+---
+
+<a id="서비스-개발-주안점"></a>
+
+## 💻 서비스 개발 주안점
+
+### 📌 Nginx Ingress를 통한 단일 진입점 및 경로 기반 라우팅
+
+> Nginx Ingress Controller를 사용하여 모든 요청에 대한 단일 진입점을 제공하고, 경로 기반 라우팅을 통해 트래픽을 적절한 서비스로 분산시킵니다.
+>
+> 이를 통해 클라이언트는 하나의 엔드포인트로만 접근하면 되며, 내부 서비스가 완전히 은닉되어 보안성과 유지보수성을 향상시켰습니다.
+
+### 📌 인증/인가 책임 분리
+
+> 게이트웨이에서는 JWT 기반의 통합 인증만을 담당하고, 실제 리소스에 대한 접근 제어(인가)는 각 마이크로서비스가 자체적으로 수행하도록 설계했습니다.
+>
+> 이를 통해 각 마이크로서비스가 비즈니스 로직에 맞는 세밀한 인가 정책을 독립적으로 관리할 수 있도록 하여 서비스의 자율성과 확장성을 높였습니다.
+
+### 📌 이벤트 기반 CQRS 패턴
+
+> Apache Kafka를 활용한 CQRS(Command Query Responsibility Segregation) 패턴을 적용하여 명령과 조회를 분리하고, 이벤트 기반의 비동기 통신을 구현했습니다.
+>
+> 이를 통해 서비스 간 결합도를 낮추고, 시스템 확장성과 안정성을 향상시켰습니다.
+
+### 📌 멀티 모듈 구조를 통한 코드 재사용성 극대화
+
+> `module-common`을 중심으로 한 멀티 모듈 구조를 적용하여, 마이크로서비스 간 공통 기능과 도메인 로직의 중복을 제거하고 일관성을 유지했습니다.
+>
+> 이를 통해 공통 로직 변경 시 일관된 업데이트가 가능하도록 하여 유지보수성을 크게 개선했습니다.
+
+---
+
+<a id="배포-아키텍처"></a>
+
+## ☁️ 배포 아키텍처
+
+> i-room 프로젝트는 **하이브리드 배포 아키텍처**를 채택하여 서비스별 특성에 맞는 최적의 환경에서 운영됩니다.
+
+### Azure Kubernetes Service (AKS)
+
+8개의 마이크로서비스와 2개의 웹 애플리케이션이 AKS 클러스터에 배포되어 있습니다:
+
+**배포된 서비스**
+
+- **Spring Boot 서비스**: Gateway, User, Management, Alarm, Sensor, Dashboard
+- **FastAPI 서비스**: Health (건강 위험도 예측)
+- **React 애플리케이션**: 관리자 앱, 근로자 앱
+
+**인프라 구성**
+
+- **컨테이너 오케스트레이션**: Kubernetes를 통한 자동 스케일링 및 로드 밸런싱
+- **로드 밸런서**: Nginx Ingress Controller를 통한 트래픽 분산
+- **데이터베이스**: MySQL 8.0 (각 마이크로서비스별 독립 DB)
+- **메시징**: Apache Kafka를 통한 이벤트 스트리밍
+- **벡터 DB**: Qdrant를 통한 AI 문서 임베딩 저장
+
 <br>
 
-## 기술 스택
+### 로컬 환경 (PPE 서비스)
 
-|         구분         | 기술                                                                                                   | 설명                               |
-|:------------------:|:-----------------------------------------------------------------------------------------------------|:---------------------------------|
-|    **Backend**     | `Java 17`, `Spring Boot 3.x`, `Spring Cloud Gateway`, `Spring Data JPA`, `Spring Security`, `Gradle` | 안정적이고 확장 가능한 백엔드 시스템 구축          |
-|                    | `Python 3.9`, `FastAPI`, `Uvicorn`                                                                   | AI 모델 서빙 및 빠른 API 개발             |
-|    **Frontend**    | `React`, `JavaScript (ES6+)`, `React Query`, `Recoil`, `Axios`                                       | 컴포넌트 기반의 반응형 UI 및 효율적인 상태 관리     |
-|       **AI**       | `YOLOv8`, `PyTorch`, `Scikit-learn`, `OpenCV`                                                        | CCTV 영상 분석 및 센서 데이터 기반 위험도 예측 모델 |
-|    **Database**    | `MySQL`, `Qdrant`                                                                                    | RDBMS와 벡터 데이터베이스를 용도에 맞게 사용      |
-| **DevOps & Infra** | `Docker`, `Docker Compose`, `Nginx`                                                                  | 컨테이너 기반의 서비스 환경 구축 및 배포          |
-|                    | `Kafka`                                                                                              | 서비스 간 비동기 통신 및 이벤트 스트리밍          |
-|                    | `Jenkins`, `Kubernetes (AKS)`                                                                        | CI/CD 파이프라인 및 클라우드 환경 배포 자동화     |
+PPE 서비스는 특수한 요구사항으로 인해 로컬 환경에서 운영됩니다:
+
+**배포 이유**
+
+- **WebRTC 실시간 스트리밍**: 저지연 비디오 처리 요구
+- **GPU 가속 처리**: YOLOv8 + BoT-SORT 모델의 실시간 추론
+- **TURN/STUN 서버**: 네트워크 환경에 따른 직접 연결 필요
+
+**기술 구성**
+
+- **서빙 프레임워크**: FastAPI + Uvicorn
+- **AI 프레임워크**: PyTorch, Ultralytics, OpenCV
+- **비디오 스트리밍**: WebRTC, aiortc
+- **모델 처리**: GPU 가속 (CUDA) 및 CPU 폴백
 
 <br>
 
-## 시연 영상
+### 네트워크 아키텍처
+
+```
+[사용자] → [Nginx Ingress] → [AKS 클러스터]
+                                ├── Spring Boot Services
+                                ├── React Applications
+                                └── Infrastructure Services
+```
+
+<br>
+
+### CI/CD 파이프라인
+
+**자동화된 배포 프로세스**
+
+- **소스 관리**: GitHub 레포지토리
+- **빌드 도구**: Jenkins (AKS 클러스터 내 배포)
+- **컨테이너화**: Docker 이미지 빌드 및 레지스트리 푸시
+- **배포 전략**: Kubernetes 롤링 업데이트
+- **모니터링**: 서비스 상태 및 로그 모니터링
+
+**배포 흐름**
+
+1. 코드 커밋 → GitHub webhook 트리거
+2. Jenkins 빌드 파이프라인 실행
+3. Docker 이미지 빌드 및 푸시
+4. AKS 클러스터에 롤링 업데이트 배포
+5. 서비스 헬스체크 및 로그 모니터링
+
+---
+
+<a id="명세서"></a>
+
+## 📡 API 명세서
+
+[API 명세서](https://disco-mitten-e75.notion.site/API-238f6cd45c7380209227f1f66bddebdd?pvs=73)
+
+<img width="2268" height="2875" alt="API 명세서" src="https://github.com/user-attachments/assets/85cd4d00-77e4-4789-96ca-6f614088064c" />
+
+---
+
+<a id="시연-영상"></a>
+
+## 🎬 시연 영상
